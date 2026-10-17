@@ -67,7 +67,7 @@
   const tabs = document.querySelectorAll('nav button');
   function show(name) {
     tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-    ['brief', 'inv', 'sales', 'ask'].forEach(n => { $('p-' + n).hidden = n !== name; });
+    ['brief', 'inv', 'sales', 'shows', 'ask'].forEach(n => { $('p-' + n).hidden = n !== name; });
     if (name === 'sales') loadSales();
     if (name === 'brief') loadBrief();
     if (name === 'inv') loadInventory();
@@ -297,6 +297,39 @@
     } catch (_) { /* reloads below show the true state */ }
     loadSales();
   });
+
+  // ---- shows ----
+  $('o-go').addEventListener('click', async () => {
+    const cards = $('o-cards').value.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    if (!cards.length) { $('o-out').innerHTML = '<p class="status">Type at least one card.</p>'; return; }
+    $('o-go').disabled = true; $('o-out').innerHTML = `<p class="status">Pricing ${cards.length} card${cards.length === 1 ? '' : 's'}…</p>`;
+    try {
+      const r = await api('/api/biz/offer', { method: 'POST', body: JSON.stringify({ cards, pct: Number($('o-pct').value) }) });
+      $('o-out').innerHTML = `<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:6px 0">
+          <div class="kpi"><small>Market value</small><b>${money(r.market)}</b><em>${r.cards.length} priced</em></div>
+          <div class="kpi"><small>Offer at ${r.pct}%</small><b class="up">${money(r.offer)}</b><em>Room to resell</em></div></div>
+        ${r.cards.length ? `<div class="tablewrap"><table style="min-width:0"><thead><tr><th>Card</th><th class="r">Market</th><th class="r">Offer</th></tr></thead><tbody>${
+          r.cards.map(c => `<tr><td>${esc(c.title)}<div class="why">${esc(c.grade || 'Raw')} · ${c.n} sales</div></td><td class="r">${money(c.market)}</td><td class="r">${money(c.offer)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${r.unpriced.length ? `<p class="status">Not enough recent sales to price: ${r.unpriced.map(u => esc(u.title)).join('; ')}. Check these by hand.</p>` : ''}`;
+    } catch (err) { $('o-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    $('o-go').disabled = false;
+  });
+  let showText = '';
+  $('s-go').addEventListener('click', async () => {
+    try {
+      const { cards } = await api(`/api/biz/show?n=${$('s-n').value}&min=${$('s-min').value}`);
+      if (!cards.length) { $('s-out').innerHTML = '<p class="status">No priced cards yet. Refresh market prices in Inventory first.</p>'; $('s-copy').hidden = $('s-print').hidden = true; return; }
+      showText = cards.map((c, i) => `${i + 1}. ${c.title}${c.grade ? ' ' + c.grade : ''} - ${money(c.price ?? c.market)}${c.trend >= 10 ? ` (up ${c.trend}%)` : ''}`).join('\n');
+      $('s-out').innerHTML = `<div class="tablewrap"><table style="min-width:0"><thead><tr><th>#</th><th>Card</th><th class="r">Price</th><th class="r">Market</th></tr></thead><tbody>${
+        cards.map((c, i) => `<tr><td>${i + 1}</td><td>${esc(c.title)}${c.grade ? ` <span class="pill">${esc(c.grade)}</span>` : ''}${c.trend >= 10 ? ` <span class="pill ok">up ${c.trend}%</span>` : ''}</td><td class="r">${money(c.price)}</td><td class="r">${money(c.market)}</td></tr>`).join('')}</tbody></table></div>`;
+      $('s-copy').hidden = $('s-print').hidden = false;
+    } catch (err) { $('s-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+  });
+  $('s-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(showText); $('s-copy').textContent = 'Copied'; setTimeout(() => { $('s-copy').textContent = 'Copy'; }, 1500); }
+    catch (_) { window.prompt('Copy your list:', showText); }
+  });
+  $('s-print').addEventListener('click', () => window.print());
 
   // ---- ask ----
   const fmt = (text) => esc(text).split(/\n+/).map(l => /^\s*[-•*]\s+/.test(l) ? `<p>• ${l.replace(/^\s*[-•*]\s+/, '')}</p>` : `<p>${l}</p>`).join('');
