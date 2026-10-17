@@ -117,6 +117,16 @@ textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
 .faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px }
 .faq summary { cursor: pointer; font-weight: 600 }
 .faq p { margin-top: 8px }
+.health { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px 24px; align-items: center; margin-top: 18px }
+.ring { width: 112px; height: 112px; display: block }
+.ring text { font-family: var(--display) }
+.hparts { display: grid; gap: 8px; min-width: 0 }
+.hpart { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 3.2rem; gap: 10px; align-items: center; font-size: 13.5px }
+.hpart .num { text-align: right; color: var(--fg2) }
+.hpart .bar { display: block }
+.htips { grid-column: 1 / -1; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px }
+.htips li { display: flex; gap: 8px; align-items: baseline } .htips b { color: var(--accent); white-space: nowrap }
+@media (max-width: 560px) { nav button { padding: 10px 9px; font-size: 13.5px } .health { grid-template-columns: minmax(0, 1fr); justify-items: start } .hpart { grid-template-columns: 7rem minmax(0, 1fr) 3rem } }
 .status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
 td .act { padding: 4px 9px; font-size: 12px }
 @media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
@@ -204,6 +214,7 @@ td .act { padding: 4px 9px; font-size: 12px }
       <p class="lede" id="sub">Your inventory, priced against real sold prices.</p>
       <div class="answer" id="summary" hidden style="margin-top:18px;max-width:none"><span class="who">Your morning summary</span><p id="summarytext"></p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="why" id="summaryat"></span><button class="act" type="button" id="summaryfresh">Write it again</button></div></div>
+      <div class="panel health" id="health" hidden></div>
       <div class="kpis" id="kpis"></div>
       <h2>What to do today</h2>
       <div class="brief" id="brief"></div>

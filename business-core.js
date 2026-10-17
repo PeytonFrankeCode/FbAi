@@ -308,4 +308,46 @@ function buyOffer(rows, pct = 60) {
   };
 }
 
-module.exports = { showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// Inventory health, 0 to 100, from four parts weighted by money (a $500 card
+// counts for more than a $2 one): priced within range of the market (40),
+// fresh, not sitting 90+ days (30), value known from comps (15) and cost
+// recorded (15). Each part says what would raise it.
+const HEALTH_PARTS = { priced: 40, fresh: 30, known: 15, costs: 15 };
+function health(items, now = Date.now()) {
+  const rows = (items || []).map(it => {
+    const v = it.value || {};
+    const w = Math.max(1, (v.market != null ? v.market : (it.price || 1)) * (it.qty || 1));
+    const days = Math.max(0, (now - Date.parse(it.listedAt || now)) / DAY);
+    const known = v.market != null;
+    const inRange = known && it.price != null && it.price <= v.market * OVER && it.price >= v.market * UNDER;
+    const fresh = days < 30 ? 1 : days >= DEAD_DAYS ? 0 : 1 - 0.5 * (days - 30) / (DEAD_DAYS - 30);
+    return { w, known, inRange, fresh, hasCost: it.cost != null, off: known && !inRange, dead: days >= DEAD_DAYS };
+  });
+  if (!rows.length) return null;
+  const total = rows.reduce((a, r) => a + r.w, 0);
+  const share = (f) => rows.reduce((a, r) => a + r.w * f(r), 0) / total;
+  const knownW = rows.filter(r => r.known).reduce((a, r) => a + r.w, 0);
+  const parts = {
+    // Priced right is judged on the cards whose market is known.
+    priced: knownW ? rows.filter(r => r.known).reduce((a, r) => a + r.w * (r.inRange ? 1 : 0), 0) / knownW : 0,
+    fresh: share(r => r.fresh),
+    known: share(r => (r.known ? 1 : 0)),
+    costs: share(r => (r.hasCost ? 1 : 0)),
+  };
+  const pts = Object.fromEntries(Object.entries(parts).map(([k, f]) => [k, Math.round(f * HEALTH_PARTS[k])]));
+  const score = Object.values(pts).reduce((a, b) => a + b, 0);
+  const nOff = rows.filter(r => r.off).length, nDead = rows.filter(r => r.dead).length;
+  const nUnknown = rows.filter(r => !r.known).length, nNoCost = rows.filter(r => !r.hasCost).length;
+  const cards = (n) => `${n} card${n === 1 ? '' : 's'}`;
+  const tips = [
+    nOff && { part: 'priced', text: `Reprice ${cards(nOff)} off the market (Inventory › Bulk reprice).` },
+    nDead && { part: 'fresh', text: `Move ${cards(nDead)} listed 90+ days: lots, auctions or a show.` },
+    nUnknown && { part: 'known', text: `${cards(nUnknown)} ${nUnknown === 1 ? 'has' : 'have'} no price yet. Make sure each title names the card fully: year, set, player, number.` },
+    nNoCost && { part: 'costs', text: `Add what you paid for ${cards(nNoCost)} so profit is real.` },
+  ].filter(Boolean).map(t => ({ ...t, gain: HEALTH_PARTS[t.part] - pts[t.part] })).filter(t => t.gain > 0)
+    .sort((x, y) => y.gain - x.gain);
+  const label = score >= 85 ? 'Excellent' : score >= 70 ? 'Good' : score >= 50 ? 'Needs work' : 'Poor';
+  return { score, label, parts: pts, max: HEALTH_PARTS, tips };
+}
+
+module.exports = { health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
