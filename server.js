@@ -19214,6 +19214,23 @@ app.post('/api/biz/reprice', async (req, res) => {
   if (plan.length) await _bizSave(who, inv);
   res.json({ applied: plan.length, plan, ebayCsv: plan.some(p => p.ebayItemId) ? BIZ.ebayReviseCsv(plan) : null });
 });
+// Show tools: the featured list from the seller's inventory, and a buy offer
+// for cards they do not own yet (a walk-in collection, a lot at a show),
+// priced the same way as inventory, 50 cards a request.
+app.get('/api/biz/show', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
+  res.set('Cache-Control', 'no-store').json({ cards: BIZ.showList(inv.items, Number(req.query.n) || 20, Number(req.query.min) || 0) });
+});
+app.post('/api/biz/offer', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const rows = (Array.isArray(req.body && req.body.cards) ? req.body.cards : []).slice(0, 50)
+    .map(r => BIZ.normalizeItem(typeof r === 'string' ? { title: r } : r)).filter(Boolean);
+  if (!rows.length) return res.status(400).json({ error: 'Add at least one card, one per line.' });
+  const now = Date.now();
+  for (const r of rows) { try { r.value = await _bizValue(r, now); } catch (_) { r.value = null; } }
+  res.json(BIZ.buyOffer(rows, req.body.pct));
+});
 app.get('/api/biz/brief', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const inv = await _bizLoad(who);

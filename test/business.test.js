@@ -79,6 +79,20 @@ check('  ...and writes the eBay listings into an eBay bulk-edit file',
   B.ebayReviseCsv(rp) === 'Action(SiteID=US|Country=US|Currency=USD|Version=1193),ItemID,StartPrice\nRevise,111,47.99\n');
 check('  ..."only lower" leaves underpriced cards alone', B.repricePlan([{ id: 'x', price: 30, value: { market: 50, n: 5 } }], { mode: 'over' }).length === 0);
 
+// Show tools: the feature list ranks value with heat; a buy offer prices
+// what it can and leaves the rest out.
+const sl = B.showList([
+  { id: 'a', title: 'Steady', value: { market: 100, trend: 0 } },
+  { id: 'b', title: 'Hot', value: { market: 90, trend: 20 } },
+  { id: 'c', title: 'Cheap', value: { market: 5 } },
+  { id: 'd', title: 'Unpriced', value: { market: null } },
+], 10, 10);
+check('the feature list puts a hot card above a slightly dearer steady one, and drops cheap and unpriced cards',
+  sl.map(x => x.id).join() === 'b,a', sl.map(x => x.id).join());
+const bo = B.buyOffer([{ title: 'A', value: { market: 100, n: 5 } }, { title: 'B', qty: 2, value: { market: 25, n: 4 } }, { title: 'C', value: { market: null, n: 1 } }], 60);
+check('a buy offer is 60% of the priced market value, the unpriced card listed apart',
+  bo.market === 150 && bo.offer === 90 && bo.cards.length === 2 && bo.unpriced.length === 1 && bo.unpriced[0].title === 'C', JSON.stringify(bo));
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -110,6 +124,9 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ sold: true, soldFor: 45 }) });
   const pv = await call('/api/biz/reprice', { method: 'POST', headers: K, body: JSON.stringify({}) });
   check('the reprice preview returns a plan', Array.isArray(pv.body.plan) && pv.body.ebayRows === 0);
+  const off = await call('/api/biz/offer', { method: 'POST', headers: K, body: JSON.stringify({ cards: ['2024 Prizm Bo Nix Silver #309', 'Zzyzx Nobody Card'], pct: 60 }) });
+  check('the buy-offer calculator prices a walk-in card from our sales and says which it cannot',
+    off.body.market === 41 && off.body.offer === 24.6 && off.body.unpriced.length === 1, JSON.stringify(off.body));
   const sales = await call('/api/biz/sales', { headers: K });
   const sale = sales.body.sold[0];
   check('marking a card sold records the sale with its player and set, and the report counts it',

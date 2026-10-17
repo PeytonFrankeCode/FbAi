@@ -283,4 +283,29 @@ function ebayReviseCsv(plan) {
     .concat(rows.map(p => `Revise,${p.ebayItemId},${p.to.toFixed(2)}`)).join('\n') + '\n';
 }
 
-module.exports = { repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// A show list: the cards worth featuring tonight. Priced cards only, ranked
+// by what they bring and whether they are heating up (a card up 20% counts
+// as 20% more), most valuable first.
+function showList(items, n = 20, minValue = 0) {
+  return (items || []).filter(it => it.value && it.value.market != null && it.value.market >= minValue)
+    .map(it => ({ id: it.id, title: it.title, grade: it.grade, price: it.price, market: it.value.market,
+      trend: it.value.trend, score: it.value.market * (1 + Math.max(0, it.value.trend || 0) / 100) }))
+    .sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(200, n)));
+}
+
+// A buy offer for a walk-in collection: each card's market value, the total,
+// and the offer at `pct` of market. Cards with no price are listed apart and
+// left out of the offer rather than guessed.
+function buyOffer(rows, pct = 60) {
+  const p = Math.max(10, Math.min(100, Number(pct) || 60)) / 100;
+  const priced = rows.filter(r => r.value && r.value.market != null);
+  const market = round2(priced.reduce((a, r) => a + r.value.market * (r.qty || 1), 0));
+  return {
+    pct: Math.round(p * 100), market, offer: round2(market * p),
+    cards: priced.map(r => ({ title: r.title, grade: r.grade, qty: r.qty || 1, market: r.value.market, n: r.value.n,
+      offer: round2(r.value.market * p * (r.qty || 1)) })).sort((a, b) => b.market - a.market),
+    unpriced: rows.filter(r => !(r.value && r.value.market != null)).map(r => ({ title: r.title, grade: r.grade, n: (r.value && r.value.n) || 0 })),
+  };
+}
+
+module.exports = { showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };

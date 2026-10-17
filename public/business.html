@@ -96,6 +96,8 @@ td.r, th.r { text-align: right }
 
 body { margin: 0 }
 [hidden] { display: none !important }
+@media print { header, nav, .foot, #landing, section:not(#p-shows), #p-shows > h1, #p-shows > .lede, #p-shows .grid2 > .panel:first-child, #p-shows .panel > h2, #p-shows .panel > p, #p-shows .panel > div:first-of-type { display: none !important }
+  body { background: #fff; color: #000 } .panel, .tablewrap { border: 0 } #p-shows .grid2 { display: block } #s-out::before { content: "Price sheet"; font: 800 20px var(--display); display: block; margin-bottom: 8px } }
 .login { max-width: 380px; margin: 12vh auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px }
 .login input, .field input, .field select, textarea { font: inherit; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); width: 100% }
 .err { color: var(--down); font-size: 13px; min-height: 1.2em }
@@ -193,6 +195,7 @@ td .act { padding: 4px 9px; font-size: 12px }
       <button role="tab" id="t-brief" aria-selected="true" data-tab="brief">Today</button>
       <button role="tab" id="t-inv" aria-selected="false" data-tab="inv">Inventory</button>
       <button role="tab" id="t-sales" aria-selected="false" data-tab="sales">Sales</button>
+      <button role="tab" id="t-shows" aria-selected="false" data-tab="shows">Shows</button>
       <button role="tab" id="t-ask" aria-selected="false" data-tab="ask">Ask</button>
     </nav>
 
@@ -254,6 +257,29 @@ td .act { padding: 4px 9px; font-size: 12px }
       <div class="grid2" id="salegroups"></div>
       <h2 style="margin-top:22px">Recent sales</h2>
       <div id="salelist"></div>
+    </section>
+
+    <section id="p-shows" hidden>
+      <h1>Show tools</h1>
+      <p class="lede">For a Whatnot stream, a card show table or a walk-in at the counter.</p>
+      <div class="grid2" style="margin-top:18px">
+        <div class="panel" style="display:grid;gap:10px">
+          <h2 style="margin:0">Buy-offer calculator</h2>
+          <p style="margin:0;color:var(--fg2);font-size:13.5px">Someone wants to sell you their cards. Type one card per line (add PSA 10 etc. if graded); each is priced from real sales.</p>
+          <textarea id="o-cards" placeholder="2024 Prizm Bo Nix Silver #309&#10;2023 Prizm CJ Stroud #339 PSA 10&#10;2024 Donruss Optic Caleb Williams Rated Rookie"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label class="field" style="min-width:9rem">Offer at<select id="o-pct"><option value="50">50% of market</option><option value="60" selected>60% of market</option><option value="65">65% of market</option><option value="70">70% of market</option><option value="75">75% of market</option><option value="80">80% of market</option></select></label>
+            <button class="act go" type="button" id="o-go" style="align-self:end">Price it</button></div>
+          <div id="o-out"></div>
+        </div>
+        <div class="panel" style="display:grid;gap:10px">
+          <h2 style="margin:0">Feature tonight</h2>
+          <p style="margin:0;color:var(--fg2);font-size:13.5px">Your most valuable cards, with the ones heating up moved higher. Copy it into your show notes.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field">How many<select id="s-n"><option>10</option><option selected>20</option><option>40</option></select></label>
+            <label class="field">Worth at least<select id="s-min"><option value="0">Any</option><option value="10">$10</option><option value="25">$25</option><option value="50">$50</option><option value="100">$100</option></select></label>
+            <button class="act go" type="button" id="s-go">Build list</button><button class="act" type="button" id="s-copy" hidden>Copy</button><button class="act" type="button" id="s-print" hidden>Print price sheet</button></div>
+          <div id="s-out"></div>
+        </div>
+      </div>
     </section>
 
     <section id="p-ask" hidden>
