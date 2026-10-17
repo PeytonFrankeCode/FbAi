@@ -29,7 +29,7 @@
     let me = {};
     try { me = await api('/api/biz/me'); } catch (_) { me = {}; }
     if (me.active) return start(me);
-    $('app').hidden = true; $('gate').hidden = false;
+    $('app').hidden = true; $('landing').hidden = false;
     $('subscribe').hidden = !(me.user && me.checkoutOpen);
     $('logintosite').hidden = !!me.user;
     $('gatemsg').textContent = !me.user ? 'Log in to your Card Huddle account first, then come back here.'
@@ -42,6 +42,16 @@
     try { const me = await api('/api/biz/me'); if (!me.admin) throw Object.assign(new Error('bad'), { status: 401 });
       try { sessionStorage.setItem('chBizKey', key); } catch (_) {} start(me); }
     catch (err) { key = ''; $('loginerr').textContent = err.status === 401 ? 'That key did not work.' : 'Could not reach the server.'; }
+  });
+  $('waitlist').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('w-go').disabled = true; $('w-msg').textContent = '';
+    try {
+      const r = await api('/api/biz/waitlist', { method: 'POST', body: JSON.stringify({ email: $('w-email').value, store: $('w-store').value,
+        where: $('w-where').value, size: $('w-size').value, website: $('w-hp').value }) });
+      $('w-msg').textContent = r.already ? "You're already on the list. We'll be in touch." : "You're on the list. We'll email you when your spot opens.";
+      $('waitlist').querySelectorAll('input,select').forEach(x => { x.disabled = true; });
+    } catch (err) { $('w-msg').textContent = err.message; $('w-go').disabled = false; }
   });
   $('subscribe').addEventListener('click', async () => {
     $('subscribe').disabled = true; $('gateerr').textContent = '';
@@ -277,7 +287,7 @@
   $('askform').addEventListener('submit', (e) => { e.preventDefault(); ask($('askq').value.trim()); });
 
   function start(me) {
-    $('gate').hidden = true; $('app').hidden = false;
+    $('landing').hidden = true; $('app').hidden = false;
     $('billing').hidden = !(me && me.user && !me.admin);
     $('comparewrap').hidden = !(me && me.admin);
     show('brief');

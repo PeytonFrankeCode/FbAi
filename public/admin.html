@@ -355,6 +355,11 @@
 
 <!-- Admin Dashboard -->
 <div id="admin-screen">
+  <!-- Card Huddle for Business founding-seller waitlist (/api/biz/waitlist) -->
+  <div class="page-title">Business waitlist</div>
+  <div class="page-subtitle" id="bw-sub">Sellers who asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.</div>
+  <div id="bw-list" style="margin-bottom:2.5rem"></div>
+
   <!-- Articles: the posting tool (/api/admin/news, /news) -->
   <div class="page-title">Articles</div>
   <div class="page-subtitle">Write an article, drop in photos, preview it exactly as it will look, then publish to <a href="/news" target="_blank" style="color:var(--accent)">Guides &amp; News</a>. Photos are shrunk on this device before they upload.</div>
@@ -546,6 +551,7 @@
       loadCommunityModeration();
       loadEstimateAccuracy();
       loadArticles();
+      loadWaitlist();
       loadSurveys();
       loadGiveawayEntrants();
       const now = new Date();
@@ -694,6 +700,20 @@
         ${r.broken ? `<div class="report-message"><strong>Broken or confusing:</strong> ${escHtml(r.broken)}</div>` : ''}
         <div class="report-message" style="color:var(--text-muted);font-size:0.74rem">${escHtml(r.device || '')} · ${r.searches || 0} searches before answering${r.page ? ` · on ${escHtml(r.page)}` : ''} · from: ${escHtml(FROM[r.source || 'unknown'] || r.source || 'unknown')}</div>
       </div>`).join('');
+  }
+
+  // ---- Business waitlist ----
+  async function loadWaitlist() {
+    const box = document.getElementById('bw-list');
+    try {
+      const r = await fetch('/api/biz/waitlist', { headers: { 'x-admin-key': adminKey }, cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      document.getElementById('bw-sub').innerHTML = `<b>${d.count}</b> seller${d.count === 1 ? '' : 's'} asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.`;
+      box.innerHTML = d.rows.length ? d.rows.map(w => `<div class="art-row"><span class="art-row-title">${escHtml(w.email)}</span>
+        <span class="art-row-meta">${escHtml(w.where || '')} · ${escHtml(w.size || '')}${w.store ? ' · ' + escHtml(w.store) : ''}</span>
+        <span class="art-row-meta">${escHtml(String(w.joinedAt).slice(0, 10))}</span></div>`).join('') : '';
+    } catch (err) { box.innerHTML = `<div class="page-subtitle" style="color:var(--red)">Could not load the waitlist: ${escHtml(err.message)}</div>`; }
   }
 
   // ---- Articles (/api/news, /api/admin/news) ----
