@@ -93,6 +93,16 @@ const bo = B.buyOffer([{ title: 'A', value: { market: 100, n: 5 } }, { title: 'B
 check('a buy offer is 60% of the priced market value, the unpriced card listed apart',
   bo.market === 150 && bo.offer === 90 && bo.cards.length === 2 && bo.unpriced.length === 1 && bo.unpriced[0].title === 'C', JSON.stringify(bo));
 
+// Health: money-weighted parts that add to 100, with what would raise it.
+const hh = B.health([
+  { title: 'Right', price: 50, cost: 10, listedAt: new Date(now - 5 * DAY).toISOString(), value: { market: 50, n: 5 } },
+  { title: 'Off and old', price: 90, listedAt: new Date(now - 120 * DAY).toISOString(), value: { market: 50, n: 5 } },
+], now);
+check('inventory health: a well-priced fresh card with a cost scores full marks, an overpriced dead one drags it down',
+  B.health([{ title: 'x', price: 50, cost: 10, listedAt: new Date(now).toISOString(), value: { market: 50, n: 5 } }], now).score === 100
+  && hh.score < 70 && hh.parts.priced === 20 && hh.tips[0].part === 'priced' && /Reprice 1 card off/.test(hh.tips[0].text), JSON.stringify(hh));
+check('  ...and an empty inventory has no score', B.health([], now) === null);
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -118,6 +128,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const it = inv.body.items[0];
   check('an imported card is priced from our own sales', val.body.valued === 1 && it.value && it.value.market === 41 && it.value.n === 5, JSON.stringify(it.value));
   const brief = await call('/api/biz/brief', { headers: K });
+  check('the brief carries the health score and keeps a reading for the day', brief.body.health && Number.isFinite(brief.body.health.score) && brief.body.health.history.length === 1);
   check('  ...and the brief tells the seller to reprice it to the market', brief.body.actions.some(a => a.kind === 'reprice' && a.suggest === 41));
   const p = await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ price: 41 }) });
   check('  ...which one tap does', p.body.item && p.body.item.price === 41);

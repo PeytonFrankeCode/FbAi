@@ -19234,7 +19234,19 @@ app.post('/api/biz/offer', async (req, res) => {
 app.get('/api/biz/brief', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const inv = await _bizLoad(who);
-  res.set('Cache-Control', 'no-store').json(BIZ.analyze(inv.items));
+  // The health score, with one reading kept a day (90 days) so the page can
+  // show how it has moved.
+  const h = BIZ.health(inv.items);
+  if (h) {
+    const day = new Date().toISOString().slice(0, 10);
+    const hist = (inv.health || []).filter(x => x.day !== day).concat({ day, score: h.score }).slice(-90);
+    const last = (inv.health || []).slice(-1)[0];
+    if (!last || last.day !== day || last.score !== h.score) { inv.health = hist; await _bizSave(who, inv); }
+    const weekAgo = hist.filter(x => x.day <= new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)).slice(-1)[0];
+    h.history = hist;
+    h.change7 = weekAgo ? h.score - weekAgo.score : null;
+  }
+  res.set('Cache-Control', 'no-store').json({ ...BIZ.analyze(inv.items), health: h });
 });
 // Plain-English questions about the seller's own business, answered by Claude
 // from the brief and the inventory table (business-core aiContext). Needs

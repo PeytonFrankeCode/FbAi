@@ -87,10 +87,30 @@
     } catch (_) { $('summary').hidden = true; }
   }
   $('summaryfresh').addEventListener('click', () => loadSummary(true));
+  // The health score: a ring for the number, a bar per part, and what would
+  // raise it most.
+  const HPART = { priced: 'Priced right', fresh: 'Fresh stock', known: 'Value known', costs: 'Costs recorded' };
+  function renderHealth(h) {
+    if (!h) { $('health').hidden = true; return; }
+    const r = 46, c = 2 * Math.PI * r, frac = h.score / 100;
+    const tone = h.score >= 70 ? 'var(--up)' : h.score >= 50 ? 'var(--warn)' : 'var(--down)';
+    $('health').innerHTML = `<svg class="ring" viewBox="0 0 112 112" role="img" aria-label="Inventory health ${h.score} out of 100, ${h.label}">
+        <circle cx="56" cy="56" r="${r}" fill="none" stroke="var(--sunk)" stroke-width="10"/>
+        <circle cx="56" cy="56" r="${r}" fill="none" stroke="${tone}" stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="${(c * frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 56 56)"/>
+        <text x="56" y="56" text-anchor="middle" font-size="30" font-weight="800" fill="var(--fg)">${h.score}</text>
+        <text x="56" y="74" text-anchor="middle" font-size="11" fill="var(--fg2)">${esc(h.label)}</text>
+      </svg>
+      <div class="hparts"><h2 style="margin:0">Inventory health${h.change7 != null ? ` <span class="pill ${h.change7 >= 0 ? 'ok' : 'bad'}">${h.change7 >= 0 ? '+' : ''}${h.change7} this week</span>` : ''}</h2>${
+        Object.keys(HPART).map(k => `<div class="hpart"><span>${HPART[k]}</span><span class="bar"><i style="width:${Math.round(100 * h.parts[k] / h.max[k])}%"></i></span><span class="num">${h.parts[k]}/${h.max[k]}</span></div>`).join('')}</div>
+      ${h.tips.length ? `<ul class="htips">${h.tips.slice(0, 3).map(t => `<li><b>+${t.gain}</b><span>${esc(t.text)}</span></li>`).join('')}</ul>` : ''}`;
+    $('health').hidden = false;
+  }
   async function loadBrief() {
     loadSummary(false);
     try {
       const b = await api('/api/biz/brief');
+      renderHealth(b.health);
       const k = b.kpis;
       const gain = k.unrealized;
       const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
@@ -102,7 +122,7 @@
       ].map(([l, v, s]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${s}</em></div>`).join('');
       const total = b.actions.reduce((a, x) => a + (x.dollars || 0), 0);
       $('headline').textContent = !k.cards ? 'Add your inventory to get your first brief.'
-        : b.actions.length ? `${b.actions.length} moves today worth about ${money(total)}.` : 'Nothing needs you today.';
+        : b.actions.length ? `${b.actions.length} moves today worth about ${money(total)}.` : !k.pricedShare ? 'Your cards are not priced yet.' : 'Nothing needs you today.';
       $('sub').textContent = k.cards ? `From ${plural(k.cards, 'card')} against real sold prices from the last 60 days.` : 'Go to Inventory to add cards or import a spreadsheet.';
       $('brief').innerHTML = b.actions.length ? b.actions.map((a, i) => {
         const [cls, tag] = KIND[a.kind] || ['', a.kind];
