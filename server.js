@@ -19006,6 +19006,29 @@ async function _bizProductId() {
   cachePut(BIZ_PRODUCT_KEY, { id }, 365 * 86400);
   return (_bizProduct = id);
 }
+// The founding-seller waitlist, from the public /business page. One record
+// per email (re-joining updates it); the owner reads them on /admin.
+const BIZ_WAIT_PREFIX = 'biz:waitlist:';
+app.post('/api/biz/waitlist', async (req, res) => {
+  const b = req.body || {};
+  if (b.website) return res.json({ ok: true });                     // a form-filling bot
+  const email = digest.normEmail(b.email);
+  if (!digest.validEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' });
+  const clip = (v, n) => String(v || '').trim().slice(0, n);
+  const key = BIZ_WAIT_PREFIX + email;
+  const prev = await recordGet(key);
+  const row = { email, store: clip(b.store, 120), where: clip(b.where, 40), size: clip(b.size, 40),
+    joinedAt: (prev && prev.joinedAt) || new Date().toISOString(), updatedAt: new Date().toISOString() };
+  await recordPut(key, row, { joinedAt: row.joinedAt });
+  res.json({ ok: true, already: !!prev });
+});
+app.get('/api/biz/waitlist', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const keys = await recordList(BIZ_WAIT_PREFIX);
+  const rows = (await Promise.all(keys.map(k => recordGet(k.name)))).filter(Boolean)
+    .sort((a, b) => String(b.joinedAt).localeCompare(String(a.joinedAt)));
+  res.set('Cache-Control', 'no-store').json({ count: rows.length, rows });
+});
 app.get('/api/biz/me', (req, res) => {
   const admin = isAdminReq(req);
   const user = getSessionUser(req);

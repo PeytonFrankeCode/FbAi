@@ -112,7 +112,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const sum = await call('/api/biz/summary', { headers: K });
   check('with no AI key the morning summary is simply left out', sum.status === 200 && sum.body.summary === null && sum.body.reason === 'no-key');
   const page = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');
-  check('the page is noindex and signs in with the admin key', /noindex, nofollow/.test(page) && /Admin key/.test(page));
+  check('the page is a public landing page (indexed) with the waitlist, and still signs in with the admin key', /index, follow/.test(page) && /id="waitlist"/.test(page) && /Admin key/.test(page));
   const w = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('  ...and /business is a page the Worker serves', /'business'/.test(w.slice(w.indexOf('STATIC_PAGES'), w.indexOf('STATIC_PAGES') + 400)));
   // Accounts: a signed-in seller with Business has their own inventory; one
@@ -137,6 +137,16 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('cancelling Business cancels Business only, never the ad-free plan on the same customer',
     S._bizSubEvent(subs, { id: 'sub_biz', customer: 'cus_1' }, 'cancelled') && subs.seller1.business.status === 'cancelled' && subs.seller1.status === 'active'
     && !S._bizSubEvent(subs, { id: 'sub_adfree', customer: 'cus_1', metadata: { plan: 'adfree' } }, 'cancelled'));
+  const J = { 'content-type': 'application/json' };
+  const w1 = await call('/api/biz/waitlist', { method: 'POST', headers: J, body: JSON.stringify({ email: 'Seller@Example.com', where: 'Whatnot', size: '250 to 1,000' }) });
+  const w2 = await call('/api/biz/waitlist', { method: 'POST', headers: J, body: JSON.stringify({ email: 'seller@example.com', where: 'eBay' }) });
+  const bad = await call('/api/biz/waitlist', { method: 'POST', headers: J, body: JSON.stringify({ email: 'nope' }) });
+  const bot = await call('/api/biz/waitlist', { method: 'POST', headers: J, body: JSON.stringify({ email: 'bot@example.com', website: 'x' }) });
+  const list = await call('/api/biz/waitlist', { headers: K });
+  check('anyone can join the waitlist once (re-joining updates it), bots and bad emails are not added',
+    w1.body.ok && !w1.body.already && w2.body.already && bad.status === 400 && bot.body.ok
+    && list.body.count === 1 && list.body.rows[0].email === 'seller@example.com' && list.body.rows[0].where === 'eBay', JSON.stringify(list.body));
+  check('  ...and only the owner can read it', (await call('/api/biz/waitlist')).status === 401);
   await call('/api/biz/inventory/all', { method: 'DELETE', headers: K });
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall business checks passed');

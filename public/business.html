@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
-<title>Card Huddle for Business</title>
+<meta name="robots" content="index, follow">
+<meta name="description" content="Inventory software for sports card sellers: every card priced daily against real sold prices, a brief of what to reprice and feature, sales and profit, and an AI analyst. $20 a month.">
+<link rel="canonical" href="https://thecardhuddle.com/business">
+<title>Card Huddle for Business: Inventory Software for Card Sellers</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 /* Layout: a seller's console. Brief first (what to do today), then the shelf, then ask. */
@@ -103,6 +105,16 @@ body { margin: 0 }
 textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
 .empty { color: var(--fg2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 22px }
 .mini { width: 90px; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg) }
+.hero { padding: 26px 0 8px; display: grid; gap: 10px; max-width: 760px }
+.hero .chip { justify-self: start }
+.item.down, .item.warn { color: var(--fg) }
+.herotitle { font-size: clamp(30px, 5vw, 46px) }
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 26px }
+.feats p, .faq p { margin: 0; color: var(--fg2); font-size: 14.5px }
+.faq { display: grid; gap: 8px; max-width: 760px }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px }
+.faq summary { cursor: pointer; font-weight: 600 }
+.faq p { margin-top: 8px }
 .status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
 td .act { padding: 4px 9px; font-size: 12px }
 @media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
@@ -115,7 +127,31 @@ td .act { padding: 4px 9px; font-size: 12px }
     <div class="shop"><span class="chip">Founding sellers</span><button class="act" type="button" id="billing" hidden>Billing</button><a href="/" style="color:var(--fg2)">Back to the site</a></div>
   </header>
 
-  <div class="login" id="gate" hidden>
+  <section id="landing" hidden>
+    <div class="hero">
+      <span class="chip">For eBay, Whatnot and card shop sellers</span>
+      <h1 class="herotitle">Know what every card on your shelf is worth, every morning.</h1>
+      <p class="lede" style="font-size:17px">Card Huddle for Business prices your whole inventory against real sold prices daily, then tells you what to reprice, what to feature and what is sitting dead, with your profit tracked by player, set and platform.</p>
+      <div class="acts" style="margin-top:14px"><a class="act go" href="#join" style="text-decoration:none">Join the founding sellers</a><a class="act" href="#how" style="text-decoration:none">See how it works</a></div>
+    </div>
+
+    <div class="feats" id="how">
+      <div class="panel"><h2>Your eBay store, synced</h2><p>Type your eBay username. Every active card listing comes in, and stays in sync. No spreadsheets, no eBay login.</p></div>
+      <div class="panel"><h2>Priced from real sales</h2><p>Each card is priced from its own sold comps: same card, same grade, last 60 days, middle price. Three sales or it says so instead of guessing.</p></div>
+      <div class="panel"><h2>A brief every morning</h2><p>What is over market and stale, what is underpriced, what is heating up, what is dead stock. One tap to fix the price.</p></div>
+      <div class="panel"><h2>Profit you can see</h2><p>Sales and profit after fees, by month, player, set and platform. Your best and worst flips, without a spreadsheet.</p></div>
+    </div>
+
+    <h2 style="margin:30px 0 10px">What a morning looks like</h2>
+    <div class="brief" style="max-width:720px" aria-label="Example brief">
+      <div class="item down"><span class="tag">Reprice</span><strong>14 Jayden Daniels Prizm Silvers are $22 over market</strong><p>Listed 41 days. It sells for about $42.</p><span class="why">12 sales, $36–$55, last Oct 14</span></div>
+      <div class="item"><span class="tag">Underpriced</span><strong>2024 Prizm Bo Nix Downtown</strong><p>Listed at $180; recent copies sold for about $248.</p><span class="why">5 sales, $240–$260</span></div>
+      <div class="item warn"><span class="tag">Dead stock</span><strong>412 cards listed 90+ days</strong><p>$7,960 tied up. Bundle the cheap ones into lots, or move them to auctions.</p></div>
+      <p class="sample" style="margin:0">Example data.</p>
+    </div>
+
+    <div class="grid2" style="margin-top:30px" id="join">
+  <div class="login" id="gate" style="margin:0">
     <h2 style="margin:0">Card Huddle for Business</h2>
     <p style="margin:0;color:var(--fg2);font-size:14.5px">Your inventory priced against real sold prices every day, a brief of what to reprice and what to feature, sales and profit, and an AI analyst that knows your shelf.</p>
     <p style="margin:0;font-family:var(--display);font-size:22px;font-weight:800">$20 <span style="font-size:14px;color:var(--fg2);font-weight:600">a month</span></p>
@@ -130,6 +166,27 @@ td .act { padding: 4px 9px; font-size: 12px }
         <div class="err" id="loginerr"></div>
       </form></details>
   </div>
+      <form class="panel" id="waitlist" style="display:grid;gap:10px">
+        <h2 style="margin:0">Join the founding sellers</h2>
+        <p style="margin:0;color:var(--fg2);font-size:14px">Founding sellers get in first and keep $20 a month for life. We'll email you when your spot opens.</p>
+        <label class="field">Email<input id="w-email" type="email" autocomplete="email" required placeholder="you@email.com"></label>
+        <label class="field">eBay username or store (optional)<input id="w-store" placeholder="ebay.com/usr/yourname"></label>
+        <label class="field">Where you sell<select id="w-where"><option>eBay</option><option>Whatnot</option><option>eBay and Whatnot</option><option>Card shop</option><option>Card shows</option><option>Other</option></select></label>
+        <label class="field">Cards in inventory<select id="w-size"><option>Under 250</option><option>250 to 1,000</option><option>1,000 to 5,000</option><option>Over 5,000</option></select></label>
+        <input id="w-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" name="website">
+        <button class="act go" type="submit" id="w-go">Save my spot</button>
+        <div class="status" id="w-msg" role="status"></div>
+      </form>
+    </div>
+
+    <h2 style="margin:34px 0 10px">Questions</h2>
+    <div class="faq">
+      <details><summary>Is The Card Huddle still free for collectors?</summary><p>Yes, forever. Every collector feature stays free. Business is a separate tool for people who sell.</p></details>
+      <details><summary>Where do the prices come from?</summary><p>Completed eBay sales we track every day, matched to the exact card and grade. Not asking prices, and never a guess: a card needs 3 recent sales of the same grade to get a price.</p></details>
+      <details><summary>Do I have to give you my eBay password?</summary><p>No. Store sync reads your public listings by username. We never see your eBay account.</p></details>
+      <details><summary>Can I cancel?</summary><p>Any time, in one click from Billing. No contract.</p></details>
+    </div>
+  </section>
 
   <div id="app" hidden>
     <nav role="tablist" aria-label="Sections">

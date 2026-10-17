@@ -6,7 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const PUB = path.join(__dirname, '..', 'public');
 const PUBLIC_PAGES = new Set(['index.html', 'about.html', 'contact.html',
-  'methodology.html', 'privacy.html', 'terms.html']);
+  'methodology.html', 'privacy.html', 'terms.html',
+  // Card Huddle for Business: a public landing page; the tool behind it signs in.
+  'business.html']);
 
 let failures = 0;
 for (const f of fs.readdirSync(PUB).filter(f => f.endsWith('.html'))) {
