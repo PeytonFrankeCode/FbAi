@@ -9037,8 +9037,21 @@ async function _nflHasSportColumn(db) {
 // excluded, so an untagged row, which is every football row from before the
 // column existed, stays exactly as it was. '' until the column is known.
 const OTHER_SPORT_TAGS = [...SPORT_TAGS.basketball, ...SPORT_TAGS.baseball];
-const _footballSql = (col = 'sport') => _nflSportCol
-  ? ` AND (${col} IS NULL OR ${col} NOT IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')}))` : '';
+//
+// Untagged is not always football, though (Oct 2026): a 1953 Topps Satchel
+// Paige reached football's Biggest sales and "2026 Bowman Chrome" its hottest
+// sets. An untagged row is also left out when it names its sport in the title,
+// is a Topps card from before Topps made football (1955), or is a modern
+// Bowman product, which is baseball (football's is "Bowman University").
+const BASEBALL_ONLY_SETS = ['Bowman', 'Bowman Chrome', 'Bowman Draft', 'Bowman Chrome Draft', 'Bowman Sterling', 'Bowman Platinum', "Bowman's Best"];
+const _untaggedNotFootballSql = (p) => `(LOWER(COALESCE(${p}title, '')) LIKE '%baseball%' OR COALESCE(${p}title, '') LIKE '% MLB %'
+    OR (${p}set_name LIKE '%Topps%' AND ${p}year < '1955')
+    OR (${p}set_name IN (${BASEBALL_ONLY_SETS.map(t => `'${t.replace(/'/g, "''")}'`).join(', ')}) AND ${p}year >= '2010'))`;
+const _footballSql = (col = 'sport') => {
+  if (!_nflSportCol) return '';
+  const p = col.includes('.') ? col.slice(0, col.indexOf('.') + 1) : '';
+  return ` AND ((${col} IS NULL AND NOT ${_untaggedNotFootballSql(p)}) OR ${col} NOT IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')}))`;
+};
 // One sport's own rows: basketball or baseball. Literal tags, not binds, so a
 // query's bind order is the same whichever sport it is built for.
 const _sportOnlySql = (sport, col = 'sport') => ` AND ${col} IN (${SPORT_TAGS[sport].map(t => `'${t}'`).join(', ')})`;
@@ -10907,7 +10920,11 @@ const SOLD_STATS_TOP = 50;
 //   worth reporting a floor price, so a $1 -> $4 common cannot lead the board.
 //
 // What survives is a smaller list than a naive query returns. That is the point.
-const MOVERS_MIN_HALF = 3;       // sales required at EACH end of the window
+const MOVERS_MIN_HALF = 5;       // sales required at EACH end of the window
+// Raw vintage is a condition market, not a price market (Oct 2026): a 1984
+// Topps Elway at -64% and a 1988 Bo Jackson at +48% on raw copies were which
+// copies sold, not a move. Raw movers start here.
+const MOVERS_MIN_YEAR = 1990;
 // A move is the price at the START of the period against the price at its END:
 // the sales of ~30 days ago against today's, not the average of the last half
 // against the first (owner, Oct 2026). A card rarely sells on one exact day, so
@@ -11206,7 +11223,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
         .filter(Boolean).join(' ').trim() || r.title,
       // What the deals finder needs to recognise this card in a listing.
       year: r.year, set: r.set_name, number: r.card_number, playerFull: r.player,
-    }; }).filter(m => Number.isFinite(m.changePct));
+    }; }).filter(m => Number.isFinite(m.changePct) && !(Number(m.year) < MOVERS_MIN_YEAR));
 
     const byChange = (a, b) => b.changePct - a.changePct;
 
@@ -18683,7 +18700,7 @@ async function _reportFor(week, { build = false, now = new Date() } = {}) {
   if (!content) return have && have.content ? have : null;
   const partial = thin(content);
   if (have && have.content && partial) return have;   // no better than what is filed
-  const rec = { week, content, builtAt: now.toISOString(), partial };
+  const rec = { week, content: { ...content, moversCalc: 'median' }, builtAt: now.toISOString(), partial };
   await cachePut(REPORT_KEY(week), rec, REPORT_KEEP);
   const ix = await _reportIndex();
   if (!ix.some(x => x.week === week)) {
@@ -20117,7 +20134,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
