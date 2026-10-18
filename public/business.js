@@ -106,8 +106,32 @@
       ${h.tips.length ? `<ul class="htips">${h.tips.slice(0, 3).map(t => `<li><b>+${t.gain}</b><span>${esc(t.text)}</span></li>`).join('')}</ul>` : ''}`;
     $('health').hidden = false;
   }
+  function renderAlerts(list) {
+    $('alertsbox').hidden = !list.length;
+    $('alerts').innerHTML = list.map(a => {
+      const up = a.pct > 0;
+      const hint = a.price == null ? '' : up && a.price < a.to ? ` You list it at ${money(a.price)}.` : !up && a.price > a.to ? ` You list it at ${money(a.price)}, above the market now.` : '';
+      return `<div class="item ${up ? '' : 'down'}"><span class="tag">${up ? 'Up' : 'Down'} ${Math.abs(a.pct)}%</span><strong>${esc(a.title)}</strong>`
+        + `<p>Market ${money(a.from)} → ${money(a.to)}.${esc(hint)}</p><span class="why">${esc(new Date(a.at).toLocaleDateString())}</span>`
+        + `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.to}">Set price to ${money(a.to)}</button><button class="act" data-dismiss="${esc(a.id)}">Dismiss</button></div></div>`;
+    }).join('');
+  }
+  async function loadAlerts() {
+    try { renderAlerts((await api('/api/biz/alerts')).alerts); } catch (_) { /* brief shows the error */ }
+  }
+  $('alerts').addEventListener('click', async (e) => {
+    const d = e.target.closest('[data-dismiss]');
+    if (d) { renderAlerts((await api('/api/biz/alerts/' + encodeURIComponent(d.dataset.dismiss), { method: 'DELETE' })).alerts); return; }
+    const b = e.target.closest('.act.go[data-id]'); if (!b) return;
+    b.disabled = true;
+    try { await api('/api/biz/inventory/' + encodeURIComponent(b.dataset.id), { method: 'PATCH', body: JSON.stringify({ price: Number(b.dataset.price) }) });
+      renderAlerts((await api('/api/biz/alerts/' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })).alerts);
+    } catch (err) { b.disabled = false; alertIn(b.closest('.item'), err.message); }
+  });
+  $('alertsclear').addEventListener('click', async () => renderAlerts((await api('/api/biz/alerts/all', { method: 'DELETE' })).alerts));
   async function loadBrief() {
     loadSummary(false);
+    loadAlerts();
     try {
       const b = await api('/api/biz/brief');
       renderHealth(b.health);

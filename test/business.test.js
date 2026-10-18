@@ -206,6 +206,31 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     w1.body.ok && !w1.body.already && w2.body.already && bad.status === 400 && bot.body.ok
     && list.body.count === 1 && list.body.rows[0].email === 'seller@example.com' && list.body.rows[0].where === 'eBay', JSON.stringify(list.body));
   check('  ...and only the owner can read it', (await call('/api/biz/waitlist')).status === 401);
+
+  // Price alerts: a 15%+ market move on 3+ sales either side, never on thin data.
+  const pa = B.priceAlert({ id: 'x', title: 'T', price: 40 }, { market: 40, n: 5 }, { market: 60, n: 6 }, now);
+  check('a price alert fires on a 15%+ move with enough sales, not on a small move or thin sales',
+    pa && pa.pct === 50 && pa.from === 40 && pa.to === 60
+    && !B.priceAlert({ id: 'x' }, { market: 40, n: 5 }, { market: 44, n: 5 }) && !B.priceAlert({ id: 'x' }, { market: 40, n: 2 }, { market: 80, n: 5 })
+    && /up 50% to \$60\.00/.test(B.alertText(pa)), JSON.stringify(pa));
+  await call('/api/biz/inventory', { method: 'POST', headers: K, body: JSON.stringify({ mode: 'replace', items: [{ title: '2024 Prizm Bo Nix Silver #309', price: 40 }] }) });
+  await call('/api/biz/value', { method: 'POST', headers: K, body: '{}' });
+  [6000, 6100, 5900, 6000, 6050, 6000].forEach((c, i) => ins.run(String(710000 + i), iso(-i - 1), '2024 Panini Prizm Bo Nix Silver #309 RC', c));
+  const pushed = [];
+  const run = await S.bizRevalueAll({ now: now + 13 * 3600000, push: async (u, m) => pushed.push([u, m]) });
+  const al = await call('/api/biz/alerts', { headers: K });
+  check('the daily re-price finds the move and keeps it as an alert (owner gets no push)',
+    run.alerts === 1 && al.body.alerts.length === 1 && al.body.alerts[0].pct > 15 && pushed.length === 0, JSON.stringify([run, al.body]));
+  const sellerInv = { items: [{ id: 'z', title: '2024 Prizm Bo Nix Silver #309', value: { market: 20, n: 5 } }] };
+  const fresh = await S._bizRevalue('u:seller', sellerInv, sellerInv.items, now, { push: async (u, m) => pushed.push([u, m]) });
+  check('  ...and a seller gets it on their phone, pointing at /business',
+    fresh.length === 1 && pushed.length === 1 && pushed[0][0] === 'seller' && pushed[0][1].url === '/business' && /market up/.test(pushed[0][1].body), JSON.stringify(pushed));
+  const dis = await call('/api/biz/alerts/' + al.body.alerts[0].id, { method: 'DELETE', headers: K });
+  check('  ...and dismissing it clears it', dis.body.alerts.length === 0);
+  const bjs = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
+  check('Today shows the alerts with a set-price and dismiss', /\/api\/biz\/alerts/.test(bjs) && /data-dismiss/.test(bjs));
+  const wk = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+  check('the cron runs the re-price, wired through init()', /flushTraffic, bizRevalueAll \} = await init\(env\)/.test(wk) && /await bizRevalueAll\(\)/.test(wk));
   await call('/api/biz/inventory/all', { method: 'DELETE', headers: K });
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall business checks passed');

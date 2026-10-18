@@ -369,4 +369,19 @@ function splitLotCost(items, total) {
   return list.map((it, i) => ({ id: it.id, cost: Math.round(floor[i] / qty(it)) / 100, by: byValue ? 'value' : 'even' }));
 }
 
-module.exports = { splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// A price alert when a card's market moves 15% or more between two pricings,
+// both on at least MIN_COMPS sales, so one odd sale never sets one off.
+const ALERT_MOVE = 0.15;
+function priceAlert(item, prev, next, now = Date.now()) {
+  if (!prev || !next || !(prev.market > 0) || !(next.market > 0)) return null;
+  if ((prev.n || 0) < MIN_COMPS || (next.n || 0) < MIN_COMPS) return null;
+  const pct = (next.market - prev.market) / prev.market;
+  if (Math.abs(pct) < ALERT_MOVE) return null;
+  return { id: item.id, title: item.title, from: prev.market, to: next.market,
+    pct: Math.round(pct * 100), price: item.price != null ? item.price : null, at: new Date(now).toISOString() };
+}
+function alertText(a) {
+  const dir = a.pct > 0 ? 'up' : 'down';
+  return `${a.title}: market ${dir} ${Math.abs(a.pct)}% to $${a.to.toFixed(2)} (was $${a.from.toFixed(2)})`;
+}
+module.exports = { priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };

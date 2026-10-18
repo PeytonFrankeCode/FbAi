@@ -19125,12 +19125,58 @@ app.post('/api/biz/value', async (req, res) => {
   const now = Date.now();
   const stale = inv.items.filter(it => !it.value || now - Date.parse(it.value.asOf || 0) > BIZ_VALUE_TTL * 1000);
   const batch = stale.slice(0, BIZ_VALUE_BATCH);
-  for (const it of batch) {
-    try { it.value = await _bizValue(it, now); } catch (err) { it.value = { market: null, n: 0, asOf: new Date(now).toISOString(), error: true }; }
-  }
+  const alerts = await _bizRevalue(who, inv, batch, now);
   if (batch.length) await _bizSave(who, inv);
-  res.json({ ok: true, valued: batch.length, remaining: stale.length - batch.length, total: inv.items.length });
+  res.json({ ok: true, valued: batch.length, remaining: stale.length - batch.length, total: inv.items.length, alerts: alerts.length });
 });
+// Re-prices a batch, keeps an alert for each card whose market moved 15%+
+// (newest first, 50 kept) and pushes them to a seller's phone.
+const BIZ_ALERTS_KEEP = 50;
+async function _bizRevalue(who, inv, batch, now = Date.now(), { push = sendPushToUser } = {}) {
+  const fresh = [];
+  for (const it of batch) {
+    const prev = it.value;
+    try { it.value = await _bizValue(it, now); } catch (err) { it.value = { market: null, n: 0, asOf: new Date(now).toISOString(), error: true }; }
+    const a = BIZ.priceAlert(it, prev, it.value, now);
+    if (a) fresh.push(a);
+  }
+  if (fresh.length) {
+    inv.alerts = fresh.concat((inv.alerts || []).filter(x => !fresh.some(f => f.id === x.id))).slice(0, BIZ_ALERTS_KEEP);
+    if (who.startsWith('u:')) {
+      const msg = fresh.length === 1 ? BIZ.alertText(fresh[0]) : `${fresh.length} of your cards moved 15%+. ${BIZ.alertText(fresh[0])}`;
+      try { await push(who.slice(2), { title: 'Card Huddle for Business', body: msg, url: '/business' }); } catch (_) { /* no device */ }
+    }
+  }
+  return fresh;
+}
+app.get('/api/biz/alerts', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
+  res.set('Cache-Control', 'no-store').json({ alerts: inv.alerts || [] });
+});
+app.delete('/api/biz/alerts/:id', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
+  const id = req.params.id;
+  inv.alerts = id === 'all' ? [] : (inv.alerts || []).filter(a => a.id !== id);
+  await _bizSave(who, inv);
+  res.json({ ok: true, alerts: inv.alerts });
+});
+// Daily cron: re-prices every seller's stale cards, a batch each, so alerts
+// arrive without the seller opening the page.
+async function bizRevalueAll({ now = Date.now(), push } = {}) {
+  const keys = await recordList('biz:inventory:');
+  let sellers = 0, alerts = 0;
+  for (const k of keys) {
+    const who = k.name.slice('biz:inventory:'.length);
+    const inv = await recordGet(k.name); if (!inv || !inv.items) continue;
+    const batch = inv.items.filter(it => !it.value || now - Date.parse(it.value.asOf || 0) > BIZ_VALUE_TTL * 1000).slice(0, BIZ_VALUE_BATCH);
+    if (!batch.length) continue;
+    alerts += (await _bizRevalue(who, inv, batch, now, push ? { push } : {})).length;
+    await _bizSave(who, inv); sellers++;
+  }
+  return { sellers, alerts };
+}
 // eBay store sync: the seller's public active listings by username (the same
 // Browse search The Floor uses; no eBay login needed), up to BIZ_EBAY_MAX.
 const BIZ_EBAY_MAX = 2000;
@@ -20071,7 +20117,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
