@@ -596,12 +596,27 @@ function buildSetPage(cl, related, playerSlug, subsets) {
 ${priceSlot('set', cl.id)}
 `;
 
+  // Every subset, with its count, ahead of the cards (Oct 2026): past the
+  // card cap 2026 Topps showed 3 of its 72 subsets and nothing said the rest
+  // existed. Each links to its own page, its section here, or the live tool.
   let rendered = 0, truncated = false;
+  const withCards = cl.sets.filter(s => Array.isArray(s.cards) && s.cards.length);
+  if (withCards.length > 1) {
+    let left = CARD_CAP;
+    html += `    <nav class="lp-subnav" aria-label="Subsets"><h2>${withCards.length} subsets</h2><ul class="lp-related-list">\n`;
+    withCards.forEach((s, i) => {
+      const own = subsetSlug.get(s.name);
+      const here = left > 0; left -= s.cards.length;
+      const href = own ? `${S.base}/sets/${cl.id}/${own}/` : here ? `#s${i}` : prefillHref(`${cl.year || ''} ${cl.brand} ${s.name}`.replace(/\s+/g, ' ').trim());
+      html += `      <li><a href="${href}">${esc(s.name || 'Set')}</a> <span class="lp-count">${s.cards.length}</span></li>\n`;
+    });
+    html += `    </ul></nav>\n`;
+  }
   for (const s of cl.sets) {
     const cards = Array.isArray(s.cards) ? s.cards : [];
     if (!cards.length) continue;
     const parallels = Array.isArray(s.parallels) ? s.parallels : [];
-    html += `    <section class="lp-subset">\n`;
+    html += `    <section class="lp-subset" id="s${withCards.indexOf(s)}">\n`;
     const ownPage = subsetSlug.get(s.name);
     const heading = ownPage
       ? `<a href="${S.base}/sets/${cl.id}/${ownPage}/">${esc(s.name || 'Set')}</a>`
@@ -853,8 +868,11 @@ function buildPlayerPage(p, related, teamSlug) {
     if (!setsMap.has(c.setId)) setsMap.set(c.setId, { name: c.setName, brand: c.brand, year: c.year, cards: [] });
     setsMap.get(c.setId).cards.push(c);
   }
-  const sortedYears = [...byYear.keys()].sort((a, b) => b - a);
+  // Rookie year first, then newest first (Oct 2026): newest-first alone
+  // stopped Josh Allen's page at 300 cards, all 2024-26, without the 2018
+  // rookies anyone opens it for.
   const minYear = years.length ? years[0] : null;
+  const sortedYears = [...byYear.keys()].sort((a, b) => (a === minYear ? -1 : b === minYear ? 1 : b - a));
   const teamLinks = [...new Set([...p.teams].map(canonicalTeam).filter(Boolean))].filter(t => teamSlug && teamSlug.has(t));
 
 
@@ -870,12 +888,24 @@ function buildPlayerPage(p, related, teamSlug) {
 ${priceSlot('player', p.slug)}
 ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="${S.base}/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
 
+  // Every year, with its count, even past the cap: the years not listed here
+  // open in the live tool.
+  const yearCount = (y) => [...byYear.get(y).values()].reduce((n, x) => n + x.cards.length, 0);
+  let budget = PLAYER_CARD_CAP;
+  const shownYears = new Set();
+  for (const y of sortedYears) { if (budget <= 0) break; shownYears.add(y); budget -= yearCount(y); }
+  if (sortedYears.length > 1) {
+    html += `    <nav class="lp-yearnav" aria-label="Years"><strong>Years:</strong> ${[...sortedYears].sort((a, b) => a - b).map(y => {
+      const label = `${y ? esc(S.yearLabel(y)) : 'Other'}${y === minYear ? ' (rookie)' : ''} <span class="lp-count">${yearCount(y)}</span>`;
+      return shownYears.has(y) ? `<a href="#y${y}">${label}</a>` : `<a href="${prefillHref([p.name, y].filter(Boolean).join(' '))}">${label}</a>`;
+    }).join(' ')}</nav>\n`;
+  }
   let rendered = 0, truncated = false;
   for (const y of sortedYears) {
     if (truncated) break;
     const setsMap = byYear.get(y);
     const setList = [...setsMap.values()].sort((a, b) => a.name.localeCompare(b.name));
-    html += `    <section class="lp-subset">\n      <h2>${y ? esc(S.yearLabel(y)) + ' ' : ''}${esc(p.name)} Cards</h2>\n`;
+    html += `    <section class="lp-subset" id="y${y}">\n      <h2>${y ? esc(S.yearLabel(y)) + ' ' : ''}${esc(p.name)} ${y === minYear ? 'Rookie ' : ''}Cards</h2>\n`;
     for (const set of setList) {
       if (truncated) break;
       html += `      <h3 class="lp-setrow"><a href="${S.base}/sets/${set.cards[0].setId}/">${esc(set.name)}</a> <span class="lp-count">${set.cards.length}</span></h3>\n      <ul class="lp-cards">\n`;
@@ -1161,6 +1191,10 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-aznav a:hover{border-color:var(--accent);text-decoration:none}
 .lp-teamline{margin:-0.75rem 0 1.25rem;font-size:.9rem;color:var(--muted)}
 .lp-teamline a{margin-right:.6rem}
+.lp-yearnav{margin:0 0 1.25rem;font-size:.9rem;line-height:2}
+.lp-yearnav a{margin-right:.7rem;white-space:nowrap}
+.lp-subnav{margin:0 0 1.5rem}
+.lp-subnav h2{font-size:1.1rem}
 /* Sold-price block, injected by the Worker into .lp-price-slot. The slot
    itself gets no styles — an empty div must take up no space on the pages
    that have too little data to fill it. */
