@@ -30,5 +30,6 @@ check('no Jaguars card is filed under Josh Allen (they are Josh Hines-Allen\'s)'
 const builder = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build-landing-pages.js'), 'utf8');
 check('player pages lead with the rookie year and list every year; set pages list every subset',
   /a === minYear \? -1/.test(builder) && /class="lp-yearnav"/.test(builder) && /class="lp-subnav"/.test(builder));
+check('a folded spelling ("CJ Stroud", "Ja’Kobi Lane") links to its player\'s page', /for \(const \{ from, into \} of merged\)[\s\S]{0,120}playerSlug\.set\(from, target\)/.test(builder));
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checklist-teams checks passed');
 process.exit(failures ? 1 : 0);
