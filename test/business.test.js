@@ -103,6 +103,14 @@ check('inventory health: a well-priced fresh card with a cost scores full marks,
   && hh.score < 70 && hh.parts.priced === 20 && hh.tips[0].part === 'priced' && /Reprice 1 card off/.test(hh.tips[0].text), JSON.stringify(hh));
 check('  ...and an empty inventory has no score', B.health([], now) === null);
 
+// A lot's cost spread over its cards: by value when known, else evenly, to
+// the cent.
+const lot = B.splitLotCost([{ id: 'a', value: { market: 150 } }, { id: 'b', value: { market: 2 } }, { id: 'c', qty: 3, value: { market: 16 } }], 200);
+const even = B.splitLotCost([{ id: 'a' }, { id: 'b' }, { id: 'c' }], 100);
+check('a $200 lot is spread by market value; one with unknown values evenly, adding back to the cent',
+  lot.find(x => x.id === 'a').cost === 150 && lot.find(x => x.id === 'c').cost === 16 && lot[0].by === 'value'
+  && even.map(x => x.cost).join() === '33.34,33.33,33.33' && even[0].by === 'even');
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -133,6 +141,14 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const p = await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ price: 41 }) });
   check('  ...which one tap does', p.body.item && p.body.item.price === 41);
   await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ sold: true, soldFor: 45 }) });
+  await call('/api/biz/inventory', { method: 'POST', headers: K, body: JSON.stringify({ items: [{ title: 'Lot card one' }, { title: 'Lot card two' }] }) });
+  const lotItems = (await call('/api/biz/inventory', { headers: K })).body.items.filter(i => /^Lot card/.test(i.title));
+  const cs = await call('/api/biz/costs', { method: 'POST', headers: K, body: JSON.stringify({ ids: lotItems.map(i => i.id), lot: 30 }) });
+  const after = (await call('/api/biz/inventory', { headers: K })).body.items.filter(i => /^Lot card/.test(i.title));
+  const one = await call('/api/biz/inventory/' + lotItems[0].id, { method: 'PATCH', headers: K, body: JSON.stringify({ cost: 4.5 }) });
+  check('a lot cost is spread over the ticked cards, and one card\'s cost can be edited on its own',
+    cs.body.updated === 2 && after.every(i => i.cost === 15) && one.body.item.cost === 4.5);
+  for (const i of lotItems) await call('/api/biz/inventory/' + i.id, { method: 'DELETE', headers: K });
   const pv = await call('/api/biz/reprice', { method: 'POST', headers: K, body: JSON.stringify({}) });
   check('the reprice preview returns a plan', Array.isArray(pv.body.plan) && pv.body.ebayRows === 0);
   const off = await call('/api/biz/offer', { method: 'POST', headers: K, body: JSON.stringify({ cards: ['2024 Prizm Bo Nix Silver #309', 'Zzyzx Nobody Card'], pct: 60 }) });

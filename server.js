@@ -19100,6 +19100,10 @@ app.patch('/api/biz/inventory/:id', async (req, res) => {
   if (!it) return res.status(404).json({ error: 'Not found' });
   const b = req.body || {};
   if (b.price !== undefined) { const n = Number(b.price); if (!(n >= 0)) return res.status(400).json({ error: 'Price must be a number' }); it.price = Math.round(n * 100) / 100; }
+  if (b.cost !== undefined) {
+    if (b.cost === null || b.cost === '') delete it.cost;
+    else { const n = Number(b.cost); if (!(n >= 0)) return res.status(400).json({ error: 'Cost must be a number' }); it.cost = Math.round(n * 100) / 100; }
+  }
   if (b.sold) { inv.items = inv.items.filter(x => x !== it); (inv.sold = inv.sold || []).push(_bizSale(it, b)); }
   await _bizSave(who, inv);
   res.json({ ok: true, item: it });
@@ -19230,6 +19234,29 @@ app.post('/api/biz/offer', async (req, res) => {
   const now = Date.now();
   for (const r of rows) { try { r.value = await _bizValue(r, now); } catch (_) { r.value = null; } }
   res.json(BIZ.buyOffer(rows, req.body.pct));
+});
+// Costs for many cards at once: { ids, each } sets one cost per card, or
+// { ids, lot } spreads what a lot cost across them (BIZ.splitLotCost).
+app.post('/api/biz/costs', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const b = req.body || {};
+  const ids = new Set((Array.isArray(b.ids) ? b.ids : []).map(String));
+  const inv = await _bizLoad(who);
+  const picked = inv.items.filter(it => ids.has(it.id));
+  if (!picked.length) return res.status(400).json({ error: 'Select at least one card.' });
+  let plan;
+  if (b.lot != null) {
+    plan = BIZ.splitLotCost(picked, b.lot);
+    if (!plan.length) return res.status(400).json({ error: 'Enter what the lot cost.' });
+  } else {
+    const each = Number(b.each);
+    if (!(each >= 0)) return res.status(400).json({ error: 'Enter a cost.' });
+    plan = picked.map(it => ({ id: it.id, cost: Math.round(each * 100) / 100, by: 'each' }));
+  }
+  const byId = new Map(plan.map(p => [p.id, p.cost]));
+  for (const it of picked) it.cost = byId.get(it.id);
+  await _bizSave(who, inv);
+  res.json({ ok: true, updated: plan.length, by: plan[0].by, plan });
 });
 app.get('/api/biz/brief', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;

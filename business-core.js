@@ -350,4 +350,23 @@ function health(items, now = Date.now()) {
   return { score, label, parts: pts, max: HEALTH_PARTS, tips };
 }
 
-module.exports = { health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// What a lot cost, spread over its cards: by market value where every card
+// has one (so a $150 card carries more of a $200 lot than a $2 one), else
+// evenly. Per card, in cents, adding back to the total exactly.
+function splitLotCost(items, total) {
+  const list = (items || []).filter(Boolean);
+  const cents = Math.round((Number(total) || 0) * 100);
+  if (!list.length || cents <= 0) return [];
+  const qty = (it) => Math.max(1, it.qty || 1);
+  const byValue = list.every(it => it.value && it.value.market > 0);
+  const weight = (it) => (byValue ? it.value.market : 1) * qty(it);
+  const sum = list.reduce((a, it) => a + weight(it), 0);
+  const raw = list.map(it => (cents * weight(it)) / sum);
+  const floor = raw.map(Math.floor);
+  let left = cents - floor.reduce((a, b) => a + b, 0);
+  raw.map((r, i) => [r - floor[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { floor[i]++; left--; } });
+  // Each card's own cost is per copy.
+  return list.map((it, i) => ({ id: it.id, cost: Math.round(floor[i] / qty(it)) / 100, by: byValue ? 'value' : 'even' }));
+}
+
+module.exports = { splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
