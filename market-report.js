@@ -57,7 +57,12 @@ function reportTitle(week, builtAt) {
 }
 
 // One sentence a reader (or an AI answer quoting us) can take away.
+// Weeks filed before movers were medians with a 5-sale floor (Oct 2026) keep
+// their sales boards; their risers and fallers are withdrawn, not shown wrong.
+const moversWithdrawn = (c) => !!c && c.moversCalc !== 'median' && !!(((c.risers || []).length) || ((c.fallers || []).length));
+const shownMovers = (c) => (moversWithdrawn(c) ? { ...c, risers: [], fallers: [] } : c);
 function reportSummary(c) {
+  c = shownMovers(c);
   const bits = [`${(c.sales || 0).toLocaleString('en-US')} football card sales tracked, ${money(c.value)} changed hands`];
   const top = c.risers && c.risers[0];
   if (top) bits.push(`biggest riser ${top.name || top.player} ${pct(top.changePct)}`);
@@ -69,6 +74,8 @@ function reportSummary(c) {
 // The page body (inside the site shell). `adUnit` is placed after the first
 // section, once.
 function renderReportBody(c, { week, builtAt, site, adUnit = '', archive = [] }) {
+  const withdrawn = moversWithdrawn(c);
+  c = shownMovers(c);
   const L = (q) => `${site}/?q=${encodeURIComponent(q)}&utm_source=report&utm_medium=web&utm_campaign=${encodeURIComponent(week)}`;
   const row = (href, img, name, detail, right, cls, ebay) => `
       <li class="mm-row"><a href="${esc(href)}"${ebay ? ' target="_blank" rel="noopener sponsored"' : ''}>
@@ -77,7 +84,7 @@ function renderReportBody(c, { week, builtAt, site, adUnit = '', archive = [] })
         <span class="mm-right ${cls || ''}">${esc(right)}</span>
       </a></li>`;
   const sections = [
-    ['Biggest risers', 'Raw base cards, this week against last', (c.risers || []).map(r =>
+    ['Biggest risers', 'Raw base cards from 1990 on: median sale at the start of the week against the end', (c.risers || []).map(r =>
       row(L(r.query), r.imageUrl, r.name || r.player, `${r.sales} sales`, pct(r.changePct), 'up'))],
     ['Players on the move', 'Repeat sales of the same cards, last 30 days', (c.players || []).map(r =>
       row(L(r.query), null, r.player, `${r.resales || 0} repeat sales`, pct(r.changePct), 'up'))],
@@ -106,8 +113,8 @@ function renderReportBody(c, { week, builtAt, site, adUnit = '', archive = [] })
     <h1>${esc(reportTitle(week, builtAt))}</h1>
     <p class="lede">${esc(reportSummary(c))}</p>
     <p class="mm-stats"><span><strong>${esc((c.sales || 0).toLocaleString('en-US'))}</strong> sales</span><span><strong>${esc(money(c.value))}</strong> changed hands</span><span><strong>${esc(money(c.avg))}</strong> average sale</span></p>
-  </div>${body}
-  <p class="mm-method">Every figure is from completed eBay sales we track, not asking prices. Movers compare raw base cards' average sale this week against last; players compare repeat sales of the same cards. <a href="/methodology.html">How prices work</a>. Tap any card for its full sale history and copies for sale now.</p>
+  </div>${withdrawn ? '<p class="mm-method">This week’s risers and fallers were computed on averages, which one odd sale can swing, and have been withdrawn. Movers are now medians with at least 5 sales at each end.</p>' : ''}${body}
+  <p class="mm-method">Every figure is from completed eBay sales we track, not asking prices. Movers compare raw base cards from 1990 on by median sale at each end of the week, with at least 5 sales at each end; players compare repeat sales of the same cards. <a href="/methodology.html">How prices work</a>. Tap any card for its full sale history and copies for sale now.</p>
   ${others.length ? `<section class="mm-section"><h2>Earlier weeks</h2><ul class="mm-archive">${others.map(x => `<li><a href="/news/market-movers/${esc(x.week)}">${esc(reportTitle(x.week, x.builtAt).replace('Football Card Market Movers: ', ''))}</a></li>`).join('')}</ul></section>` : ''}`;
 }
 
@@ -136,4 +143,4 @@ const REPORT_CSS = [
   '.ch-adfree .mm-ad{display:none}',
 ].join('\n');
 
-module.exports = { WEEK_RE, weekStart, weekEnding, reportTitle, reportSummary, renderReportBody, REPORT_CSS, ebayLink };
+module.exports = { moversWithdrawn, WEEK_RE, weekStart, weekEnding, reportTitle, reportSummary, renderReportBody, REPORT_CSS, ebayLink };
