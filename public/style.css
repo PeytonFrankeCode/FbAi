@@ -10183,3 +10183,9 @@ html.install-open { overflow: hidden; }
 .news-kicker { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
 .news-card-sub { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; flex: 1; }
 .news-meta { font-size: 0.72rem; color: var(--text-muted, var(--text-secondary)); }
+
+/* Grading Advisor: grader and fee (Oct 2026) */
+.grading-opts { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 10px; font-size: 14px; color: var(--text-muted); }
+.grading-opts label { display: flex; align-items: center; gap: 6px; }
+.grading-opts select, .grading-opts input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border, rgba(127,127,127,.35)); background: var(--bg-card, transparent); color: inherit; }
+.grading-opts input { width: 90px; }

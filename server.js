@@ -3841,6 +3841,12 @@ function computeApproxValue(results, label) {
 // edit here and nowhere else.
 const PSA_GRADING_FEE = 74.99;
 const PSA_GRADING_TIER = 'PSA\u2019s cheapest open tier';
+// The advisor grades at PSA, SGC or CGC, at the collector's own fee if they
+// give one (Oct 2026: one hardcoded PSA tier fit nobody on a different plan).
+// The SGC and CGC figures are their cheapest standard tiers, as a starting
+// point the page lets the collector change.
+const GRADER_FEES = { PSA: PSA_GRADING_FEE, SGC: 15, CGC: 18 };
+const GRADER_FEE_MAX = 10000;
 
 // ---- /api/grading-advisor ----
 // Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
@@ -3853,14 +3859,19 @@ app.get('/api/grading-advisor', async (req, res) => {
 
   try {
     const baseQ = query.trim();
+    const grader = Object.prototype.hasOwnProperty.call(GRADER_FEES, String(req.query.grader || '').toUpperCase()) ? String(req.query.grader).toUpperCase() : 'PSA';
+    const askedFee = Number(req.query.fee);
+    const ownFee = req.query.fee != null && req.query.fee !== '' && Number.isFinite(askedFee) && askedFee >= 0 && askedFee <= GRADER_FEE_MAX;
+    const fee = ownFee ? Math.round(askedFee * 100) / 100 : GRADER_FEES[grader];
+    const g = grader.toLowerCase();
     // Grade comes from the provider's structured grader/grade filters rather
     // than hoping "PSA 10" shows up in the listing title — and `graded: false`
     // gives a genuinely raw pool instead of "the query minus a grade word".
     const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
       fetchEbayItems(baseQ, 20, 'sold', 'grading-raw',   0, { graded: false }),
-      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa8',  0, { grader: 'PSA', grade: '8' }),
-      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa9',  0, { grader: 'PSA', grade: '9' }),
-      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa10', 0, { grader: 'PSA', grade: '10' }),
+      fetchEbayItems(baseQ, 20, 'sold', `grading-${g}8`,  0, { grader, grade: '8' }),
+      fetchEbayItems(baseQ, 20, 'sold', `grading-${g}9`,  0, { grader, grade: '9' }),
+      fetchEbayItems(baseQ, 20, 'sold', `grading-${g}10`, 0, { grader, grade: '10' }),
     ]);
     if (sendIfSoldBlocked(res, rawData, psa8Data, psa9Data, psa10Data)) return;
 
@@ -3881,14 +3892,16 @@ app.get('/api/grading-advisor', async (req, res) => {
     };
 
     const raw   = summarize(rawItems,   'Raw');
-    const psa8  = summarize(psa8Items,  'PSA 8');
-    const psa9  = summarize(psa9Items,  'PSA 9');
-    const psa10 = summarize(psa10Items, 'PSA 10');
+    // Keyed psa8/9/10 whatever the grader, so pages already open keep working;
+    // `grader` says whose grades they are.
+    const psa8  = summarize(psa8Items,  `${grader} 8`);
+    const psa9  = summarize(psa9Items,  `${grader} 9`);
+    const psa10 = summarize(psa10Items, `${grader} 10`);
 
     // Grade premium over the raw median, net of grading cost.
     const calcPremium = (graded, rawVal) => {
       if (!graded || !rawVal) return null;
-      const net = graded.median - rawVal.median - PSA_GRADING_FEE;
+      const net = graded.median - rawVal.median - fee;
       return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
     };
 
@@ -3912,7 +3925,8 @@ app.get('/api/grading-advisor', async (req, res) => {
         psa10: calcPremium(psa10, raw),
       },
       // `economy` is what pages loaded before this read; keep it equal.
-      gradingCost: { fee: PSA_GRADING_FEE, tier: PSA_GRADING_TIER, economy: PSA_GRADING_FEE },
+      grader,
+      gradingCost: { fee, own: ownFee, defaultFee: GRADER_FEES[grader], tier: grader === 'PSA' ? PSA_GRADING_TIER : `${grader}\u2019s standard tier`, economy: fee },
       comps: {
         raw:   trimComps(rawItems),
         psa8:  trimComps(psa8Items),
@@ -18628,7 +18642,7 @@ function newsShell(opts) {
     + '<a class="lp-cta-top" href="/">Search Card Prices &rarr;</a></header>'
     + '<main class="wrap">' + (opts.crumbs ? '<nav class="lp-crumbs" aria-label="Breadcrumb">' + opts.crumbs + '</nav>' : '') + opts.body + '</main>'
     + '<footer class="lp-footer"><p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>'
-    + '<p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/news">Guides</a>'
+    + '<p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/news">News</a>'
     + ' &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a>'
     + ' &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a></p></footer></body></html>';
 }
@@ -18651,7 +18665,7 @@ app.get('/news', async (req, res) => {
     + '<div class="foot"><span>' + NEWS.esc(String(a.publishedAt || '').slice(0, 10)) + '</span>'
     + '<span>&middot;</span><span>' + NEWS.readingMinutes(a.body) + ' min</span></div>'
     + '</div>').join('');
-  const body = '<div style="padding:36px 0 0"><h1>Guides &amp; News</h1>'
+  const body = '<div style="padding:36px 0 0"><h1>News</h1>'
     + '<p class="lede">Written from our own sold data &mdash; what actually changed hands, '
     + 'and what it means for what you hold.</p></div>'
     + ((list.length || reportCard) ? '<div class="grid">' + reportCard + cards + '</div>'
@@ -18659,7 +18673,7 @@ app.get('/news', async (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=300');
   res.send(newsShell({
-    title: 'Guides & News · The Card Huddle',
+    title: 'News · The Card Huddle',
     description: 'Card collecting guides and market analysis, written from real sold data.',
     canonical: NEWS_SITE + '/news', body: body,
     // An empty section is exactly what a low-value review counts against a
@@ -18740,7 +18754,7 @@ async function _sendReport(res, rec, canonicalPath) {
   res.send(newsShell({
     title: title + ' · The Card Huddle', description: desc, canonical: NEWS_SITE + canonicalPath,
     ads: true, jsonLd, css: mreport.REPORT_CSS,
-    crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">Guides</a><span class="sep">/</span><span aria-current="page">Market Movers</span>',
+    crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">News</a><span class="sep">/</span><span aria-current="page">Market Movers</span>',
     body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive }),
   }));
 }
@@ -18838,7 +18852,7 @@ async function _articlePage(a, { preview = false } = {}) {
     + '<article>' + withAd + '</article></div>';
   return newsShell({ title: a.title + ' · The Card Huddle', description: desc,
                      canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd,
-                     crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">Guides</a><span class="sep">/</span><span aria-current="page">' + NEWS.esc(a.title) + '</span>',
+                     crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">News</a><span class="sep">/</span><span aria-current="page">' + NEWS.esc(a.title) + '</span>',
                      ads: !preview, image, preview, noindex: preview });
 }
 
@@ -20134,7 +20148,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

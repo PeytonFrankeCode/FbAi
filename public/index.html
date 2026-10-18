@@ -280,7 +280,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=93b6a7f61e" />
+  <link rel="stylesheet" href="style.css?v=4c7d95308d" />
 
 
 </head>
@@ -879,7 +879,7 @@
        Market Movers report, each opening its own server-rendered page. -->
   <div id="news-view" class="news-view hidden">
     <div class="news-container">
-      <h2 class="news-h2">Guides &amp; News</h2>
+      <h2 class="news-h2">News</h2>
       <p class="news-sub">Market reports and articles, written from the sales we track.</p>
       <div id="news-list" class="news-list"><p class="news-sub">Loading&hellip;</p></div>
     </div>
@@ -1240,8 +1240,12 @@
             <button type="button" class="scan-cam-btn" onclick="openScanFillModal('grading-input')" title="Scan card photo">&#128247;</button>
             <button type="submit" id="grading-btn" class="grading-submit-btn">Analyze</button>
           </div>
+          <div class="grading-opts">
+            <label>Grader <select id="grading-grader" onchange="gradingGraderChanged()"><option value="PSA">PSA</option><option value="SGC">SGC</option><option value="CGC">CGC</option></select></label>
+            <label>Fee per card $<input type="number" id="grading-fee" min="0" max="10000" step="0.01" inputmode="decimal" placeholder="74.99" /></label>
+          </div>
         </form>
-        <p class="grading-hint">Enter a card name — we'll pull recent sold prices for raw and every PSA grade to show you the grading premium.</p>
+        <p class="grading-hint">Enter a card name — we'll pull recent sold prices for raw and the grader's 8, 9 and 10 to show you the grading premium. Set the fee to the tier you actually use.</p>
       </div>
 
       <div id="grading-loading" class="loading hidden">
@@ -1267,7 +1271,7 @@
             <tbody id="grading-tbody"></tbody>
           </table>
         </div>
-        <p class="grading-disclaimer">Based on recent eBay sold listings. Net figures subtract PSA's grading fee, $74.99 a card at its cheapest open tier (PSA has paused its cheaper tiers while it clears its backlog). Shipping and insurance are extra. Results are estimates only.</p>
+        <p class="grading-disclaimer" id="grading-disclaimer">Based on recent eBay sold listings. Net figures subtract the grading fee shown. Shipping and insurance are extra. Results are estimates only.</p>
       </div>
 
     </div>
@@ -1738,7 +1742,7 @@
         <span class="footer-sep">&bull;</span>
         <a href="/teams/">NFL Team Guides</a>
         <span class="footer-sep">&bull;</span>
-        <a href="/news">Guides &amp; News</a>
+        <a href="/news">News</a>
         <a href="/about.html">About</a>
         <span class="footer-sep">&bull;</span>
         <a href="/methodology.html">How Prices Work</a>
@@ -2001,7 +2005,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
-  <script src="app.js?v=9f2532de25"></script>
+  <script src="app.js?v=fbe13d19e1"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
   {

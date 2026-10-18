@@ -305,9 +305,9 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
   check('  ...the how-to sheet has steps for both iPhone and Android',
     /class="install-steps" data-os="ios"/.test(html) && /class="install-steps" data-os="android"/.test(html)
     && /Add to Home Screen/.test(html) && /Add to Home screen/.test(html));
-  check('  ...one-tap install where the browser offers it, banner on second visit, snoozed 21 days',
+  check('  ...one-tap install where the browser offers it, banner on second visit after a first search, snoozed 21 days',
     /addEventListener\('beforeinstallprompt'/.test(f) && /e\.preventDefault\(\)/.test(f) && /p\.prompt\(\)/.test(f)
-    && /if \(visits < 2 \|\| _lsGet\('chInstalled'\) === '1'\) return;/.test(f) && /INSTALL_SNOOZE_MS = 21 \* 24 \* 3600 \* 1000/.test(f));
+    && /if \(visits < 2 \|\| _lsGet\('chInstalled'\) === '1' \|\| !_hasSearched\(\)\) return;/.test(f) && /INSTALL_SNOOZE_MS = 21 \* 24 \* 3600 \* 1000/.test(f));
 }
 
 // Phone notifications (owner, Oct 2026): a row in the alerts panel; the
