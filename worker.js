@@ -146,7 +146,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, bizRevalueAll } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -158,7 +158,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, bizRevalueAll };
   return serverInit;
 }
 
@@ -1187,7 +1187,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1351,6 +1351,18 @@ export default {
           }
         } else {
           console.error('[Cron] runEstimatorBacktest missing from init() — not wired through');
+        }
+
+        // Card Huddle for Business price alerts: re-prices each seller's stale
+        // cards, a batch per tick, 12:xx-15:xx UTC (US morning), and pushes
+        // any 15%+ market moves (server.js bizRevalueAll).
+        if (typeof bizRevalueAll === 'function') {
+          const h = scheduledAt.getUTCHours();
+          if (h >= 12 && h <= 15 && aliasTick) {
+            await bizRevalueAll().catch(err => console.error('[Cron] biz revalue failed:', err && err.message || err));
+          }
+        } else {
+          console.error('[Cron] bizRevalueAll missing from init() — not wired through');
         }
 
         // The weekly Market Movers email (server.js sendMarketDigest). Every
