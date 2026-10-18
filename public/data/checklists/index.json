@@ -1940,7 +1940,7 @@
     },
     {
       "id": "2022-select-draft-picks-football",
-      "name": "2022 Select Draft Picks Football",
+      "name": "2022 Panini Select Draft Picks Football",
       "year": 2022,
       "brand": "Select Draft Picks",
       "sport": "Football",
@@ -2367,7 +2367,7 @@
     },
     {
       "id": "2021-select-football",
-      "name": "2021 Select Football",
+      "name": "2021 Panini Select Football",
       "year": 2021,
       "brand": "Select",
       "sport": "Football",
@@ -2376,7 +2376,7 @@
     },
     {
       "id": "2020-absolute-football",
-      "name": "2020 Absolute Football",
+      "name": "2020 Panini Absolute Football",
       "year": 2020,
       "brand": "Absolute",
       "sport": "Football",
@@ -2796,7 +2796,7 @@
     },
     {
       "id": "2020-zenith-football",
-      "name": "2020 Zenith Football",
+      "name": "2020 Panini Zenith Football",
       "year": 2020,
       "brand": "Zenith",
       "sport": "Football",
@@ -3186,7 +3186,7 @@
     },
     {
       "id": "2019-select-football",
-      "name": "2019 Select Football",
+      "name": "2019 Panini Select Football",
       "year": 2019,
       "brand": "Select",
       "sport": "Football",
@@ -3546,7 +3546,7 @@
     },
     {
       "id": "2018-select-football",
-      "name": "2018 Select Football",
+      "name": "2018 Panini Select Football",
       "year": 2018,
       "brand": "Select",
       "sport": "Football",
@@ -4217,7 +4217,7 @@
     },
     {
       "id": "2016-panini-playoff-football",
-      "name": "2016 Panini Playoff Football",
+      "name": "2016 Playoff Football",
       "year": 2016,
       "brand": "Playoff",
       "sport": "Football",
@@ -4887,7 +4887,7 @@
     },
     {
       "id": "2014-panini-elite-football",
-      "name": "2014 Panini Elite Football",
+      "name": "2014 Elite Football",
       "year": 2014,
       "brand": "Elite",
       "sport": "Football",
@@ -6057,7 +6057,7 @@
     },
     {
       "id": "2011-national-treasures-football",
-      "name": "2011 National Treasures Football",
+      "name": "2011 Panini National Treasures Football",
       "year": 2011,
       "brand": "National Treasures",
       "sport": "Football",

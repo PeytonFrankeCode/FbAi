@@ -2681,10 +2681,19 @@ function _sportSettingsChanged(box) {
   setSportsEnabled(picked);
 }
 
+// Nothing asks for anything before the first search (Oct 2026): install the
+// app, pick your sports, the Monday email and the survey all stacked up on a
+// first visit before anyone had looked up a card. Football is the default
+// until then; the asks come after, one at a time.
+function _hasSearched() { try { return localStorage.getItem('chSearched') === '1'; } catch (_) { return true; } }
+function _askOnScreen() {
+  return !!document.querySelector('#sports-picker:not(.hidden), #install-hint:not(.hidden), #survey-banner:not(.hidden), #tour:not(.hidden)');
+}
+
 // The first-visit question. Football starts ticked; the person must leave at
 // least one on. Closing it without choosing keeps football and asks no more.
 function maybeAskSports() {
-  if (_sportsSaved()) return false;
+  if (_sportsSaved() || !_hasSearched()) return false;
   const el = document.getElementById('sports-picker');
   if (!el) return false;
   document.getElementById('sports-picker-options').innerHTML = _sportChipsHtml(['football'], 'picker');
@@ -3624,7 +3633,10 @@ async function loadGradePanel(query) {
   body.innerHTML = '';
 
   try {
-    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const grader = (document.getElementById('grading-grader') || {}).value || 'PSA';
+    const feeIn = ((document.getElementById('grading-fee') || {}).value || '').trim();
+    try { localStorage.setItem('gradingPrefs', JSON.stringify({ grader, fee: feeIn })); } catch (_) { /* private mode */ }
+    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}&grader=${encodeURIComponent(grader)}${feeIn ? '&fee=' + encodeURIComponent(feeIn) : ''}`);
     const data = await res.json();
     if (res.status === 402 && data && data.limitReached) {
       loading.classList.add('hidden');
@@ -9468,6 +9480,22 @@ function exportBulkCSV() {
 }
 
 // ---- Grading Advisor ----
+// Grader and fee are the collector's (Oct 2026), remembered on this device.
+// The fee box shows the grader's standard tier until they type their own.
+const GRADING_DEFAULT_FEES = { PSA: 74.99, SGC: 15, CGC: 18 };
+function gradingGraderChanged() {
+  const g = document.getElementById('grading-grader'), f = document.getElementById('grading-fee');
+  if (g && f) f.placeholder = String(GRADING_DEFAULT_FEES[g.value] || '');
+}
+(function restoreGradingPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem('gradingPrefs') || 'null');
+    const g = document.getElementById('grading-grader'), f = document.getElementById('grading-fee');
+    if (p && g && GRADING_DEFAULT_FEES[p.grader]) g.value = p.grader;
+    if (p && f && p.fee) f.value = p.fee;
+  } catch (_) { /* nothing saved */ }
+  gradingGraderChanged();
+})();
 async function runGradingAdvisor(e) {
   e.preventDefault();
   const query = document.getElementById('grading-input').value.trim();
@@ -9486,7 +9514,10 @@ async function runGradingAdvisor(e) {
   btn.textContent = 'Analyzing...';
 
   try {
-    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const grader = (document.getElementById('grading-grader') || {}).value || 'PSA';
+    const feeIn = ((document.getElementById('grading-fee') || {}).value || '').trim();
+    try { localStorage.setItem('gradingPrefs', JSON.stringify({ grader, fee: feeIn })); } catch (_) { /* private mode */ }
+    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}&grader=${encodeURIComponent(grader)}${feeIn ? '&fee=' + encodeURIComponent(feeIn) : ''}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch data');
     renderGradingResults(data);
@@ -9525,11 +9556,14 @@ function renderGradingResults(data) {
     return `<span class="${cls}">${net > 0 ? '+' : ''}$${net.toFixed(2)}</span>`;
   };
 
+  const gr = data.grader || 'PSA';
+  const disc = document.getElementById('grading-disclaimer');
+  if (disc) disc.textContent = `Based on recent eBay sold listings of ${gr}-graded copies. Net figures subtract ${feeTxt} a card${data.gradingCost && data.gradingCost.own ? ', the fee you set' : `, ${(data.gradingCost && data.gradingCost.tier) || 'the standard tier'}; set your own above`}. Shipping and insurance are extra. Results are estimates only.`;
   const rows = [
     { label: 'Raw',    key: 'raw',   stats: grades.raw,   premium: null },
-    { label: 'PSA 8',  key: 'psa8',  stats: grades.psa8,  premium: premiums.psa8  },
-    { label: 'PSA 9',  key: 'psa9',  stats: grades.psa9,  premium: premiums.psa9  },
-    { label: 'PSA 10', key: 'psa10', stats: grades.psa10, premium: premiums.psa10 },
+    { label: `${gr} 8`,  key: 'psa8',  stats: grades.psa8,  premium: premiums.psa8  },
+    { label: `${gr} 9`,  key: 'psa9',  stats: grades.psa9,  premium: premiums.psa9  },
+    { label: `${gr} 10`, key: 'psa10', stats: grades.psa10, premium: premiums.psa10 },
   ];
 
   tbody.innerHTML = rows.map(({ label, key, stats, premium }) => {
@@ -9555,7 +9589,7 @@ function renderGradingResults(data) {
   // Recommendation banner
   const bestGrade = ['psa10','psa9','psa8'].find(g => premiums[g]?.worthIt);
   if (bestGrade) {
-    const label = bestGrade === 'psa10' ? 'PSA 10' : bestGrade === 'psa9' ? 'PSA 9' : 'PSA 8';
+    const label = `${gr} ${bestGrade.replace('psa', '')}`;
     const net   = premiums[bestGrade].net;
     recBox.className = 'grading-recommendation grading-rec-yes';
     recBox.innerHTML = `<span class="grading-rec-icon">✅</span><span class="grading-rec-text"><strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the ${feeTxt} grading fee.</span>`;
@@ -15677,6 +15711,7 @@ function _surveyOffer(source) {
   const state = _surveyState();
   if (state === 'dismissed' && !m.dismissedAt) { m.dismissedAt = Date.now(); _saveSurveyMeta(m); }
   if (!_surveyMayAsk(state, m, Date.now())) return;
+  if (!_hasSearched() || _askOnScreen()) return;
   // The announcement at the top is already asking; one ask on screen is enough.
   const top = document.getElementById('site-banner');
   if (BANNER.survey && top && !top.classList.contains('hidden')) return;
@@ -15706,6 +15741,12 @@ function _surveyDeclined() {
 // Called for every search the person runs. The count is kept across visits,
 // so someone who looks up a card or two each time is still asked.
 function _surveyNoteSearch() {
+  if (!_hasSearched()) {
+    try { localStorage.setItem('chSearched', '1'); } catch (_) { /* private mode */ }
+    const f = document.getElementById('digest-form');
+    if (f && f.dataset.enabled === '1') f.classList.remove('hidden');
+    setTimeout(() => { if (!_askOnScreen()) maybeAskSports(); }, 4000);
+  }
   _surveySearches++;
   const m = _surveyMeta();
   m.searches = (m.searches || 0) + 1;
@@ -18718,7 +18759,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const say = (text, cls) => { msg.textContent = text; msg.className = 'digest-msg' + (cls ? ' ' + cls : ''); };
   // Shown only once the server can send email; a form that can only fail is
   // worse than none.
-  fetch('/api/digest/status').then(r => safeJson(r)).then(d => { if (d && d.enabled) f.classList.remove('hidden'); }).catch(() => {});
+  fetch('/api/digest/status').then(r => safeJson(r)).then(d => {
+    if (!d || !d.enabled) return;
+    f.dataset.enabled = '1';
+    if (_hasSearched()) f.classList.remove('hidden');
+  }).catch(() => {});
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = emailEl.value.trim();
@@ -19106,12 +19151,12 @@ function dismissInstallHint() {
   const start = () => {
     _syncInstallUI();
     if (_isInstalled() || _installOS() === 'desktop') return;
-    if (visits < 2 || _lsGet('chInstalled') === '1') return;
+    if (visits < 2 || _lsGet('chInstalled') === '1' || !_hasSearched()) return;
     const snoozed = parseInt(_lsGet('chInstallSnooze') || '0', 10) || 0;
     if (Date.now() - snoozed < INSTALL_SNOOZE_MS) return;
     setTimeout(function show(tries) {
       // Never over a dialog, the login, or an open menu; try again shortly.
-      const busy = document.querySelector('.login-overlay:not(.hidden), .settings-overlay:not(.hidden), .modal-overlay:not(.hidden), .install-sheet:not(.hidden), .nav-bar.menu-open, #tour:not(.hidden)');
+      const busy = document.querySelector('.login-overlay:not(.hidden), .settings-overlay:not(.hidden), .modal-overlay:not(.hidden), .install-sheet:not(.hidden), .nav-bar.menu-open, #tour:not(.hidden), #sports-picker:not(.hidden), #survey-banner:not(.hidden)');
       if (busy) { if ((tries || 0) < 10) setTimeout(() => show((tries || 0) + 1), 6000); return; }
       document.getElementById('install-hint')?.classList.remove('hidden');
       _installTrack('install_hint_show', { os: _installOS() });

@@ -67,8 +67,14 @@ check('no sale lands in two grades', new Set(all).size === all.length);
   const app = fs.readFileSync(root + '/public/app.js', 'utf8');
   const html = fs.readFileSync(root + '/public/index.html', 'utf8');
   check('the fee is PSA\'s $74.99, defined once', /const PSA_GRADING_FEE = 74\.99;/.test(srv) && !/GRADING_COST/.test(srv));
-  check('  ...the net premium subtracts it', /graded\.median - rawVal\.median - PSA_GRADING_FEE/.test(srv));
-  check('  ...and every answer says what was subtracted', /gradingCost: \{ fee: PSA_GRADING_FEE/.test(srv));
+  // Oct 2026: the collector picks PSA, SGC or CGC and may set their own fee.
+  check('  ...the default for PSA; SGC and CGC have their own, and a fee the collector sets wins',
+    /const GRADER_FEES = \{ PSA: PSA_GRADING_FEE, SGC: \d+(\.\d+)?, CGC: \d+(\.\d+)? \}/.test(srv) && /const fee = ownFee \? Math\.round\(askedFee \* 100\) \/ 100 : GRADER_FEES\[grader\]/.test(srv));
+  check('  ...the net premium subtracts that fee', /graded\.median - rawVal\.median - fee;/.test(srv));
+  check('  ...the grader\'s own grades are fetched', /\{ grader, grade: '10' \}/.test(srv));
+  check('  ...and every answer says whose grades and what was subtracted', /grader,\s+gradingCost: \{ fee, own: ownFee/.test(srv));
+  check('the page has the grader picker and fee box, and sends both',
+    /id="grading-grader"/.test(html) && /id="grading-fee"/.test(html) && /&grader=\$\{encodeURIComponent\(grader\)\}/.test(app));
   const render = app.slice(app.indexOf('function renderGradingResults'), app.indexOf('function renderGradingResults') + 6000);
   check('the page quotes the fee the server used, not a number of its own',
     /data\.gradingCost/.test(render) && !/\$25/.test(render) && !/\$25/.test(html));
