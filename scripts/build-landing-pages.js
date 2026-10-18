@@ -1392,6 +1392,13 @@ function prepareSport() {
       break;
     }
   }
+  // Every folded spelling links to its player's page too (Oct 2026): set pages
+  // look players up by the checklist's own string, so 2026 Topps #80 "CJ
+  // Stroud" fell through to a generic search while "C.J. Stroud" had a page.
+  for (const { from, into } of merged) {
+    const target = playerSlug.get(into);
+    if (target && !playerSlug.has(from)) playerSlug.set(from, target);
+  }
   // setId -> eligible players (for related-player suggestions), in popularity order.
   const setPlayers = new Map();
   for (const p of eligible) for (const sid of p.setIds) {
