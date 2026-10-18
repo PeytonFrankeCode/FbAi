@@ -127,6 +127,10 @@ textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
 .htips { grid-column: 1 / -1; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px }
 .htips li { display: flex; gap: 8px; align-items: baseline } .htips b { color: var(--accent); white-space: nowrap }
 @media (max-width: 560px) { nav button { padding: 10px 9px; font-size: 13.5px } .health { grid-template-columns: minmax(0, 1fr); justify-items: start } .hpart { grid-template-columns: 7rem minmax(0, 1fr) 3rem } }
+.costbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3 }
+.costbar select, .costbar input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg) }
+.costbar input { width: 7rem }
+.costbtn { padding: 3px 8px; font-size: 12.5px; font-variant-numeric: tabular-nums }
 .status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
 td .act { padding: 4px 9px; font-size: 12px }
 @media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
@@ -257,6 +261,12 @@ td .act { padding: 4px 9px; font-size: 12px }
         </div>
       </details>
       <div class="toolbar"><button class="act" type="button" id="reprice">Refresh market prices</button><span class="status" id="invstatus"></span></div>
+      <div class="panel costbar" id="costbar" hidden>
+        <strong id="c-count">0 selected</strong>
+        <select id="c-mode" aria-label="How to set cost"><option value="each">Each cost</option><option value="lot">The lot cost (split)</option></select>
+        <input id="c-amount" inputmode="decimal" placeholder="$" aria-label="Amount">
+        <button class="act go" type="button" id="c-apply">Set cost</button>
+      </div>
       <div id="invtable"></div>
     </section>
 

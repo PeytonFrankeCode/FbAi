@@ -159,15 +159,42 @@
           pill = it.price > v.market * 1.2 ? '<span class="pill bad">Over market</span>' : it.price < v.market * 0.85 ? '<span class="pill warn">Underpriced</span>' : '<span class="pill ok">On market</span>';
         } else if (v.asOf && v.market == null) pill = `<span class="pill">${v.n || 0} comps</span>`;
         if (days >= 90) pill += ' <span class="pill bad">90d+</span>';
-        return `<tr><td>${esc(it.title)}${it.qty > 1 ? ` &times;${it.qty}` : ''}</td><td>${esc(it.grade || 'Raw')}</td><td>${esc(it.platform || '')}</td>
-          <td class="r">${money(it.cost)}</td><td class="r">${money(it.price)}</td><td class="r">${money(v.market)}</td><td class="r">${v.n || 0}</td><td class="r">${days}</td><td>${pill}</td>
+        return `<tr><td><input type="checkbox" class="c-pick" value="${esc(it.id)}" aria-label="Select ${esc(it.title)}"></td><td>${esc(it.title)}${it.qty > 1 ? ` &times;${it.qty}` : ''}</td><td>${esc(it.grade || 'Raw')}</td><td>${esc(it.platform || '')}</td>
+          <td class="r"><button class="act costbtn" data-cost="${esc(it.id)}" data-val="${it.cost ?? ''}" title="Set what you paid">${it.cost == null ? 'Add' : money(it.cost)}</button></td><td class="r">${money(it.price)}</td><td class="r">${money(v.market)}</td><td class="r">${v.n || 0}</td><td class="r">${days}</td><td>${pill}</td>
           <td style="white-space:nowrap"><button class="act" data-sold="${esc(it.id)}" data-price="${it.price ?? ''}">Sold</button> <button class="act" data-del="${esc(it.id)}" aria-label="Remove ${esc(it.title)}">Remove</button></td></tr>`;
       }).join('');
-      $('invtable').innerHTML = `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Grade</th><th>Where</th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th class="r">Comps</th><th class="r">Days</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      $('costbar').hidden = true;
+      $('invtable').innerHTML = `<div class="tablewrap"><table><thead><tr><th><input type="checkbox" id="c-all" aria-label="Select all"></th><th>Card</th><th>Grade</th><th>Where</th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th class="r">Comps</th><th class="r">Days</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
       if (items.some(it => !it.value)) valueAll();
     } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('invtable').innerHTML = `<div class="empty">Could not load: ${esc(err.message)}</div>`; }
   }
+  // Costs: tap one to edit it, or tick several and set one cost each or what
+  // the whole lot cost (spread by market value, or evenly).
+  const picked = () => [...document.querySelectorAll('.c-pick:checked')].map(c => c.value);
+  function syncCostBar() { const n = picked().length; $('costbar').hidden = !n; $('c-count').textContent = `${n} selected`; }
+  $('invtable').addEventListener('change', (e) => {
+    if (e.target.id === 'c-all') document.querySelectorAll('.c-pick').forEach(c => { c.checked = e.target.checked; });
+    if (e.target.id === 'c-all' || e.target.classList.contains('c-pick')) syncCostBar();
+  });
+  $('c-apply').addEventListener('click', async () => {
+    const ids = picked(), amt = Number(String($('c-amount').value).replace(/[$,]/g, ''));
+    if (!ids.length || !(amt >= 0) || $('c-amount').value === '') { $('invstatus').textContent = 'Enter an amount first.'; return; }
+    const lot = $('c-mode').value === 'lot';
+    try {
+      const r = await api('/api/biz/costs', { method: 'POST', body: JSON.stringify(lot ? { ids, lot: amt } : { ids, each: amt }) });
+      $('invstatus').textContent = lot ? `Spread ${money(amt)} across ${r.updated} card${r.updated === 1 ? '' : 's'} ${r.by === 'value' ? 'by market value' : 'evenly (not all had a market price)'}.` : `Set the cost on ${r.updated} card${r.updated === 1 ? '' : 's'}.`;
+      $('c-amount').value = ''; loadInventory();
+    } catch (err) { $('invstatus').textContent = err.message; }
+  });
   $('invtable').addEventListener('click', async (e) => {
+    const cb = e.target.closest('[data-cost]');
+    if (cb) {
+      const v = window.prompt('What did you pay for this card? (leave empty to clear)', cb.dataset.val);
+      if (v == null) return;
+      try { await api('/api/biz/inventory/' + encodeURIComponent(cb.dataset.cost), { method: 'PATCH', body: JSON.stringify({ cost: v.trim() === '' ? null : Number(v.replace(/[$,]/g, '')) }) }); }
+      catch (err) { $('invstatus').textContent = err.message; }
+      return loadInventory();
+    }
     const sb = e.target.closest('[data-sold]');
     if (sb) {
       const v = window.prompt('Sold for how much?', sb.dataset.price || '');
