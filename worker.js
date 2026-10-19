@@ -146,7 +146,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, bizRevalueAll } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -158,7 +158,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, bizRevalueAll };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll };
   return serverInit;
 }
 
@@ -830,6 +830,29 @@ export class AdSlotRemover {
   element(el) { el.remove(); this.removed++; }
 }
 
+// A priced player page's title and description, with its median in them
+// (price-block-core pricedHead). The <title> text can arrive in several
+// chunks, so it is gathered and written back once at the end; the text is
+// raw page source, entities and all, which is what pricedHead expects.
+export class PricedTitle {
+  constructor(summary, pricedHead) { this.summary = summary; this.pricedHead = pricedHead; this.buf = ''; }
+  text(t) {
+    this.buf += t.text;
+    if (!t.lastInTextNode) { t.remove(); return; }
+    t.replace(this.pricedHead(this.summary, this.buf, '').title, { html: true });
+  }
+}
+export class PricedMeta {
+  constructor(summary, pricedHead, field) { this.summary = summary; this.pricedHead = pricedHead; this.field = field; }
+  element(el) {
+    const was = el.getAttribute('content');
+    if (!was) return;
+    const head = this.field === 'title'
+      ? this.pricedHead(this.summary, was, '') : this.pricedHead(this.summary, '', was);
+    if (head[this.field] !== was) el.setAttribute('content', head[this.field]);
+  }
+}
+
 // The retired-player-slug map, loaded once per isolate.
 //
 // Cached in module scope rather than fetched per request: a player page is the
@@ -1056,12 +1079,23 @@ export default {
               // than turning a working page into a 502 over a missing price.
               if (resp.status === 200 && /^\/(sets|players)\//.test(url.pathname)) {
                 try {
-                  const { renderPriceBlock } = await init(env);
+                  const { renderPriceBlock, pricedHead } = await init(env);
                   if (renderPriceBlock) {
                     const blocks = await priceBlocks(env);
                     if (blocks && Object.keys(blocks.pages).length) {
                       const rw = new HTMLRewriter()
                         .on('div[data-price-key]', new PriceSlotFiller(blocks, renderPriceBlock));
+                      // A player page with prices says the median in its
+                      // search title too (owner, Oct 2026). Set pages keep
+                      // theirs: a whole product's median is a weaker answer.
+                      const pkey = priceKeyForPath(url.pathname);
+                      const summary = pkey && pkey.startsWith('player:') && blocks.pages[pkey];
+                      if (summary && pricedHead) {
+                        rw.on('title', new PricedTitle(summary, pricedHead))
+                          .on('meta[property="og:title"]', new PricedMeta(summary, pricedHead, 'title'))
+                          .on('meta[name="description"]', new PricedMeta(summary, pricedHead, 'description'))
+                          .on('meta[property="og:description"]', new PricedMeta(summary, pricedHead, 'description'));
+                      }
                       // No price block for this URL means the page is the bare
                       // template, so the ad tag comes off with it. Only when the
                       // map actually loaded — an empty map is a KV failure, and

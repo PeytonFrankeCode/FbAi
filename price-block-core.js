@@ -211,6 +211,38 @@ function render(summary, opts) {
   return html;
 }
 
+// A player page's <title> and description, with the median in them.
+//
+// The search result is the first thing a collector sees, and "what is it
+// worth" is what they searched. The number is the same median the block on
+// the page prints, from the same summary, so the snippet never promises a
+// price the page does not show. No summary (too few sales) means no change:
+// the title stays the checklist title it was built with.
+//
+// Rewrites a known phrase rather than rebuilding the title, so a page whose
+// wording has moved on is left exactly as it was instead of mangled. The
+// builder's wording is held to that phrase by test/price-block.test.js.
+// Takes text as it sits in the page source (`&amp;`) or decoded (`&`), as an
+// attribute may be read either way, and keeps whichever form it was given.
+const TITLE_PHRASE = ' — Values &amp; Checklist';
+
+function pricedHead(summary, title, description) {
+  const out = { title, description };
+  if (!summary || summary.median == null) return out;
+  const m = esc(money(summary.median));
+  if (typeof title === 'string') {
+    for (const amp of ['&amp;', '&']) {
+      const phrase = ` — Values ${amp} Checklist`;
+      if (title.includes(phrase)) { out.title = title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`); break; }
+    }
+  }
+  if (typeof description === 'string' && description) {
+    out.description = `Median sale ${m} across ${summary.sales.toLocaleString('en-US')} recent eBay sales. `
+      + description;
+  }
+  return out;
+}
+
 // The key a page looks itself up by. Kept here so the builder and the injector
 // cannot disagree about it — they are in different files and one of them
 // running with a stale idea of the format would simply render nothing, which
@@ -219,5 +251,5 @@ const keyFor = (kind, id) => `${kind}:${id}`;
 
 module.exports = {
   MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS, THUMB_SIZE, thumb,
-  median, money, esc, summarise, render, keyFor, ebaySearchUrl,
+  median, money, esc, summarise, render, pricedHead, TITLE_PHRASE, keyFor, ebaySearchUrl,
 };
