@@ -12336,10 +12336,15 @@ async function _parallelLadder() {
 const ESTIMATOR_PARAMS_KEY = 'estimator:params:v1';
 let _estMemo = { at: 0, data: null };
 async function _estimatorParams() {
-  if (_estMemo.at && Date.now() - _estMemo.at < 10 * 60000) return _estimatorParamsNow();
-  const data = await cacheGet(ESTIMATOR_PARAMS_KEY).catch(() => null);
-  _estMemo = { at: Date.now(), data: data || null };
-  return _estimatorParamsNow();
+  if (!(_estMemo.at && Date.now() - _estMemo.at < 10 * 60000)) {
+    const data = await cacheGet(ESTIMATOR_PARAMS_KEY).catch(() => null);
+    _estMemo = { at: Date.now(), data: data || null };
+  }
+  const params = _estimatorParamsNow();
+  // A thin player's drift shrunk toward the market's needs the market's line
+  // on hand before the synchronous pricing below asks for it.
+  if (params.trendPrior === 'market') await _primeMarketDrift();
+  return params;
 }
 function _estimatorParamsNow() {
   const d = _estMemo.data;
@@ -12892,15 +12897,48 @@ async function _checklistBuckets(pid, player) {
 // The player's drift (estimator-core trendDrift) from his sales before
 // `refIso`: repeat sales of one card, parallel and grade, so a dear card
 // selling this week and a cheap one last month is not read as a trend.
+// The market's own drift, per day, over the 45 days to `refIso`: the slab
+// index the Market tab builds, read from its cache (primed by
+// _primeMarketDrift before anything asks). Only points on or before refIso
+// are used, so the nightly backtest never sees its hidden window. null when
+// the index is not cached or does not reach back far enough.
+let _mktSeriesMemo = { at: 0, series: null };
+async function _primeMarketDrift() {
+  if (_mktSeriesMemo.series && Date.now() - _mktSeriesMemo.at < 3600e3) return;
+  let hit = null;
+  for (const d of [90, 30]) {
+    hit = await cacheGet(_marketIndexKey(d)).catch(() => null);
+    if (hit && hit.available && (hit.series || []).length >= 3) break;
+  }
+  const series = ((hit && hit.series) || [])
+    .map(p => ({ date: String(p.date || '').slice(0, 10), score: Number(p.score) }))
+    .filter(p => p.date && p.score > 0).sort((a, b) => (a.date < b.date ? -1 : 1));
+  _mktSeriesMemo = { at: Date.now(), series: series.length >= 3 ? series : null };
+}
+const MARKET_DRIFT_SPAN = 45;
+function _marketDriftAt(refIso, series = _mktSeriesMemo.series) {
+  if (!series || !series.length) return null;
+  const ref = String(refIso).slice(0, 10);
+  const upTo = series.filter(p => p.date <= ref);
+  if (upTo.length < 2) return null;
+  const end = upTo[upTo.length - 1];
+  const fromIso = new Date(Date.parse(end.date) - MARKET_DRIFT_SPAN * EST.DAY).toISOString().slice(0, 10);
+  const start = upTo.find(p => p.date >= fromIso) || upTo[0];
+  const days = EST.daysBetween(start.date, end.date);
+  if (!(days >= 14) || !(start.score > 0)) return null;
+  return EST.clampDrift(Math.log(end.score / start.score) / days);
+}
+
 function _playerDrift(rows, params, refIso) {
-  if (!(params.trendTau > 0)) return 0;
+  const prior = params.trendPrior === 'market' ? (_marketDriftAt(refIso) || 0) : 0;
+  if (!(params.trendTau > 0)) return prior;
   const obs = [];
   for (const r of rows) {
     if (!(r.price_cents > 0) || String(r.sold_date) >= refIso) continue;
     obs.push({ group: `${r.set_name}|${r.card_number}|${_ladderKey(r.parallel || '')}|${_gradeBucket(r)}`,
                age: EST.daysBetween(r.sold_date, refIso), logp: Math.log(r.price_cents) });
   }
-  return EST.trendDrift(obs, params.trendTau).drift;
+  return EST.trendDrift(obs, params.trendTau, prior).drift;
 }
 
 // One parallel's sales as the estimator takes them: each moved to `refIso`
@@ -13096,7 +13134,7 @@ async function _backtestPairs(db, want) {
 function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso, start = null } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
-  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
+  const isDefault = (g) => !g.halfLife && !g.trendTau && (g.trendPrior || 'flat') === 'flat' && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
     && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest && !g.baseCap
     && !g.levelPrior && !g.weightAnchors && !g.baseQuantile;
   const numberedOf = (cases) => cases.filter(c => c.larger);
@@ -13248,6 +13286,7 @@ async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {
     const db = getNflDb();
     if (!db) return { ok: false, reason: 'no dataset' };
     await _parallelLadder();
+    await _primeMarketDrift();
     const bks = await _backtestPairs(db, pairs);
     if (!bks.length) return { ok: false, reason: 'no player/product pairs with checklist sales' };
     const saved = await cacheGet(ESTIMATOR_PARAMS_KEY).catch(() => null);
@@ -20195,7 +20234,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
