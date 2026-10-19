@@ -9482,7 +9482,8 @@ function exportBulkCSV() {
 // ---- Grading Advisor ----
 // Grader and fee are the collector's (Oct 2026), remembered on this device.
 // The fee box shows the grader's standard tier until they type their own.
-const GRADING_DEFAULT_FEES = { PSA: 74.99, SGC: 15, CGC: 18 };
+// Must equal server.js GRADER_FEES (test/grading-advisor.test.js).
+const GRADING_DEFAULT_FEES = { PSA: 59.99, SGC: 50, CGC: 17 };
 function gradingGraderChanged() {
   const g = document.getElementById('grading-grader'), f = document.getElementById('grading-fee');
   if (g && f) f.placeholder = String(GRADING_DEFAULT_FEES[g.value] || '');

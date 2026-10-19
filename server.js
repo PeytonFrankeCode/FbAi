@@ -3836,16 +3836,21 @@ function computeApproxValue(results, label) {
 }
 
 // What grading one card at PSA costs, in dollars: the cheapest tier PSA is
-// taking. $74.99 since PSA shut its cheaper tiers to work down its backlog. One figure, used by the advisor's math, sent to the
-// page with every answer, and quoted in the emails — so a price change is an
-// edit here and nowhere else.
-const PSA_GRADING_FEE = 74.99;
+// taking. $59.99 is the Standard level PSA opened in Sept 2026 (90-100
+// business days, $1,000 max value); the Value tiers are Collectors Club only.
+// One figure, used by the advisor's math, sent to the page with every answer,
+// and quoted in the emails — so a price change is an edit here and nowhere
+// else (and in GRADING_DEFAULT_FEES in app.js, which a test holds equal).
+const PSA_GRADING_FEE = 59.99;
 const PSA_GRADING_TIER = 'PSA\u2019s cheapest open tier';
 // The advisor grades at PSA, SGC or CGC, at the collector's own fee if they
 // give one (Oct 2026: one hardcoded PSA tier fit nobody on a different plan).
 // The SGC and CGC figures are their cheapest standard tiers, as a starting
-// point the page lets the collector change.
-const GRADER_FEES = { PSA: PSA_GRADING_FEE, SGC: 15, CGC: 18 };
+// point the page lets the collector change. Checked Oct 2026 on each grader's
+// own fee page: SGC Standard is $50 up to $1,500 declared value (it was $15
+// until SGC raised it on Sept 2, 2026); CGC Bulk is $17 (25-card minimum, up to
+// $500), since Mar 24, 2026.
+const GRADER_FEES = { PSA: PSA_GRADING_FEE, SGC: 50, CGC: 17 };
 const GRADER_FEE_MAX = 10000;
 
 // ---- /api/grading-advisor ----
