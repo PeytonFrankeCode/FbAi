@@ -34,6 +34,7 @@ const DAY = 86400000;
 const DEFAULT_PARAMS = Object.freeze({
   halfLife: null,     // days; null = every sale weighs the same (the old behaviour)
   trendTau: 0,        // prior sd of daily drift, log units; 0 = no trend adjustment
+  trendPrior: 'flat', // what a thin player's drift is shrunk toward: 'flat' (0) or 'market' (the slab index's)
   spreadTau: 0,       // prior sd of the spread k around 1; 0 = product spread for all
   floorBase: false,   // hold every parallel's step to at least base
   numberedFrom: 'all', // 'larger': a numbered parallel is priced from this card's larger print runs
@@ -55,8 +56,14 @@ const daysBetween = (a, b) => (Date.parse(String(b).slice(0, 10)) - Date.parse(S
 // The player's drift, as log-price change per day forward. `obs` is
 // [{ group, age, logp }]: age in days before the reference date, group the
 // identity a repeat sale shares (card, parallel, grade).
-function trendDrift(obs, tau) {
-  if (!(tau > 0)) return { drift: 0, n: 0 };
+//
+// `prior` is the drift to shrink toward: 0 says a player with no evidence of
+// his own is flat; the market's drift says he moves with the market. With no
+// trend fit at all (tau 0) the prior is the whole answer.
+const clampDrift = (d) => Math.max(-TREND_MAX, Math.min(TREND_MAX, d));
+function trendDrift(obs, tau, prior = 0) {
+  const p0 = Number.isFinite(prior) ? clampDrift(prior) : 0;
+  if (!(tau > 0)) return { drift: p0, n: 0 };
   const groups = new Map();
   for (const o of obs) {
     if (!Number.isFinite(o.logp) || !Number.isFinite(o.age)) continue;
@@ -76,13 +83,13 @@ function trendDrift(obs, tau) {
     }
     g++;
   }
-  if (n - g < 3 || !(sxx > 0)) return { drift: 0, n };
+  if (n - g < 3 || !(sxx > 0)) return { drift: p0, n };
   const beta = sxy / sxx;                              // per day of AGE: rising prices give beta < 0
   const rss = demeaned.reduce((t, [x, y]) => t + (y - beta * x) ** 2, 0);
   const s2 = rss / Math.max(1, n - g - 1);
   const varB = s2 / sxx;
   const shrink = (tau * tau) / (tau * tau + varB);
-  const drift = Math.max(-TREND_MAX, Math.min(TREND_MAX, -beta * shrink));
+  const drift = clampDrift(p0 + (-beta - p0) * shrink);
   return { drift, n, raw: -beta, shrink };
 }
 
@@ -229,9 +236,14 @@ function crossCalibrated(cases, keyOf = KEY_BASIS) {
 // _tuneEstimator), keeping each change that helps — ~15 evaluations.
 // Every setting that has ever mattered stays searchable; the tuner warm-starts
 // from the last adopted settings and caps its evaluations (server.js
-// ESTIMATOR_MAX_EVALS). Left out: numberedNearest, floorBase and halfLife,
-// which never helped on any market, live or test; the estimator still takes
-// them.
+// ESTIMATOR_MAX_EVALS). Left out: numberedNearest and floorBase, which never
+// helped on any market, live or test; the estimator still takes them.
+//
+// Back in since Oct 2026, with 90+ days of sales rather than 40-60: halfLife
+// (recency, which a market moving from the offseason into the season may now
+// reward), finer trendTau steps, and trendPrior (a thin player shrunk toward
+// the market's drift instead of toward flat). Each is adopted only if the
+// backtest shows it winning, like every other setting here.
 const PARAM_DIMS = {
   levelPrior: [0, 0.5, 1, 2],
   weightAnchors: [false, true],
@@ -239,11 +251,13 @@ const PARAM_DIMS = {
   liftRarer: [true, false],
   baseCap: [false, true],
   slabs: ['use', 'fallback'],
-  trendTau: [0, 0.004],
+  trendTau: [0, 0.002, 0.004, 0.008],
+  trendPrior: ['flat', 'market'],
+  halfLife: [null, 45],
   spreadTau: [0, 0.2],
   numberedFrom: ['all', 'larger'],
 };
-const PARAM_START = Object.freeze({ halfLife: null, trendTau: 0, spreadTau: 0, floorBase: false, slabs: 'use', numberedFrom: 'all',
+const PARAM_START = Object.freeze({ halfLife: null, trendTau: 0, trendPrior: 'flat', spreadTau: 0, floorBase: false, slabs: 'use', numberedFrom: 'all',
   liftRarer: true, numberedNearest: 0, baseCap: false, levelPrior: 0, weightAnchors: false, baseQuantile: 0 });
 
 // Adopt a tuned setting only if it beats the old estimator by a margin the
@@ -258,6 +272,6 @@ const MAX_EXTRA_BIAS = 10;
 
 module.exports = {
   DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, MAX_EXTRA_BIAS, DAY,
-  daysBetween, trendDrift, adjustedMedian, fitSpread,
+  daysBetween, trendDrift, clampDrift, TREND_MAX, adjustedMedian, fitSpread,
   scoreCases, calibrate, withCalib, crossCalibrated, calibFactor, tierOf, KEY_BASIS, KEY_BAND, KEY_KIND,
 };

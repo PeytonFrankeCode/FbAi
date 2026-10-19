@@ -372,6 +372,44 @@ for (const [num, player, level, k, drift] of PLAYERS) {
 
   check('the cron runs the backtest daily', /getUTCHours\(\) === 8 && aliasTick\)[\s\S]{0,80}runEstimatorBacktest\(\)/.test(src));
 
+  // ---- A thin player moves with the market, not flat (Oct 2026) ----
+  {
+    const thin = [{ group: 'a', age: 40, logp: Math.log(100) }, { group: 'a', age: 0, logp: Math.log(104) },
+      { group: 'b', age: 30, logp: Math.log(50) }, { group: 'b', age: 2, logp: Math.log(49) }];
+    const flat = EST.trendDrift(thin, 0.002, 0).drift, mkt = EST.trendDrift(thin, 0.002, 0.004).drift;
+    check('a thin player\'s drift is shrunk toward the market\'s, when that is the prior', mkt > flat + 0.002 && mkt <= 0.004,
+      `flat ${flat.toFixed(4)} market ${mkt.toFixed(4)}`);
+    // Enough sales to be fitted, too noisy to trust far: the fit lands between
+    // the player's own reading and the prior, so the prior moves it.
+    const noisy = [];
+    let sd = 11;
+    const r2 = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+    for (let g = 0; g < 4; g++) for (let age = 0; age < 40; age += 8) noisy.push({ group: 'n' + g, age, logp: Math.log(80) + (r2() - 0.5) * 0.8 });
+    const nf = EST.trendDrift(noisy, 0.003, 0), nm = EST.trendDrift(noisy, 0.003, 0.006);
+    check('  ...and a fitted but noisy one lands between its own reading and the prior',
+      nf.shrink > 0 && nf.shrink < 1 && nm.drift > nf.drift + 0.002, `shrink ${nf.shrink && nf.shrink.toFixed(2)}, flat ${nf.drift.toFixed(4)}, market ${nm.drift.toFixed(4)}`);
+    check('  ...with no trend fit the market\'s drift is the whole answer, and flat stays flat',
+      EST.trendDrift(thin, 0, 0.003).drift === 0.003 && EST.trendDrift(thin, 0).drift === 0);
+    const strong = [];
+    for (let g = 0; g < 6; g++) for (let age = 0; age < 60; age += 3) strong.push({ group: 'c' + g, age, logp: Math.log(100) - 0.008 * age });
+    check('  ...while a player with plenty of evidence keeps his own', Math.abs(EST.trendDrift(strong, 0.004, -0.004).drift - 0.008) < 0.001,
+      EST.trendDrift(strong, 0.004, -0.004).drift.toFixed(4));
+    check('  ...and an absurd market drift is held to the same bound', EST.trendDrift(thin, 0, 0.5).drift === EST.TREND_MAX);
+
+    // The market's line, read only up to the date asked about: the backtest
+    // asks for its window's start and must not see the weeks it hides.
+    const day = (i) => new Date(Date.UTC(2026, 6, 1) + i * 86400000).toISOString().slice(0, 10);
+    const series = Array.from({ length: 100 }, (_, i) => ({ date: day(i), score: i < 60 ? 100 * Math.exp(0.002 * i) : 100 * Math.exp(0.12) * Math.exp(-0.01 * (i - 60)) }));
+    const before = S._marketDriftAt(day(59), series), after = S._marketDriftAt(day(99), series);
+    check('the market\'s drift is read from its index up to the date asked, never past it',
+      Math.abs(before - 0.002) < 0.0003 && after < 0, `to ${day(59)}: ${before && before.toFixed(4)}, to ${day(99)}: ${after && after.toFixed(4)}`);
+    check('  ...and is nothing at all when the index does not reach back two weeks',
+      S._marketDriftAt(day(5), series) === null && S._marketDriftAt(day(50), []) === null);
+    check('the tuner searches the market prior, recency and finer trend steps',
+      EST.PARAM_DIMS.trendPrior.includes('market') && EST.PARAM_DIMS.halfLife.includes(45) && EST.PARAM_DIMS.trendTau.length === 4
+      && EST.PARAM_START.trendPrior === 'flat' && EST.DEFAULT_PARAMS.trendPrior === 'flat');
+  }
+
   console.log(failures ? `\n${failures} check(s) failed` : '\nall estimator-backtest checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
