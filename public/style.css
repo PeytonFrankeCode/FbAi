@@ -10189,3 +10189,10 @@ html.install-open { overflow: hidden; }
 .grading-opts label { display: flex; align-items: center; gap: 6px; }
 .grading-opts select, .grading-opts input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border, rgba(127,127,127,.35)); background: var(--bg-card, transparent); color: inherit; }
 .grading-opts input { width: 90px; }
+
+/* The photo search's own line above the results: what it searched, and the
+   way back to the other matches. */
+.scan-search-note { margin: 0.6rem 0 0; padding: 0.55rem 0.8rem; border: 1px solid var(--border-primary); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--bg-card); color: var(--text-secondary); font-size: 0.88rem; line-height: 1.45; }
+.scan-search-note strong { color: var(--text-primary); }
+.scan-search-note-btn { margin-left: 0.4rem; padding: 0.15rem 0.6rem; border: 1px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.scan-search-note-btn:hover { background: var(--accent); color: var(--bg-primary); }
