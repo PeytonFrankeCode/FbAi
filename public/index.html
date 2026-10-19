@@ -280,7 +280,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=4c7d95308d" />
+  <link rel="stylesheet" href="style.css?v=054a17684c" />
 
 
 </head>
@@ -550,6 +550,7 @@
         <button class="mode-tab active" data-mode="sold">Sold</button>
       </div>
       <div id="sport-note" class="sport-note hidden" role="note"></div>
+      <div id="scan-search-note" class="scan-search-note hidden" role="status"></div>
       <!-- Price range filter — visible only in For Sale mode. The eBay
            Browse API gets fed minPrice/maxPrice and we also drop anything
            outside the range client-side as a safety net. -->
@@ -1927,7 +1928,7 @@
     <div class="modal-box modal-box-lg">
       <button class="login-close" onclick="closeScanFillModal()">&times;</button>
       <h2>&#128247; Scan Card Photo</h2>
-      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">Take or upload a card photo — we'll find the best matching title for you.</p>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">Take or upload a card photo — we'll find the card and search its sold prices for you.</p>
 
       <!-- Phase 1: Camera + Upload -->
       <div id="scan-fill-phase-upload">
@@ -2005,7 +2006,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
-  <script src="app.js?v=c13c85adab"></script>
+  <script src="app.js?v=927ff61f8e"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
   {

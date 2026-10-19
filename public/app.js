@@ -1368,7 +1368,7 @@ if (searchSuggest) {
     const b = e.target.closest('.search-suggest-item');
     if (b) _ssPick(Number(b.dataset.i));
   });
-  form.addEventListener('submit', () => { clearTimeout(_ssTimer); _ssSeq++; _ssHide(); });
+  form.addEventListener('submit', () => { clearTimeout(_ssTimer); _ssSeq++; _ssHide(); if (!_scanSearchPending) _hideScanSearchNote(); });
 }
 
 // Show recent on load
@@ -8112,6 +8112,7 @@ function captureScanFill() {
   document.getElementById('scan-fill-preview-wrap').classList.remove('hidden');
   document.getElementById('scan-fill-error').classList.add('hidden');
   document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+  if (_scanFillAuto()) submitScanFill();
 }
 
 async function handleScannerFile(e) {
@@ -8787,6 +8788,52 @@ let _scanFillTargetId = null;
 let _scanFillIsTextarea = false;
 let _scanFillImageDataUrl = null;
 let _scanFillMode = 'fill'; // 'fill' = fill an input, 'collection' = add to My Cards
+let _scanFillLastMatches = null;
+
+// A photo into a single search box searches straight away (owner, Oct 2026):
+// the best match is picked and its sold results load, with the other matches
+// a tap away. Bulk lines and My Cards adds keep the picker, where a wrong
+// pick is a wrong card added rather than a search to redo.
+function _scanFillAuto() { return _scanFillMode === 'fill' && !_scanFillIsTextarea; }
+
+// The match the others agree with most: each title scored against the
+// consensus player, year, set and card number of all of them, eBay's order
+// breaking ties. One odd listing ranked first by looks does not win alone.
+function _bestScanMatchIndex(matches) {
+  const list = matches || [];
+  if (list.length < 2) return 0;
+  const id = _identityFromTitles(list.map(m => m.title));
+  let best = 0, bestScore = -1;
+  list.forEach((m, i) => {
+    const sc = _scoreAgainstIdentity(m.title, id);
+    if (sc > bestScore) { best = i; bestScore = sc; }
+  });
+  return best;
+}
+
+// The line above the results saying what the photo was searched as, with the
+// way back to the other matches.
+function _showScanSearchNote(query) {
+  const el = document.getElementById('scan-search-note');
+  if (!el) return;
+  const others = (_scanFillLastMatches || []).length > 1;
+  el.innerHTML = `&#128247; Searched from your photo: <strong>${escHtml(query)}</strong>`
+    + (others ? ` <button type="button" class="scan-search-note-btn" onclick="reopenScanMatches()">Not this card?</button>` : '');
+  el.classList.remove('hidden');
+}
+function _hideScanSearchNote() { document.getElementById('scan-search-note')?.classList.add('hidden'); }
+
+function reopenScanMatches() {
+  if (!(_scanFillLastMatches || []).length) return;
+  _scanFillTargetId = 'search-input';
+  _scanFillIsTextarea = false;
+  _scanFillMode = 'fill';
+  document.getElementById('scan-fill-phase-upload').classList.add('hidden');
+  document.getElementById('scan-fill-matching').classList.add('hidden');
+  document.getElementById('scan-fill-error').classList.add('hidden');
+  _renderScanFillMatches(_scanFillLastMatches);
+  document.getElementById('scan-fill-modal').classList.remove('hidden');
+}
 
 function openScanFillModal(targetId, isTextarea, mode) {
   _scanFillTargetId = targetId;
@@ -8839,7 +8886,9 @@ async function handleScanFillFile(e) {
     document.getElementById('scan-fill-phase-matches').classList.add('hidden');
   } catch (err) {
     alert('Could not load image: ' + (err.message || 'Unknown error'));
+    return;
   }
+  if (_scanFillAuto()) submitScanFill();
 }
 
 async function submitScanFill() {
@@ -8870,7 +8919,9 @@ async function submitScanFill() {
       document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
       return;
     }
+    _scanFillLastMatches = data.matches;
     _renderScanFillMatches(data.matches);
+    if (_scanFillAuto()) selectScanFillMatch(_bestScanMatchIndex(data.matches), { auto: true });
   } catch (err) {
     spinner.classList.add('hidden');
     document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
@@ -8897,7 +8948,8 @@ function _renderScanFillMatches(matches) {
   document.getElementById('scan-fill-phase-matches').classList.remove('hidden');
 }
 
-function selectScanFillMatch(index) {
+let _scanSearchPending = false;
+function selectScanFillMatch(index, { auto = false } = {}) {
   const cards = document.getElementById('scan-fill-matches-grid').querySelectorAll('.scanner-match-card');
   const card = cards[index];
   if (!card) return;
@@ -8923,10 +8975,15 @@ function selectScanFillMatch(index) {
     targetEl.focus();
   }
   closeScanFillModal();
+  // The front-page search says what the photo was searched as; the note
+  // survives this submit only (a typed search after it clears it).
+  const onSearch = targetEl && targetEl.id === 'search-input';
+  if (onSearch) { _scanSearchPending = true; _showScanSearchNote(broadQuery); }
   // Auto-trigger search so the user sees results immediately.
   const form = targetEl && targetEl.form;
   if (form) form.dispatchEvent(new Event('submit'));
-  else if (targetEl && targetEl.id === 'search-input') performSearch();
+  else if (onSearch) performSearch();
+  _scanSearchPending = false;
 }
 
 // ---- Pro+ Tools ----
