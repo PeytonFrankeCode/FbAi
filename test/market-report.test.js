@@ -104,6 +104,47 @@ store.set('soldstats:last:30', JSON.stringify(month30));
   const bad = await get('/news/market-movers/not-a-week');
   check('  ...and so is anything that is not a week', bad.status === 404);
 
+  // ---- The page's depth and its week-at-a-glance (Oct 2026: it read thin) ----
+  {
+    const mv = (n, c, i) => ({ name: n, player: n, query: n, changePct: c, sales: 6 + i, older: 20, recent: Math.round(20 * (1 + c / 100)) });
+    const w = { available: true, pricedSales: 63412, totalValue: 4521900, avgPrice: 71,
+      cardMovers: Array.from({ length: 14 }, (_, i) => mv(`2025 Prizm Card ${i}`, 60 - i * 6, i)),
+      mostSold: Array.from({ length: 12 }, (_, i) => ({ name: `${i < 7 ? 2025 : 2018} Prizm Seller ${i}`, query: `q${i}`, sales: 300 - i, avgPrice: 12, topPrice: 90 })),
+      priciest: Array.from({ length: 9 }, (_, i) => ({ title: `Big Card ${i}`, price: 9000 - i, grade: i < 3 ? 'PSA 10' : 'BGS 9.5', itemUrl: 'https://www.ebay.com/itm/1' })),
+      topSets: Array.from({ length: 7 }, (_, i) => ({ name: `Set ${i}`, query: `Set ${i}`, sales: 900 - i, avgPrice: 20 })) };
+    const c = { ...digest.digestContent(w, month30), moversCalc: 'median',
+      market: { d7: { changePct: 2.44, series: [100, 101, 100.5, 102] }, d30: { changePct: 6.1, series: [98, 99, 101, 102] } } };
+    check('the email keeps its short lists', c.risers.length === 5 && c.mostSold.length === 3 && c.priciest.length === 3);
+    check('  ...while the page gets the deeper ones', c.more.risers.length === 10 && c.more.mostSold.length === 10
+      && c.more.priciest.length === 8 && c.more.sets.length === 6 && c.more.fallers.length <= 6);
+    const prev = { ...digest.digestContent({ ...w, pricedSales: 57110, totalValue: 4012000, cardMovers: w.cardMovers.slice(2) }, month30), moversCalc: 'median' };
+    const html = mreport.renderReportBody(c, { week: '2026-W43', builtAt: '2026-10-19T12:00:00Z', site: 'https://thecardhuddle.com', prev });
+    check('three headliner tiles open the page: biggest riser, biggest sale, most traded',
+      (html.match(/class="mm-tile"/g) || []).length === 3 && /Biggest riser/.test(html) && /Biggest sale/.test(html) && /Most traded/.test(html));
+    check('  ...the riser shown with its prices at each end', /\$20 → \$32/.test(html));
+    check('sales and dollars are compared with last week', /63,412<\/strong> sales <em class="mm-delta up">▲ 11%<\/em>/.test(html)
+      && /changed hands <em class="mm-delta up">▲ 13%<\/em>/.test(html));
+    check('  ...and a mover missing from last week\'s lists is marked new, one that was there is not',
+      /2025 Prizm Card 0<em class="mm-new">New<\/em>/.test(html) && !/2025 Prizm Card 3<em class="mm-new">/.test(html));
+    check('the slab market index is in the strip, to a tenth, with its line', /\+2\.4%<\/strong> slab market index<svg class="mm-spark up"/.test(html));
+    const brief = (html.match(/<section class="mm-brief">([\s\S]*?)<\/section>/) || [])[1] || '';
+    check('the week in brief says what the figures below it show',
+      /slab market index moved \+2\.4% this week \(\+6\.1% over 30 days\)/.test(brief)
+      && /Sales were up 11% on last week: 63,412 against 57,110\./.test(brief)
+      && /7 of the 10 most-traded cards are from 2025 or 2026 sets\./.test(brief)
+      && /Gem mint 10s were 3 of the 8 biggest sales\./.test(brief), brief.replace(/<[^>]+>/g, ' | '));
+    check('  ...and leaves out a line the week cannot support',
+      !/most-traded cards are from/.test(mreport.renderReportBody({ ...c, more: { ...c.more, mostSold: c.more.mostSold.map(r => ({ ...r, name: '2018 ' + r.name.slice(5) })) } },
+        { week: '2026-W43', builtAt: '2026-10-19T12:00:00Z', site: 'x' })));
+    check('movers carry their rank and a bar sized by the move', /<span class="mm-rank">10<\/span>/.test(html)
+      && /<span class="mm-bar up"><i style="width:100%"><\/i><\/span>/.test(html));
+    // A week filed before any of this: the short lists, no prev, no index.
+    const old = mreport.renderReportBody({ ...c, more: undefined, market: undefined }, { week: '2026-W42', builtAt: '2026-10-12T12:00:00Z', site: 'x' });
+    check('a week filed before the deeper lists still renders, from the short ones',
+      /<span class="mm-rank">5<\/span>/.test(old) && !/<span class="mm-rank">6<\/span>/.test(old)
+        && !/mm-delta/.test(old) && !/slab market index/.test(old) && !/class="mm-new"/.test(old));
+  }
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall market-report checks passed');
   process.exit(failures ? 1 : 0);

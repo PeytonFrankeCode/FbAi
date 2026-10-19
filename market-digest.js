@@ -63,9 +63,21 @@ function digestContent(week7, month30) {
   const priciest = (week7.priciest || []).filter(r => r && r.title).slice(0, 3);
   const sets = (week7.topSets || []).filter(r => r && r.query).slice(0, 3);
   if (risers.length + players.length + mostSold.length < 3) return null;
+  // The email shows the short lists above; the web report goes deeper from
+  // the same boards (owner, Oct 2026: the page read thin at five and three).
+  const more = {
+    risers: cards.filter(r => r.changePct > 0).sort((a, b) => b.changePct - a.changePct).slice(0, 10),
+    fallers: cards.filter(r => r.changePct < 0).sort((a, b) => a.changePct - b.changePct).slice(0, 6),
+    players: ((month30 && month30.available && month30.playerMovers) || [])
+      .filter(r => r && r.query && Number.isFinite(r.changePct) && r.changePct > 0)
+      .sort((a, b) => b.changePct - a.changePct).slice(0, 8),
+    mostSold: (week7.mostSold || []).filter(r => r && r.query).slice(0, 10),
+    priciest: (week7.priciest || []).filter(r => r && r.title).slice(0, 8),
+    sets: (week7.topSets || []).filter(r => r && r.query).slice(0, 6),
+  };
   return {
     sales: week7.pricedSales || 0, value: week7.totalValue || 0, avg: week7.avgPrice || 0,
-    risers, fallers, players, mostSold, priciest, sets,
+    risers, fallers, players, mostSold, priciest, sets, more,
   };
 }
 
