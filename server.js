@@ -19372,11 +19372,15 @@ app.get('/api/biz/brief', async (req, res) => {
 // Two providers, picked by BIZ_AI_PROVIDER ('anthropic' or 'workers', default
 // anthropic when its key is set, else Workers AI). The owner's compare view
 // runs both on one question so the choice is made on real answers.
+// Anthropic is the owner's pick (Oct 2026, wrangler.toml). Chosen but keyless
+// reads as no provider, so the page says the key is missing rather than every
+// summary failing on a provider that cannot run.
 const BIZ_AI_MODEL = 'claude-haiku-5-5';
 const BIZ_WORKERS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 function _bizProvider() {
   const want = process.env.BIZ_AI_PROVIDER;
-  if (want === 'workers' || want === 'anthropic') return want;
+  if (want === 'anthropic') return process.env.ANTHROPIC_API_KEY ? 'anthropic' : null;
+  if (want === 'workers') return getAI() ? 'workers' : null;
   return process.env.ANTHROPIC_API_KEY ? 'anthropic' : (getAI() ? 'workers' : null);
 }
 const BIZ_AI_SYSTEM = [
