@@ -4983,6 +4983,9 @@ const RSI_JUNK_ONLY = `
           AND NOT ( ${_rsiJunkSql("COALESCE(title, '')")} )`;
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 // Raw, or a slab whose grader and grade the collector parsed.
+// A slab whose grader and grade the collector parsed; no raw copies.
+const RSI_GRADED_ONLY = `
+          AND COALESCE(TRIM(grader), '') <> '' AND COALESCE(TRIM(grade), '') <> ''`;
 const RSI_RAW_OR_GRADED = `
           AND ((1 = 1 ${RSI_RAW_ONLY}) OR (COALESCE(TRIM(grader), '') <> '' AND COALESCE(TRIM(grade), '') <> ''))`;
 
@@ -5204,9 +5207,20 @@ const MARKET_CARDS_PER_PLAYER = 10;
 // smoother line, for about a second more per query. Parallels as well
 // (MARKET_SERIES=graded,parallels) added little more for twice the query time,
 // so they stay out; MARKET_SERIES=base is the raw-only index.
-const MARKET_SERIES = new Set(String(process.env.MARKET_SERIES || 'graded').split(',')
+//
+// Slabs only since Oct 2026 (owner): a raw card sells on a condition its title
+// does not state, a slab's condition is on the label. Measured against
+// simulated markets whose answer is known (test/market-flat.test.js, 600
+// players): a true +9.9% over 90 days read +1.8% to +8.4% with raw copies in,
+// whose condition noise the per-player clamp flattens, and +7.8% to +9.4% on
+// slabs alone. Both read flat on a flat market. On Jul 19 - Oct 17 sales slabs
+// read +22.5% where the median graded card moved +0.9%: not drift, but two
+// averages, the index weighing 600 players equally. MARKET_SERIES=graded
+// brings raw back in beside the slabs.
+const MARKET_SERIES = new Set(String(process.env.MARKET_SERIES || 'slabs').split(',')
   .map(s => s.trim()).filter(s => s && s !== 'base'));
-const _mkSeriesOpts = () => ({ graded: MARKET_SERIES.has('graded'), parallels: MARKET_SERIES.has('parallels') });
+const _mkSeriesOpts = () => ({ graded: MARKET_SERIES.has('graded') || MARKET_SERIES.has('slabs'),
+  slabsOnly: MARKET_SERIES.has('slabs'), parallels: MARKET_SERIES.has('parallels') });
 const _mkCardKey = (playerExpr) => (MARKET_SERIES.has('parallels')
   ? `${_cardKeySql(playerExpr)} || '|' || ${RSI_PAR_KEY_SQL}` : _cardKeySql(playerExpr));
 // A player needs this many priced comparisons inside a bucket to contribute.
@@ -5313,7 +5327,7 @@ function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
 
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                         junk = false, labels = false, hasImage = false, useAlias = false, deny = [],
-                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, parallels = false }) {
+                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, slabsOnly = false, parallels = false }) {
   // Cards the checklists name as NOT base (_marketDenied), taken out before
   // each player's busiest ten are chosen, so the next card takes the slot.
   const denySql = deny.length
@@ -5335,7 +5349,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // `graded` lets slabs in whose grade was parsed into the columns: the card
   // key carries grader and grade, so each grade is its own card, measured only
   // against itself. Slabs the parser could not grade stay out, as for raw.
-  const saleTests = `${parallels ? RSI_SERIAL_UNLESS_PARALLEL : RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  const saleTests = `${parallels ? RSI_SERIAL_UNLESS_PARALLEL : RSI_BASE_SERIAL}${noOffer}${slabsOnly ? RSI_GRADED_ONLY : graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
   const columns = `${colTests}${saleTests}`;
   // The same key columns join the two passes. Player by `=`, which lets SQLite
   // build a lookup index on the chosen list; the rest by `IS`, because grader

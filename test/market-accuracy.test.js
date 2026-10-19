@@ -115,6 +115,11 @@ const d1 = {
 };
 require(path.join(__dirname, '..', 'db.js')).getNflDb = () => d1;
 process.env.CF_WORKER = '1';
+// The index's arithmetic, on raw fixtures whose condition noise and outliers
+// are the point. The live default follows slabs alone (Oct 2026); slabs and
+// raw share every line of this maths, and the basket choice has its own tests
+// (market-graded, market-flat), so these run with raw copies admitted.
+process.env.MARKET_SERIES = process.env.MARKET_SERIES || 'graded';
 const { app, backfillPlayerAliases } = require(path.join(__dirname, '..', 'server.js'));
 const { resolvePlayer, norm: normPlayer } = require(path.join(__dirname, '..', 'card-index.js'));
 const PORT = 3196;

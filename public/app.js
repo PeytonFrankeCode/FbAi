@@ -7701,7 +7701,7 @@ async function loadMarketIndex() {
     <div class="market-basket" id="market-basket">
       <div class="market-basket-head">
         <span class="market-basket-title">What's driving it</span>
-        <span class="market-basket-sub">most-traded base cards in the basket, raw and graded</span>
+        <span class="market-basket-sub">most-traded graded base cards in the basket</span>
       </div>
       <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
     </div>
@@ -7763,7 +7763,7 @@ async function loadMarketBasket(basketP, seq = _mkSeq) {
   wrap.innerHTML = `
     <div class="market-basket-head">
       <span class="market-basket-title">What's driving it</span>
-      <span class="market-basket-sub">${cards.length} most-traded base card${cards.length === 1 ? '' : 's'} in the basket, raw and graded</span>
+      <span class="market-basket-sub">${cards.length} most-traded graded base card${cards.length === 1 ? '' : 's'} in the basket</span>
     </div>
     <ul class="market-basket-list">
       ${cards.map(c => `
