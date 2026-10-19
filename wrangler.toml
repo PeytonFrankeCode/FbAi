@@ -32,6 +32,12 @@ run_worker_first = true
 SITE_URL = "https://thecardhuddle.com"
 EBAY_APP_ID = "PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8"
 USE_MOCK_DATA = "false"
+# Card Huddle for Business (owner, Oct 2026): sales open, and Claude writes the
+# summaries. Both also need secrets set in the Cloudflare dashboard:
+# STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET for checkout, ANTHROPIC_API_KEY
+# for the AI. Without the key the page says AI is not set up; nothing breaks.
+BUSINESS_CHECKOUT = "on"
+BIZ_AI_PROVIDER = "anthropic"
 
 # Cloudflare KV namespace for persistent storage (user accounts, subscriptions,
 # watchlists, etc.). Without this, data resets on every cold start.

@@ -256,7 +256,8 @@ const check = (label, ok, detail) => {
   // asserted is still that this whole region is inside one try/catch, and
   // the check below pins the new code inside it too.
   const at = workerSrc.indexOf('PriceSlotFiller(blocks');
-  const around = at === -1 ? '' : workerSrc.slice(Math.max(0, at - 900), at + 1400);
+  // Widened again for the priced-title rewriters (Oct 2026), pinned below.
+  const around = at === -1 ? '' : workerSrc.slice(Math.max(0, at - 900), at + 2400);
   check('a failure to price degrades to the page as it is today',
     /catch\s*\(priceErr\)/.test(around),
     'injection is wrapped so it cannot 502 a page over a missing median');
@@ -267,6 +268,9 @@ const check = (label, ok, detail) => {
   check('  ...and the ad gate is inside that same guard',
     /AdTagRemover/.test(guarded),
     'an ad-gate throw must degrade to the page, not error it');
+  check('  ...and so are the priced-title rewriters',
+    /new PricedTitle\(/.test(guarded) && /new PricedMeta\(/.test(guarded),
+    'a title-rewrite throw must degrade to the page, not error it');
 
   // 6. The pieces the call site needs must EXIST, not merely be called.
   //
@@ -315,6 +319,46 @@ const check = (label, ok, detail) => {
     rewriterBlock !== null && !/getNflDb|\.prepare\(/.test(rewriterBlock),
     rewriterBlock === null ? 'could not locate the loader — it may not exist'
       : 'a D1 query per page view is the design this replaced');
+}
+
+// ---- the median in a player page's search title ----
+//
+// The snippet must say the page's own number or nothing: a page with too few
+// sales keeps its plain title, and a title whose wording moved on is left
+// alone rather than half-rewritten.
+{
+  const { pricedHead } = require(path.join(__dirname, '..', 'price-block-core.js'));
+  const t = 'Bo Nix Football Cards — Values &amp; Checklist | The Card Huddle';
+  const d = 'Bo Nix football card price guide — see real eBay sold prices.';
+  const s = { sales: 1234, cards: 300, median: 1450, low: 100, high: 240000, top: [] };
+  const h = pricedHead(s, t, d);
+  check('a priced player title carries the median the page prints',
+    h.title === 'Bo Nix Football Cards — Median Sale $14.50 &amp; Checklist | The Card Huddle', h.title);
+  check('  ...and the description leads with it and the sale count',
+    h.description === 'Median sale $14.50 across 1,234 recent eBay sales. ' + d, h.description);
+  check('  ...in whichever escaping the attribute was read with',
+    pricedHead(s, t.replace('&amp;', '&'), '').title.includes('Median Sale $14.50 & Checklist'));
+  check('  ...whole dollars above $100, as on the page',
+    pricedHead({ ...s, median: 128400 }, t, '').title.includes('Median Sale $1,284 '));
+  check('an unpriced page keeps its title and description',
+    pricedHead(null, t, d).title === t && pricedHead(null, t, d).description === d);
+  check('a title in other words is left exactly as it was',
+    pricedHead(s, 'Bo Nix Cards | The Card Huddle', '').title === 'Bo Nix Cards | The Card Huddle');
+
+  const fs = require('fs');
+  const builder = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build-landing-pages.js'), 'utf8');
+  check('the player pages are still built with the phrase the rewrite looks for',
+    /const title = `\$\{p\.name\} \$\{S\.Word\} Cards — Values & Checklist \| The Card Huddle`;/.test(builder),
+    'build-landing-pages.js buildPlayerPage title changed; update pricedHead to match');
+
+  const w = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+  check('the worker rewrites the title and descriptions on priced player pages only',
+    /pkey\.startsWith\('player:'\) && blocks\.pages\[pkey\]/.test(w)
+      && /\.on\('title', new PricedTitle\(summary, pricedHead\)\)/.test(w)
+      && /\.on\('meta\[name="description"\]', new PricedMeta\(summary, pricedHead, 'description'\)\)/.test(w));
+  check('  ...with pricedHead handed over from server.js like the renderer',
+    /renderPriceBlock: priceRender, pricedHead,/.test(fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8'))
+      && (w.match(/renderPriceBlock, pricedHead, bizRevalueAll \}/g) || []).length === 2);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall price-block checks passed');

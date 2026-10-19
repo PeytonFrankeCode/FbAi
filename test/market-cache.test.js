@@ -38,9 +38,9 @@ let n = 0;
 for (let c = 0; c < 150; c++) {
   for (let d = -200; d <= 0; d++) {
     if ((c + d) % 3) continue;
-    ins.run(`i${n++}`, iso(d), `2020 Prizm Player ${c} Base #${c}`,
+    ins.run(`i${n++}`, iso(d), `2020 Prizm Player ${c} Base #${c} PSA 10`,
             Math.round(10000 * (1 + 0.05 * (d + 200) / 200)),
-            `Player ${c}`, '2020', 'Prizm', 'Base', String(c), '', '', 0.9);
+            `Player ${c}`, '2020', 'Prizm', 'Base', String(c), 'PSA', '10', 0.9);   // slabs: the market follows them
   }
 }
 

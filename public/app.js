@@ -7701,7 +7701,7 @@ async function loadMarketIndex() {
     <div class="market-basket" id="market-basket">
       <div class="market-basket-head">
         <span class="market-basket-title">What's driving it</span>
-        <span class="market-basket-sub">most-traded base cards in the basket, raw and graded</span>
+        <span class="market-basket-sub">most-traded graded base cards in the basket</span>
       </div>
       <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
     </div>
@@ -7763,7 +7763,7 @@ async function loadMarketBasket(basketP, seq = _mkSeq) {
   wrap.innerHTML = `
     <div class="market-basket-head">
       <span class="market-basket-title">What's driving it</span>
-      <span class="market-basket-sub">${cards.length} most-traded base card${cards.length === 1 ? '' : 's'} in the basket, raw and graded</span>
+      <span class="market-basket-sub">${cards.length} most-traded graded base card${cards.length === 1 ? '' : 's'} in the basket</span>
     </div>
     <ul class="market-basket-list">
       ${cards.map(c => `
@@ -9482,7 +9482,8 @@ function exportBulkCSV() {
 // ---- Grading Advisor ----
 // Grader and fee are the collector's (Oct 2026), remembered on this device.
 // The fee box shows the grader's standard tier until they type their own.
-const GRADING_DEFAULT_FEES = { PSA: 74.99, SGC: 15, CGC: 18 };
+// Must equal server.js GRADER_FEES (test/grading-advisor.test.js).
+const GRADING_DEFAULT_FEES = { PSA: 59.99, SGC: 50, CGC: 17 };
 function gradingGraderChanged() {
   const g = document.getElementById('grading-grader'), f = document.getElementById('grading-fee');
   if (g && f) f.placeholder = String(GRADING_DEFAULT_FEES[g.value] || '');

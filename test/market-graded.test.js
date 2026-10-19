@@ -7,6 +7,9 @@
 //     the card jumping 10x and back, and the index would be wrecked;
 //   - MARKET_SERIES=base still gives the raw-only index.
 //
+// Since Oct 2026 the default is slabs alone (MARKET_SERIES=slabs, see
+// test/market-flat.test.js for why); MARKET_SERIES=graded is raw and slabs.
+//
 // The base run is the same file in a child process, because MARKET_SERIES is
 // read when server.js loads.
 let DatabaseSync;
@@ -91,9 +94,17 @@ if (process.argv[2] === '--child') {
     if (!line) { console.error(p.stderr); return null; }
     return JSON.parse(line.slice(2));
   };
-  const graded = run(null);
+  const slabs = run(null);
+  const graded = run('graded');
   const base = run('base');
-  check('by default the index follows graded copies as well as raw',
+  check('by default the index follows slabs alone, never a raw copy',
+    slabs && slabs.available && graded && graded.available && base && base.available
+      && slabs.obs + base.obs === graded.obs && slabs.cards > 0 && slabs.graded === slabs.cards,
+    slabs && graded && base ? `sales used: slabs ${slabs.obs} + raw ${base.obs} vs both ${graded.obs}; PSA 10 rows ${slabs.graded}/${slabs.cards}` : 'a run failed');
+  check('  ...and reads the same rising market',
+    slabs && slabs.available && slabs.changePct > 0 && Math.abs(slabs.changePct - (base && base.changePct)) <= 1.5,
+    slabs && base ? `slabs ${slabs.changePct}% vs raw-only ${base.changePct}%` : '');
+  check('MARKET_SERIES=graded follows graded copies as well as raw',
     graded && graded.available && base && base.available && graded.obs > base.obs * 1.5,
     graded && base ? `sales used: graded ${graded.obs} vs raw-only ${base.obs}` : 'a run failed');
   check('  ...a slab never compared with its raw card: a market rising 8% reads as rising 8%',

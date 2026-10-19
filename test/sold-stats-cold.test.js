@@ -17,21 +17,32 @@ db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cen
 db.exec(`CREATE TABLE daily (sold_date TEXT, sales INTEGER, priced INTEGER, total_cents INTEGER)`);
 const DAY = 86400000;
 const iso = (o) => new Date(Date.now() + o * DAY).toISOString().slice(0, 10);
+// PSA 10s, because the market follows slabs (MARKET_SERIES, Oct 2026).
 const ins = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, player, year, set_name, parallel,
-  card_number, grader, grade, confidence, best_offer) VALUES (?,?,?,?,?,'2023','Prizm','',?,'','',0.9,0)`);
+  card_number, grader, grade, confidence, best_offer) VALUES (?,?,?,?,?,'2023','Prizm','',?,'PSA','10',0.9,0)`);
 let n = 0;
 // Thirty-five days of history: enough for a 30-day market, not a 90-day one.
 // A seller who writes the team (or their shop) into the player field.
 for (const [player, perDay] of [['Steady Climber', 0.01], ['Slow Fader', -0.005], ['Earl Campbell / Houston Oilers', 0.012]]) {
   for (let c = 1; c <= 4; c++) {
     for (let d = -35; d <= -1; d++) {
-      ins.run(`s${n++}`, iso(d), `2023 Prizm ${player} #${c}`, Math.round(4000 * Math.pow(1 + perDay, d + 35)), player, String(c));
+      ins.run(`s${n++}`, iso(d), `2023 Prizm ${player} #${c} PSA 10`, Math.round(4000 * Math.pow(1 + perDay, d + 35)), player, String(c));
     }
+  }
+}
+// The card movers board stays on raw base cards (it groups by card, not by
+// grade), so the seller-suffixed player trades raw as well, for its names.
+const raw = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, player, year, set_name, parallel,
+  card_number, grader, grade, confidence, best_offer) VALUES (?,?,?,?,?,'2023','Prizm','',?,'','',0.9,0)`);
+for (let c = 1; c <= 4; c++) {
+  for (let d = -35; d <= -1; d++) {
+    raw.run(`r${n++}`, iso(d), `2023 Prizm Earl Campbell / Houston Oilers #${c}`,
+            Math.round(2000 * Math.pow(1.012, d + 35)), 'Earl Campbell / Houston Oilers', String(c));
   }
 }
 // A minority spelling of a player, which sorts last alphabetically: the
 // label must be the spelling most of their sales use, not MAX().
-for (let d = -30; d <= -2; d += 7) ins.run(`m${n++}`, iso(d), '2023 Prizm Steady Climber #1', 4000, 'steady CLIMBER.', '1');
+for (let d = -30; d <= -2; d += 7) ins.run(`m${n++}`, iso(d), '2023 Prizm Steady Climber #1 PSA 10', 4000, 'steady CLIMBER.', '1');
 db.exec(`INSERT INTO daily SELECT sold_date, COUNT(*), COUNT(price_cents), SUM(price_cents) FROM sales GROUP BY sold_date`);
 
 let d1Queries = 0;

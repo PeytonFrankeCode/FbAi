@@ -199,12 +199,13 @@ for (let c = 1; c <= 4; c++) {
 // --- Players on the move: read off the market index ------------------------
 // The market measures price as it changes: a card's sale against its own
 // previous one, day to day. So the players here trade every day, as the
-// market's players do, rather than in two bursts.
+// market's players do, rather than in two bursts. PSA 10s, because the market
+// follows slabs (MARKET_SERIES, Oct 2026).
 function daily(player, number, startPrice, perDay) {
   for (let d = -29; d <= -1; d++) {
     const price = startPrice * Math.pow(1 + perDay, d + 29);
-    ins.run(`d${n++}`, iso(d), `2023 Prizm ${player} #${number}`, Math.round(price * 100),
-            player, '2023', 'Prizm', '', number, '', '', 0.9, null);
+    ins.run(`d${n++}`, iso(d), `2023 Prizm ${player} #${number} PSA 10`, Math.round(price * 100),
+            player, '2023', 'Prizm', '', number, 'PSA', '10', 0.9, null);
   }
 }
 // Four cards, each up ~1% a day: a player whose market rose.
@@ -214,7 +215,7 @@ daily('Lone Spike', '1', 40, 0.05);
 for (let c = 2; c <= 4; c++) daily('Lone Spike', String(c), 40, 0);
 // A handful of resales at a huge move: too little to rank.
 for (const [d, price] of [[-20, 10], [-19, 10], [-3, 90], [-2, 90]]) {
-  ins.run(`t${n++}`, iso(d), '2023 Prizm Few Resales #1', price * 100, 'Few Resales', '2023', 'Prizm', '', '1', '', '', 0.9, null);
+  ins.run(`t${n++}`, iso(d), '2023 Prizm Few Resales #1 PSA 10', price * 100, 'Few Resales', '2023', 'Prizm', '', '1', 'PSA', '10', 0.9, null);
 }
 
 // --- Set volume, for the demand board ---------------------------------------
