@@ -18767,6 +18767,9 @@ const _reportAdUnit = () => '<div class="mm-ad"><span class="mm-ad-label">Advert
   + '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>';
 async function _sendReport(res, rec, canonicalPath) {
   const archive = await _reportIndex();
+  // The week before, for "against last week" and the NEW marks.
+  const before = archive.filter(x => x.week < rec.week).sort((a, b) => (a.week < b.week ? 1 : -1))[0];
+  const prevRec = before ? await _reportFor(before.week).catch(() => null) : null;
   const title = mreport.reportTitle(rec.week, rec.builtAt);
   const desc = mreport.reportSummary(rec.content);
   const start = mreport.weekEnding(rec.week, rec.builtAt);
@@ -18783,7 +18786,8 @@ async function _sendReport(res, rec, canonicalPath) {
     title: title + ' · The Card Huddle', description: desc, canonical: NEWS_SITE + canonicalPath,
     ads: true, jsonLd, css: mreport.REPORT_CSS,
     crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">News</a><span class="sep">/</span><span aria-current="page">Market Movers</span>',
-    body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive }),
+    body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive,
+      prev: prevRec && prevRec.content }),
   }));
 }
 function _reportMissing(res) {
@@ -20026,7 +20030,18 @@ async function _digestContentNow() {
     (async () => (await cacheGet(SOLD_STATS_KEY(7))) || cacheGet(SOLD_STATS_LAST_KEY(7)))(),
     (async () => (await cacheGet(SOLD_STATS_KEY(30))) || cacheGet(SOLD_STATS_LAST_KEY(30)))(),
   ]);
-  return digest.digestContent(w, m);
+  const content = digest.digestContent(w, m);
+  if (!content) return content;
+  // The slab market index for the week and the month, as the Market tab last
+  // built it: read from its cache only, never computed here.
+  const idx = async (d) => {
+    const hit = await cacheGet(_marketIndexKey(d)).catch(() => null);
+    if (!hit || !hit.available || !Number.isFinite(hit.changePct)) return null;
+    return { changePct: hit.changePct,
+             series: (hit.series || []).map(p => Number(p.score)).filter(Number.isFinite).slice(-31) };
+  };
+  const [d7, d30] = await Promise.all([idx(7), idx(30)]);
+  return (d7 || d30) ? { ...content, market: { d7, d30 } } : content;
 }
 
 function _digestMessage(content, week, sub) {
