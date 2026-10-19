@@ -9367,6 +9367,7 @@ async function warmMarket() {
   return _asD1Source('market-warm', () => _warmMarket());
 }
 
+const MARKET_CRON_REBUILD_S = 6 * 3600;
 async function _warmMarket() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
@@ -9376,8 +9377,16 @@ async function _warmMarket() {
     jobs.push([`index:${days}d`, _marketIndexKey(days), () => _computeMarketIndex(db, days)]);
     jobs.push([`basket:${days}d`, _marketBasketKey(days, ''), () => _computeMarketBasket(db, days, '')]);
   }
+  // Also rebuilt here: an entry over MARKET_CRON_REBUILD_S old (Oct 2026). The
+  // visitor-side refresh runs after the response under the Worker's time
+  // limit, and the 7-day build kept missing it: the Market showed Oct 14 for a
+  // day while sales through Oct 17 sat in the table. By age, not by asking the
+  // database for its newest day, so a quiet tick still costs no queries.
   for (const [label, key, compute] of jobs) {
-    if (await cacheGet(key)) { done.push(`${label}:cached`); continue; }
+    const hit = await cacheGet(key);
+    const age = hit ? (Date.now() - Date.parse(hit.generatedAt || '')) / 1000 : 0;
+    const behind = !!hit && !(age <= MARKET_CRON_REBUILD_S);
+    if (hit && !behind) { done.push(`${label}:cached`); continue; }
     // A tick that finds the database resting builds nothing, and one whose
     // build overloads it stops there: six heavy queries in a row against a
     // database already over its limit is how the last outage was sustained.

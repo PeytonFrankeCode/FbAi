@@ -1318,7 +1318,7 @@ export default {
         // Rebuild any missing Market tab entry — whole-market index and basket
         // for each period — so the first visitor after a deploy does not wait
         // for the full query. Every tick, because it is six KV reads when
-        // nothing is missing; see warmMarket for why stale ones are left alone.
+        // nothing is missing, plus any entry over 6 hours old (see warmMarket).
         if (typeof warmMarket === 'function') {
           await warmMarket().catch(err => console.error('[Cron] market warm failed:', err && err.message || err));
         } else {

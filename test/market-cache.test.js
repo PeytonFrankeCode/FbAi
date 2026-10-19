@@ -266,6 +266,12 @@ const check = (label, ok, detail) => {
     /warmMarket\(\)/.test(code) && (code.match(/warmMarket/g) || []).length >= 4,
     'a name missing from the init() whitelist makes the cron a silent no-op');
 
+  {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'server.js'), 'utf8');
+    check('the cron rebuilds a Market entry over 6 hours old, not only missing ones',
+      /const MARKET_CRON_REBUILD_S = 6 \* 3600;/.test(src) && /const behind = !!hit && !\(age <= MARKET_CRON_REBUILD_S\);/.test(src)
+      && /if \(hit && !behind\) \{ done\.push/.test(src));
+  }
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall market-cache checks passed');
   process.exit(failures ? 1 : 0);
