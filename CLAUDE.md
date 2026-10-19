@@ -24,3 +24,12 @@ and a feature:
 
 The optional ad-free purchase stays optional: everything works the same
 without it.
+
+## Working with the owner
+
+- **End every reply that did work with a short summary at the bottom** of what
+  was done: what changed, where (PR or branch), and anything the owner needs to
+  do (owner, Oct 2026).
+- Commit, push and open pull requests without asking first (owner, Oct 2026).
+- The owner has no terminal, console or wrangler. Run every command yourself;
+  give dashboard click-paths or browser URLs for anything only they can do.
