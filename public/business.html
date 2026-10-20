@@ -246,7 +246,6 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
 .qs { display: flex; flex-wrap: wrap; gap: 8px; animation: aiin .28s ease-out both }
 .q { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line2); background: var(--surface); color: var(--fg2); cursor: pointer; text-align: left }
 .q:hover { color: var(--fg); border-color: var(--accent) }
-.aicompare { padding: 8px 16px 0; font-size: 12.5px }
 .aiform { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); margin: 0 }
 .aiform input { flex: 1; border-radius: 999px; padding: 10px 16px; background: var(--sunk); border-color: transparent; font-size: 16px }
 .aiform input:focus { border-color: var(--accent); outline: none; background: var(--surface) }
@@ -559,8 +558,6 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
           <button class="q" type="button">What should I feature in my next Whatnot show?</button>
         </div>
       </div>
-      <label id="comparewrap" class="check aicompare" hidden>
-        <input type="checkbox" id="compare"> Owner test: ask Claude Haiku and Workers AI side by side</label>
       <form class="aiform" id="askform"><input id="askq" aria-label="Your question" placeholder="Ask about your business…" autocomplete="off" maxlength="500">
         <button type="submit" id="asksend" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
     </div>

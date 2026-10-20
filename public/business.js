@@ -525,15 +525,8 @@
     bubble('me', `<p>${esc(q)}</p>`);
     const done = thinking();
     try {
-      if ($('compare').checked) {
-        const r = await api('/api/biz/compare', { method: 'POST', body: JSON.stringify({ q }) });
-        done();
-        const one = (name, x) => answer(`<span class="who">${name} · ${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}`);
-        one('Claude Haiku 5.5', r.anthropic); one('Workers AI', r.workers);
-      } else {
-        const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
-        done(); answer(fmt(r.answer));
-      }
+      const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
+      done(); answer(fmt(r.answer));
     } catch (err) { done(); bubble('ai', `<p class="err">${esc(err.message)}</p>`); }
     busy = false; $('asksend').disabled = false; $('aifab').classList.remove('busy');
     if (!$('aipanel').hidden) $('askq').focus();
@@ -544,7 +537,6 @@
   function start(me) {
     $('landing').hidden = true; $('app').hidden = false;
     $('billing').hidden = !(me && me.user && !me.admin);
-    $('comparewrap').hidden = !(me && me.admin);
     show('brief');
   }
   gate();
