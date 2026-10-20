@@ -4,6 +4,8 @@
 // gate keeps exactly the reading he had.
 const path = require('path');
 process.env.CF_WORKER = '1';
+// Raw-sale fixtures: read with the raw-card gates (server.js PLAYER_SLABS_ONLY).
+process.env.PLAYER_MARKET_SERIES = process.env.PLAYER_MARKET_SERIES || 'graded';
 const S = require(path.join(__dirname, '..', 'server.js'));
 
 let failures = 0;

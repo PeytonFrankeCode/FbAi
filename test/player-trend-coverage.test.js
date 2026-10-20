@@ -54,6 +54,8 @@ const d1 = { prepare(sql) {
 } };
 require(path.join(__dirname, '..', 'db.js')).getNflDb = () => d1;
 process.env.CF_WORKER = '1';
+// Raw-sale fixtures: read with the raw-card gates (server.js PLAYER_SLABS_ONLY).
+process.env.PLAYER_MARKET_SERIES = process.env.PLAYER_MARKET_SERIES || 'graded';
 const { app } = require(path.join(__dirname, '..', 'server.js'));
 const PORT = 3245;
 const server = app.listen(PORT);

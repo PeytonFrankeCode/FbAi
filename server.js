@@ -10459,7 +10459,8 @@ app.get('/api/player-index', async (req, res) => {
 async function _playerIndexCached(db, days, player) {
   // v8: base cards by checklist, outlier card-days set aside.
   // v11: a pooled, market-blended reading for players too thin for the measured one.
-  return await _marketCached(`playerindex:v11:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  // v12: slabs only, two sales a card and a window.
+  return await _marketCached(`playerindex:v12:${PLAYER_SLABS_ONLY ? 'slabs' : 'graded'}:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -10526,9 +10527,16 @@ function _marketRatioFrom(series, fromDay) {
 // Measured on the flat-market fixture (true prices never move), see
 // test/market-accuracy.test.js for the figures this was tuned against.
 const PLAYER_TREND_OUTLIER_X = 3;         // a card-day this far off the card's typical day is set aside
-const PLAYER_TREND_MIN_CARD_DAYS = 3;     // a card must trade on this many days to say anything
+// The player market is slabs (owner, Oct 2026), and with slabs two sales are
+// enough: a graded copy's grade and price are read reliably, where a raw
+// card's condition is anyone's guess, so a slab card's second sale already
+// says where it trades. PLAYER_MARKET_SERIES=graded brings raw cards back
+// with the gates they need (3 days a card, 8 card-days a window); the test
+// markets built from raw sales use it.
+const PLAYER_SLABS_ONLY = (process.env.PLAYER_MARKET_SERIES || 'slabs') !== 'graded';
+const PLAYER_TREND_MIN_CARD_DAYS = PLAYER_SLABS_ONLY ? 2 : 3;   // a card must trade on this many days to say anything
 function _playerTrendWindow(days) { return days >= 90 ? 14 : days >= 30 ? 7 : 3; }
-const PLAYER_TREND_MIN_WINDOW = 8;        // card-days needed in a window for it to count
+const PLAYER_TREND_MIN_WINDOW = PLAYER_SLABS_ONLY ? 2 : 8;     // card-days needed in a window for it to count
 // ESTIMATED POINTS. Collection gaps leave whole days with no sales, and at the
 // end of the data (the collector's lag plus any uncollected days) a player's
 // last few days are routinely empty — which made every 7-day player view say
@@ -10546,8 +10554,9 @@ const PLAYER_TREND_MAX_WIDEN = 2;
 // Read far enough back for the first window to widen and the period to shift.
 function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (PLAYER_TREND_MAX_WIDEN + 1); }
 
-// A single player's chart follows more of their cards than the whole-market
-// basket takes from each player, and their graded copies too. The market's ten
+// A player's chart reads graded copies only, like the market (owner, Oct
+// 2026: the player market is slabs, always). It follows more of their cards
+// than the whole-market basket takes from each player. The market's ten
 // raw base cards per player are plenty across 600 players; for one player they
 // are not: Bo Nix, with ~8,000 sales, had three qualifying card-days a week
 // against the eight a window needs, because a newer player's sales are mostly
@@ -10567,7 +10576,7 @@ async function _playerTrendQuery(db, throughIso, days, player) {
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER: P, CARD, P, JOIN: '', ALIAS_FILTER: '', noOffer,
                           extraWhere: ' AND player = ? AND confidence >= ?',
-                          perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true })}
+                          perPlayer: PLAYER_TREND_CARDS, slabsOnly: PLAYER_SLABS_ONLY, graded: !PLAYER_SLABS_ONLY, parallels: true })}
      SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
@@ -10739,7 +10748,7 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null,
 //  - and it carries an 80% band, so a thin reading says it is thin.
 // Tuned and checked by /api/debug/player-index-accuracy, which thins out
 // well-traded players and compares both readings with their full-data trend.
-const PLAYER_POOLED_MIN_WINDOW = 3;
+const PLAYER_POOLED_MIN_WINDOW = PLAYER_SLABS_ONLY ? 2 : 3;
 const PLAYER_POOLED_MIN_CARD_DAYS = 2;
 const PLAYER_POOLED_SHRINK_K = 6;
 // The market's weight by period, from /api/debug/player-index-accuracy on

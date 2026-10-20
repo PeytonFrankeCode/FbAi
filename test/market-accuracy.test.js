@@ -120,6 +120,9 @@ process.env.CF_WORKER = '1';
 // raw share every line of this maths, and the basket choice has its own tests
 // (market-graded, market-flat), so these run with raw copies admitted.
 process.env.MARKET_SERIES = process.env.MARKET_SERIES || 'graded';
+// The player markets here are raw sales too, so the player trend reads them
+// with the raw-card gates (server.js PLAYER_SLABS_ONLY).
+process.env.PLAYER_MARKET_SERIES = process.env.PLAYER_MARKET_SERIES || 'graded';
 const { app, backfillPlayerAliases } = require(path.join(__dirname, '..', 'server.js'));
 const { resolvePlayer, norm: normPlayer } = require(path.join(__dirname, '..', 'card-index.js'));
 const PORT = 3196;
