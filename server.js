@@ -676,6 +676,9 @@ const RL_TIERS = [
   // A survey answer is a person's two minutes; a script posting hundreds is
   // noise in the admin tab.
   { name: 'survey', minute: 3, hour: 10, match: (p) => p === '/api/survey' },
+  // An article's read beacons (/api/news/beacon): a reader sends a handful;
+  // each is one D1 write, so a script must not be able to post thousands.
+  { name: 'beacon', minute: 30, hour: 300, match: (p) => p === '/api/news/beacon' },
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
@@ -18720,6 +18723,7 @@ function newsShell(opts) {
     + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
     + '<link rel="stylesheet" href="/sets/landing.css">'
     + '<style>' + NEWS_CSS + (opts.css || '') + '</style>' + jsonLd
+    + (opts.track ? _articleTracker(opts.track) : '')
     + '</head><body>' + (opts.preview ? '<div class="preview-bar">Preview: not published yet</div>' : '')
     // The same chrome as the player and set pages (scripts/build-landing-pages.js).
     + '<header class="lp-header"><a class="lp-brand" href="/"><img src="/logo-dark.png" alt="The Card Huddle"></a>'
@@ -18840,7 +18844,7 @@ async function _sendReport(res, rec, canonicalPath) {
   res.set('Cache-Control', 'public, max-age=900');
   res.send(newsShell({
     title: title + ' · The Card Huddle', description: desc, canonical: NEWS_SITE + canonicalPath,
-    ads: true, jsonLd, css: mreport.REPORT_CSS,
+    ads: true, jsonLd, css: mreport.REPORT_CSS, track: 'market-movers-' + String(rec.week).toLowerCase(),
     crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">News</a><span class="sep">/</span><span aria-current="page">Market Movers</span>',
     body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive,
       prev: prevRec && prevRec.content }),
@@ -18941,8 +18945,143 @@ async function _articlePage(a, { preview = false } = {}) {
   return newsShell({ title: a.title + ' · The Card Huddle', description: desc,
                      canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd,
                      crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">News</a><span class="sep">/</span><span aria-current="page">' + NEWS.esc(a.title) + '</span>',
-                     ads: !preview, image, preview, noindex: preview });
+                     ads: !preview, image, preview, noindex: preview, track: preview ? null : a.slug });
 }
+
+// ---- How each article does (owner, Oct 2026) ----
+// The admin's Articles page shows, per article: views, time on the page,
+// how many read to the end, where readers came from, and the clicks it led
+// to. The page sends a few small beacons (a view, seconds visible, reaching
+// the end, an ad or site click) and each adds to one D1 row per article per
+// day. Only browsers that run the script count, so crawlers do not; nothing
+// about the reader is kept. Ad clicks are a browser's best guess (focus
+// moving into an ad's frame): AdSense's own report is the real number.
+const ARTICLE_STATS_TABLE = 'article_stats';
+const ARTICLE_REFS = ['search', 'social', 'direct', 'site', 'other'];
+const ARTICLE_COLS = ['views', 'seconds', 'read_end', 'ad_clicks', 'site_clicks', ...ARTICLE_REFS.map(r => 'from_' + r)];
+const ARTICLE_MAX_SECONDS = 1800;
+const _REPORT_TRACK = /^market-movers-\d{4}-w\d{2}$/;
+let _articleStatsReady = null;
+async function _articleStatsDb() {
+  const db = getNflDb();
+  if (!db) return null;
+  if (_articleStatsReady === null) {
+    try {
+      await db.prepare(
+        `CREATE TABLE IF NOT EXISTS ${ARTICLE_STATS_TABLE} (
+           day  TEXT NOT NULL,
+           slug TEXT NOT NULL,
+           ${ARTICLE_COLS.map(c => c + ' INTEGER NOT NULL DEFAULT 0').join(',\n           ')},
+           PRIMARY KEY (day, slug)
+         )`).run();
+      _articleStatsReady = true;
+    } catch (err) {
+      console.error('[news/stats] table unavailable:', err && err.message);
+      _articleStatsReady = false;
+    }
+  }
+  return _articleStatsReady ? db : null;
+}
+
+function _articleTracker(slug) {
+  const s = JSON.stringify(String(slug)).replace(/</g, '\\u003c');
+  return '<script>(function(){var s=' + s + ',t0=Date.now(),on=document.visibilityState==="visible"?t0:0,acc=0,seen=0,ended=0,ad=0;'
+    + 'function b(e,x){try{var d=JSON.stringify(Object.assign({s:s,e:e},x||{}));'
+    + 'if(navigator.sendBeacon&&navigator.sendBeacon("/api/news/beacon",new Blob([d],{type:"application/json"})))return;'
+    + 'fetch("/api/news/beacon",{method:"POST",headers:{"Content-Type":"application/json"},body:d,keepalive:true}).catch(function(){})}catch(_){}}'
+    + 'var h="";try{h=document.referrer?new URL(document.referrer).hostname:""}catch(_){}'
+    + 'b("v",{r:!h?"direct":h===location.hostname?"site"'
+    + ':/(^|\\.)(google|bing|duckduckgo|yahoo|ecosia|brave|search\\.yahoo)\\./.test(h)?"search"'
+    + ':/(facebook|fb\\.|instagram|(^|\\.)t\\.co$|twitter|(^|\\.)x\\.com$|reddit|tiktok|youtube|threads|pinterest|discord)/.test(h)?"social":"other"});'
+    + 'function flush(){if(on){acc+=(Date.now()-on)/1000;on=Date.now()}var t=Math.round(acc);if(t>0){b("t",{t:t});acc-=t}}'
+    + 'document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){flush();on=0}else on=Date.now()});'
+    + 'addEventListener("pagehide",function(){flush();on=0});'
+    // Read to the end: the end of the article on screen after 15 seconds on
+    // the page, so a short piece is not "read" the moment it loads.
+    + 'function chk(){if(!ended&&seen&&Date.now()-t0>=15000){ended=1;b("e")}}setTimeout(chk,15100);'
+    // It runs in <head>, so the article is looked for once the page is parsed.
+    + 'function watch(){var art=document.querySelector("article")||document.querySelector("main");'
+    + 'if(art&&"IntersectionObserver"in window){var end=document.createElement("span");art.appendChild(end);'
+    + 'new IntersectionObserver(function(es){seen=es[0].isIntersecting?1:0;chk()}).observe(end)}}'
+    + 'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",watch);else watch();'
+    + 'addEventListener("blur",function(){setTimeout(function(){var f=document.activeElement;'
+    + 'if(!ad&&f&&f.tagName==="IFRAME"&&f.closest("ins.adsbygoogle")){ad=1;b("a")}},0)});'
+    + 'document.addEventListener("click",function(ev){var a=ev.target.closest&&ev.target.closest("a[href]");if(!a)return;'
+    + 'try{var u=new URL(a.href);if(u.hostname===location.hostname&&!/^\\/news(\\/|$)/.test(u.pathname))b("s")}catch(_){}});'
+    + '})();</script>';
+}
+
+function _articleBeaconRow(body) {
+  const row = Object.fromEntries(ARTICLE_COLS.map(c => [c, 0]));
+  const e = body && body.e;
+  if (e === 'v') { row.views = 1; row['from_' + (ARTICLE_REFS.includes(body.r) ? body.r : 'other')] = 1; }
+  else if (e === 't') row.seconds = Math.max(0, Math.min(ARTICLE_MAX_SECONDS, Math.round(Number(body.t) || 0)));
+  else if (e === 'e') row.read_end = 1;
+  else if (e === 'a') row.ad_clicks = 1;
+  else if (e === 's') row.site_clicks = 1;
+  else return null;
+  return ARTICLE_COLS.some(c => row[c]) ? row : null;
+}
+
+app.post('/api/news/beacon', async (req, res) => {
+  const body = req.body || {};
+  const slug = String(body.s || '').toLowerCase();
+  const ua = String(req.headers['user-agent'] || '');
+  const row = _articleBeaconRow(body);
+  // Only a live article or a filed weekly report, so a stranger cannot make
+  // up rows for pages that do not exist.
+  const known = row && ua && !_BOT_UA.test(ua) && /^[a-z0-9-]{1,90}$/.test(slug)
+    && (_REPORT_TRACK.test(slug) || newsPublished().some(a => a.slug === slug));
+  if (known) {
+    try {
+      const db = await _articleStatsDb();
+      if (db) {
+        await db.prepare(
+          `INSERT INTO ${ARTICLE_STATS_TABLE} (day, slug, ${ARTICLE_COLS.join(', ')})
+           VALUES (?, ?, ${ARTICLE_COLS.map(() => '?').join(', ')})
+           ON CONFLICT(day, slug) DO UPDATE SET ${ARTICLE_COLS.map(c => `${c} = ${c} + excluded.${c}`).join(', ')}`)
+          .bind(new Date().toISOString().slice(0, 10), slug, ...ARTICLE_COLS.map(c => row[c])).run();
+      }
+    } catch (err) {
+      console.error('[news/beacon]', err && err.message);
+    }
+  }
+  res.status(204).end();
+});
+
+// The admin table: each article's totals over the last N days, and the
+// views by day for the chart.
+app.get('/api/admin/news/stats', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
+  const since = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10);
+  const db = await _articleStatsDb();
+  if (!db) return res.json({ days, since, articles: [], daily: [], available: false });
+  try {
+    const sums = ARTICLE_COLS.map(c => `SUM(${c}) AS ${c}`).join(', ');
+    const per = await db.prepare(
+      `SELECT slug, ${sums}, MIN(day) AS first_day FROM ${ARTICLE_STATS_TABLE} WHERE day >= ? GROUP BY slug ORDER BY views DESC`).bind(since).all();
+    const daily = await db.prepare(
+      `SELECT day, SUM(views) AS views FROM ${ARTICLE_STATS_TABLE} WHERE day >= ? GROUP BY day ORDER BY day`).bind(since).all();
+    const titles = new Map(loadNews().map(a => [a.slug, a.title]));
+    const label = (slug) => titles.get(slug)
+      || (_REPORT_TRACK.test(slug) ? 'Market Movers, week ' + Number(slug.slice(-2)) + ', ' + slug.slice(14, 18) : slug);
+    const articles = ((per && per.results) || []).map(r => {
+      const o = { slug: r.slug, title: label(r.slug),
+        url: _REPORT_TRACK.test(r.slug) ? '/news/market-movers/' + r.slug.slice(14).toUpperCase() : '/news/' + r.slug };
+      for (const c of ARTICLE_COLS) o[c] = Number(r[c]) || 0;
+      o.avgSeconds = o.views ? Math.round(o.seconds / o.views) : 0;
+      o.readPct = o.views ? Math.round(100 * Math.min(o.read_end, o.views) / o.views) : 0;
+      o.searchPct = o.views ? Math.round(100 * o.from_search / o.views) : 0;
+      return o;
+    });
+    res.json({ days, since, available: true, articles,
+      daily: ((daily && daily.results) || []).map(r => ({ day: r.day, views: Number(r.views) || 0 })) });
+  } catch (err) {
+    console.error('[news/stats]', err && err.message);
+    res.status(500).json({ error: 'Stats could not be read' });
+  }
+});
 
 // Article photos (the editor uploads them, already shrunk to WebP in the
 // browser). Kept in the R2 bucket under news/, named by their content, so the
