@@ -322,6 +322,109 @@
     catch (err) { $('invstatus').textContent = err.message; }
   });
 
+  // ---- Add cards from photos (owner, Oct 2026): up to 40 at once ----
+  // Each photo is shrunk here first (1280px, JPEG), which is quicker to send and
+  // costs the AI less, then read four at a time (/api/biz/identify) so the rows
+  // fill in as they finish. Nothing is added until the seller has looked: every
+  // row is editable, and only the ticked ones go in.
+  const PH_MAX = 40, PH_AT_ONCE = 4;
+  let phRows = [];
+  async function shrinkPhoto(file, max = 1280) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.82);
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const CONF = { high: ['ok', 'Sure'], medium: ['warn', 'Check it'], low: ['bad', 'Unsure'] };
+  function phPaint(r) {
+    const el = r.el;
+    el.className = 'ph-row' + (r.state === 'reading' || r.state === 'wait' ? ' reading' : '') + (r.state === 'failed' ? ' failed' : '');
+    const meta = el.querySelector('.ph-meta');
+    if (r.state === 'wait') meta.innerHTML = 'Waiting…';
+    else if (r.state === 'reading') meta.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Reading the card…';
+    else if (r.state === 'failed') meta.innerHTML = `<span class="err">${esc(r.error)}</span>`;
+    else {
+      const [cls, word] = CONF[r.confidence] || CONF.medium;
+      const v = r.value || {};
+      meta.innerHTML = `<span class="pill ${cls}">${word}</span>`
+        + (v.market != null ? `<span>Sells for about <b>${money(v.market)}</b> (${v.n} sales)</span>` : '<span>No recent sales to price it</span>')
+        + (r.note ? `<span>${esc(r.note)}</span>` : '');
+    }
+  }
+  function phCount() {
+    const n = phRows.filter(r => r.state === 'done' && r.el.querySelector('.ph-pick').checked).length;
+    const busy = phRows.filter(r => r.state === 'wait' || r.state === 'reading').length;
+    $('ph-acts').hidden = !phRows.length;
+    $('ph-add').textContent = `Add ${n} card${n === 1 ? '' : 's'}`;
+    $('ph-add').disabled = !n;
+    const done = phRows.length - busy;
+    $('ph-status').textContent = !phRows.length ? '' : busy ? `Reading ${done} of ${phRows.length}…` : `${phRows.length} photo${phRows.length === 1 ? '' : 's'} read. Check each one, then add.`;
+  }
+  async function phWork() {
+    for (;;) {
+      const r = phRows.find(x => x.state === 'wait');
+      if (!r) return;
+      r.state = 'reading'; phPaint(r); phCount();
+      try {
+        const out = await api('/api/biz/identify', { method: 'POST', body: JSON.stringify({ image: await shrinkPhoto(r.file) }) });
+        const c = out.card || {};
+        r.state = 'done'; r.confidence = c.confidence; r.note = c.note; r.value = out.value;
+        const f = (k) => r.el.querySelector('.ph-' + k);
+        f('title').value = c.title || '';
+        f('grade').value = c.grade || '';
+        if (out.value && out.value.market != null) f('price').value = out.value.market;
+        f('pick').checked = !!c.title && c.confidence !== 'low';
+      } catch (err) { r.state = 'failed'; r.error = err.message; }
+      phPaint(r); phCount();
+    }
+  }
+  $('ph-files').addEventListener('change', () => {
+    const files = [...$('ph-files').files].filter(f => /^image\//.test(f.type));
+    $('ph-files').value = '';
+    const room = PH_MAX - phRows.length;
+    if (!room) { $('ph-status').textContent = `That's ${PH_MAX} photos. Add these first, then choose more.`; return; }
+    for (const file of files.slice(0, room)) {
+      const el = document.createElement('div');
+      const thumb = URL.createObjectURL(file);
+      el.innerHTML = `<input type="checkbox" class="ph-pick" aria-label="Add this card"><img src="${thumb}" alt="">
+        <div class="ph-fields"><input class="ph-title" aria-label="Card" placeholder="Card title">
+          <input class="ph-grade" aria-label="Grade" placeholder="Raw or PSA 10"><input class="ph-price" inputmode="decimal" aria-label="Your price" placeholder="$ price">
+          <div class="ph-meta"></div></div>`;
+      el.querySelector('.ph-pick').addEventListener('change', phCount);
+      $('ph-list').appendChild(el);
+      const r = { file, el, thumb, state: 'wait' };
+      phRows.push(r); phPaint(r);
+    }
+    if (files.length > room) $('ph-status').textContent = `Only the first ${room} were taken: ${PH_MAX} at a time.`;
+    phCount();
+    for (let i = 0; i < PH_AT_ONCE; i++) phWork();
+  });
+  function phClear() {
+    phRows.forEach(r => URL.revokeObjectURL(r.thumb));
+    phRows = []; $('ph-list').innerHTML = ''; phCount();
+  }
+  $('ph-clear').addEventListener('click', phClear);
+  $('ph-add').addEventListener('click', async () => {
+    const take = phRows.filter(r => r.state === 'done' && r.el.querySelector('.ph-pick').checked);
+    const items = take.map(r => ({ title: r.el.querySelector('.ph-title').value.trim(), grade: r.el.querySelector('.ph-grade').value.trim(),
+      price: r.el.querySelector('.ph-price').value, platform: $('ph-platform').value })).filter(x => x.title);
+    if (!items.length) return;
+    $('ph-add').disabled = true;
+    try {
+      await api('/api/biz/inventory', { method: 'POST', body: JSON.stringify({ items }) });
+      phRows = phRows.filter(r => !take.includes(r));
+      take.forEach(r => { URL.revokeObjectURL(r.thumb); r.el.remove(); });
+      phCount();
+      $('invstatus').textContent = `Added ${items.length} card${items.length === 1 ? '' : 's'} from photos.`;
+      loadInventory();
+    } catch (err) { $('ph-status').textContent = err.message; phCount(); }
+  });
+
   // CSV: quoted fields, commas inside quotes, a header row.
   function parseCsv(text) {
     const rows = []; let row = [], cell = '', q = false;
