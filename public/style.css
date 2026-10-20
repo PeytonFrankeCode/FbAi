@@ -10196,3 +10196,119 @@ html.install-open { overflow: hidden; }
 .scan-search-note strong { color: var(--text-primary); }
 .scan-search-note-btn { margin-left: 0.4rem; padding: 0.15rem 0.6rem; border: 1px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
 .scan-search-note-btn:hover { background: var(--accent); color: var(--bg-primary); }
+
+/* ==== Easier on the eyes, easier to get around (owner, Oct 2026) ==========
+   From a beta reviewer on a phone: "better layout, easier to navigate, easier
+   on the eyes". Styling only: nothing here changes what any control does.
+
+   1. Secondary text you can read. The dark theme's muted grey (#475569 on
+      #0c0e14) was about 2.5:1, under the 4.5:1 a label needs; these are 5:1+.
+      :not([data-theme="light"]) so the light theme keeps its own values. */
+:root:not([data-theme="light"]) {
+  --text-muted: #8a97ab;
+  --text-faint: #5b677a;
+  --border-primary: #222b3d;
+}
+
+/* 2. Results that read as a list of sales, not a wall of badges: the SOLD
+      tag goes quiet (every card on a sold search is sold), the team stripe
+      thins, and the set label stops competing with the price. */
+.sold-badge {
+  background: rgba(10, 12, 18, 0.72);
+  color: #e6e9ef;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+[data-theme="light"] .sold-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #3b4a41;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.card-accent { height: 2px; opacity: 0.85; }
+.card-tag { color: var(--text-secondary); font-weight: 600; }
+
+/* 3. Phones. The phone layout (.mobile-layout, set by app.js for screens up
+      to 768px or when picked in settings) used to zoom the whole site to 85%
+      over an 11px base, which put labels and chips near 9px: the main thing
+      "easier on the eyes" was about. Now it renders at full size, with the
+      ad units' counter-zoom undone to match, the search box near the top
+      and one compact header. */
+.mobile-layout body { zoom: 1; font-size: 15px; }
+.mobile-layout .home-ad .home-ad-ins,
+.mobile-layout .cl-ad .cl-ad-ins,
+.mobile-layout .market-ad .market-ad-ins { zoom: 1; }
+/* The beta strip: one quiet line. */
+.mobile-layout .site-banner-link { padding: 0.4rem 0.4rem 0.4rem 0.75rem; }
+.mobile-layout .site-banner-text { font-size: 0.74rem; }
+.mobile-layout .site-banner-cta { display: none; }
+
+/* Header: logo left, log-in right, no tagline; the glow off. */
+.mobile-layout header { padding: 0.55rem 1rem; }
+.mobile-layout header::before { display: none; }
+.mobile-layout .header-inner { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto; gap: 0.5rem; }
+.mobile-layout .header-inner .header-brand { grid-column: 1; grid-row: 1; text-align: left; margin: 0; }
+.mobile-layout .header-inner .header-auth { grid-column: 3; grid-row: 1; justify-self: end; }
+.mobile-layout .header-inner .header-tagline { display: none; }
+.mobile-layout .header-logo { height: 46px; }
+.mobile-layout .auth-btn { padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+
+.mobile-layout .nav-bar { padding: 0.35rem 1rem 0.45rem; }
+
+/* Search / Grading Advisor / Card Identifier: a smaller segmented row. */
+.mobile-layout .page-subtab { font-size: 0.82rem; padding: 0.4rem 0.75rem; }
+
+.mobile-layout main { padding: 1rem 1rem 1.5rem; }
+
+/* The search form on one line: the camera inside the box, the button
+   beside it. It was three stacked rows, the camera one looking like an
+   empty second search field. */
+.mobile-layout #search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+.mobile-layout #search-form .search-input-wrap { grid-column: 1; grid-row: 1; }
+/* 16px, or iPhones zoom the page every time the box is tapped. */
+.mobile-layout #search-input { padding-right: 2.9rem; font-size: 16px; }
+.mobile-layout #search-form .scan-cam-btn {
+  grid-column: 1; grid-row: 1; justify-self: end; align-self: center;
+  margin-right: 0.3rem; padding: 0.4rem 0.55rem; z-index: 2;
+  background: transparent; border-color: transparent;
+}
+.mobile-layout #search-btn { grid-column: 2; grid-row: 1; width: auto; padding: 0 1.1rem; }
+.mobile-layout .mode-tabs { margin-top: 0.75rem; }
+
+/* Sale cards: tighter, with the price as the thing you see. */
+.mobile-layout .card-body { padding: 0.7rem 0.75rem 0.8rem; }
+.mobile-layout .card-price { font-size: 1.25rem; }
+.mobile-layout .card-title { font-size: 0.8rem; }
+
+/* The how-it-works text under the home page: smaller, calmer type. */
+.mobile-layout .about-section { margin-top: 2rem; }
+.mobile-layout .about-section h2 { font-size: 1.05rem; }
+.mobile-layout .about-section h3 { font-size: 0.88rem; }
+.mobile-layout .about-section p { font-size: 0.88rem; line-height: 1.65; color: var(--text-secondary); }
+
+/* Phone-layout type that was sized for the 85% zoom, brought up to sizes that
+   read at arm's length (the zoom made 0.68rem about 9px). */
+.mobile-layout .nav-tab { font-size: 0.85rem; }
+.mobile-layout .mode-tab { font-size: 0.85rem; padding: 0.35rem 0.85rem; }
+.mobile-layout .chip, .mobile-layout .recent-chip { font-size: 0.8rem; padding: 0.35rem 0.7rem; }
+.mobile-layout .section-label { font-size: 0.75rem; }
+.mobile-layout .sort-btn { font-size: 0.78rem; padding: 0.3rem 0.6rem; }
+.mobile-layout .card-title { font-size: 0.8rem; }
+.mobile-layout .card-price { font-size: 1.15rem; }
+.mobile-layout .card-detail { font-size: 0.72rem; }
+.mobile-layout .stat-value { font-size: 1.15rem; }
+.mobile-layout .stat-label { font-size: 0.7rem; }
+.mobile-layout #search-btn { font-size: 0.95rem; padding: 0 1.1rem; width: auto; }
+.mobile-layout .variant-meta, .mobile-layout .checklist-parallel, .mobile-layout .hotcold-prices,
+.mobile-layout .portfolio-card-cost, .mobile-layout .footer-copy { font-size: 0.72rem; }
+.mobile-layout .checklist-cat-tab, .mobile-layout .coll-tab, .mobile-layout .portfolio-action-btn,
+.mobile-layout .footer-links { font-size: 0.78rem; }
+.mobile-layout .portfolio-stat-label { font-size: 0.68rem; }
+.mobile-layout #search-input::placeholder { font-size: 0.88rem; }
+.mobile-layout #search-btn { padding: 0 0.9rem; }

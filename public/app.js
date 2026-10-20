@@ -2458,19 +2458,19 @@ document.addEventListener('load', (e) => {
 var SPORTS_KEY = 'chSports';
 var SPORTS = {
   football: { example: 'Patrick Mahomes', label: 'Football', icon: '\u{1F3C8}', testing: false,
-    placeholder: 'e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes',
+    placeholder: 'e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes', short: 'e.g. 2020 Prizm Mahomes',
     chips: [
       ['Patrick Mahomes 2017 Prizm Base', 'Mahomes Prizm Base'], ['Patrick Mahomes 2017 Prizm Silver', 'Mahomes Prizm Silver'],
       ['Joe Burrow 2020 Prizm Base', 'Burrow Prizm Base'], ['Justin Jefferson 2020 Prizm Silver PSA 10', 'Jefferson Prizm Silver PSA 10'],
       ['Josh Allen 2018 Prizm Base', 'Allen Prizm Base'], ["Ja'Marr Chase 2021 Prizm Base", 'Chase Prizm Base']] },
   basketball: { example: 'Victor Wembanyama', label: 'Basketball', icon: '\u{1F3C0}', testing: true,
-    placeholder: 'e.g. Victor Wembanyama or 2023 Prizm Wembanyama',
+    placeholder: 'e.g. Victor Wembanyama or 2023 Prizm Wembanyama', short: 'e.g. 2023 Prizm Wemby',
     chips: [
       ['2023 Prizm Victor Wembanyama', 'Wembanyama Prizm'], ['2003 Topps Chrome LeBron James', 'LeBron Topps Chrome RC'],
       ['2018 Prizm Luka Doncic Silver', 'Doncic Prizm Silver'], ['2019 Prizm Zion Williamson', 'Zion Prizm'],
       ['2009 Topps Stephen Curry', 'Curry Topps RC'], ['2024 Prizm Caitlin Clark', 'Caitlin Clark Prizm']] },
   baseball: { example: 'Shohei Ohtani', label: 'Baseball', icon: '\u{26BE}', testing: true,
-    placeholder: 'e.g. Shohei Ohtani or 2018 Topps Chrome Ohtani',
+    placeholder: 'e.g. Shohei Ohtani or 2018 Topps Chrome Ohtani', short: 'e.g. 2018 Chrome Ohtani',
     chips: [
       ['2018 Topps Chrome Shohei Ohtani', 'Ohtani Topps Chrome RC'], ['2011 Topps Update Mike Trout', 'Trout Update RC'],
       ['2019 Bowman Chrome Julio Rodriguez', 'J-Rod Bowman Chrome'], ['2022 Topps Chrome Bobby Witt Jr', 'Witt Jr. Chrome RC'],
@@ -2545,8 +2545,11 @@ function applySport() {
   const input = document.getElementById('search-input');
   if (input) {
     const names = p.enabled.map(id => SPORTS[id].example);
-    input.placeholder = p.enabled.length === 1 ? SPORTS[p.enabled[0]].placeholder
-      : `e.g. ${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
+    // A phone's search box shows about 22 characters, which cut the long
+    // hint off mid-name (owner, Oct 2026): narrow screens get the short one.
+    const narrow = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+    input.placeholder = p.enabled.length === 1 ? SPORTS[p.enabled[0]][narrow ? 'short' : 'placeholder']
+      : narrow ? 'Search a player or card' : `e.g. ${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
   }
   // Same buttons, new searches (their click handlers read data-query): taken
   // in turn from each sport that is on, so every sport gets a fair share.
