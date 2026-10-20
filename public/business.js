@@ -101,7 +101,7 @@
         <text x="56" y="56" text-anchor="middle" font-size="30" font-weight="800" fill="var(--fg)">${h.score}</text>
         <text x="56" y="74" text-anchor="middle" font-size="11" fill="var(--fg2)">${esc(h.label)}</text>
       </svg>
-      <div class="hparts"><h2 style="margin:0">Inventory health${h.change7 != null ? ` <span class="pill ${h.change7 >= 0 ? 'ok' : 'bad'}">${h.change7 >= 0 ? '+' : ''}${h.change7} this week</span>` : ''}</h2>${
+      <div class="hparts"><h2>Inventory health${h.change7 != null ? ` <span class="pill ${h.change7 >= 0 ? 'ok' : 'bad'}">${h.change7 >= 0 ? '+' : ''}${h.change7} this week</span>` : ''}</h2>${
         Object.keys(HPART).map(k => `<div class="hpart"><span>${HPART[k]}</span><span class="bar"><i style="width:${Math.round(100 * h.parts[k] / h.max[k])}%"></i></span><span class="num">${h.parts[k]}/${h.max[k]}</span></div>`).join('')}</div>
       ${h.tips.length ? `<ul class="htips">${h.tips.slice(0, 3).map(t => `<li><b>+${t.gain}</b><span>${esc(t.text)}</span></li>`).join('')}</ul>` : ''}`;
     $('health').hidden = false;
@@ -111,9 +111,9 @@
     $('alerts').innerHTML = list.map(a => {
       const up = a.pct > 0;
       const hint = a.price == null ? '' : up && a.price < a.to ? ` You list it at ${money(a.price)}.` : !up && a.price > a.to ? ` You list it at ${money(a.price)}, above the market now.` : '';
-      return `<div class="item ${up ? '' : 'down'}"><span class="tag">${up ? 'Up' : 'Down'} ${Math.abs(a.pct)}%</span><strong>${esc(a.title)}</strong>`
-        + `<p>Market ${money(a.from)} → ${money(a.to)}.${esc(hint)}</p><span class="why">${esc(new Date(a.at).toLocaleDateString())}</span>`
-        + `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.to}">Set price to ${money(a.to)}</button><button class="act" data-dismiss="${esc(a.id)}">Dismiss</button></div></div>`;
+      return `<div class="item ${up ? '' : 'down'}"><div class="item-main"><span class="tag">${up ? 'Up' : 'Down'} ${Math.abs(a.pct)}%</span><strong>${esc(a.title)}</strong>`
+        + `<p>Market ${money(a.from)} → ${money(a.to)}.${esc(hint)}</p><span class="why">${esc(new Date(a.at).toLocaleDateString([], { month: 'short', day: 'numeric' }))}</span></div>`
+        + `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.to}">Set to ${money(a.to)}</button><button class="act ghost" data-dismiss="${esc(a.id)}">Dismiss</button></div></div>`;
     }).join('');
   }
   async function loadAlerts() {
@@ -142,16 +142,16 @@
         ['Market value', money(k.marketValue), `${k.pricedShare}% of cards priced`],
         ['Listed at', money(k.listedValue), plural(k.cards, 'card')],
         ['Cost basis', money(k.costBasis), k.pricedWithCost ? `<span class="${gain >= 0 ? 'up' : 'down'}">${gain >= 0 ? '+' : ''}${money(gain)} unrealized</span>` : (k.costBasis ? 'Gain shows once cards are priced' : 'Add costs to see profit')],
-        ['Dead stock (90d+)', k.deadStock.toLocaleString(), `${money(k.deadValue)} tied up`],
+        ['Dead stock', k.deadStock.toLocaleString(), `90+ days, ${money(k.deadValue)} tied up`],
       ].map(([l, v, s]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${s}</em></div>`).join('');
       const total = b.actions.reduce((a, x) => a + (x.dollars || 0), 0);
       $('headline').textContent = !k.cards ? 'Add your inventory to get your first brief.'
         : b.actions.length ? `${b.actions.length} moves today worth about ${money(total)}.` : !k.pricedShare ? 'Your cards are not priced yet.' : 'Nothing needs you today.';
-      $('sub').textContent = k.cards ? `From ${plural(k.cards, 'card')} against real sold prices from the last 60 days.` : 'Go to Inventory to add cards or import a spreadsheet.';
+      $('sub').textContent = k.cards ? `${plural(k.cards, 'card')}, priced against the last 60 days of sales.` : 'Go to Inventory to add cards or import a spreadsheet.';
       $('brief').innerHTML = b.actions.length ? b.actions.map((a, i) => {
         const [cls, tag] = KIND[a.kind] || ['', a.kind];
-        const btn = a.suggest != null && a.id ? `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.suggest}">Set price to ${money(a.suggest)}</button></div>` : '';
-        return `<div class="item ${cls}" id="act-${i}"><span class="tag">${tag}</span><strong>${esc(a.title)}</strong><p>${esc(a.text)}</p><span class="why">${esc(a.why || '')}</span>${btn}</div>`;
+        const btn = a.suggest != null && a.id ? `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.suggest}">Set to ${money(a.suggest)}</button></div>` : '';
+        return `<div class="item ${cls}" id="act-${i}"><div class="item-main"><span class="tag">${tag}</span><strong>${esc(a.title)}</strong><p>${esc(a.text)}</p>${a.why ? `<span class="why">${esc(a.why)}</span>` : ''}</div>${btn}</div>`;
       }).join('') : `<div class="empty">${!k.cards ? 'No cards yet.' : k.pricedShare ? 'Every priced card is within range of the market. Check back tomorrow.' : 'None of your cards has 3 recent sales of the same grade yet, so none can be priced. Open Inventory to refresh prices.'}</div>`;
     } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('brief').innerHTML = `<div class="empty">Could not load the brief: ${esc(err.message)}</div>`; }
   }
@@ -171,9 +171,9 @@
       const inv = await api('/api/biz/inventory');
       const { items } = inv;
       if (inv.ebaySeller && !$('ebayseller').value) $('ebayseller').value = inv.ebaySeller;
-      if (inv.ebaySyncedAt) $('ebaystatus').textContent = `Last synced ${new Date(inv.ebaySyncedAt).toLocaleString()} from ${inv.ebaySeller}.`;
+      if (inv.ebaySyncedAt) $('ebaystatus').textContent = `Last synced ${new Date(inv.ebaySyncedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} from ${inv.ebaySeller}.`;
       if (inv.ebaySeller && Date.now() - Date.parse(inv.ebaySyncedAt || 0) > 6 * 3600 * 1000 && !syncing) { ebaySync(); return; }
-      if (!items.length) { $('invtable').innerHTML = '<div class="empty">No cards yet. Add one above or import a spreadsheet.</div>'; return; }
+      if (!items.length) { $('addbox').open = true; $('invtable').innerHTML = '<div class="empty">No cards yet. Add one above, import a spreadsheet or sync your eBay store.</div>'; return; }
       const now = Date.now();
       const rows = items.map(it => {
         const v = it.value || {};
@@ -181,14 +181,19 @@
         let pill = '<span class="pill warn">Not priced yet</span>';
         if (v.market != null && it.price != null) {
           pill = it.price > v.market * 1.2 ? '<span class="pill bad">Over market</span>' : it.price < v.market * 0.85 ? '<span class="pill warn">Underpriced</span>' : '<span class="pill ok">On market</span>';
-        } else if (v.asOf && v.market == null) pill = `<span class="pill">${v.n || 0} comps</span>`;
+        } else if (v.asOf && v.market == null) pill = '<span class="pill">Too few sales</span>';
         if (days >= 90) pill += ' <span class="pill bad">90d+</span>';
-        return `<tr><td><input type="checkbox" class="c-pick" value="${esc(it.id)}" aria-label="Select ${esc(it.title)}"></td><td>${esc(it.title)}${it.qty > 1 ? ` &times;${it.qty}` : ''}</td><td>${esc(it.grade || 'Raw')}</td><td>${esc(it.platform || '')}</td>
-          <td class="r"><button class="act costbtn" data-cost="${esc(it.id)}" data-val="${it.cost ?? ''}" title="Set what you paid">${it.cost == null ? 'Add' : money(it.cost)}</button></td><td class="r">${money(it.price)}</td><td class="r">${money(v.market)}</td><td class="r">${v.n || 0}</td><td class="r">${days}</td><td>${pill}</td>
-          <td style="white-space:nowrap"><button class="act" data-sold="${esc(it.id)}" data-price="${it.price ?? ''}">Sold</button> <button class="act" data-del="${esc(it.id)}" aria-label="Remove ${esc(it.title)}">Remove</button></td></tr>`;
+        const meta = [it.grade || 'Raw', it.platform, `${days} day${days === 1 ? '' : 's'} listed`].filter(Boolean).map(esc).join(' · ');
+        return `<tr><td class="pick"><input type="checkbox" class="c-pick" value="${esc(it.id)}" aria-label="Select ${esc(it.title)}"></td>
+          <td class="w"><b>${esc(it.title)}${it.qty > 1 ? ` <span class="why">&times;${it.qty}</span>` : ''}</b><span class="why">${meta}</span></td>
+          <td class="r c1" data-label="Cost"><button class="act costbtn" data-cost="${esc(it.id)}" data-val="${it.cost ?? ''}" title="Set what you paid">${it.cost == null ? 'Add' : money(it.cost)}</button></td>
+          <td class="r" data-label="Your price">${money(it.price)}</td>
+          <td class="r" data-label="Market">${money(v.market)}<span class="why" style="display:block">${v.n || 0} comp${v.n === 1 ? '' : 's'}</span></td>
+          <td class="st">${pill}</td>
+          <td class="end"><button class="act" data-sold="${esc(it.id)}" data-price="${it.price ?? ''}">Sold</button><button class="act ghost" data-del="${esc(it.id)}" aria-label="Remove ${esc(it.title)}">Remove</button></td></tr>`;
       }).join('');
       $('costbar').hidden = true;
-      $('invtable').innerHTML = `<div class="tablewrap"><table><thead><tr><th><input type="checkbox" id="c-all" aria-label="Select all"></th><th>Card</th><th>Grade</th><th>Where</th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th class="r">Comps</th><th class="r">Days</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      $('invtable').innerHTML = `<div class="tablewrap rt pickable"><table><thead><tr><th class="pick"><input type="checkbox" id="c-all" aria-label="Select all"></th><th>Card <span style="font-weight:400">(${items.length.toLocaleString()})</span></th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
       if (items.some(it => !it.value)) valueAll();
     } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('invtable').innerHTML = `<div class="empty">Could not load: ${esc(err.message)}</div>`; }
   }
@@ -256,10 +261,10 @@
       if (!plan.length) { $('r-plan').innerHTML = '<p class="status">Every priced card is already within range of the market. Nothing to change.</p>'; return; }
       const down = plan.filter(p => p.change != null && p.change < 0).length;
       $('r-plan').innerHTML = `<p class="status">${plan.length} card${plan.length === 1 ? '' : 's'} to reprice: ${down} lower, ${plan.length - down} higher. Untick any to leave alone.</p>
-        <div class="tablewrap"><table><thead><tr><th><input type="checkbox" id="r-all" checked aria-label="Select all"></th><th>Card</th><th class="r">Now</th><th class="r">New</th><th class="r">Market</th><th class="r">Comps</th></tr></thead><tbody>${
-        plan.map(p => `<tr><td><input type="checkbox" class="r-pick" value="${esc(p.id)}" checked aria-label="Reprice ${esc(p.title)}"></td><td>${esc(p.title)}${p.ebayItemId ? ' <span class="pill">eBay</span>' : ''}</td>
-          <td class="r">${money(p.from)}</td><td class="r ${p.change != null && p.change < 0 ? 'down' : 'up'}">${money(p.to)}</td><td class="r">${money(p.market)}</td><td class="r">${p.n}</td></tr>`).join('')}</tbody></table></div>
-        <div class="toolbar"><button class="act go" type="button" id="r-apply">Apply to selected</button></div>`;
+        <div class="tablewrap rt pickable"><table><thead><tr><th class="pick"><input type="checkbox" id="r-all" checked aria-label="Select all"></th><th>Card</th><th class="r">Now</th><th class="r">New</th><th class="r">Market</th></tr></thead><tbody>${
+        plan.map(p => `<tr><td class="pick"><input type="checkbox" class="r-pick" value="${esc(p.id)}" checked aria-label="Reprice ${esc(p.title)}"></td><td class="w"><b>${esc(p.title)}</b><span class="why">${p.n} comp${p.n === 1 ? '' : 's'}${p.ebayItemId ? ' · eBay' : ''}</span></td>
+          <td class="r c1" data-label="Now">${money(p.from)}</td><td class="r ${p.change != null && p.change < 0 ? 'down' : 'up'}" data-label="New">${money(p.to)}</td><td class="r" data-label="Market">${money(p.market)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="acts" style="margin-top:12px"><button class="act go" type="button" id="r-apply">Apply to selected</button></div>`;
       $('r-all').addEventListener('change', (e) => document.querySelectorAll('.r-pick').forEach(c => { c.checked = e.target.checked; }));
       $('r-apply').addEventListener('click', applyReprice);
     } catch (err) { $('r-plan').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
@@ -274,9 +279,9 @@
       if (r.ebayCsv) {
         const url = URL.createObjectURL(new Blob([r.ebayCsv], { type: 'text/csv' }));
         const n = r.plan.filter(p => p.ebayItemId).length;
-        html += `<div class="item warn"><span class="tag">One more step for eBay</span><strong>Upload the new prices to eBay</strong>
-          <p>${n} of these are eBay listings. Download the file, then in eBay go to Seller Hub &rsaquo; Reports &rsaquo; Uploads &rsaquo; Upload template and choose it. eBay changes all ${n} prices at once; your next sync here picks them up.</p>
-          <div class="acts"><a class="act go" href="${url}" download="card-huddle-reprice.csv" style="text-decoration:none">Download eBay file</a></div></div>`;
+        html += `<div class="brief"><div class="item warn"><div class="item-main"><span class="tag">One more step for eBay</span><strong>Upload the new prices to eBay</strong>
+          <p>${n} of these are eBay listings. Download the file, then in eBay go to Seller Hub &rsaquo; Reports &rsaquo; Uploads &rsaquo; Upload template and choose it. eBay changes all ${n} prices at once; your next sync here picks them up.</p></div>
+          <div class="acts"><a class="act go" href="${url}" download="card-huddle-reprice.csv">Download eBay file</a></div></div></div>`;
       }
       $('r-plan').innerHTML = html;
       loadInventory();
@@ -335,8 +340,8 @@
   });
 
   // ---- sales ----
-  const tbl = (title, rows) => `<div class="panel"><h2>${title}</h2>${rows.length ? `<div class="tablewrap" style="border:0"><table style="min-width:0"><thead><tr><th></th><th class="r">Sales</th><th class="r">Revenue</th><th class="r">Profit</th></tr></thead><tbody>${
-    rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${r.sales}</td><td class="r">${money(r.revenue)}</td><td class="r ${r.profit >= 0 ? 'up' : 'down'}">${r.missingCost === r.sales ? '—' : money(r.profit)}</td></tr>`).join('')}</tbody></table></div>` : '<p style="color:var(--fg3);margin:0">No sales yet.</p>'}</div>`;
+  const tbl = (title, rows) => `<div class="panel"><h2>${title}</h2>${rows.length ? `<div class="tablewrap flat"><table><thead><tr><th></th><th class="r">Sales</th><th class="r">Revenue</th><th class="r">Profit</th></tr></thead><tbody>${
+    rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${r.sales}</td><td class="r">${money(r.revenue)}</td><td class="r ${r.profit >= 0 ? 'up' : 'down'}">${r.missingCost === r.sales ? '—' : money(r.profit)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">No sales yet.</p>'}</div>`;
   async function loadSales() {
     try {
       const { report: r, ended, sold } = await api('/api/biz/sales');
@@ -347,14 +352,15 @@
         ['Fees, 30 days', money(m.fees), 'Estimated'],
         ['All-time profit', money(a.profit), a.missingCost ? `${a.missingCost} sale${a.missingCost === 1 ? ' has' : 's have'} no cost` : `${a.sales} sale${a.sales === 1 ? '' : 's'}`],
       ].map(([l, v, x]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${x}</em></div>`).join('');
-      $('endedbox').innerHTML = ended.length ? `<div class="panel" style="margin-bottom:18px"><h2>Gone from eBay: sold or ended?</h2><p style="margin:0 0 10px;color:var(--fg2);font-size:13.5px">These left your eBay store since the last sync. Confirm the ones that sold.</p>${
-        ended.slice(-50).reverse().map(it => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)">
-          <span style="flex:1 1 16rem;min-width:0">${esc(it.title)}</span><input class="mini" data-for="${esc(it.id)}" value="${it.price ?? ''}" inputmode="decimal" aria-label="Sold for">
-          <button class="act go" data-endsold="${esc(it.id)}">Sold</button><button class="act" data-endnot="${esc(it.id)}">Didn't sell</button></div>`).join('')}</div>` : '';
+      $('endedbox').innerHTML = ended.length ? `<div class="panel" style="margin-bottom:20px"><h2>Gone from eBay: sold or ended?</h2><p class="hint">These left your eBay store since the last sync. Confirm the ones that sold.</p>${
+        ended.slice(-50).reverse().map(it => `<div class="endrow">
+          <span>${esc(it.title)}</span><input class="mini" data-for="${esc(it.id)}" value="${it.price ?? ''}" inputmode="decimal" aria-label="Sold for">
+          <button class="act go" data-endsold="${esc(it.id)}">Sold</button><button class="act ghost" data-endnot="${esc(it.id)}">Didn't sell</button></div>`).join('')}</div>` : '';
       $('salegroups').innerHTML = tbl('By month', r.byMonth) + tbl('By player', r.byPlayer) + tbl('By set', r.bySet) + tbl('By platform', r.byPlatform);
-      $('salelist').innerHTML = sold.length ? `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Sold</th><th>Where</th><th class="r">For</th><th class="r">Cost</th><th></th></tr></thead><tbody>${
-        sold.map(x => `<tr><td>${esc(x.title)}</td><td>${esc(String(x.soldAt).slice(0, 10))}</td><td>${esc(x.platform || '')}</td><td class="r">${money(x.soldFor)}</td><td class="r">${money(x.cost)}</td>
-          <td><button class="act" data-undo="${esc(x.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No sales recorded yet. Tap Sold on a card in Inventory, or sync eBay to catch sales automatically.</div>';
+      const day = (d) => { const t = Date.parse(d); return Number.isFinite(t) ? new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' }) : esc(String(d).slice(0, 10)); };
+      $('salelist').innerHTML = sold.length ? `<div class="tablewrap rt"><table><thead><tr><th>Card</th><th class="r">Sold for</th><th class="r">Cost</th><th></th></tr></thead><tbody>${
+        sold.map(x => `<tr><td class="w"><b>${esc(x.title)}</b><span class="why">${[day(x.soldAt), esc(x.platform || '')].filter(Boolean).join(' · ')}</span></td><td class="r" data-label="Sold for">${money(x.soldFor)}</td><td class="r" data-label="Cost">${money(x.cost)}</td>
+          <td class="end"><button class="act ghost" data-undo="${esc(x.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No sales recorded yet. Tap Sold on a card in Inventory, or sync eBay to catch sales automatically.</div>';
     } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('salelist').innerHTML = `<div class="empty">Could not load sales: ${esc(err.message)}</div>`; }
   }
   $('p-sales').addEventListener('click', async (e) => {
@@ -376,10 +382,10 @@
     $('o-go').disabled = true; $('o-out').innerHTML = `<p class="status">Pricing ${cards.length} card${cards.length === 1 ? '' : 's'}…</p>`;
     try {
       const r = await api('/api/biz/offer', { method: 'POST', body: JSON.stringify({ cards, pct: Number($('o-pct').value) }) });
-      $('o-out').innerHTML = `<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:6px 0">
+      $('o-out').innerHTML = `<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0 0 12px">
           <div class="kpi"><small>Market value</small><b>${money(r.market)}</b><em>${r.cards.length} priced</em></div>
           <div class="kpi"><small>Offer at ${r.pct}%</small><b class="up">${money(r.offer)}</b><em>Room to resell</em></div></div>
-        ${r.cards.length ? `<div class="tablewrap"><table style="min-width:0"><thead><tr><th>Card</th><th class="r">Market</th><th class="r">Offer</th></tr></thead><tbody>${
+        ${r.cards.length ? `<div class="tablewrap flat"><table><thead><tr><th>Card</th><th class="r">Market</th><th class="r">Offer</th></tr></thead><tbody>${
           r.cards.map(c => `<tr><td>${esc(c.title)}<div class="why">${esc(c.grade || 'Raw')} · ${c.n} sales</div></td><td class="r">${money(c.market)}</td><td class="r">${money(c.offer)}</td></tr>`).join('')}</tbody></table></div>` : ''}
         ${r.unpriced.length ? `<p class="status">Not enough recent sales to price: ${r.unpriced.map(u => esc(u.title)).join('; ')}. Check these by hand.</p>` : ''}`;
     } catch (err) { $('o-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
@@ -391,8 +397,8 @@
       const { cards } = await api(`/api/biz/show?n=${$('s-n').value}&min=${$('s-min').value}`);
       if (!cards.length) { $('s-out').innerHTML = '<p class="status">No priced cards yet. Refresh market prices in Inventory first.</p>'; $('s-copy').hidden = $('s-print').hidden = true; return; }
       showText = cards.map((c, i) => `${i + 1}. ${c.title}${c.grade ? ' ' + c.grade : ''} - ${money(c.price ?? c.market)}${c.trend >= 10 ? ` (up ${c.trend}%)` : ''}`).join('\n');
-      $('s-out').innerHTML = `<div class="tablewrap"><table style="min-width:0"><thead><tr><th>#</th><th>Card</th><th class="r">Price</th><th class="r">Market</th></tr></thead><tbody>${
-        cards.map((c, i) => `<tr><td>${i + 1}</td><td>${esc(c.title)}${c.grade ? ` <span class="pill">${esc(c.grade)}</span>` : ''}${c.trend >= 10 ? ` <span class="pill ok">up ${c.trend}%</span>` : ''}</td><td class="r">${money(c.price)}</td><td class="r">${money(c.market)}</td></tr>`).join('')}</tbody></table></div>`;
+      $('s-out').innerHTML = `<div class="tablewrap flat"><table><thead><tr><th>#</th><th>Card</th><th class="r">Price</th><th class="r">Market</th></tr></thead><tbody>${
+        cards.map((c, i) => `<tr><td class="why">${i + 1}</td><td>${esc(c.title)}${c.grade ? ` <span class="pill">${esc(c.grade)}</span>` : ''}${c.trend >= 10 ? ` <span class="pill ok">up ${c.trend}%</span>` : ''}</td><td class="r">${money(c.price)}</td><td class="r">${money(c.market)}</td></tr>`).join('')}</tbody></table></div>`;
       $('s-copy').hidden = $('s-print').hidden = false;
     } catch (err) { $('s-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
   });
