@@ -564,7 +564,8 @@ class PriceSlotFiller {
     const summary = this.blocks.pages[key];
     if (!summary) return;               // too little data — leave the slot empty
     const html = this.render(summary, {
-      noun: summary.noun, from: this.blocks.from, to: this.blocks.to,
+      // A page priced from the longer window carries its own dates.
+      noun: summary.noun, from: summary.from || this.blocks.from, to: summary.to || this.blocks.to,
     });
     if (html) { el.setInnerContent(html, { html: true }); this.filled++; }
   }
