@@ -7,195 +7,332 @@
 <meta name="description" content="Inventory software for sports card sellers: every card priced daily against real sold prices, a brief of what to reprice and feature, sales and profit, and an AI analyst. $20 a month.">
 <link rel="canonical" href="https://thecardhuddle.com/business">
 <title>Card Huddle for Business: Inventory Software for Card Sellers</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: a seller's console. Brief first (what to do today), then the shelf, then ask. */
+/* A seller's console: what to do today first, then the shelf, then ask.
+   One type scale, one card style, helper text kept small and quiet. */
 :root {
-  --bg: #f3f6f4; --surface: #ffffff; --sunk: #e8eeea; --line: #d5ded8;
-  --fg: #0f1a14; --fg2: #4b5b52; --fg3: #7d8c84;
-  --accent: #1f9a62; --accent-soft: rgba(31,154,98,.12);
-  --up: #1b873f; --down: #c62828; --warn: #b7791f; --warn-soft: rgba(183,121,31,.13); --down-soft: rgba(198,40,40,.1);
+  --bg: #f4f6f5; --surface: #ffffff; --sunk: #eef2ef; --line: #e1e7e3; --line2: #cfd8d2;
+  --fg: #101a15; --fg2: #4f5e56; --fg3: #84918a;
+  --accent: #1a8f5a; --accent-ink: #ffffff; --accent-soft: rgba(26,143,90,.1);
+  --up: #1b873f; --down: #c62828; --warn: #a96b12; --warn-soft: rgba(183,121,31,.12); --down-soft: rgba(198,40,40,.08);
+  --shadow: 0 1px 2px rgba(16,26,21,.04), 0 1px 3px rgba(16,26,21,.04);
   --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --r: 14px;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0c0f0d; --surface: #151b17; --sunk: #10150f; --line: #26302a;
-  --fg: #edf2ee; --fg2: #a3b2a9; --fg3: #6b7a71;
-  --accent: #5ece99; --accent-soft: rgba(94,206,153,.13);
-  --up: #5ece99; --down: #f87171; --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --down-soft: rgba(248,113,113,.12);
-  color-scheme: dark } }
+  --bg: #0b0e0c; --surface: #141a16; --sunk: #1a211c; --line: #222b25; --line2: #2f3a33;
+  --fg: #edf2ee; --fg2: #a6b4ab; --fg3: #6f7e75;
+  --accent: #5ece99; --accent-ink: #06231a; --accent-soft: rgba(94,206,153,.12);
+  --up: #5ece99; --down: #f87171; --warn: #f2b84b; --warn-soft: rgba(242,184,75,.12); --down-soft: rgba(248,113,113,.11);
+  --shadow: none; color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #0c0f0d; --surface: #151b17; --sunk: #10150f; --line: #26302a;
-  --fg: #edf2ee; --fg2: #a3b2a9; --fg3: #6b7a71;
-  --accent: #5ece99; --accent-soft: rgba(94,206,153,.13);
-  --up: #5ece99; --down: #f87171; --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --down-soft: rgba(248,113,113,.12);
-  color-scheme: dark }
-* { box-sizing: border-box }
-body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px }
-.wrap { max-width: 1080px; margin: 0 auto }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 20px 14px; border-bottom: 1px solid var(--line) }
-.brand { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -.01em }
-.brand span { color: var(--accent) }
-.shop { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--fg2) }
-.chip { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent) }
-.sample { margin: 14px 0 0; font-size: 12.5px; color: var(--fg3) }
-nav { display: flex; gap: 4px; margin: 18px 0 22px; border-bottom: 1px solid var(--line); overflow-x: auto }
-nav button { font: inherit; font-weight: 600; font-size: 14px; color: var(--fg2); background: none; border: 0; padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap }
-nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
-nav button:focus-visible, .act:focus-visible, .ask input:focus-visible, .ask button:focus-visible, .q:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
-h1 { font-family: var(--display); font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.02em; margin: 0; text-wrap: balance }
-h2 { font-family: var(--display); font-size: 18px; margin: 0 0 12px; letter-spacing: -.01em }
-.lede { color: var(--fg2); margin: 6px 0 0; max-width: 62ch }
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0 }
-.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0 }
-.kpi b { display: block; font-family: var(--display); font-size: 24px; font-variant-numeric: tabular-nums }
-.kpi small { font-size: 12px; color: var(--fg3); text-transform: uppercase; letter-spacing: .05em; font-weight: 600 }
-.kpi em { font-style: normal; font-size: 12.5px; font-weight: 600 }
-.up { color: var(--up) } .down { color: var(--down) }
-.grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; align-items: start }
-.brief { display: flex; flex-direction: column; gap: 10px }
-.item { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px }
-.item.warn { border-left-color: var(--warn) } .item.down { border-left-color: var(--down) }
-.item .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
-.item.warn .tag { color: var(--warn) } .item.down .tag { color: var(--down) }
-.item strong { font-size: 15.5px }
-.item p { margin: 0; color: var(--fg2); font-size: 14px }
-.item .why { font-family: var(--mono); font-size: 12px; color: var(--fg3) }
-.acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px }
-.act { font: inherit; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); cursor: pointer }
-.act.go { background: var(--accent); border-color: var(--accent); color: #06231a }
-.item.done { opacity: .55 } .item.done .acts { display: none }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0 }
-.chan { display: grid; gap: 10px }
-.chan div { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; align-items: center; font-size: 13.5px }
-.bar { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden }
-.bar i { display: block; height: 100% ; background: var(--accent) }
-.num { font-variant-numeric: tabular-nums; font-weight: 600 }
-.spark { width: 100%; height: 90px; display: block; margin-top: 6px }
-.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px }
-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px }
-th { text-align: left; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg3); font-weight: 700; padding: 11px 14px; border-bottom: 1px solid var(--line) }
-td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums }
-tr:last-child td { border-bottom: 0 }
-td.r, th.r { text-align: right }
-.pill { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap }
-.pill.ok { background: var(--accent-soft); color: var(--accent) } .pill.warn { background: var(--warn-soft); color: var(--warn) } .pill.bad { background: var(--down-soft); color: var(--down) }
-.ask { display: flex; gap: 8px; margin-top: 4px }
-.ask input { flex: 1; min-width: 0; font: inherit; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg) }
-.ask button { font: inherit; font-weight: 700; padding: 0 16px; border-radius: 10px; border: 0; background: var(--accent); color: #06231a; cursor: pointer }
-.qs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px }
-.q { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg2); cursor: pointer }
-.answer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 10px; max-width: 760px }
-.answer .who { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em }
-.answer p { margin: 0 } .answer ul { margin: 0; padding-left: 20px } .answer li { margin: 4px 0 }
-.foot { margin-top: 28px; font-size: 12.5px; color: var(--fg3) }
-@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } .grid2 { grid-template-columns: minmax(0, 1fr) } }
-@media (prefers-reduced-motion: no-preference) { .item { transition: opacity .25s } }
+  --bg: #0b0e0c; --surface: #141a16; --sunk: #1a211c; --line: #222b25; --line2: #2f3a33;
+  --fg: #edf2ee; --fg2: #a6b4ab; --fg3: #6f7e75;
+  --accent: #5ece99; --accent-ink: #06231a; --accent-soft: rgba(94,206,153,.12);
+  --up: #5ece99; --down: #f87171; --warn: #f2b84b; --warn-soft: rgba(242,184,75,.12); --down-soft: rgba(248,113,113,.11);
+  --shadow: none; color-scheme: dark }
 
-body { margin: 0 }
+* { box-sizing: border-box }
 [hidden] { display: none !important }
-@media print { header, nav, .foot, #landing, section:not(#p-shows), #p-shows > h1, #p-shows > .lede, #p-shows .grid2 > .panel:first-child, #p-shows .panel > h2, #p-shows .panel > p, #p-shows .panel > div:first-of-type { display: none !important }
-  body { background: #fff; color: #000 } .panel, .tablewrap { border: 0 } #p-shows .grid2 { display: block } #s-out::before { content: "Price sheet"; font: 800 20px var(--display); display: block; margin-bottom: 8px } }
-.login { max-width: 380px; margin: 12vh auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px }
-.login input, .field input, .field select, textarea { font: inherit; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); width: 100% }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14.5px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01';
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)) }
+a { color: inherit }
+.wrap { max-width: 1120px; margin: 0 auto }
+.up { color: var(--up) } .down { color: var(--down) }
+.num { font-variant-numeric: tabular-nums }
+
+/* ---- type ---- */
+h1, h2, h3 { font-family: var(--display); letter-spacing: -.015em; margin: 0; text-wrap: balance }
+h1 { font-size: clamp(22px, 3.2vw, 28px); line-height: 1.2; font-weight: 700 }
+h2 { font-size: 16px; line-height: 1.3; font-weight: 700 }
+h3 { font-size: 15px; font-weight: 700 }
+.lede { color: var(--fg2); margin: 4px 0 0; max-width: 60ch }
+.hint { color: var(--fg3); font-size: 13px; margin: 2px 0 0; line-height: 1.45 }
+.why { color: var(--fg3); font-size: 12.5px; font-variant-numeric: tabular-nums }
+.status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
 .err { color: var(--down); font-size: 13px; min-height: 1.2em }
-.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 }
-.addrow { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin: 12px 0 }
-.field { display: grid; gap: 4px; font-size: 12px; color: var(--fg3); min-width: 0 }
-textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
-.empty { color: var(--fg2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 22px }
-.mini { width: 90px; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg) }
-.hero { padding: 26px 0 8px; display: grid; gap: 10px; max-width: 760px }
-.hero .chip { justify-self: start }
+.page-head { margin: 26px 0 20px }
+.sechead { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; margin: 0 0 10px }
+.sechead h2 { white-space: nowrap }
+.sechead .hint { margin: 0 }
+
+/* ---- header and tabs ---- */
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 18px 14px }
+.brand { font-family: var(--display); font-weight: 800; font-size: 17px; letter-spacing: -.01em; text-decoration: none; white-space: nowrap }
+.brand span { color: var(--accent) }
+.shop { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--fg2) }
+.shop a { text-decoration: none } .shop a:hover { color: var(--fg) }
+nav { position: sticky; top: 0; z-index: 5; display: flex; gap: 2px; background: var(--bg); border-bottom: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none; margin: 0 -2px }
+nav::-webkit-scrollbar { display: none }
+nav button { font: inherit; font-weight: 600; font-size: 14px; color: var(--fg3); background: none; border: 0; padding: 12px 12px 11px;
+  border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap }
+nav button:hover { color: var(--fg2) }
+nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+/* ---- surfaces ---- */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; box-shadow: var(--shadow) }
+.panel > h2 + .hint { margin-bottom: 12px }
+.stack { display: grid; gap: 16px; min-width: 0; align-content: start }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start }
+.grid2.even { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+.empty { color: var(--fg2); background: var(--surface); border: 1px dashed var(--line2); border-radius: var(--r); padding: 22px; text-align: center }
+
+/* ---- buttons, inputs ---- */
+.act { font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 9px; border: 1px solid var(--line2);
+  background: var(--surface); color: var(--fg); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+  justify-content: center; gap: 6px; white-space: nowrap; line-height: 1.3 }
+.act:hover { background: var(--sunk) }
+.act.go { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.act.go:hover { filter: brightness(1.06) }
+.act.ghost { border-color: transparent; background: none; color: var(--fg2) }
+.act.ghost:hover { background: var(--sunk); color: var(--fg) }
+.act.sm, td .act { padding: 4px 9px; font-size: 12.5px; border-radius: 8px }
+.act:disabled { opacity: .55; cursor: default }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+input, select, textarea { font: inherit; font-size: 14px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line2);
+  background: var(--surface); color: var(--fg); width: 100%; min-width: 0 }
+input::placeholder, textarea::placeholder { color: var(--fg3) }
+input[type="checkbox"] { width: auto; accent-color: var(--accent) }
+textarea { min-height: 110px; font-size: 13px; line-height: 1.5 }
+.field { display: grid; gap: 5px; font-size: 12.5px; font-weight: 500; color: var(--fg2); min-width: 0 }
+.check { display: flex; gap: 7px; align-items: center; font-size: 13px; color: var(--fg2); cursor: pointer }
+.inline { display: flex; gap: 8px }
+.inline input { flex: 1 }
+
+/* ---- pills, tags ---- */
+.chip, .pill, .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px;
+  border-radius: 999px; white-space: nowrap; background: var(--sunk); color: var(--fg2); line-height: 1.6 }
+.chip, .tag, .pill.ok { background: var(--accent-soft); color: var(--accent) }
+.pill.warn { background: var(--warn-soft); color: var(--warn) } .pill.bad { background: var(--down-soft); color: var(--down) }
+.tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+
+/* ---- KPIs ---- */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 20px }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; min-width: 0; display: grid; gap: 2px; box-shadow: var(--shadow) }
+.kpi small { font-size: 12.5px; color: var(--fg2); font-weight: 500 }
+.kpi b { font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; line-height: 1.25 }
+.kpi em { font-style: normal; font-size: 12.5px; color: var(--fg3) }
+
+/* ---- the brief: one card, rows split by lines ---- */
+.brief { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow) }
+.brief > .empty { border: 0; border-radius: 0 }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; padding: 14px 18px }
+.item + .item { border-top: 1px solid var(--line) }
+.item-main { display: grid; gap: 3px; justify-items: start; min-width: 0 }
+.item strong { font-size: 14.5px; font-weight: 600; line-height: 1.4 }
+.item p { margin: 0; color: var(--fg2); font-size: 13.5px }
 .item.down, .item.warn { color: var(--fg) }
-.herotitle { font-size: clamp(30px, 5vw, 46px) }
-.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 26px }
-.feats p, .faq p { margin: 0; color: var(--fg2); font-size: 14.5px }
+.item.warn .tag { background: var(--warn-soft); color: var(--warn) }
+.item.down .tag { background: var(--down-soft); color: var(--down) }
+.item > .why, .item > .err { grid-column: 1 / -1 }
+.item.done .item-main { opacity: .5 } .item.done .acts { display: none } .item.done > .why { color: var(--up) }
+@media (prefers-reduced-motion: no-preference) { .item-main { transition: opacity .25s } }
+
+/* ---- morning summary, health ---- */
+.summary p { margin: 6px 0 12px; font-size: 14.5px; line-height: 1.6 }
+.summary .acts { justify-content: space-between }
+.health { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 18px; align-items: center }
+.ring { width: 92px; height: 92px; display: block }
+.ring text { font-family: var(--display) }
+.hparts { display: grid; gap: 7px; min-width: 0 }
+.hparts h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px }
+.hpart { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr) 2.6rem; gap: 10px; align-items: center; font-size: 13px; color: var(--fg2) }
+.hpart .num { text-align: right; color: var(--fg3); font-size: 12px }
+.bar { display: block; height: 6px; border-radius: 3px; background: var(--sunk); overflow: hidden }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px }
+.htips { grid-column: 1 / -1; display: grid; gap: 6px; margin: 0; padding: 12px 0 0; list-style: none; font-size: 13px; color: var(--fg2); border-top: 1px solid var(--line) }
+.htips li { display: flex; gap: 10px; align-items: baseline }
+.htips b { color: var(--accent); font-variant-numeric: tabular-nums; min-width: 1.8em }
+
+/* ---- tables ---- */
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow) }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px }
+th { text-align: left; font-size: 12px; color: var(--fg3); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface) }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: middle }
+tr:last-child td { border-bottom: 0 }
+tbody tr:hover td { background: color-mix(in srgb, var(--sunk) 50%, transparent) }
+td.r, th.r { text-align: right }
+td.w { min-width: 14rem }
+td.w b { font-weight: 600; display: block; line-height: 1.4 }
+td.w .why { display: block; margin-top: 1px }
+td.w b .why { display: inline; margin: 0 }
+td.end { white-space: nowrap; text-align: right }
+td.st .pill + .pill { margin-left: 4px }
+.flat { border: 0; box-shadow: none; border-radius: 0; background: none }
+.flat th, .flat td { padding-inline: 0 10px; background: none }
+.flat th:last-child, .flat td:last-child { padding-right: 0 }
+
+/* ---- inventory ---- */
+.tools { display: grid; gap: 10px; margin: 0 0 18px }
+details.panel { padding: 0 }
+details.panel > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600 }
+details.panel > summary::-webkit-details-marker { display: none }
+details.panel > summary::after { content: ''; width: 8px; height: 8px; border-right: 2px solid var(--fg3); border-bottom: 2px solid var(--fg3); transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; flex: none }
+details.panel[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px) }
+details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align: right }
+.drawer { padding: 0 18px 18px; display: grid; gap: 12px }
+.addrow { display: grid; grid-template-columns: 3fr 1.2fr 1fr 1fr 1.1fr auto; gap: 10px; align-items: end }
+.bulkrow { display: grid; grid-template-columns: repeat(2, minmax(0, 12rem)) auto auto auto; gap: 10px 16px; align-items: end }
+.bulkrow .check { padding-bottom: 9px }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 0 0 10px }
+.toolbar .acts { gap: 12px }
+.costbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; position: sticky; top: 46px; z-index: 4; padding: 10px 12px }
+.costbar select { width: auto } .costbar input { width: 7rem }
+.costbtn { font-variant-numeric: tabular-nums }
+.mini { width: 6.5rem; padding: 6px 9px }
+.endrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line) }
+.endrow > span { flex: 1 1 16rem; min-width: 0 }
+
+/* ---- ask ---- */
+.ask { display: flex; gap: 8px; max-width: 760px }
+.ask input { flex: 1; padding: 12px 14px; border-radius: 11px; font-size: 15px }
+.ask button { font: inherit; font-weight: 600; padding: 0 20px; border-radius: 11px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer }
+.qs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px }
+.q { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line2); background: var(--surface); color: var(--fg2); cursor: pointer }
+.q:hover { color: var(--fg); border-color: var(--fg3) }
+.answer { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; display: grid; gap: 8px; max-width: 760px; box-shadow: var(--shadow) }
+.answer .who { font-size: 12.5px; font-weight: 600; color: var(--accent) }
+.answer p { margin: 0; line-height: 1.6 }
+.comparewrap { margin: -8px 0 16px }
+
+/* ---- landing ---- */
+.hero { padding: 40px 0 8px; display: grid; gap: 14px; max-width: 720px }
+.hero .chip { justify-self: start }
+.herotitle { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -.025em; font-weight: 800 }
+.hero .lede { font-size: 16.5px; line-height: 1.55 }
+.hero .acts { margin-top: 6px }
+.hero .act { padding: 10px 16px; font-size: 14px }
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 36px }
+.feats .panel { display: grid; gap: 6px; align-content: start }
+.feats p, .faq p { margin: 0; color: var(--fg2); font-size: 14px }
+.sect { margin: 44px 0 14px }
+.example { max-width: 720px }
+.sample { margin: 8px 0 0; font-size: 12.5px; color: var(--fg3) }
+.join { margin-top: 44px; align-items: stretch }
+.login { display: grid; gap: 12px; align-content: start }
+.login > .status:empty, .login > .err:empty { display: none }
+.price { font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: -.02em }
+.price span { font-size: 14px; color: var(--fg2); font-weight: 600; letter-spacing: 0 }
+.owner summary { cursor: pointer; font-size: 12.5px; color: var(--fg3) }
+.owner form { display: grid; gap: 8px; margin-top: 10px }
+#waitlist { display: grid; gap: 12px; align-content: start }
+.hp { position: absolute; left: -9999px }
 .faq { display: grid; gap: 8px; max-width: 760px }
-.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 13px 16px }
 .faq summary { cursor: pointer; font-weight: 600 }
 .faq p { margin-top: 8px }
-.health { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px 24px; align-items: center; margin-top: 18px }
-.ring { width: 112px; height: 112px; display: block }
-.ring text { font-family: var(--display) }
-.hparts { display: grid; gap: 8px; min-width: 0 }
-.hpart { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 3.2rem; gap: 10px; align-items: center; font-size: 13.5px }
-.hpart .num { text-align: right; color: var(--fg2) }
-.hpart .bar { display: block }
-.htips { grid-column: 1 / -1; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px }
-.htips li { display: flex; gap: 8px; align-items: baseline } .htips b { color: var(--accent); white-space: nowrap }
-@media (max-width: 560px) { nav button { padding: 10px 9px; font-size: 13.5px } .health { grid-template-columns: minmax(0, 1fr); justify-items: start } .hpart { grid-template-columns: 7rem minmax(0, 1fr) 3rem } }
-.costbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3 }
-.costbar select, .costbar input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg) }
-.costbar input { width: 7rem }
-.costbtn { padding: 3px 8px; font-size: 12.5px; font-variant-numeric: tabular-nums }
-.status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
-td .act { padding: 4px 9px; font-size: 12px }
-@media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
+.foot { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--fg3) }
+
+/* ---- small screens: tables become cards ---- */
+@media (max-width: 860px) {
+  .grid2, .grid2.even { grid-template-columns: minmax(0, 1fr) }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 }
+  .bulkrow { grid-template-columns: 1fr 1fr } .bulkrow .act { grid-column: 1 / -1 }
+}
+@media (max-width: 640px) {
+  .page-head { margin: 20px 0 16px }
+  .kpi { padding: 12px 14px } .kpi b { font-size: 21px }
+  .item { grid-template-columns: minmax(0, 1fr); padding: 14px 16px } .item .acts { margin-top: 6px }
+  .health { gap: 14px } .ring { width: 76px; height: 76px }
+  .hparts h2 { font-size: 15px }
+  .hpart { grid-template-columns: 6.4rem minmax(0, 1fr); font-size: 12.5px } .hpart .num { display: none }
+  details.panel > summary .hint { display: none }
+  .rt { background: none; border: 0; box-shadow: none; overflow: visible }
+  .rt table, .rt tbody { display: block }
+  .rt thead { display: none }
+  .rt tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px }
+  .rt td { padding: 0; border: 0; min-width: 0; text-align: left !important }
+  .rt tbody tr:hover td { background: none }
+  .rt td[data-label]::before { content: attr(data-label); display: block; font-size: 11.5px; color: var(--fg3); font-weight: 500 }
+  .rt td.w { grid-column: 1 / -1; min-width: 0 }
+  .rt td.st, .rt td.end { grid-column: 1 / -1 }
+  .rt td.end { display: flex; gap: 6px; justify-content: flex-start }
+  .rt td.pick { display: none }
+  .rt.pickable tr { position: relative; padding-left: 44px }
+  .rt.pickable td.pick { display: block; position: absolute; left: 15px; top: 14px }
+  .costbar { top: 44px }
+}
+@media (max-width: 400px) { nav button { padding-inline: 9px; font-size: 13.5px } .brand { font-size: 16px } }
+
+/* ---- print: the Feature tonight price sheet only ---- */
+@media print {
+  header, nav, .foot, #landing, #p-brief, #p-inv, #p-sales, #p-ask, #p-shows .page-head, #offerpanel, #featpanel > :not(#s-out) { display: none !important }
+  body { background: #fff; color: #000; padding: 0 } .panel, .tablewrap { border: 0; box-shadow: none } #p-shows .grid2 { display: block }
+  #s-out::before { content: "Price sheet"; font: 800 20px var(--display); display: block; margin-bottom: 8px }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">The Card Huddle <span>for Business</span></div>
-    <div class="shop"><span class="chip">Founding sellers</span><button class="act" type="button" id="billing" hidden>Billing</button><a href="/" style="color:var(--fg2)">Back to the site</a></div>
+    <a class="brand" href="/business">The Card Huddle <span>for Business</span></a>
+    <div class="shop"><button class="act sm" type="button" id="billing" hidden>Billing</button><a href="/">Back to the site</a></div>
   </header>
 
   <section id="landing" hidden>
     <div class="hero">
       <span class="chip">For eBay, Whatnot and card shop sellers</span>
       <h1 class="herotitle">Know what every card on your shelf is worth, every morning.</h1>
-      <p class="lede" style="font-size:17px">Card Huddle for Business prices your whole inventory against real sold prices daily, then tells you what to reprice, what to feature and what is sitting dead, with your profit tracked by player, set and platform.</p>
-      <div class="acts" style="margin-top:14px"><a class="act go" href="#join" style="text-decoration:none">Join the founding sellers</a><a class="act" href="#how" style="text-decoration:none">See how it works</a></div>
+      <p class="lede">Your whole inventory priced against real sold prices daily, with a short list of what to reprice, what to feature and what is sitting dead.</p>
+      <div class="acts"><a class="act go" href="#join">Join the founding sellers</a><a class="act" href="#how">See how it works</a></div>
     </div>
 
     <div class="feats" id="how">
-      <div class="panel"><h2>Your eBay store, synced</h2><p>Type your eBay username. Every active card listing comes in, and stays in sync. No spreadsheets, no eBay login.</p></div>
-      <div class="panel"><h2>Priced from real sales</h2><p>Each card is priced from its own sold comps: same card, same grade, last 60 days, middle price. Three sales or it says so instead of guessing.</p></div>
-      <div class="panel"><h2>A brief every morning</h2><p>What is over market and stale, what is underpriced, what is heating up, what is dead stock. One tap to fix the price.</p></div>
-      <div class="panel"><h2>Profit you can see</h2><p>Sales and profit after fees, by month, player, set and platform. Your best and worst flips, without a spreadsheet.</p></div>
+      <div class="panel"><h3>Your eBay store, synced</h3><p>Type your eBay username and every active listing comes in. No spreadsheets, no eBay login.</p></div>
+      <div class="panel"><h3>Priced from real sales</h3><p>Same card, same grade, last 60 days. Fewer than three sales and it says so instead of guessing.</p></div>
+      <div class="panel"><h3>A brief every morning</h3><p>Overpriced, underpriced, heating up, dead stock. One tap to fix the price.</p></div>
+      <div class="panel"><h3>Profit you can see</h3><p>Profit after fees by month, player, set and platform.</p></div>
     </div>
 
-    <h2 style="margin:30px 0 10px">What a morning looks like</h2>
-    <div class="brief" style="max-width:720px" aria-label="Example brief">
-      <div class="item down"><span class="tag">Reprice</span><strong>14 Jayden Daniels Prizm Silvers are $22 over market</strong><p>Listed 41 days. It sells for about $42.</p><span class="why">12 sales, $36–$55, last Oct 14</span></div>
-      <div class="item"><span class="tag">Underpriced</span><strong>2024 Prizm Bo Nix Downtown</strong><p>Listed at $180; recent copies sold for about $248.</p><span class="why">5 sales, $240–$260</span></div>
-      <div class="item warn"><span class="tag">Dead stock</span><strong>412 cards listed 90+ days</strong><p>$7,960 tied up. Bundle the cheap ones into lots, or move them to auctions.</p></div>
-      <p class="sample" style="margin:0">Example data.</p>
+    <h2 class="sect">What a morning looks like</h2>
+    <div class="example">
+      <div class="brief" aria-label="Example brief">
+        <div class="item down"><div class="item-main"><span class="tag">Reprice</span><strong>14 Jayden Daniels Prizm Silvers are $22 over market</strong><p>Listed 41 days. It sells for about $42.</p><span class="why">12 sales, $36–$55, last Oct 14</span></div></div>
+        <div class="item"><div class="item-main"><span class="tag">Underpriced</span><strong>2024 Prizm Bo Nix Downtown</strong><p>Listed at $180; recent copies sold for about $248.</p><span class="why">5 sales, $240–$260</span></div></div>
+        <div class="item warn"><div class="item-main"><span class="tag">Dead stock</span><strong>412 cards listed 90+ days</strong><p>$7,960 tied up. Bundle the cheap ones into lots, or move them to auctions.</p></div></div>
+      </div>
+      <p class="sample">Example data.</p>
     </div>
 
-    <div class="grid2" style="margin-top:30px" id="join">
-  <div class="login" id="gate" style="margin:0">
-    <h2 style="margin:0">Card Huddle for Business</h2>
-    <p style="margin:0;color:var(--fg2);font-size:14.5px">Your inventory priced against real sold prices every day, a brief of what to reprice and what to feature, sales and profit, and an AI analyst that knows your shelf.</p>
-    <p style="margin:0;font-family:var(--display);font-size:22px;font-weight:800">$20 <span style="font-size:14px;color:var(--fg2);font-weight:600">a month</span></p>
-    <div id="gatemsg" style="font-size:14px;color:var(--fg2)"></div>
-    <button class="act go" type="button" id="subscribe" hidden>Subscribe</button>
-    <a class="act" id="logintosite" href="/" hidden style="text-align:center;text-decoration:none">Log in on The Card Huddle</a>
-    <div class="err" id="gateerr"></div>
-    <details><summary style="cursor:pointer;font-size:13px;color:var(--fg3)">Owner sign-in</summary>
-      <form id="login" style="display:grid;gap:8px;margin-top:8px">
-        <input id="key" type="password" autocomplete="current-password" placeholder="Admin key" aria-label="Admin key">
-        <button class="act" type="submit">Sign in with the admin key</button>
-        <div class="err" id="loginerr"></div>
-      </form></details>
-  </div>
-      <form class="panel" id="waitlist" style="display:grid;gap:10px">
-        <h2 style="margin:0">Join the founding sellers</h2>
-        <p style="margin:0;color:var(--fg2);font-size:14px">Founding sellers get in first and keep $20 a month for life. We'll email you when your spot opens.</p>
+    <div class="grid2 even join" id="join">
+      <div class="panel login" id="gate">
+        <h2>Card Huddle for Business</h2>
+        <p class="hint">Daily prices on your inventory, a morning brief, sales and profit, and an AI analyst that knows your shelf.</p>
+        <p class="price" style="margin:0">$20 <span>a month</span></p>
+        <div id="gatemsg" class="status"></div>
+        <button class="act go" type="button" id="subscribe" hidden>Subscribe</button>
+        <a class="act" id="logintosite" href="/" hidden>Log in on The Card Huddle</a>
+        <div class="err" id="gateerr"></div>
+        <details class="owner"><summary>Owner sign-in</summary>
+          <form id="login">
+            <input id="key" type="password" autocomplete="current-password" placeholder="Admin key" aria-label="Admin key">
+            <button class="act" type="submit">Sign in with the admin key</button>
+            <div class="err" id="loginerr"></div>
+          </form></details>
+      </div>
+      <form class="panel" id="waitlist">
+        <div><h2>Join the founding sellers</h2>
+          <p class="hint">Get in first and keep $20 a month for life. We'll email you when your spot opens.</p></div>
         <label class="field">Email<input id="w-email" type="email" autocomplete="email" required placeholder="you@email.com"></label>
         <label class="field">eBay username or store (optional)<input id="w-store" placeholder="ebay.com/usr/yourname"></label>
-        <label class="field">Where you sell<select id="w-where"><option>eBay</option><option>Whatnot</option><option>eBay and Whatnot</option><option>Card shop</option><option>Card shows</option><option>Other</option></select></label>
-        <label class="field">Cards in inventory<select id="w-size"><option>Under 250</option><option>250 to 1,000</option><option>1,000 to 5,000</option><option>Over 5,000</option></select></label>
-        <input id="w-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" name="website">
+        <div class="grid2 even" style="gap:12px">
+          <label class="field">Where you sell<select id="w-where"><option>eBay</option><option>Whatnot</option><option>eBay and Whatnot</option><option>Card shop</option><option>Card shows</option><option>Other</option></select></label>
+          <label class="field">Cards in inventory<select id="w-size"><option>Under 250</option><option>250 to 1,000</option><option>1,000 to 5,000</option><option>Over 5,000</option></select></label>
+        </div>
+        <input id="w-hp" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" name="website">
         <button class="act go" type="submit" id="w-go">Save my spot</button>
         <div class="status" id="w-msg" role="status"></div>
       </form>
     </div>
 
-    <h2 style="margin:34px 0 10px">Questions</h2>
+    <h2 class="sect">Questions</h2>
     <div class="faq">
       <details><summary>Is The Card Huddle still free for collectors?</summary><p>Yes, forever. Every collector feature stays free. Business is a separate tool for people who sell.</p></details>
       <details><summary>Where do the prices come from?</summary><p>Completed eBay sales we track every day, matched to the exact card and grade. Not asking prices, and never a guess: a card needs 3 recent sales of the same grade to get a price.</p></details>
@@ -214,56 +351,78 @@ td .act { padding: 4px 9px; font-size: 12px }
     </nav>
 
     <section id="p-brief">
-      <h1 id="headline">Today</h1>
-      <p class="lede" id="sub">Your inventory, priced against real sold prices.</p>
-      <div class="answer" id="summary" hidden style="margin-top:18px;max-width:none"><span class="who">Your morning summary</span><p id="summarytext"></p>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="why" id="summaryat"></span><button class="act" type="button" id="summaryfresh">Write it again</button></div></div>
-      <div class="panel health" id="health" hidden></div>
+      <div class="page-head">
+        <h1 id="headline">Today</h1>
+        <p class="lede" id="sub">Your inventory, priced against real sold prices.</p>
+      </div>
       <div class="kpis" id="kpis"></div>
-      <div id="alertsbox" hidden><h2>Price alerts <button class="act" type="button" id="alertsclear">Clear all</button></h2>
-        <p class="why">Cards whose market moved 15% or more since they were last priced.</p>
-        <div class="brief" id="alerts"></div></div>
-      <h2>What to do today</h2>
-      <div class="brief" id="brief"></div>
+      <div class="grid2">
+        <div class="stack">
+          <div id="alertsbox" hidden>
+            <div class="sechead"><h2>Price alerts</h2><button class="act ghost sm" type="button" id="alertsclear">Clear all</button></div>
+            <div class="brief" id="alerts"></div>
+            <p class="hint">Market moved 15% or more since the card was last priced.</p>
+          </div>
+          <div>
+            <div class="sechead"><h2>What to do today</h2></div>
+            <div class="brief" id="brief"></div>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="panel summary" id="summary" hidden>
+            <h2>Morning summary</h2>
+            <p id="summarytext"></p>
+            <div class="acts"><span class="why" id="summaryat"></span><button class="act ghost sm" type="button" id="summaryfresh">Rewrite</button></div>
+          </div>
+          <div class="panel health" id="health" hidden></div>
+        </div>
+      </div>
     </section>
 
     <section id="p-inv" hidden>
-      <h1>Inventory</h1>
-      <p class="lede">Add cards one at a time, or paste a spreadsheet (CSV) or an eBay active-listings export. Columns it reads: title, grade, cost, price, platform, quantity, date listed.</p>
-      <div class="panel" style="margin:16px 0;display:grid;gap:8px">
-        <h2 style="margin:0">Sync your eBay store</h2>
-        <p style="margin:0;font-size:13.5px;color:var(--fg2)">Pulls in every active card listing by your eBay username. No eBay login needed. It re-syncs each time you open this page after 6 hours.</p>
-        <div class="ask" style="margin:0"><input id="ebayseller" aria-label="eBay username" placeholder="Your eBay username or ebay.com/usr/ link"><button type="button" id="ebaysync">Sync</button></div>
-        <div class="status" id="ebaystatus"></div>
+      <div class="page-head">
+        <h1>Inventory</h1>
+        <p class="lede">Every card priced from its own recent sold comps.</p>
       </div>
-      <div class="addrow" id="addform">
-        <label class="field">Card<input id="a-title" placeholder="2024 Prizm Bo Nix Silver #309"></label>
-        <label class="field">Grade<input id="a-grade" placeholder="Raw or PSA 10"></label>
-        <label class="field">Cost<input id="a-cost" inputmode="decimal" placeholder="$"></label>
-        <label class="field">Your price<input id="a-price" inputmode="decimal" placeholder="$"></label>
-        <label class="field">Where<select id="a-platform"><option>eBay</option><option>Whatnot</option><option>Instagram</option><option>TikTok</option><option>Shop</option><option>Other</option></select></label>
-        <button class="act go" type="button" id="a-add">Add</button>
-      </div>
-      <details style="margin:8px 0 14px"><summary style="cursor:pointer;font-weight:600">Import a spreadsheet</summary>
-        <div style="display:grid;gap:8px;margin-top:10px">
-          <input type="file" id="csvfile" accept=".csv,text/csv">
-          <textarea id="csvtext" placeholder="title,grade,cost,price,platform&#10;2024 Prizm Bo Nix Silver #309,,18,45,eBay"></textarea>
-          <div class="toolbar" style="margin:0"><button class="act go" type="button" id="csvgo">Import</button>
-            <label style="font-size:13px;color:var(--fg2);display:flex;gap:6px;align-items:center"><input type="checkbox" id="csvreplace"> Replace everything</label></div>
-        </div></details>
-      <details class="panel" id="bulkbox" style="margin:0 0 14px"><summary style="cursor:pointer;font-weight:700">Bulk reprice to market</summary>
-        <div style="display:grid;gap:10px;margin-top:12px">
-          <div class="addrow" style="grid-template-columns:repeat(4,minmax(0,1fr)) auto;margin:0">
-            <label class="field">Which cards<select id="r-mode"><option value="both">Over and under market</option><option value="over">Only overpriced (lower)</option><option value="under">Only underpriced (raise)</option></select></label>
-            <label class="field">List at<select id="r-cut"><option value="0">Market price</option><option value="3">3% under market</option><option value="5">5% under market</option><option value="10">10% under market</option></select></label>
-            <label class="field" style="flex-direction:row;align-items:center;gap:6px;display:flex"><input type="checkbox" id="r-99" checked style="width:auto"> End in .99</label>
-            <label class="field" style="flex-direction:row;align-items:center;gap:6px;display:flex"><input type="checkbox" id="r-floor" checked style="width:auto"> Never below cost</label>
-            <button class="act go" type="button" id="r-preview">Preview</button>
-          </div>
-          <div id="r-plan"></div>
+      <div class="tools">
+        <div class="panel">
+          <div class="sechead"><h2>eBay store</h2><span class="hint">No eBay login. Re-syncs every 6 hours.</span></div>
+          <div class="ask" style="max-width:none"><input id="ebayseller" aria-label="eBay username" placeholder="Your eBay username or ebay.com/usr/ link"><button type="button" id="ebaysync">Sync</button></div>
+          <div class="status" id="ebaystatus" style="margin-top:8px"></div>
         </div>
-      </details>
-      <div class="toolbar"><button class="act" type="button" id="reprice">Refresh market prices</button><span class="status" id="invstatus"></span></div>
+        <details class="panel" id="addbox"><summary>Add a card<span class="hint">One at a time</span></summary>
+          <div class="drawer">
+            <div class="addrow" id="addform">
+              <label class="field">Card<input id="a-title" placeholder="2024 Prizm Bo Nix Silver #309"></label>
+              <label class="field">Grade<input id="a-grade" placeholder="Raw or PSA 10"></label>
+              <label class="field">Cost<input id="a-cost" inputmode="decimal" placeholder="$"></label>
+              <label class="field">Your price<input id="a-price" inputmode="decimal" placeholder="$"></label>
+              <label class="field">Where<select id="a-platform"><option>eBay</option><option>Whatnot</option><option>Instagram</option><option>TikTok</option><option>Shop</option><option>Other</option></select></label>
+              <button class="act go" type="button" id="a-add" style="padding-block:9px">Add</button>
+            </div>
+          </div></details>
+        <details class="panel"><summary>Import a spreadsheet<span class="hint">CSV or an eBay active-listings export</span></summary>
+          <div class="drawer">
+            <input type="file" id="csvfile" accept=".csv,text/csv">
+            <textarea id="csvtext" placeholder="title,grade,cost,price,platform&#10;2024 Prizm Bo Nix Silver #309,,18,45,eBay"></textarea>
+            <p class="hint" style="margin:0">Columns it reads: title, grade, cost, price, platform, quantity, date listed.</p>
+            <div class="acts"><button class="act go" type="button" id="csvgo">Import</button>
+              <label class="check"><input type="checkbox" id="csvreplace"> Replace everything</label></div>
+          </div></details>
+        <details class="panel" id="bulkbox"><summary>Bulk reprice to market<span class="hint">Preview before anything changes</span></summary>
+          <div class="drawer">
+            <div class="bulkrow">
+              <label class="field">Which cards<select id="r-mode"><option value="both">Over and under market</option><option value="over">Only overpriced (lower)</option><option value="under">Only underpriced (raise)</option></select></label>
+              <label class="field">List at<select id="r-cut"><option value="0">Market price</option><option value="3">3% under market</option><option value="5">5% under market</option><option value="10">10% under market</option></select></label>
+              <label class="check"><input type="checkbox" id="r-99" checked> End in .99</label>
+              <label class="check"><input type="checkbox" id="r-floor" checked> Never below cost</label>
+              <button class="act go" type="button" id="r-preview" style="padding-block:9px">Preview</button>
+            </div>
+            <div id="r-plan"></div>
+          </div>
+        </details>
+      </div>
+      <div class="toolbar"><span class="status" id="invstatus"></span><button class="act sm" type="button" id="reprice">Refresh market prices</button></div>
       <div class="panel costbar" id="costbar" hidden>
         <strong id="c-count">0 selected</strong>
         <select id="c-mode" aria-label="How to set cost"><option value="each">Each cost</option><option value="lot">The lot cost (split)</option></select>
@@ -274,50 +433,55 @@ td .act { padding: 4px 9px; font-size: 12px }
     </section>
 
     <section id="p-sales" hidden>
-      <h1>Sales and profit</h1>
-      <p class="lede">Profit after estimated selling fees (eBay 13.25% + $0.40, Whatnot 10.9% + $0.30). Add your cost to a card to see its profit.</p>
+      <div class="page-head">
+        <h1>Sales and profit</h1>
+        <p class="lede">Profit after estimated selling fees. Add a card's cost to see its profit.</p>
+      </div>
       <div class="kpis" id="salekpis"></div>
       <div id="endedbox"></div>
-      <div class="grid2" id="salegroups"></div>
-      <h2 style="margin-top:22px">Recent sales</h2>
+      <div class="grid2 even" id="salegroups"></div>
+      <div class="sechead" style="margin-top:28px"><h2>Recent sales</h2></div>
       <div id="salelist"></div>
+      <p class="hint" style="margin-top:14px">Fees estimated at eBay 13.25% + $0.40 and Whatnot 10.9% + $0.30 per sale.</p>
     </section>
 
     <section id="p-shows" hidden>
-      <h1>Show tools</h1>
-      <p class="lede">For a Whatnot stream, a card show table or a walk-in at the counter.</p>
-      <div class="grid2" style="margin-top:18px">
-        <div class="panel" style="display:grid;gap:10px">
-          <h2 style="margin:0">Buy-offer calculator</h2>
-          <p style="margin:0;color:var(--fg2);font-size:13.5px">Someone wants to sell you their cards. Type one card per line (add PSA 10 etc. if graded); each is priced from real sales.</p>
+      <div class="page-head">
+        <h1>Show tools</h1>
+        <p class="lede">For a Whatnot stream, a card show table or a walk-in at the counter.</p>
+      </div>
+      <div class="grid2 even">
+        <div class="panel stack" id="offerpanel">
+          <div><h2>Buy-offer calculator</h2><p class="hint">One card per line, with the grade if it's slabbed. Each is priced from real sales.</p></div>
           <textarea id="o-cards" placeholder="2024 Prizm Bo Nix Silver #309&#10;2023 Prizm CJ Stroud #339 PSA 10&#10;2024 Donruss Optic Caleb Williams Rated Rookie"></textarea>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label class="field" style="min-width:9rem">Offer at<select id="o-pct"><option value="50">50% of market</option><option value="60" selected>60% of market</option><option value="65">65% of market</option><option value="70">70% of market</option><option value="75">75% of market</option><option value="80">80% of market</option></select></label>
-            <button class="act go" type="button" id="o-go" style="align-self:end">Price it</button></div>
+          <div class="acts" style="align-items:end"><label class="field" style="min-width:10rem">Offer at<select id="o-pct"><option value="50">50% of market</option><option value="60" selected>60% of market</option><option value="65">65% of market</option><option value="70">70% of market</option><option value="75">75% of market</option><option value="80">80% of market</option></select></label>
+            <button class="act go" type="button" id="o-go" style="padding-block:9px">Price it</button></div>
           <div id="o-out"></div>
         </div>
-        <div class="panel" style="display:grid;gap:10px">
-          <h2 style="margin:0">Feature tonight</h2>
-          <p style="margin:0;color:var(--fg2);font-size:13.5px">Your most valuable cards, with the ones heating up moved higher. Copy it into your show notes.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="field">How many<select id="s-n"><option>10</option><option selected>20</option><option>40</option></select></label>
+        <div class="panel stack" id="featpanel">
+          <div><h2>Feature tonight</h2><p class="hint">Your most valuable cards, with the ones heating up moved higher.</p></div>
+          <div class="acts" style="align-items:end"><label class="field">How many<select id="s-n"><option>10</option><option selected>20</option><option>40</option></select></label>
             <label class="field">Worth at least<select id="s-min"><option value="0">Any</option><option value="10">$10</option><option value="25">$25</option><option value="50">$50</option><option value="100">$100</option></select></label>
-            <button class="act go" type="button" id="s-go">Build list</button><button class="act" type="button" id="s-copy" hidden>Copy</button><button class="act" type="button" id="s-print" hidden>Print price sheet</button></div>
+            <button class="act go" type="button" id="s-go" style="padding-block:9px">Build list</button><button class="act" type="button" id="s-copy" hidden style="padding-block:9px">Copy</button><button class="act" type="button" id="s-print" hidden style="padding-block:9px">Print</button></div>
           <div id="s-out"></div>
         </div>
       </div>
     </section>
 
     <section id="p-ask" hidden>
-      <h1>Ask about your business</h1>
-      <p class="lede">Answers come from your own inventory, checked against real sold prices.</p>
+      <div class="page-head">
+        <h1>Ask about your business</h1>
+        <p class="lede">Answers come from your own inventory, checked against real sold prices.</p>
+      </div>
       <form class="ask" id="askform"><input id="askq" aria-label="Your question" placeholder="What's my dead stock?"><button type="submit">Ask</button></form>
       <div class="qs">
         <button class="q" type="button">What's my dead stock?</button>
         <button class="q" type="button">Which cards am I overpricing?</button>
         <button class="q" type="button">What should I feature in my next Whatnot show?</button>
       </div>
-      <label id="comparewrap" hidden style="display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--fg2);margin:-6px 0 14px">
-        <input type="checkbox" id="compare"> Owner test: ask both AIs (Claude Haiku and Cloudflare Workers AI) side by side</label>
-      <div class="grid2" id="comparebox" hidden></div>
+      <label id="comparewrap" class="check comparewrap" hidden>
+        <input type="checkbox" id="compare"> Owner test: ask Claude Haiku and Cloudflare Workers AI side by side</label>
+      <div class="grid2 even" id="comparebox" hidden></div>
       <div class="answer" id="answer" hidden><span class="who">The Card Huddle</span><div id="answertext"></div></div>
     </section>
   </div>
