@@ -29,7 +29,7 @@ const check = (label, ok, detail) => {
 };
 
 (async () => {
-  const { isKnownHtmlPath, notFoundResponse } = await import(path.join(ROOT, 'worker.js'));
+  const { isKnownHtmlPath, notFoundResponse, isUnbuiltPage, generatedPagePath } = await import(path.join(ROOT, 'worker.js'));
 
   // ---- Real routes must survive ----
   const KEEP = [
@@ -120,6 +120,21 @@ const check = (label, ok, detail) => {
       /no-store/.test(r.headers.get('cache-control') || ''));
     check('  ...and still offers a way back',
       /href="\/"/.test(body), 'a dead end is a worse page than a 404');
+  }
+
+  // ---- Generated pages the build did not write (the 4,000-page cap) ----
+  {
+    const assets = (list, ok = true) => ({ ASSETS: { fetch: async () => new Response(list ? JSON.stringify(list) : '<html>', { status: ok ? 200 : 404, headers: { 'content-type': list ? 'application/json' : 'text/html' } }) } });
+    check('with no list of built pages, nothing is turned away', !(await isUnbuiltPage(assets(null), '/players/anyone/')));
+    const env = assets(['/players/', '/players/bo-nix/', '/sets/2024-panini-prizm-football/', '/basketball/players/lebron-james/']);
+    check('a generated page that was built is served', !(await isUnbuiltPage(env, '/players/bo-nix/')) && !(await isUnbuiltPage(env, '/players/bo-nix'))
+      && !(await isUnbuiltPage(env, '/players/')) && !(await isUnbuiltPage(env, '/basketball/players/lebron-james/')));
+    check('  ...and one that was not answers 404', await isUnbuiltPage(env, '/players/some-backup-lineman/')
+      && await isUnbuiltPage(env, '/sets/2024-panini-prizm-football/rookies/') && await isUnbuiltPage(env, '/baseball/sets/'));
+    check('  ...while files, the app and other pages are never checked', generatedPagePath('/sets/landing.css') === null
+      && generatedPagePath('/') === null && generatedPagePath('/news/x') === null && !(await isUnbuiltPage(env, '/sets/landing.css')));
+    const src = fs.readFileSync(path.join(ROOT, 'worker.js'), 'utf8');
+    check('  ...and it is wired into the HTML path', /if \(resp\.status === 200 && await isUnbuiltPage\(env, url\.pathname\)\) \{\s*\n\s*return notFoundResponse\(\);/.test(src));
   }
 
   // ---- It has to be wired in, not merely defined ----

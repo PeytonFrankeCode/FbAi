@@ -9691,8 +9691,9 @@ const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's football URLs, checked by test/set-key.test.js so it cannot
 // drift silently away from what build-landing-pages.js emits. Football only:
 // the basketball and baseball pages have no sold data to be priced by.
-// Football's share of the one index budget all three sports now share.
-const INDEXABLE_URLS = 3837;
+// Under the 4,000-page cap (owner, Oct 2026): every football page built is
+// offered to search, plus the home page and three hand-written pages.
+const INDEXABLE_URLS = 3702;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });

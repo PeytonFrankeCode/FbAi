@@ -34,6 +34,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Which generated pages have real price data: the keys of the cron's
+      # price map in KV. The page build keeps those inside its 4,000-page cap
+      # (build-landing-pages.js planIndex), since they are the pages with ads.
+      # Best-effort: without it (no KV read on the token, KV down) the build
+      # ranks on card counts alone and says so in its log. Only keys and sale
+      # counts are kept; nothing secret is printed.
+      - name: Fetch the price map's page keys
+        continue-on-error: true
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          mkdir -p .cache
+          NS=$(awk '/^\[\[kv_namespaces\]\]/{f=1} f && /^id *=/{gsub(/[" ]/,"",$0); sub(/^id=/,"",$0); print; exit}' wrangler.toml)
+          code=$(curl -sS -o .cache/priceblocks.json -w '%{http_code}' -H "Authorization: Bearer $CF_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/storage/kv/namespaces/$NS/values/priceblocks%3Av1")
+          if [ "$code" != "200" ]; then
+            echo "::warning::Could not read the price map from KV (HTTP $code); the page build will rank on card counts. The API token needs Account > Workers KV Storage > Read."
+            rm -f .cache/priceblocks.json; exit 0
+          fi
+          node -e "const d=JSON.parse(require('fs').readFileSync('.cache/priceblocks.json','utf8'));const p={};for(const[k,v]of Object.entries(d.pages||{}))p[k]={sales:v&&v.sales||1};require('fs').writeFileSync('.cache/priced-keys.json',JSON.stringify({built:d.built,pages:p}));console.log('price map:',Object.keys(p).length,'priced pages, built',d.built)"
+
       - name: Build SEO landing pages
         run: npm run build:pages
 

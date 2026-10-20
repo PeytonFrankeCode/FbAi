@@ -27,7 +27,7 @@
  *
  * Re-run any time the checklists change:  npm run build:pages
  */
-const { isEarner } = require('../search-earners.js');
+const { isEarner, PAGES: EARNER_PAGES } = require('../search-earners.js');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -326,69 +326,105 @@ const INDEX_MIN_PLAYER_CARDS = 50;
 const INDEX_MIN_SUBSET_CARDS = 100;
 const INDEX_MIN_PRODUCT_CARDS = 50;
 
-// One index for every sport, capped at what football alone had.
+// The whole generated site is capped at PAGE_CAP pages (owner, Oct 2026).
 //
-// Basketball and baseball brought thousands of indexable pages of their own,
-// which would have near doubled the index in one deploy — the scaled-content
-// shape the thresholds above exist to avoid. So the thresholds are floors now,
-// and the sitemap is a budget, split in two pools:
+// It had grown to 66,000: every player with ten cards, every product, every
+// insert set, for three sports, of which Google was told to index fewer than
+// one in ten. Pages nobody can find and the site itself hides are only cost
+// (build time, upload, a thin-site look to an ad network's reviewer), so a page
+// is now built only if it earns its place. What does not make the cut is not
+// written at all: its address answers 404 (worker.js, data/built-pages.json)
+// and no other page links to it (pruneLinks).
 //
-//   football        FOOTBALL_SHARE of the budget. Its pages carry prices, ads
-//                   and ranking history the other sports do not have yet.
-//   everything else the rest, basketball and baseball competing for it.
+// Football, in this order until the cap:
+//   hubs, year hubs, team pages     always
+//   pages Google sends clicks to    search-earners.js, by clicks
+//   pages with real price data      the cron's price map, read in CI before the
+//                                   build (PRICED_KEYS_FILE), by sales; these
+//                                   carry the ads
+//   the strongest of the rest       card count against the floor for its kind
+// Insert-set (subset) pages only when Google already sends them clicks: the
+// Worker keeps the rest out of search (prunedPath).
 //
-// A fixed split rather than one open ranking so that adding checklists to one
-// sport (2000-2017 basketball and baseball arrived after the budget did) takes
-// room from that pool, not from football. Within a pool every hub, year hub
-// and team page is in, and the rest goes to the strongest product, set and
-// player pages. "Strongest" is card count against the floor for that kind of
-// page (a player with 150 cards scores 3, as does a set with 300). That is a
-// proxy: the real signal is Search Console clicks, and there is no export to
-// rank on yet.
-const INDEX_BUDGET = 5756;
-const FOOTBALL_SHARE = 2 / 3;
+// Basketball and baseball (owner, Oct 2026: keep a few hundred): their
+// OTHER_SPORT_PLAYERS biggest players each, and their players hub. Still kept
+// out of search by the Worker while those sports are in testing.
+//
+// Every football page built is offered to search; isIndexed() is that set.
+const PAGE_CAP = 4000;
+const OTHER_SPORT_PLAYERS = 150;
 const INDEX_FLOOR = { product: INDEX_MIN_PRODUCT_CARDS, subset: INDEX_MIN_SUBSET_CARDS, player: INDEX_MIN_PLAYER_CARDS };
 let INDEXED = new Set();   // `${sport}:${kind}:${key}`, filled by planIndex()
+let BUILT = new Set();     // URL paths, filled by planIndex()
 const isIndexed = (kind, key) => INDEXED.has(`${S.id}:${kind}:${key}`);
+const isBuilt = (urlPath) => BUILT.has(urlPath);
+
+// The price map's keys and sale counts, when CI fetched it (see deploy.yml).
+// Missing or unreadable means the plan falls back to card counts alone.
+function loadPricedKeys() {
+  const f = process.env.PRICED_KEYS_FILE || path.join(__dirname, '..', '.cache', 'priced-keys.json');
+  try {
+    const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    const pages = (d && d.pages) || {};
+    return new Map(Object.entries(pages).map(([k, v]) => [k, Number((v && v.sales) || 1)]));
+  } catch (_) { return new Map(); }
+}
 
 function planIndex(sports) {
-  const footballBudget = Math.floor(INDEX_BUDGET * FOOTBALL_SHARE);
-  const pools = {
-    football: { budget: footballBudget, fixed: 0, cands: [] },
-    other: { budget: INDEX_BUDGET - footballBudget, fixed: 0, cands: [] },
-  };
+  const priced = loadPricedKeys();
+  INDEXED = new Set(); BUILT = new Set();
+  const cands = [];
   for (const { cfg, ctx } of sports) {
-    const pool = pools[cfg.id === 'football' ? 'football' : 'other'];
-    // Hubs (sets, players, teams), year hubs and teams; football also has the
-    // home page and about, methodology and contact. Must match buildSitemap.
-    pool.fixed += 3 + ctx.years.length + ctx.teams.length + (cfg.id === 'football' ? 4 : 0);
-    // A page that has earned Google clicks (search-earners.js) goes in first,
-    // under the floor or not: that is the signal the card count stands in for.
-    const pathOf = (kind, key) => `${cfg.base || ''}/${kind === 'player' ? 'players' : 'sets'}/${key}/`;
-    const add = (kind, key, cards) => {
-      const earned = cfg.id === 'football' && isEarner(pathOf(kind, key));
-      // Subset pages are kept out of search by the Worker (worker.js
-      // prunedPath) unless they have earned clicks, so a budget slot spent on
-      // one bought nothing; it goes to a player or product page instead.
-      if (kind === 'subset' && !earned) return;
-      if (earned || cards >= INDEX_FLOOR[kind]) pool.cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind, score: (earned ? 1e6 : 0) + cards / INDEX_FLOOR[kind] });
+    const b = cfg.base || '';
+    if (cfg.id !== 'football') {
+      BUILT.add(`${b}/players/`);
+      const top = [...ctx.eligible].sort((x, y) => y.cards.length - x.cards.length || (x.name < y.name ? -1 : 1)).slice(0, OTHER_SPORT_PLAYERS);
+      for (const p of top) BUILT.add(`${b}/players/${p.slug}/`);
+      continue;
+    }
+    for (const h of ['/sets/', '/players/', '/teams/']) BUILT.add(h);
+    for (const y of ctx.years) BUILT.add(`/sets/${y}/`);
+    for (const t of ctx.teams) BUILT.add(`/teams/${t.slug}/`);
+    const add = (kind, key, cards, urlPath, priceKey) => {
+      const clicks = isEarner(urlPath) ? ((EARNER_PAGES[urlPath] || [1])[0] || 1) : 0;
+      const sales = priced.get(priceKey) || 0;
+      if (kind === 'subset' && !clicks) return;
+      if (!clicks && !sales && cards < INDEX_FLOOR[kind]) return;
+      const score = clicks ? 3e6 + clicks : sales ? 2e6 + sales : cards / INDEX_FLOOR[kind];
+      cands.push({ id: `${cfg.id}:${kind}:${key}`, kind, path: urlPath, score });
     };
     for (const cl of ctx.checklists) {
-      add('product', cl.id, cl.cardCount);
-      for (const sub of (ctx.subsetIndex.get(cl.id) || [])) add('subset', `${cl.id}/${sub.slug}`, (sub.set.cards || []).length);
+      add('product', cl.id, cl.cardCount, `/sets/${cl.id}/`, `set:${cl.id}`);
+      for (const sub of (ctx.subsetIndex.get(cl.id) || [])) {
+        add('subset', `${cl.id}/${sub.slug}`, (sub.set.cards || []).length, `/sets/${cl.id}/${sub.slug}/`, `subset:${cl.id}/${sub.slug}`);
+      }
     }
-    for (const p of ctx.eligible) add('player', p.slug, p.cards.length);
+    for (const p of ctx.eligible) add('player', p.slug, p.cards.length, `/players/${p.slug}/`, `player:${p.slug}`);
   }
-  INDEXED = new Set();
+  // Stable order for equal scores, so a rebuild picks the same pages.
+  cands.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const room = Math.max(0, PAGE_CAP - BUILT.size);
+  const picked = cands.slice(0, room);
   const tally = {};
-  for (const [name, pool] of Object.entries(pools)) {
-    // Stable order for equal scores, so a rebuild picks the same pages.
-    pool.cands.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    const picked = pool.cands.slice(0, Math.max(0, pool.budget - pool.fixed));
-    for (const c of picked) { INDEXED.add(c.id); tally[`${c.sport} ${c.kind}`] = (tally[`${c.sport} ${c.kind}`] || 0) + 1; }
-    console.log(`index budget, ${name}: ${pool.budget} URLs — ${pool.fixed} hubs and teams, ${picked.length} of ${pool.cands.length} pages over the floors`);
-  }
+  for (const c of picked) { BUILT.add(c.path); INDEXED.add(c.id); tally[c.kind] = (tally[c.kind] || 0) + 1; }
+  const by = (lo) => picked.filter(c => c.score >= lo && c.score < lo * 1.5).length;
+  console.log(`page plan: ${BUILT.size} of ${PAGE_CAP} pages — ${BUILT.size - picked.length} hubs, teams and other-sport players, `
+    + `${picked.length} of ${cands.length} football candidates (${by(3e6)} with Google clicks, ${by(2e6)} priced${priced.size ? '' : ' — no price map, card counts only'})`);
   console.log('  ' + Object.entries(tally).map(([k, n]) => `${k}: ${n}`).join(', '));
+}
+
+// Links to generated pages that were not built come out: a list item that is
+// only such a link goes, an inline one becomes plain text, and a list left
+// empty goes with its heading. The patterns never cross a closing tag, so one
+// item cannot swallow the next.
+const GENERATED_PATH = /^(?:\/(?:basketball|baseball))?\/(?:sets|players|teams)\/(?:[^"?#]*\/)?$/;
+const deadLink = (href) => GENERATED_PATH.test(href) && !BUILT.has(href);
+function pruneLinks(html) {
+  return html
+    .replace(/[ \t]*<li>\s*<a\b[^>]*?\bhref="([^"]+)"[^>]*>((?:(?!<\/a>)[\s\S])*)<\/a>\s*<\/li>\n?/g, (m, href) => (deadLink(href) ? '' : m))
+    .replace(/<a\b[^>]*?\bhref="([^"]+)"[^>]*>((?:(?!<\/a>)[\s\S])*)<\/a>/g, (m, href, inner) => (deadLink(href) ? `<span>${inner}</span>` : m))
+    .replace(/(?:[ \t]*<h[23][^>]*>(?:(?!<\/h[23]>)[\s\S])*<\/h[23]>\s*)?[ \t]*<ul[^>]*>\s*<\/ul>\n?/g, '')
+    .replace(/[ \t]*<p class="lp-cta-row">\s*(?:<span>(?:(?!<\/span>)[\s\S])*<\/span>\s*)+<\/p>\n?/g, '');
 }
 
 // ---- Small helpers --------------------------------------------------------
@@ -1273,8 +1309,11 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 // ---- Sitemap --------------------------------------------------------------
 function buildSitemap(list, players, teams, years, subsetIndex) {
   const urls = [];
-  const push = (loc, priority, changefreq, lastmod) =>
+  const push = (loc, priority, changefreq, lastmod) => {
+    const p = loc.slice(SITE.length);
+    if (GENERATED_PATH.test(p) && !isBuilt(p)) return;          // not built (planIndex)
     urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
+  };
 
   // Product id -> date of the last commit that touched its checklist.
   const setDate = new Map(list.map(cl => [cl.id, fileLastmod(cl.file)]));
@@ -1329,7 +1368,7 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
     push(`${SITE}${S.base}/teams/${t.slug}/`, '0.7', 'weekly',
       newestDate([...(t.setIds || [])].map(id => setDate.get(id))));
   }
-  console.log(`  sitemap: ${urls.length} indexable URLs (${skipped} thin pages built but noindexed)`);
+  console.log(`  sitemap: ${urls.length} indexable URLs (${skipped} pages left out: not built, or not offered to search)`);
   return urls;
 }
 
@@ -1474,26 +1513,33 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
   // One stylesheet for every sport's pages, at /sets/landing.css.
   if (S.id === 'football') fs.writeFileSync(path.join(S.setsDir, 'landing.css'), LANDING_CSS);
 
-  let bytes = 0;
-  for (const cl of checklists) {
-    const dir = path.join(S.setsDir, cl.id);
+  let bytes = 0, pagesWritten = 0;
+  // A page is written only if the plan built it (planIndex), with its links to
+  // pages that were not built taken out.
+  const emit = (urlPath, make) => {
+    if (!isBuilt(urlPath)) return;
+    const html = pruneLinks(withAdSlots(make()));
+    const dir = path.join(PUBLIC_DIR, urlPath);
     fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), html);
+    bytes += Buffer.byteLength(html); pagesWritten++;
+  };
+  const built = {
+    set: (id) => isBuilt(`${S.base}/sets/${id}/`),
+    player: (slug) => isBuilt(`${S.base}/players/${slug}/`),
+    team: (slug) => isBuilt(`${S.base}/teams/${slug}/`),
+  };
+  const builtSets = checklists.filter(cl => built.set(cl.id));
+  for (const cl of checklists) {
     const subs = subsetIndex.get(cl.id) || [];
-    const html = withAdSlots(buildSetPage(cl, relatedSets(cl, checklists), playerSlug, subs));
-    fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
+    emit(`${S.base}/sets/${cl.id}/`, () => buildSetPage(cl, relatedSets(cl, builtSets), playerSlug, subs));
     for (const sub of subs) {
       const siblings = subs.filter(x => x.slug !== sub.slug).slice(0, 12);
-      const sdir = path.join(dir, sub.slug);
-      fs.mkdirSync(sdir, { recursive: true });
-      const shtml = withAdSlots(buildSubsetPage(cl, sub.set, sub.slug, siblings, playerSlug));
-      fs.writeFileSync(path.join(sdir, 'index.html'), shtml); bytes += Buffer.byteLength(shtml);
+      emit(`${S.base}/sets/${cl.id}/${sub.slug}/`, () => buildSubsetPage(cl, sub.set, sub.slug, siblings, playerSlug));
     }
   }
   for (const y of years) {
-    const ydir = path.join(S.setsDir, String(y));
-    fs.mkdirSync(ydir, { recursive: true });
-    const yhtml = withAdSlots(buildYearHub(y, byYear.get(y), subsetIndex));
-    fs.writeFileSync(path.join(ydir, 'index.html'), yhtml); bytes += Buffer.byteLength(yhtml);
+    emit(`${S.base}/sets/${y}/`, () => buildYearHub(y, (byYear.get(y) || []).filter(cl => built.set(cl.id)), subsetIndex));
   }
   // Rookie classes and current rosters, for the links at the foot of each
   // player page. A player's class is their rookie year (rookieYearOf) and
@@ -1521,21 +1567,16 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
       classYear, rookieClass: (classOf.get(classYear) || []).slice(0, 30),
       team, teammates: (squadOf.get(team) || []).slice(0, 30),
     };
-    const dir = path.join(S.playersDir, p.slug);
-    fs.mkdirSync(dir, { recursive: true });
-    const html = withAdSlots(buildPlayerPage(p, related, teamSlug, more));
-    fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
+    emit(`${S.base}/players/${p.slug}/`, () => buildPlayerPage(p, related, teamSlug, more));
   }
+  const builtTeams = teams.filter(t => built.team(t.slug));
   for (const t of teams) {
-    const relatedTeams = teams.filter(x => x.slug !== t.slug).slice(0, 8);
-    const dir = path.join(S.teamsDir, t.slug);
-    fs.mkdirSync(dir, { recursive: true });
-    const html = withAdSlots(buildTeamPage(t, playerSlug, relatedTeams));
-    fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
+    const relatedTeams = builtTeams.filter(x => x.slug !== t.slug).slice(0, 8);
+    emit(`${S.base}/teams/${t.slug}/`, () => buildTeamPage(t, playerSlug, relatedTeams));
   }
 
-  fs.writeFileSync(path.join(S.setsDir, 'index.html'), withAdSlots(buildSetsHub(checklists)));
-  fs.writeFileSync(path.join(S.playersDir, 'index.html'), withAdSlots(buildPlayersHub(eligible)));
+  emit(`${S.base}/sets/`, () => buildSetsHub(builtSets));
+  emit(`${S.base}/players/`, () => buildPlayersHub(eligible.filter(p => built.player(p.slug))));
 
   // A machine-readable list of the player pages, for the same reason
   // checklists/index.json exists: the Worker needs to know what pages there
@@ -1710,10 +1751,10 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
       })),
     }) + '\n');
   }
-  fs.writeFileSync(path.join(S.teamsDir, 'index.html'), withAdSlots(buildTeamsHub(teams)));
+  emit(`${S.base}/teams/`, () => buildTeamsHub(builtTeams));
   const urls = buildSitemap(checklists, eligible, teams, years, subsetIndex);
 
-  console.log(`  wrote ${checklists.length} product + ${subsetTotal} set + ${eligible.length} player + ${teams.length} team pages + ${years.length} year hubs + 3 hubs + sitemap`);
+  console.log(`  wrote ${pagesWritten} pages (of ${checklists.length} products, ${subsetTotal} sets, ${eligible.length} players, ${teams.length} teams, ${years.length} year hubs, 3 hubs) + sitemap`);
   console.log(`  total generated HTML: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
   {
     const { withAds, withoutAds } = _adsStats;
@@ -1741,7 +1782,10 @@ function main() {
     S = cfg;
     urls.push(...buildSport(ctx));
   }
-  if (urls.length > INDEX_BUDGET) throw new Error(`sitemap has ${urls.length} URLs, over the ${INDEX_BUDGET} budget`);
+  if (BUILT.size > PAGE_CAP) throw new Error(`${BUILT.size} pages planned, over the ${PAGE_CAP} cap`);
+  // What was built, for the Worker: a generated address not on this list
+  // answers 404 rather than the app shell (worker.js isBuiltPage).
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'data', 'built-pages.json'), JSON.stringify([...BUILT].sort()) + '\n');
   fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
   console.log(`sitemap: ${urls.length} indexable URLs across every sport`);
