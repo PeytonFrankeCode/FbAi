@@ -133,6 +133,16 @@ function thumb(url, alt) {
     + `decoding="async" width="40" height="56" onerror="this.remove()" /></span>`;
 }
 
+// Each card in the table opens its own sold prices in the live search
+// (owner, Oct 2026): the reader who sees a card's median and wants the sales
+// behind it is one tap away, on this site. The label is "player #number" on a
+// set page and "year set #number" on a player page, so the page's noun fills
+// in whichever half the label leaves out.
+function cardSearchHref(noun, label) {
+  const q = `${noun && noun !== 'this set' ? noun + ' ' : ''}${label || ''}`.replace(/\s+/g, ' ').trim();
+  return '/?prefill=' + encodeURIComponent(q);
+}
+
 // The markup.
 //
 // Plain semantic HTML, no scripts, no classes the landing-page CSS does not
@@ -177,7 +187,7 @@ function render(summary, opts) {
     html += `    <tbody>\n`;
     for (const r of summary.top) {
       html += `      <tr><td class="lp-thumb-cell">${thumb(r.img, r.label)}</td>`;
-      html += `<td>${esc(r.label)}</td><td>${r.sales.toLocaleString('en-US')}</td>`;
+      html += `<td><a href="${esc(cardSearchHref(noun, r.label))}">${esc(r.label)}</a></td><td>${r.sales.toLocaleString('en-US')}</td>`;
       html += `<td>${esc(money(r.median))}</td></tr>\n`;
     }
     html += `    </tbody>\n  </table>\n`;
@@ -251,5 +261,5 @@ const keyFor = (kind, id) => `${kind}:${id}`;
 
 module.exports = {
   MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS, THUMB_SIZE, thumb,
-  median, money, esc, summarise, render, pricedHead, TITLE_PHRASE, keyFor, ebaySearchUrl,
+  median, money, esc, summarise, render, pricedHead, TITLE_PHRASE, keyFor, ebaySearchUrl, cardSearchHref,
 };

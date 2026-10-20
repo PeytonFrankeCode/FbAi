@@ -19728,6 +19728,7 @@ const PHOTO_FETCH_TIMEOUT_MS = 8000;
 const PRICE_BLOCKS_KEY = 'priceblocks:v1';
 const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
 const PRICE_BLOCK_WINDOW_DAYS = 45;
+const PRICE_BLOCK_WIDE_DAYS = 120;
 
 // Records that a build was tried, separately from whether it worked.
 //
@@ -19881,7 +19882,14 @@ async function _buildPriceBlocks() {
     SELECT g, label, n AS sales, price_cents AS median${IMGSEL}
       FROM base WHERE rn = (n + 1) / 2`;
 
-  let setCards, playerCards, span;
+  // A page that misses the bar on the last 45 days gets a second look over
+  // the last 120 (owner, Oct 2026). Plenty of real players and sets trade
+  // steadily but too slowly to clear 20 sales across 10 cards in six weeks,
+  // and those pages sat without prices (and so without ads) for it. The bar
+  // itself does not move, and a page priced from the longer window prints its
+  // own dates, so the number never claims to be fresher than it is.
+  const wideSince = new Date(Date.now() - PRICE_BLOCK_WIDE_DAYS * 86400000).toISOString().slice(0, 10);
+  let setCards, playerCards, span, wideSet, widePlayer, wideSpan;
   try {
     [setCards, playerCards, span] = await Promise.all([
       db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(since).all(),
@@ -19892,103 +19900,130 @@ async function _buildPriceBlocks() {
   } catch (err) {
     return failed(`query-failed: ${err && err.message}`);
   }
-
-  // Fold the card rows onto the pages they belong to. A page can collect rows
-  // from several spellings — the join already knows that — so this accumulates
-  // rather than assigns.
-  const pages = new Map();
-  const collect = (rows, resolve, kind) => {
-    for (const r of (rows && rows.results) || []) {
-      const page = resolve(r.g);
-      if (!page) continue;
-      const id = kind === 'set' ? page.id : page.slug;
-      const key = priceKeyFor(kind, id);
-      let p = pages.get(key);
-      if (!p) { p = { kind, page, sales: 0, prices: [], cards: [] }; pages.set(key, p); }
-      const sales = Number(r.sales || 0), med = Number(r.median || 0);
-      p.sales += sales;
-      p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
-      // The page-wide median is over CARDS, not over sales: weighting by sale
-      // count would let one heavily-traded base card decide the figure for the
-      // whole set, which is the opposite of what a reader is asking.
-      p.prices.push(med);
-    }
-  };
-  collect(setCards, g => {
-    const i = String(g || '').indexOf('|');
-    return i === -1 ? null : matchSale(setIndex, String(g).slice(0, i), String(g).slice(i + 1));
-  }, 'set');
-  collect(playerCards, g => matchPlayer(playerIndex, g), 'player');
-
-  // ---- subset pages ----
-  //
-  // 572 of the indexable URLs are subsets of a product — "2025 Panini Prizm /
-  // Rookie Revolution" — and they cannot be joined the way the other two are,
-  // because `sales` has no subset column. A subset IS a list of (player, card
-  // number) pairs though, and a sale carries both, so the join goes through
-  // membership instead. build-landing-pages.js emits the map.
-  //
-  // Ambiguous cards are absent from that map by construction: inserts reuse
-  // the base numbering, so 28.5% of keys belong to more than one subset and
-  // are omitted rather than guessed. A page therefore prices the cards it can
-  // prove are its own, and MIN_CARDS still decides whether that is enough to
-  // print anything.
   try {
-    const attribution = await _loadJson('subsets/attribution.json');
-    for (const r of (setCards && setCards.results) || []) {
-      const i = String(r.g || '').indexOf('|');
-      if (i === -1) continue;
-      const product = matchSale(setIndex, String(r.g).slice(0, i), String(r.g).slice(i + 1));
-      if (!product) continue;
-      const map = _attributionFor(attribution, product.id);
-      if (!map) continue;
-      // The label is `player #number`; the map is keyed `player|number`. Split
-      // on the LAST ' #' so a player whose name contains one still resolves.
-      const label = String(r.label || '');
-      const at = label.lastIndexOf(' #');
-      if (at === -1) continue;
-      // Both halves arrive already normalised — the SQL label is built from
-      // _normCol(player) and _normCol(card_number), and the map was keyed with
-      // the JS norm(). test/subset-attribution.test.js asserts those two agree;
-      // if they ever drift, every lookup here misses and the subset pages just
-      // stay empty, with nothing thrown to say why.
-      const slug = map[`${label.slice(0, at)}|${label.slice(at + 2)}`];
-      if (!slug) continue;
-      const key = priceKeyFor('subset', `${product.id}/${slug}`);
-      let p = pages.get(key);
-      if (!p) {
-        p = { kind: 'subset', page: { id: `${product.id}/${slug}`, name: product.name, slug },
-              sales: 0, prices: [], cards: [] };
-        pages.set(key, p);
-      }
-      const sales = Number(r.sales || 0), med = Number(r.median || 0);
-      p.sales += sales;
-      p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
-      p.prices.push(med);
-    }
+    [wideSet, widePlayer, wideSpan] = await Promise.all([
+      db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(wideSince).all(),
+      db.prepare(cardAgg(P, `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`)).bind(wideSince).all(),
+      db.prepare(`SELECT MIN(sold_date) AS first, MAX(sold_date) AS last
+                    FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(wideSince).first(),
+    ]);
   } catch (err) {
-    // No attribution artifact means no subset blocks, which is the same as a
-    // subset with too little data: the slot stays empty. Not worth failing the
-    // whole build for.
-    console.error('[prices] subset attribution unavailable:', err && err.message);
+    // The longer look is a bonus: without it the 45-day pages still ship.
+    console.error('[prices] 120-day pass skipped:', err && err.message);
   }
+  let attribution = null;
+  try { attribution = await _loadJson('subsets/attribution.json'); }
+  catch (err) { console.error('[prices] subset attribution unavailable:', err && err.message); }
 
-  const out = {};
-  let kept = 0;
-  for (const [key, p] of pages) {
-    p.cards.sort((a, b) => b.sales - a.sales || a.label.localeCompare(b.label));
-    const prices = p.prices.slice().sort((a, b) => a - b);
-    const summary = priceSummarise({
-      sales: p.sales,
-      cards: p.cards.length,
-      median: priceMedian(prices),
-      low: prices[0], high: prices[prices.length - 1],
-    }, p.cards);
-    if (!summary) continue;
-    summary.noun = p.kind === 'set' ? p.page.name : p.page.name;
-    out[key] = summary;
-    kept++;
+  const fold = (setCards, playerCards) => {
+    // Fold the card rows onto the pages they belong to. A page can collect rows
+    // from several spellings — the join already knows that — so this accumulates
+    // rather than assigns.
+    const pages = new Map();
+    const collect = (rows, resolve, kind) => {
+      for (const r of (rows && rows.results) || []) {
+        const page = resolve(r.g);
+        if (!page) continue;
+        const id = kind === 'set' ? page.id : page.slug;
+        const key = priceKeyFor(kind, id);
+        let p = pages.get(key);
+        if (!p) { p = { kind, page, sales: 0, prices: [], cards: [] }; pages.set(key, p); }
+        const sales = Number(r.sales || 0), med = Number(r.median || 0);
+        p.sales += sales;
+        p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
+        // The page-wide median is over CARDS, not over sales: weighting by sale
+        // count would let one heavily-traded base card decide the figure for the
+        // whole set, which is the opposite of what a reader is asking.
+        p.prices.push(med);
+      }
+    };
+    collect(setCards, g => {
+      const i = String(g || '').indexOf('|');
+      return i === -1 ? null : matchSale(setIndex, String(g).slice(0, i), String(g).slice(i + 1));
+    }, 'set');
+    collect(playerCards, g => matchPlayer(playerIndex, g), 'player');
+
+    // ---- subset pages ----
+    //
+    // 572 of the indexable URLs are subsets of a product — "2025 Panini Prizm /
+    // Rookie Revolution" — and they cannot be joined the way the other two are,
+    // because `sales` has no subset column. A subset IS a list of (player, card
+    // number) pairs though, and a sale carries both, so the join goes through
+    // membership instead. build-landing-pages.js emits the map.
+    //
+    // Ambiguous cards are absent from that map by construction: inserts reuse
+    // the base numbering, so 28.5% of keys belong to more than one subset and
+    // are omitted rather than guessed. A page therefore prices the cards it can
+    // prove are its own, and MIN_CARDS still decides whether that is enough to
+    // print anything.
+    if (attribution) {
+      for (const r of (setCards && setCards.results) || []) {
+        const i = String(r.g || '').indexOf('|');
+        if (i === -1) continue;
+        const product = matchSale(setIndex, String(r.g).slice(0, i), String(r.g).slice(i + 1));
+        if (!product) continue;
+        const map = _attributionFor(attribution, product.id);
+        if (!map) continue;
+        // The label is `player #number`; the map is keyed `player|number`. Split
+        // on the LAST ' #' so a player whose name contains one still resolves.
+        const label = String(r.label || '');
+        const at = label.lastIndexOf(' #');
+        if (at === -1) continue;
+        // Both halves arrive already normalised — the SQL label is built from
+        // _normCol(player) and _normCol(card_number), and the map was keyed with
+        // the JS norm(). test/subset-attribution.test.js asserts those two agree;
+        // if they ever drift, every lookup here misses and the subset pages just
+        // stay empty, with nothing thrown to say why.
+        const slug = map[`${label.slice(0, at)}|${label.slice(at + 2)}`];
+        if (!slug) continue;
+        const key = priceKeyFor('subset', `${product.id}/${slug}`);
+        let p = pages.get(key);
+        if (!p) {
+          p = { kind: 'subset', page: { id: `${product.id}/${slug}`, name: product.name, slug },
+                sales: 0, prices: [], cards: [] };
+          pages.set(key, p);
+        }
+        const sales = Number(r.sales || 0), med = Number(r.median || 0);
+        p.sales += sales;
+        p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
+        p.prices.push(med);
+      }
+    }
+    return pages;
+  };
+
+  const priceAll = (pages, from, to) => {
+    const out = {};
+    let groups = 0;
+    for (const [key, p] of pages) {
+      groups++;
+      p.cards.sort((a, b) => b.sales - a.sales || a.label.localeCompare(b.label));
+      const prices = p.prices.slice().sort((a, b) => a - b);
+      const summary = priceSummarise({
+        sales: p.sales,
+        cards: p.cards.length,
+        median: priceMedian(prices),
+        low: prices[0], high: prices[prices.length - 1],
+      }, p.cards);
+      if (!summary) continue;
+      summary.noun = p.page.name;
+      if (from) { summary.from = from; summary.to = to; }
+      out[key] = summary;
+    }
+    return { out, groups };
+  };
+  const primary = priceAll(fold(setCards, playerCards));
+  const out = primary.out;
+  let kept = Object.keys(out).length, widened = 0;
+  if (wideSet && widePlayer) {
+    const wide = priceAll(fold(wideSet, widePlayer), (wideSpan && wideSpan.first) || wideSince, (wideSpan && wideSpan.last) || '');
+    for (const [key, summary] of Object.entries(wide.out)) {
+      if (out[key]) continue;
+      out[key] = summary; widened++;
+    }
   }
+  kept += widened;
+  const pages = { size: primary.groups };
 
   const payload = {
     built: new Date().toISOString(),
@@ -20002,9 +20037,9 @@ async function _buildPriceBlocks() {
     return failed(`kv-write-failed: ${err && err.message}`);
   }
   const bytes = JSON.stringify(payload).length;
-  console.log(`[prices] ${kept} pages priced, ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
-  await mark('ok', { pages: kept, bytes, groups: pages.size });
-  return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
+  console.log(`[prices] ${kept} pages priced (${widened} from the 120-day window), ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
+  await mark('ok', { pages: kept, widened, bytes, groups: pages.size });
+  return { ok: true, pages: kept, widened, bytes, from: payload.from, to: payload.to };
 }
 
 // RETIRED (owner, Oct 2026). Listing photos belong to the sellers who took

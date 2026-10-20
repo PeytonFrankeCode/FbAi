@@ -828,7 +828,24 @@ function buildYearHub(year, products, subsetIndex) {
 }
 
 // ---- Per-player page ------------------------------------------------------
-function buildPlayerPage(p, related, teamSlug) {
+// A player's rookie year. The data has no RC flag, and a player's first card
+// is often a college or draft-prospect one (Bo Nix's first are 2022 Bowman
+// University), so it is the first year with two or more licensed products,
+// leaving those out. Before 1995 one is enough: there were far fewer sets.
+const PRE_ROOKIE_PRODUCT = /universit|college|draft|prospect|\bleaf\b|\bnil\b|high school|\bsage\b|\bonyx\b|wild card/i;
+function rookieYearOf(p) {
+  const perYear = new Map();
+  for (const c of p.cards) {
+    if (!c.year || PRE_ROOKIE_PRODUCT.test(c.setName || '')) continue;
+    if (!perYear.has(c.year)) perYear.set(c.year, new Set());
+    perYear.get(c.year).add(c.setId);
+  }
+  const years = [...perYear.keys()].sort((a, b) => a - b);
+  const y = years.find(y => perYear.get(y).size >= (y < 1995 ? 1 : 2));
+  return y || years[0] || [...p.years].sort((a, b) => a - b)[0] || null;
+}
+
+function buildPlayerPage(p, related, teamSlug, more = {}) {
   const title = `${p.name} ${S.Word} Cards — Values & Checklist | The Card Huddle`;
   const canonical = `${SITE}${S.base}/players/${p.slug}/`;
   const years = [...p.years].sort((a, b) => a - b);
@@ -871,7 +888,7 @@ function buildPlayerPage(p, related, teamSlug) {
   // Rookie year first, then newest first (Oct 2026): newest-first alone
   // stopped Josh Allen's page at 300 cards, all 2024-26, without the 2018
   // rookies anyone opens it for.
-  const minYear = years.length ? years[0] : null;
+  const minYear = more.classYear || (years.length ? years[0] : null);
   const sortedYears = [...byYear.keys()].sort((a, b) => (a === minYear ? -1 : b === minYear ? 1 : b - a));
   const teamLinks = [...new Set([...p.teams].map(canonicalTeam).filter(Boolean))].filter(t => teamSlug && teamSlug.has(t));
 
@@ -924,10 +941,24 @@ ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a
   if (truncated) {
     html += `    <p class="lp-truncate">Showing ${rendered.toLocaleString()} of ${p.cards.length.toLocaleString()} cards. <a href="${prefillHref(p.name)}">Search all ${esc(p.name)} cards in the live tool &rarr;</a></p>\n`;
   }
-  if (related && related.length) {
-    html += `    <section class="lp-related">\n      <h2>Related players</h2>\n      <ul class="lp-related-list">\n`;
-    for (const r of related) html += `        <li><a href="${S.base}/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
-    html += `      </ul>\n      <p><a href="${S.base}/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
+  // Where a reader goes next (owner, Oct 2026): the rest of the rookie class,
+  // the current teammates, then others from the same set. Each list leaves
+  // out names an earlier one already gave.
+  const seen = new Set([p.slug]);
+  const fresh = (list) => (list || []).filter(r => !seen.has(r.slug) && seen.add(r.slug));
+  const groups = [
+    more.classYear ? [`${esc(S.yearLabel(more.classYear))} rookie class`, fresh(more.rookieClass).slice(0, 12)] : null,
+    more.team ? [`More ${esc(more.team)} players`, fresh(more.teammates).slice(0, 12)] : null,
+    ['Related players', fresh(related).slice(0, 10)],
+  ].filter(g => g && g[1].length);
+  if (groups.length) {
+    html += `    <section class="lp-related">\n`;
+    for (const [h, list] of groups) {
+      html += `      <h2>${h}</h2>\n      <ul class="lp-related-list">\n`;
+      for (const r of list) html += `        <li><a href="${S.base}/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
+      html += `      </ul>\n`;
+    }
+    html += `      <p><a href="${S.base}/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
   }
   html += `  </main>\n` + footer();
   return html;
@@ -1455,13 +1486,35 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
     const yhtml = withAdSlots(buildYearHub(y, byYear.get(y), subsetIndex));
     fs.writeFileSync(path.join(ydir, 'index.html'), yhtml); bytes += Buffer.byteLength(yhtml);
   }
+  // Rookie classes and current rosters, for the links at the foot of each
+  // player page. A player's class is their rookie year (rookieYearOf) and
+  // their team the one on their newest card; within a group, pages that are
+  // indexed come first (links that help search too), then the busiest.
+  const classOf = new Map(), squadOf = new Map();
+  const rank = (a, b) => (isIndexed('player', b.slug) - isIndexed('player', a.slug)) || b.cards.length - a.cards.length || a.name.localeCompare(b.name);
+  const nowTeam = (p) => {
+    let best = null;
+    for (const c of p.cards) if (c.team && (!best || (c.year || 0) > (best.year || 0))) best = c;
+    return best ? canonicalTeam(best.team) : null;
+  };
+  for (const p of eligible) {
+    const y = rookieYearOf(p), t = nowTeam(p);
+    if (y) { if (!classOf.has(y)) classOf.set(y, []); classOf.get(y).push(p); }
+    if (t) { if (!squadOf.has(t)) squadOf.set(t, []); squadOf.get(t).push(p); }
+  }
+  for (const list of [...classOf.values(), ...squadOf.values()]) list.sort(rank);
   for (const p of eligible) {
     const sorted = [...p.cards].sort((a, b) => (b.year || 0) - (a.year || 0));
     const primarySet = sorted[0].setId;
     const related = (setPlayers.get(primarySet) || []).filter(x => x.name !== p.name).slice(0, 10);
+    const classYear = rookieYearOf(p), team = nowTeam(p);
+    const more = {
+      classYear, rookieClass: (classOf.get(classYear) || []).slice(0, 30),
+      team, teammates: (squadOf.get(team) || []).slice(0, 30),
+    };
     const dir = path.join(S.playersDir, p.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const html = withAdSlots(buildPlayerPage(p, related, teamSlug));
+    const html = withAdSlots(buildPlayerPage(p, related, teamSlug, more));
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
   for (const t of teams) {
