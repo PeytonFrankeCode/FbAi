@@ -101,28 +101,31 @@ check('sport-players.json is built from the checklists as they are', pok, pok ? 
   if (!fs.existsSync(path.join(PUB, 'sets', 'index.html'))) {
     console.log('SKIP  guide pages — run `npm run build:pages` first (CI does)');
   } else {
+    // The 4,000-page cap (owner, Oct 2026): each of the other sports keeps
+    // its biggest players and their hub, and nothing else.
+    const built = JSON.parse(fs.readFileSync(path.join(PUB, 'data', 'built-pages.json'), 'utf8'));
     for (const sport of ['basketball', 'baseball']) {
-      const hubs = ['sets', 'players', 'teams'].map(k => path.join(PUB, sport, k, 'index.html'));
       const Sport = sport[0].toUpperCase() + sport.slice(1);
-      check(`${sport}: set, player and team guides are built`, hubs.every(f => fs.existsSync(f))
-        && fs.readFileSync(hubs[1], 'utf8').includes(`${Sport} Card Player Price Guides`));
-      const hub = fs.readFileSync(hubs[0], 'utf8');
-      check(`  ...linking within the sport, with no ads or empty price blocks`,
-        hub.includes(`href="/${sport}/sets/`) && !/href="\/(sets|players|teams)\//.test(hub.replace('href="/sets/landing.css', ''))
-        && !hub.includes('adsbygoogle') && !hub.includes('data-price-key'));
+      const players = built.filter(p => p.startsWith(`/${sport}/players/`) && p !== `/${sport}/players/`);
+      const hubFile = path.join(PUB, sport, 'players', 'index.html');
+      check(`${sport}: a few hundred player guides and their hub, and no set or team pages`,
+        fs.existsSync(hubFile) && fs.readFileSync(hubFile, 'utf8').includes(`${Sport} Card Player Price Guides`)
+        && players.length >= 100 && players.length <= 200
+        && !built.some(p => p.startsWith(`/${sport}/sets/`) || p.startsWith(`/${sport}/teams/`)), `${players.length} players`);
+      const hub = fs.readFileSync(hubFile, 'utf8');
+      const links = [...hub.matchAll(/href="(\/[^"]*)"/g)].map(m => m[1]).filter(h => /^\/(?:basketball|baseball)?\/?(?:sets|players|teams)\//.test(h) && !/\.css/.test(h));
+      check(`  ...linking only to pages that exist in its own sport, with no ads or price blocks`,
+        links.length > 50 && links.every(h => h.startsWith(`/${sport}/`) && built.includes(h))
+        && !hub.includes('adsbygoogle') && !hub.includes('data-price-key'), links.filter(h => !built.includes(h)).slice(0, 3).join(' '));
     }
-    // One index budget for all three sports: the new sports took the place of
-    // football's weakest pages instead of adding thousands of their own.
+    check('the whole generated site is 4,000 pages at most', built.length <= 4000 && built.length > 3500, String(built.length));
     const locs = fs.readFileSync(path.join(PUB, 'sitemap.xml'), 'utf8').match(/<loc>[^<]+<\/loc>/g) || [];
-    const per = s => locs.filter(l => l.includes(`thecardhuddle.com/${s}/`)).length;
-    check('the sitemap stays within the index budget, with every sport in it', locs.length <= 5756
-      && per('basketball') > 300 && per('baseball') > 300, `${locs.length} URLs: ${per('basketball')} basketball, ${per('baseball')} baseball`);
-    const demoted = fs.readFileSync(path.join(PUB, 'basketball', 'players', 'index.html'), 'utf8');
-    check('  ...and a page left out of it says noindex', /<meta name="robots" content="index, follow"/.test(demoted)
-      && fs.readdirSync(path.join(PUB, 'basketball', 'players')).some(d => {
-        const f = path.join(PUB, 'basketball', 'players', d, 'index.html');
-        return fs.existsSync(f) && !locs.some(l => l.includes(`/basketball/players/${d}/`)) && /content="noindex, follow"/.test(fs.readFileSync(f, 'utf8'));
-      }));
+    check('  ...and the sitemap lists only built pages', locs.length <= 4000 && locs.every(l => {
+      const p = l.replace(/<\/?loc>/g, '').replace('https://thecardhuddle.com', '');
+      return !/^(?:\/(?:basketball|baseball))?\/(?:sets|players|teams)\//.test(p) || built.includes(p);
+    }), `${locs.length} URLs`);
+    const someNba = built.find(p => /^\/basketball\/players\/./.test(p));
+    check('  ...and the other sports\' player pages still say noindex', /content="noindex, follow"/.test(fs.readFileSync(path.join(PUB, someNba, 'index.html'), 'utf8')));
     const fb = fs.readFileSync(path.join(PUB, 'sets', 'index.html'), 'utf8');
     check('football\'s guides are unchanged by it', fb.includes('Football Card Checklists &amp; Price Guides') && !/href="\/(basketball|baseball)\//.test(fb));
   }

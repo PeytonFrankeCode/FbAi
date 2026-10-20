@@ -867,6 +867,38 @@ export class PricedMeta {
 // A failure to load is cached as an empty map, not retried per request. If the
 // file is missing, the right behaviour is to serve the pages normally rather
 // than to hammer the asset binding on every hit.
+// The generated pages the build actually wrote (owner, Oct 2026: capped at
+// 4,000 of what used to be 66,000). Any other address under /players/,
+// /sets/ or /teams/ would get the app shell from the asset fallback with a
+// 200 (a soft 404, ad tag and all), so it answers a real 404 instead. Read once
+// per isolate; a deploy brings new isolates. If the list cannot be read, every
+// address is let through, as before.
+const GENERATED_PAGE = /^(?:\/(?:basketball|baseball))?\/(?:sets|players|teams)\/(?:[^.]*)$/;
+export function generatedPagePath(pathname) {
+  const p = String(pathname || '');
+  if (!GENERATED_PAGE.test(p)) return null;
+  return p.endsWith('/') ? p : p + '/';
+}
+let _builtPages = null;
+async function builtPages(env) {
+  if (_builtPages) return _builtPages;
+  try {
+    const resp = await env.ASSETS.fetch(new Request('https://assets.local/data/built-pages.json'));
+    const ct = resp.headers.get('content-type') || '';
+    if (resp.ok && /json/i.test(ct)) {
+      const list = await resp.json();
+      if (Array.isArray(list) && list.length) _builtPages = new Set(list);
+    }
+  } catch (_) { /* unreadable: let everything through */ }
+  return _builtPages;
+}
+export async function isUnbuiltPage(env, pathname) {
+  const p = generatedPagePath(pathname);
+  if (!p) return false;
+  const built = await builtPages(env);
+  return !!(built && !built.has(p));
+}
+
 let _playerRedirects = null;
 async function playerRedirect(env, slug) {
   if (!slug) return null;
@@ -1046,6 +1078,10 @@ export default {
               // which means this is the SPA fallback rather than a page. Answer
               // 404 with no ad tag instead of 200 with one.
               if (resp.status === 200 && !isKnownHtmlPath(url.pathname)) {
+                return notFoundResponse();
+              }
+              // A generated page the build did not write (see builtPages).
+              if (resp.status === 200 && await isUnbuiltPage(env, url.pathname)) {
                 return notFoundResponse();
               }
               const h = new Headers(resp.headers);

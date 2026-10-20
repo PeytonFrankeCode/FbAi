@@ -15,6 +15,10 @@ public/teams/
 public/basketball/
 public/baseball/
 public/sitemap.xml
+# The list of generated pages the build wrote, read by the Worker to 404 the rest.
+public/data/built-pages.json
+# The price map's keys, fetched from KV by CI before the page build.
+.cache/
 # Card-title typeahead shards (scripts/build-card-suggest.js), ~70 MB, built
 # from the checklists before every deploy.
 public/data/suggest/
