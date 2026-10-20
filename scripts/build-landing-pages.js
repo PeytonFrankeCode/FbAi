@@ -27,6 +27,7 @@
  *
  * Re-run any time the checklists change:  npm run build:pages
  */
+const { isEarner } = require('../search-earners.js');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -361,8 +362,16 @@ function planIndex(sports) {
     // Hubs (sets, players, teams), year hubs and teams; football also has the
     // home page and about, methodology and contact. Must match buildSitemap.
     pool.fixed += 3 + ctx.years.length + ctx.teams.length + (cfg.id === 'football' ? 4 : 0);
+    // A page that has earned Google clicks (search-earners.js) goes in first,
+    // under the floor or not: that is the signal the card count stands in for.
+    const pathOf = (kind, key) => `${cfg.base || ''}/${kind === 'player' ? 'players' : 'sets'}/${key}/`;
     const add = (kind, key, cards) => {
-      if (cards >= INDEX_FLOOR[kind]) pool.cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind, score: cards / INDEX_FLOOR[kind] });
+      const earned = cfg.id === 'football' && isEarner(pathOf(kind, key));
+      // Subset pages are kept out of search by the Worker (worker.js
+      // prunedPath) unless they have earned clicks, so a budget slot spent on
+      // one bought nothing; it goes to a player or product page instead.
+      if (kind === 'subset' && !earned) return;
+      if (earned || cards >= INDEX_FLOOR[kind]) pool.cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind, score: (earned ? 1e6 : 0) + cards / INDEX_FLOOR[kind] });
     };
     for (const cl of ctx.checklists) {
       add('product', cl.id, cl.cardCount);
