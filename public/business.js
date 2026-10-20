@@ -423,7 +423,60 @@
   // ---- ask: a chat bubble in the corner ----
   // Opens from any tab. While the AI works, a thinking bubble waves its dots
   // and says what it is doing, so a slow answer never looks frozen.
-  const fmt = (text) => esc(text).split(/\n+/).map(l => /^\s*[-•*]\s+/.test(l) ? `<p>• ${l.replace(/^\s*[-•*]\s+/, '')}</p>` : `<p>${l}</p>`).join('');
+  // An answer, made easy to read: a lead sentence, then a list whose labels
+  // are bold, with dollar figures picked out. Takes the light markdown the AI
+  // writes (**bold**, "- " or "1." lists, "#" headings) and nothing else; all
+  // text is escaped first.
+  function fmt(text) {
+    const inline = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^\w*])\*([^*\n]+)\*(?!\w)/g, '$1$2')
+      .replace(/`([^`]+)`/g, '$1').replace(/(−?\$(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)/g, '<span class="amt">$1</span>');
+    const label = (s) => /^<b>/.test(s) ? s : s.replace(/^([^:<]{1,28}):\s+/, (m, l) => l.trim().split(/\s+/).length <= 4 ? `<b>${l}:</b> ` : m);
+    let html = '', list = null;
+    const close = () => { if (list) { html += `</${list}>`; list = null; } };
+    for (const raw of String(text || '').split(/\n+/)) {
+      const l = raw.trim(); if (!l) continue;
+      const ul = /^[-•*]\s+(.*)$/.exec(l), ol = /^\d+[.)]\s+(.*)$/.exec(l), h = /^#{1,6}\s+(.*)$/.exec(l);
+      if (ul || ol) {
+        const tag = ul ? 'ul' : 'ol';
+        if (list !== tag) { close(); html += `<${tag}>`; list = tag; }
+        html += `<li>${label(inline((ul || ol)[1]))}</li>`;
+      } else { close(); html += h ? `<p class="aih">${inline(h[1].replace(/\*\*/g, ''))}</p>` : `<p>${inline(l)}</p>`; }
+    }
+    close();
+    return html || '<p>(no answer)</p>';
+  }
+  // The type-out: the answer takes its full size at once (so nothing jumps),
+  // then its words fade in, in order, over a second or two. A tap shows it all.
+  function typeOut(el) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const words = [];
+    const walk = (n) => {
+      for (const c of [...n.childNodes]) {
+        if (c.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          for (const part of c.textContent.split(/(\s+)/)) {
+            if (!part) continue;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); continue; }
+            const w = document.createElement('span'); w.className = 'tw'; w.textContent = part; words.push(w); frag.appendChild(w);
+          }
+          c.replaceWith(frag);
+        } else if (c.nodeType === 1) walk(c);
+      }
+    };
+    walk(el);
+    if (!words.length) return;
+    const per = Math.max(12, Math.min(38, 2200 / words.length));
+    const t0 = performance.now();
+    let shown = 0;
+    el.classList.add('typing');
+    const finish = () => { el.querySelectorAll('.tw, li').forEach(w => w.classList.add('on')); shown = words.length; };
+    el.addEventListener('click', finish, { once: true });
+    (function step(now) {
+      const want = Math.min(words.length, Math.floor((now - t0) / per) + 1);
+      while (shown < want) { const w = words[shown++]; w.classList.add('on'); const li = w.closest('li'); if (li) li.classList.add('on'); }
+      if (shown < words.length) requestAnimationFrame(step);
+    })(t0);
+  }
   const THINKING = ['Reading your inventory…', 'Checking real sold prices…', 'Looking at your sales…', 'Writing it up…'];
   let busy = false;
   function openAsk() {
@@ -445,10 +498,13 @@
     const m = document.createElement('div');
     m.className = 'aimsg ' + who;
     m.innerHTML = `<div class="aibubble">${html}</div>`;
-    $('aithread').appendChild(m);
-    $('aithread').scrollTop = $('aithread').scrollHeight;
+    const th = $('aithread');
+    th.appendChild(m);
+    // Show the new message from its top: a long answer starts where it starts.
+    th.scrollTop = Math.min(th.scrollHeight - th.clientHeight, m.offsetTop - 12);
     return m;
   }
+  const answer = (html) => { const m = bubble('ai answer', html); typeOut(m.querySelector('.aibubble')); return m; };
   function thinking() {
     const m = bubble('ai thinking', `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="thinkline">${THINKING[0]}</span>`);
     m.setAttribute('aria-label', 'Thinking');
@@ -472,11 +528,11 @@
       if ($('compare').checked) {
         const r = await api('/api/biz/compare', { method: 'POST', body: JSON.stringify({ q }) });
         done();
-        const one = (name, x) => bubble('ai', `<span class="who">${name} · ${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}`);
+        const one = (name, x) => answer(`<span class="who">${name} · ${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}`);
         one('Claude Haiku 5.5', r.anthropic); one('Workers AI', r.workers);
       } else {
         const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
-        done(); bubble('ai', fmt(r.answer));
+        done(); answer(fmt(r.answer));
       }
     } catch (err) { done(); bubble('ai', `<p class="err">${esc(err.message)}</p>`); }
     busy = false; $('asksend').disabled = false; $('aifab').classList.remove('busy');
