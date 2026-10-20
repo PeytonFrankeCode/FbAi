@@ -19678,6 +19678,86 @@ app.post('/api/biz/compare', async (req, res) => {
   const [anthropic, workers] = await Promise.all([one('anthropic'), one('workers')]);
   res.json({ q, anthropic: { model: BIZ_AI_MODEL, ...anthropic }, workers: { model: BIZ_WORKERS_MODEL, ...workers } });
 });
+// ---- Bulk identify: a stack of card photos into inventory (owner, Oct 2026) ----
+// One photo per request, so a seller's 40 go up a few at a time with progress
+// and one bad photo fails alone. Two readers, each covering the other: eBay's
+// image search finds listings that LOOK like the card (it is free, and good
+// at the product and the player), and Claude reads what is PRINTED on it (the
+// card number, a serial stamp, the grade on a slab label), which look-alikes
+// get wrong. Claude is shown eBay's titles as hints and told to trust the card
+// over them. The answer comes back in a fixed shape (structured output), then
+// is priced like any inventory card.
+const BIZ_IDENTIFY_PER_DAY = 400;          // photos a seller may identify a day (owner unmetered)
+const BIZ_IDENTIFY_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['player', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'title', 'confidence', 'note'],
+  properties: {
+    player: { type: ['string', 'null'] },
+    year: { type: ['string', 'null'], description: 'Card year as printed, e.g. "2024" or "2023-24"' },
+    set: { type: ['string', 'null'], description: 'Maker and product, e.g. "Panini Prizm", "Topps Chrome"' },
+    cardNumber: { type: ['string', 'null'] },
+    parallel: { type: ['string', 'null'], description: 'Parallel or insert name, "Base" if none' },
+    printRun: { type: ['integer', 'null'], description: 'The N in a serial stamp like 12/N, else null' },
+    serial: { type: ['string', 'null'], description: 'The serial stamp as printed, e.g. "12/99"' },
+    auto: { type: 'boolean' }, relic: { type: 'boolean' }, rookie: { type: 'boolean' },
+    grader: { type: ['string', 'null'], description: 'PSA, BGS, SGC or CGC when the card is in a slab' },
+    grade: { type: ['string', 'null'], description: 'The grade on the slab label, e.g. "10" or "9.5"' },
+    title: { type: 'string', description: 'An eBay-style title: year, set, player, parallel, #number, /print run, RC, AUTO, grader grade' },
+    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    note: { type: ['string', 'null'], description: 'One short line on anything unsure, else null' },
+  },
+};
+const BIZ_IDENTIFY_SYSTEM = 'You identify sports trading cards from a photo for a card seller\'s inventory. '
+  + 'Read what is printed on the card: year, maker and set, player, card number, any serial stamp (e.g. 12/99), '
+  + 'autograph or memorabilia, rookie marks, and for a graded slab the grader and grade on its label. '
+  + 'Listing titles from an image search are given as hints: they often name the right product and player but '
+  + 'the wrong parallel, number or print run, so trust what you can read on the card over them. '
+  + 'Never invent a serial number or grade you cannot see. Use null for anything you cannot read, and say "low" confidence '
+  + 'when the photo does not show enough to be sure.';
+const _imgMedia = (dataUrl) => {
+  const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,/.exec(String(dataUrl || ''));
+  return m ? m[1] : 'image/jpeg';
+};
+app.post('/api/biz/identify', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const b64 = _cleanImageBase64(req.body && req.body.image);
+  if (!b64) return res.status(400).json({ error: 'Add a photo of the card.' });
+  if (b64.length > 6_000_000) return res.status(413).json({ error: 'That photo is too large. Try a smaller one.' });
+  if (_bizProvider() !== 'anthropic') return res.status(503).json({ error: 'Photo identification needs the ANTHROPIC_API_KEY on the Worker.' });
+  if (who !== 'owner') {
+    const ck = 'biz:ident:' + who + ':' + new Date().toISOString().slice(0, 10);
+    const used = ((await cacheGet(ck)) || {}).n || 0;
+    if (used >= BIZ_IDENTIFY_PER_DAY) return res.status(429).json({ error: `That's today's ${BIZ_IDENTIFY_PER_DAY} photos. More tomorrow.` });
+    cachePut(ck, { n: used + 1 }, 2 * 86400);
+  }
+  try {
+    const hints = await ebayImageSearch(b64, 6).then(r => (r || []).map(x => x.title).filter(Boolean).slice(0, 6)).catch(() => []);
+    if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
+    const r = await _bizClient.messages.create({
+      model: BIZ_AI_MODEL,
+      max_tokens: 2000,
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: BIZ_IDENTIFY_SCHEMA } },
+      system: BIZ_IDENTIFY_SYSTEM,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: _imgMedia(req.body.image), data: b64 } },
+        { type: 'text', text: hints.length
+          ? 'Image-search listing titles (hints, may be wrong):\n' + hints.map(t => '- ' + t).join('\n') + '\n\nIdentify this card.'
+          : 'No image-search hints for this photo. Identify this card.' }] }],
+    });
+    if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'This photo could not be read.' });
+    const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    let card;
+    try { card = JSON.parse(text); } catch (_) { return res.status(502).json({ error: 'The card could not be read. Try another photo.' }); }
+    const grade = card.grader && card.grade ? `${String(card.grader).toUpperCase()} ${card.grade}` : null;
+    let value = null;
+    try { value = card.title ? await _bizValue({ title: String(card.title).slice(0, 200), grade }) : null; } catch (_) { value = null; }
+    res.json({ card: { ...card, grade: grade || null, gradeNumber: card.grade || null }, value, hints });
+  } catch (err) {
+    console.error('[biz/identify]', err && err.status, err && err.message);
+    res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' });
+  }
+});
+
 app.post('/api/biz/ask', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const q = String((req.body && req.body.q) || '').trim().slice(0, 500);

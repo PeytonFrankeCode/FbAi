@@ -281,7 +281,30 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     calls.length = 0; script = [];
     await call('/api/biz/summary?fresh=1', { headers: K });
     check('  ...while the morning summary stays a single, cheaper call with no tools', calls.length === 1 && !calls[0].tools);
+    // Bulk add from photos (owner, Oct 2026): each photo is one call that
+    // reads the card into fields, then it is priced like any other card.
+    calls.length = 0;
+    script = [{ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({
+      player: 'Bo Nix', year: '2024', set: 'Panini Prizm', cardNumber: '309', parallel: 'Silver', printRun: null, serial: null,
+      auto: false, relic: false, rookie: true, grader: 'psa', grade: '10', title: '2024 Prizm Bo Nix Silver #309 RC', confidence: 'high', note: null }) }] }];
+    const photo = 'data:image/jpeg;base64,' + 'A'.repeat(400);
+    const id1 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    const img = calls[0] && calls[0].messages[0].content.find(b => b.type === 'image');
+    check('a card photo is read by the AI into fields, a title and a grade, then priced',
+      id1.status === 200 && id1.body.card.player === 'Bo Nix' && id1.body.card.grade === 'PSA 10' && id1.body.card.confidence === 'high'
+      && img && img.source.media_type === 'image/jpeg' && calls[0].output_config.format.type === 'json_schema' && !calls[0].tools
+      && 'value' in id1.body, JSON.stringify({ status: id1.status, body: id1.body }));
+    const id2 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({}) });
+    check('  ...a request with no photo is turned away', id2.status === 400);
+    script = [{ stop_reason: 'end_turn', content: [{ type: 'text', text: 'not json' }] }];
+    const id3 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('  ...an unreadable answer says so rather than adding a blank card', id3.status === 502 && id3.body.error);
     S._bizSetClient(null); delete process.env.ANTHROPIC_API_KEY; delete process.env.BIZ_AI_PROVIDER;
+    const id4 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('  ...and with no Anthropic key it says the key is missing', id4.status === 503);
+    check('the page reads up to 40 photos, 4 at a time, and adds the ticked ones to inventory',
+      /PH_MAX = 40/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8'))
+      && /id="ph-files"[^>]*multiple/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')));
   }
   const bjs = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
   check('Today shows the alerts with a set-price and dismiss', /\/api\/biz\/alerts/.test(bjs) && /data-dismiss/.test(bjs));
