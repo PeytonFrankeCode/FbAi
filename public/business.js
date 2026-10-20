@@ -67,7 +67,7 @@
   const tabs = document.querySelectorAll('nav button');
   function show(name) {
     tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-    ['brief', 'inv', 'sales', 'shows', 'ask'].forEach(n => { $('p-' + n).hidden = n !== name; });
+    ['brief', 'inv', 'sales', 'shows'].forEach(n => { $('p-' + n).hidden = n !== name; });
     if (name === 'sales') loadSales();
     if (name === 'brief') loadBrief();
     if (name === 'inv') loadInventory();
@@ -420,28 +420,69 @@
   });
   $('s-print').addEventListener('click', () => window.print());
 
-  // ---- ask ----
+  // ---- ask: a chat bubble in the corner ----
+  // Opens from any tab. While the AI works, a thinking bubble waves its dots
+  // and says what it is doing, so a slow answer never looks frozen.
   const fmt = (text) => esc(text).split(/\n+/).map(l => /^\s*[-•*]\s+/.test(l) ? `<p>• ${l.replace(/^\s*[-•*]\s+/, '')}</p>` : `<p>${l}</p>`).join('');
-  async function compare(q) {
-    $('answer').hidden = true; $('comparebox').hidden = false;
-    $('comparebox').innerHTML = '<div class="answer"><p style="color:var(--fg3)">Asking both…</p></div>';
-    try {
-      const r = await api('/api/biz/compare', { method: 'POST', body: JSON.stringify({ q }) });
-      const col = (name, x) => `<div class="answer" style="max-width:none"><span class="who">${name}</span>
-        <span class="why">${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}</div>`;
-      $('comparebox').innerHTML = col('Claude Haiku 5.5', r.anthropic) + col('Cloudflare Workers AI', r.workers);
-    } catch (err) { $('comparebox').innerHTML = `<div class="answer"><p class="err">${esc(err.message)}</p></div>`; }
+  const THINKING = ['Reading your inventory…', 'Checking real sold prices…', 'Looking at your sales…', 'Writing it up…'];
+  let busy = false;
+  function openAsk() {
+    const p = $('aipanel');
+    p.classList.remove('closing'); p.hidden = false; p.classList.add('open');
+    $('aifab').setAttribute('aria-expanded', 'true');
+    setTimeout(() => $('askq').focus(), 60);
+  }
+  function closeAsk() {
+    const p = $('aipanel'); if (p.hidden) return;
+    p.classList.remove('open'); p.classList.add('closing');
+    $('aifab').setAttribute('aria-expanded', 'false');
+    setTimeout(() => { if (p.classList.contains('closing')) { p.hidden = true; p.classList.remove('closing'); } }, 160);
+  }
+  $('aifab').addEventListener('click', openAsk);
+  $('aiclose').addEventListener('click', () => { closeAsk(); $('aifab').focus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('aipanel').hidden) { closeAsk(); $('aifab').focus(); } });
+  function bubble(who, html) {
+    const m = document.createElement('div');
+    m.className = 'aimsg ' + who;
+    m.innerHTML = `<div class="aibubble">${html}</div>`;
+    $('aithread').appendChild(m);
+    $('aithread').scrollTop = $('aithread').scrollHeight;
+    return m;
+  }
+  function thinking() {
+    const m = bubble('ai thinking', `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="thinkline">${THINKING[0]}</span>`);
+    m.setAttribute('aria-label', 'Thinking');
+    const line = m.querySelector('.thinkline');
+    let n = 0;
+    const t = setInterval(() => {
+      if (n >= THINKING.length - 1) return clearInterval(t);
+      line.classList.add('swap');
+      setTimeout(() => { line.textContent = THINKING[++n]; line.classList.remove('swap'); }, 250);
+    }, 1800);
+    return () => { clearInterval(t); m.remove(); };
   }
   async function ask(q) {
-    if (!q) return;
-    if ($('compare').checked) return compare(q);
-    $('comparebox').hidden = true;
-    $('answer').hidden = false; $('answertext').innerHTML = '<p style="color:var(--fg3)">Reading your inventory…</p>';
-    try { const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
-      $('answertext').innerHTML = fmt(r.answer); }
-    catch (err) { $('answertext').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    if (!q || busy) return;
+    busy = true; $('asksend').disabled = true; $('aifab').classList.add('busy');
+    $('askq').value = '';
+    const qs = $('aiqs'); if (qs) qs.remove();
+    bubble('me', `<p>${esc(q)}</p>`);
+    const done = thinking();
+    try {
+      if ($('compare').checked) {
+        const r = await api('/api/biz/compare', { method: 'POST', body: JSON.stringify({ q }) });
+        done();
+        const one = (name, x) => bubble('ai', `<span class="who">${name} · ${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}`);
+        one('Claude Haiku 5.5', r.anthropic); one('Workers AI', r.workers);
+      } else {
+        const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
+        done(); bubble('ai', fmt(r.answer));
+      }
+    } catch (err) { done(); bubble('ai', `<p class="err">${esc(err.message)}</p>`); }
+    busy = false; $('asksend').disabled = false; $('aifab').classList.remove('busy');
+    if (!$('aipanel').hidden) $('askq').focus();
   }
-  document.querySelectorAll('.q').forEach(b => b.addEventListener('click', () => { $('askq').value = b.textContent; ask(b.textContent); }));
+  document.querySelectorAll('.q').forEach(b => b.addEventListener('click', () => ask(b.textContent)));
   $('askform').addEventListener('submit', (e) => { e.preventDefault(); ask($('askq').value.trim()); });
 
   function start(me) {

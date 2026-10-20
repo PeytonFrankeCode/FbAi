@@ -239,6 +239,10 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
       (html.match(/<li>/g) || []).length === 3 && /<li><b>Reprice:<\/b> Smith/.test(html) && /<b>Check first:<\/b>/.test(html) && /&lt;listing&gt;/.test(html), html);
     check('  ...an older paragraph summary still shows as a paragraph', summaryHtml('Plain text.') === '<p>Plain text.</p>');
     const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    const bpage = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');
+    check('Ask is a chat bubble in the corner, not a tab, and shows it is thinking while it works',
+      /id="aifab"/.test(bpage) && /id="aipanel"/.test(bpage) && !/data-tab="ask"/.test(bpage) && /@keyframes aidot/.test(bpage)
+      && /function thinking\(\)/.test(bjs) && /Checking real sold prices/.test(bjs) && /prefers-reduced-motion: reduce/.test(bpage));
     check('  ...and the AI is asked for labelled bullets', /morning summary as 3 to 5 bullet points, one per line, each starting with "- "/.test(srv));
   }
   const wk = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
