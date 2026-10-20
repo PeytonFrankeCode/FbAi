@@ -229,6 +229,18 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('  ...and dismissing it clears it', dis.body.alerts.length === 0);
   const bjs = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
   check('Today shows the alerts with a set-price and dismiss', /\/api\/biz\/alerts/.test(bjs) && /data-dismiss/.test(bjs));
+  {
+    // The morning summary is a bulleted list with bold labels (owner, Oct 2026).
+    const i = bjs.indexOf('function summaryHtml('), j = bjs.indexOf('\n  }\n', i);
+    const esc = (x) => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const summaryHtml = new Function('esc', bjs.slice(i, j + 4) + '; return summaryHtml;')(esc);
+    const html = summaryHtml('- Reprice: Smith is $13 under market.\n- **Check first:** the $12,000 Wembanyama <listing>.\n- Going well: Smith is up 76%.');
+    check('the morning summary renders as a list, labels in bold, text escaped',
+      (html.match(/<li>/g) || []).length === 3 && /<li><b>Reprice:<\/b> Smith/.test(html) && /<b>Check first:<\/b>/.test(html) && /&lt;listing&gt;/.test(html), html);
+    check('  ...an older paragraph summary still shows as a paragraph', summaryHtml('Plain text.') === '<p>Plain text.</p>');
+    const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    check('  ...and the AI is asked for labelled bullets', /morning summary as 3 to 5 bullet points, one per line, each starting with "- "/.test(srv));
+  }
   const wk = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('the cron runs the re-price, wired through init()', /flushTraffic, bizRevalueAll \} = await init\(env\)/.test(wk) && /await bizRevalueAll\(\)/.test(wk));
   await call('/api/biz/inventory/all', { method: 'DELETE', headers: K });
