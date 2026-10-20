@@ -72,8 +72,9 @@ const check = (label, ok, detail) => {
     /if \(url\.pathname === '\/sitemap\.xml' && resp\.status === 200\)[\s\S]{0,200}filterSitemap\(await resp\.text\(\), await priceBlocks\(env\)\)/.test(worker));
   check('  ...and marks an unpriced page noindex only when the map loaded',
     /unpriced = !!\(blocks && Object\.keys\(blocks\.pages\)\.length && !blocks\.pages\[key\]\)/.test(worker)
-      && /if \(unpriced \|\| pruned\) h\.set\('X-Robots-Tag', 'noindex, follow'\)/.test(worker)
-      && /if \(unpriced \|\| pruned\) out = new HTMLRewriter\(\)\.on\('meta\[name="robots"\]', new RobotsNoindex\(\)\)/.test(worker));
+      && /hideFromSearch = unpriced && !isEarner\(url\.pathname\)/.test(worker)
+      && /if \(hideFromSearch \|\| pruned\) h\.set\('X-Robots-Tag', 'noindex, follow'\)/.test(worker)
+      && /if \(hideFromSearch \|\| pruned\) out = new HTMLRewriter\(\)\.on\('meta\[name="robots"\]', new RobotsNoindex\(\)\)/.test(worker));
 
   // The written side: guides are where original content goes, and an empty
   // section must not be offered to search in the meantime.

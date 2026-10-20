@@ -5,6 +5,7 @@ let serverInit = null;
 import { moderateText, stripBidi } from './moderation.js';
 import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot, TALLY_COUNTS } from './traffic-core.js';
 import { keyForUrl as photoKeyForUrl } from './photo-archive-core.js';
+import { isEarner } from './search-earners.js';
 
 // This isolate's visitor tally (traffic-core.js), written to its own KV key
 // every FLUSH_MS so the report can sum every isolate that served anyone.
@@ -766,6 +767,8 @@ export class RobotsNoindex {
 // They stay up for anyone who follows a link: noindex, and out of the sitemap.
 export function prunedPath(path) {
   const p = String(path || '');
+  // Except a page Google has actually sent clicks to (search-earners.js).
+  if (isEarner(p)) return false;
   if (/^\/sets\/[^/]+\/[^/]+\/?$/.test(p) && !/\.(css|js|json)$/.test(p)) return true;
   if (/^\/(basketball|baseball)(\/|$)/.test(p)) return true;
   if (/^\/players\/mystery-rookie(-\d+)?\/?$/.test(p)) return true;
@@ -796,7 +799,7 @@ export function filterSitemap(xml, blocks) {
     try { path = new URL(loc).pathname; } catch (_) { return entry; }
     if (prunedPath(path)) return '';
     const key = pricedPageKey(path);
-    return key && !pages[key] ? '' : entry;
+    return key && !pages[key] && !isEarner(path) ? '' : entry;
   });
 }
 
@@ -1053,20 +1056,23 @@ export default {
               // Only when the map loaded, as for the ad tag below: an empty
               // map is a KV failure, and de-indexing the site over one would
               // be far worse than an unpriced page staying in for a day.
-              let unpriced = false;
+              let unpriced = false, hideFromSearch = false;
               if (resp.status === 200) {
                 const key = pricedPageKey(url.pathname);
                 if (key) {
                   try {
                     const blocks = await priceBlocks(env);
                     unpriced = !!(blocks && Object.keys(blocks.pages).length && !blocks.pages[key]);
+                    // Searchable all the same if Google already sends it clicks
+                    // (search-earners.js); the ad tag still follows the prices.
+                    hideFromSearch = unpriced && !isEarner(url.pathname);
                   } catch (_) { unpriced = false; }
                 }
               }
               const pruned = resp.status === 200 && prunedPath(url.pathname);
-              if (unpriced || pruned) h.set('X-Robots-Tag', 'noindex, follow');
+              if (hideFromSearch || pruned) h.set('X-Robots-Tag', 'noindex, follow');
               let out = new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
-              if (unpriced || pruned) out = new HTMLRewriter().on('meta[name="robots"]', new RobotsNoindex()).transform(out);
+              if (hideFromSearch || pruned) out = new HTMLRewriter().on('meta[name="robots"]', new RobotsNoindex()).transform(out);
 
               // Fill the sold-price block on checklist and player pages.
               //
