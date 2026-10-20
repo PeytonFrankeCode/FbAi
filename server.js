@@ -3531,7 +3531,12 @@ function _sameCard(seed, cand, strict) {
 // page can name the section. Returns null when the query is too vague to
 // resolve a card at all, and the page then renders exactly as it did before —
 // a search for "Mahomes" should not be split into anything.
-async function tagSameCard(results, query) {
+// opts.pricing: the stricter reading used to put a price on ONE card (Card
+// Huddle for Business, owner Oct 2026). A title that names no parallel is the
+// base card, not "every parallel", and a title with no print run compares only
+// with sales that have none: an unstated print run is a silence when someone
+// is browsing, but a priced base card was being valued off its /25s and /99s.
+async function tagSameCard(results, query, opts = {}) {
   if (!Array.isArray(results) || results.length === 0) return null;
   let pi = null;
   try { pi = await parallelIndex(); } catch (_) { pi = null; }
@@ -3543,6 +3548,7 @@ async function tagSameCard(results, query) {
   // A search that says "base" asks for the base card: its parallels are other
   // cards, not "every parallel" as a search naming none would mean.
   if (seed.parallel == null && /\bbase\b/i.test(String(query))) seed.parallel = '';
+  if (opts.pricing && seed.parallel == null) seed.parallel = '';
   const strict = await _isCatalogued(query, year);
 
   // Too vague to split on. With no parallel read AND no kind AND no print run,
@@ -3558,7 +3564,8 @@ async function tagSameCard(results, query) {
   let differing = 0, unconfirmed = 0;
   for (const r of results) {
     const cand = _identityOf(r.title, pi, player, pAliases, r.itemId || r.item_id, sOverrides);
-    const same = _sameCard(seed, cand, strict);
+    const same = _sameCard(seed, cand, strict)
+      && !(opts.pricing && seed.printRun == null && cand.printRun != null);
     r.sameCard = same;
     // Why, when it is not: `sameCardUnread` is "this listing's parallel could
     // not be read" (only a catalogued product sets those aside), as against a
@@ -19071,14 +19078,27 @@ function _bizGate(req, res) {
 }
 // Sold comps for one card from our own sales: the same words in the title,
 // read the way the sold search reads them.
+// Read by the same rules as the sold search (owner, Oct 2026: "the same rules
+// as our sold database"): oversize cards out unless asked for, the keyword
+// match, the price-outlier trim, then the card-identity check, in its pricing
+// mode, so a base card is valued off base sales and never off its numbered
+// parallels.
+async function _bizSoldFor(query, tag) {
+  const data = await fetchViaNflCardDb(query, 150, tag);
+  const rows = _dropOversizeUnlessAsked(data.results || [], query);
+  const m = matchSoldListings(rows, query);
+  if (m.relaxedBy) return { results: [], relaxedBy: m.relaxedBy };
+  const kept = filterPriceOutliers(m.results || []);
+  try { await tagSameCard(kept, query, { pricing: true }); } catch (_) { /* untagged: keep the match */ }
+  return { results: kept.filter(r => r.sameCard !== false), relaxedBy: 0 };
+}
 async function _bizComps(item) {
-  const data = await fetchViaNflCardDb(item.title, 150, 'business');
-  const m = matchSoldListings(data.results || [], item.title);
-  if (m.relaxedBy) return [];
-  return (m.results || []).map(r => ({ price: Number(r.price), soldDate: r.soldDate, grade: r.grade, grader: r.grader, condition: r.condition }));
+  const { results } = await _bizSoldFor(item.title, 'business');
+  return results.map(r => ({ price: Number(r.price), soldDate: r.soldDate, grade: r.grade, grader: r.grader, condition: r.condition }));
 }
 async function _bizValue(item, now = Date.now()) {
-  const key = 'biz:val:' + crypto.createHash('sha1').update(item.title.toLowerCase() + '|' + (item.grade || 'raw')).digest('hex').slice(0, 20);
+  // v2: the sold search's rules (_bizSoldFor).
+  const key = 'biz:val2:' + crypto.createHash('sha1').update(item.title.toLowerCase() + '|' + (item.grade || 'raw')).digest('hex').slice(0, 20);
   const hit = await cacheGet(key);
   if (hit && hit.asOf) return hit;
   const v = BIZ.valueFromSales(item, await _bizComps(item), now);
@@ -19458,6 +19478,10 @@ const BIZ_AI_SYSTEM = [
   'Write for a busy seller in plain, everyday words. Start with a one-sentence answer.',
   'Then at most 4 bullet points, one per line, each written as "- **Short label:** one sentence" of under 25 words naming the card and the dollar figures.',
   'Say "recent sales" rather than "comps". No headings, no tables, no closing summary.',
+  // A ceiling on any price it suggests (owner, Oct 2026). A market median far
+  // above the asking price is usually a different version (a numbered or
+  // parallel card) in the sales, not a bargain.
+  'Never suggest a price more than 3 times what the card is listed at now. If the market median is more than 3 times the asking price, say the sales may include a different version of the card and that it should be checked by hand, rather than suggesting that price.',
 ].join(' ');
 const BIZ_ASKS_PER_DAY = 40;
 let _bizClient = null;
@@ -19566,8 +19590,7 @@ async function _bizRunTool(name, input) {
   switch (name) {
     case 'search_sold_sales': {
       if (q.length < 3) return { error: 'Give a card to search for.' };
-      const data = await fetchViaNflCardDb(q, 150, 'business-ai');
-      const m = matchSoldListings(data.results || [], q);
+      const m = await _bizSoldFor(q, 'business-ai');
       const rows = (m.results || []).filter(r => Number(r.price) > 0)
         .sort((a, b) => String(b.soldDate || '').localeCompare(String(a.soldDate || '')));
       const prices = rows.map(r => Number(r.price)).sort((a, b) => a - b);
