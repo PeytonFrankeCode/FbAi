@@ -243,6 +243,18 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     check('Ask is a chat bubble in the corner, not a tab, and shows it is thinking while it works',
       /id="aifab"/.test(bpage) && /id="aipanel"/.test(bpage) && !/data-tab="ask"/.test(bpage) && /@keyframes aidot/.test(bpage)
       && /function thinking\(\)/.test(bjs) && /Checking real sold prices/.test(bjs) && /prefers-reduced-motion: reduce/.test(bpage));
+    {
+      // Answers read easily: lead sentence, labelled list, dollar figures picked out, all escaped.
+      const fi = bjs.indexOf('  function fmt('), fj = bjs.indexOf('\n  }\n', fi);
+      const fmt = new Function('esc', bjs.slice(fi, fj + 4) + '; return fmt;')(esc);
+      const out = fmt('Five cards need a look.\n- **Underpriced:** Allen is $5.99 against about $6, up 1,336%.\n- Over market: Purdy is $1,729.99 <b>.\n1. First\n2. Second');
+      check('an AI answer renders as a lead line, a labelled list and a numbered list, with dollars marked and text escaped',
+        /^<p>Five cards need a look\.<\/p><ul><li><b>Underpriced:<\/b> Allen is <span class="amt">\$5\.99<\/span> against about <span class="amt">\$6<\/span>,/.test(out)
+        && /<li><b>Over market:<\/b> Purdy is <span class="amt">\$1,729\.99<\/span> &lt;b&gt;\.<\/li><\/ul><ol><li>First<\/li><li>Second<\/li><\/ol>$/.test(out)
+        && !/\*\*/.test(out), out);
+      check('  ...and the words type out once it arrives', /function typeOut\(/.test(bjs) && /\.tw\.on/.test(bpage)
+        && /\*\*Short label:\*\*/.test(fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8')));
+    }
     check('  ...and the AI is asked for labelled bullets', /morning summary as 3 to 5 bullet points, one per line, each starting with "- "/.test(srv));
   }
   const wk = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
