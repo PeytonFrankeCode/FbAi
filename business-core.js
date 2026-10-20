@@ -70,6 +70,11 @@ function normalizeItem(row, now = Date.now()) {
 // Too few sales is no price, never a guess.
 const VALUE_DAYS = 60;
 const MIN_COMPS = 3;
+// The most Business will ever suggest raising a card to: 3x its asking price
+// (owner, Oct 2026). A median past that is far likelier a numbered or parallel
+// version in the sales than a card listed at a third of its worth.
+const MAX_X = 3;
+const capRaise = (price, to) => (price > 0 && to > price * MAX_X ? round2(price * MAX_X) : to);
 function valueFromSales(item, sales, now = Date.now()) {
   const want = readGrade(item.grade);
   const same = (sales || []).filter(s => {
@@ -91,7 +96,10 @@ function valueFromSales(item, sales, now = Date.now()) {
     low: round2(Math.min(...same.map(s => s.price))),
     high: round2(Math.max(...same.map(s => s.price))),
     lastSold: new Date(same[0].t).toISOString().slice(0, 10),
-    trend: recent.length >= 2 && older.length >= 2 ? Math.round(((mr - mo) / mo) * 1000) / 10 : null,
+    // A two-week move past 3x either way is a mix of different versions in the
+    // sales, not a market, so it is no trend at all (owner, Oct 2026).
+    trend: recent.length >= 2 && older.length >= 2 && mr / mo <= MAX_X && mo / mr <= MAX_X
+      ? Math.round(((mr - mo) / mo) * 1000) / 10 : null,
     asOf: new Date(now).toISOString(),
   };
 }
@@ -130,9 +138,12 @@ function analyze(items, now = Date.now()) {
         text: `Listed $${r.price} for ${r.days} days. It sells for about $${r.market}.`,
         why: `${r.n} sales, $${r.low}–$${r.high}, last ${r.lastSold || ''}`.trim(), suggest: r.market });
     } else if (r.price < r.market * UNDER && r.n >= MIN_COMPS) {
-      actions.push({ kind: 'underpriced', id: r.id, title: r.title, dollars: (r.market - r.price) * r.qty,
-        text: `Listed at $${r.price}; recent copies sold for about $${r.market}.`,
-        why: `${r.n} sales, $${r.low}–$${r.high}`, suggest: r.market });
+      const to = capRaise(r.price, r.market);
+      actions.push({ kind: 'underpriced', id: r.id, title: r.title, dollars: (to - r.price) * r.qty,
+        text: to < r.market
+          ? `Listed at $${r.price}; sales run about $${r.market}, over 3x. Check they are the same version before going past $${to}.`
+          : `Listed at $${r.price}; recent copies sold for about $${r.market}.`,
+        why: `${r.n} sales, $${r.low}–$${r.high}`, suggest: to });
     }
     if (r.trend != null && r.trend >= HOT_TREND) {
       actions.push({ kind: 'hot', id: r.id, title: r.title, dollars: r.market * r.qty * (r.trend / 100),
@@ -261,7 +272,7 @@ function repricePlan(items, { mode = 'both', undercut = 0, end99 = false, floor 
   for (const it of items || []) {
     const v = it.value || {};
     if (v.market == null || !(v.n >= MIN_COMPS)) continue;
-    let to = v.market * (1 - cut);
+    let to = capRaise(it.price, v.market * (1 - cut));
     if (end99 && to >= 5) to = Math.max(0.99, Math.floor(to) - 0.01 + (to % 1 >= 0.5 ? 1 : 0));
     to = round2(to);
     if (floor && it.cost != null && to < it.cost) to = round2(it.cost);
@@ -384,4 +395,4 @@ function alertText(a) {
   const dir = a.pct > 0 ? 'up' : 'down';
   return `${a.title}: market ${dir} ${Math.abs(a.pct)}% to $${a.to.toFixed(2)} (was $${a.from.toFixed(2)})`;
 }
-module.exports = { priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+module.exports = { priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS, MAX_X };

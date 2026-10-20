@@ -22,6 +22,23 @@ const sales = [40, 42, 38, 300, 41].map((p, i) => ({ price: p, soldDate: iso(-i 
   .concat([{ price: 900, soldDate: iso(-2), grade: '10', grader: 'PSA', condition: 'PSA 10' }]);
 const v = B.valueFromSales(raw, sales, now);
 check('a raw card is priced from raw sales only, by median (one stray $300 does not move it)', v.market === 41 && v.n === 5, JSON.stringify(v));
+{
+  // Never more than 3x the asking price (owner, Oct 2026).
+  const now0 = Date.now();
+  const cheap = { id: 'c', title: '2025 Topps Resurgence Protonyx Josh Allen #PT-23', qty: 1, price: 5.99, listedAt: new Date(now0 - 5 * 864e5).toISOString(),
+    value: { market: 82, n: 6, low: 5, high: 140, trend: null } };
+  const br = B.analyze([cheap], now0);
+  const up = br.actions.find(a => a.kind === 'underpriced');
+  check('a suggested raise stops at 3x the asking price, and says why',
+    up && up.suggest === 17.97 && /over 3x/.test(up.text) && /same version/.test(up.text), JSON.stringify(up));
+  const plan = B.repricePlan([cheap]);
+  check('  ...and so does the bulk reprice', plan.length === 1 && plan[0].to === 17.97, JSON.stringify(plan));
+  const fair = B.analyze([{ ...cheap, price: 40, value: { ...cheap.value, market: 60 } }], now0).actions.find(a => a.kind === 'underpriced');
+  check('  ...while an ordinary gap is suggested in full', fair && fair.suggest === 60);
+  const mix = [...[5, 6, 5, 6].map((p, i) => ({ price: p, soldDate: new Date(now0 - (20 + i) * 864e5).toISOString() })),
+    ...[80, 90].map((p, i) => ({ price: p, soldDate: new Date(now0 - (1 + i) * 864e5).toISOString() }))];
+  check('a two-week jump past 3x reads as no trend, not +1,400%', B.valueFromSales({ title: 'x' }, mix, now0).trend === null);
+}
 check('  ...a PSA 10 from PSA 10 sales only, and too few is no price, not a guess',
   B.valueFromSales({ title: 'x', grade: 'PSA 10' }, sales, now).market === null && B.valueFromSales({ title: 'x', grade: 'PSA 10' }, sales, now).n === 1);
 const items = [
@@ -117,6 +134,9 @@ db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cen
   player TEXT, parallel TEXT, year TEXT, set_name TEXT, card_number TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
 const ins = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, player, year, set_name, parallel, card_number, confidence) VALUES (?,?,?,?,'Bo Nix','2024','Prizm','Silver','309',0.9)`);
 [4000, 4200, 3900, 4100, 4300].forEach((c, i) => ins.run(String(700000 + i), iso(-i - 1), '2024 Panini Prizm Bo Nix Silver #309 RC', c));
+// Its numbered parallel sells for far more, and must not price the card (the
+// sold search's identity rules, in their pricing mode).
+[52000, 49000, 51000, 50500, 50000, 49500, 51500].forEach((c, i) => ins.run(String(705000 + i), iso(-i - 1), '2024 Panini Prizm Bo Nix Silver #309 RC /99', c));
 const d1 = { prepare(sql) { let b = []; const api = { bind(...a) { b = a; return api; }, async all() { return { results: db.prepare(sql).all(...b) }; },
   async first() { return db.prepare(sql).get(...b) || null; }, async run() { return { success: true }; } }; return api; } };
 const dbMod = require(path.join(__dirname, '..', 'db.js'));
@@ -134,7 +154,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const val = await call('/api/biz/value', { method: 'POST', headers: K, body: '{}' });
   const inv = await call('/api/biz/inventory', { headers: K });
   const it = inv.body.items[0];
-  check('an imported card is priced from our own sales', val.body.valued === 1 && it.value && it.value.market === 41 && it.value.n === 5, JSON.stringify(it.value));
+  check('an imported card is priced from our own sales, its /99 parallel\'s $500 sales left out', val.body.valued === 1 && it.value && it.value.market === 41 && it.value.n === 5, JSON.stringify(it.value));
   const brief = await call('/api/biz/brief', { headers: K });
   check('the brief carries the health score and keeps a reading for the day', brief.body.health && Number.isFinite(brief.body.health.score) && brief.body.health.history.length === 1);
   check('  ...and the brief tells the seller to reprice it to the market', brief.body.actions.some(a => a.kind === 'reprice' && a.suggest === 41));
