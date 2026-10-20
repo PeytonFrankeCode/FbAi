@@ -82,11 +82,23 @@
       const r = await api('/api/biz/summary' + (fresh ? '?fresh=1' : ''));
       if (!r.summary) { $('summary').hidden = true; return; }
       $('summary').hidden = false;
-      $('summarytext').textContent = r.summary;
+      $('summarytext').innerHTML = summaryHtml(r.summary);
       $('summaryat').textContent = r.at ? `Written ${new Date(r.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} from your cards and sales` : '';
     } catch (_) { $('summary').hidden = true; }
   }
   $('summaryfresh').addEventListener('click', () => loadSummary(true));
+  // "- Label: sentence" lines become a list with the label in bold; anything
+  // else (an older paragraph summary) stays a paragraph.
+  function summaryHtml(text) {
+    const lines = String(text).split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const bullet = /^[-•*]\s+/;
+    if (!lines.some(l => bullet.test(l))) return `<p>${esc(text)}</p>`;
+    return '<ul>' + lines.map(l => {
+      const t = l.replace(bullet, '').replace(/\*\*/g, '');
+      const m = /^([^:]{1,28}):\s+(.+)$/.exec(t);
+      return `<li>${m && m[1].split(/\s+/).length <= 4 ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(t)}</li>`;
+    }).join('') + '</ul>';
+  }
   // The health score: a ring for the number, a bar per part, and what would
   // raise it most.
   const HPART = { priced: 'Priced right', fresh: 'Fresh stock', known: 'Value known', costs: 'Costs recorded' };

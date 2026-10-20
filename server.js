@@ -19480,16 +19480,19 @@ async function _bizLLM(inv, instruction, provider = _bizProvider()) {
 }
 // The morning summary at the top of Today: written once a day, and again when
 // the inventory or sales change, so opening the page twice costs one answer.
-const BIZ_SUMMARY_ASK = 'Write this seller\'s morning summary: what changed in their business, '
-  + 'the 2 or 3 things most worth doing today with the dollars involved, and one thing going well. '
-  + 'At most 90 words. Plain sentences, no bullet points, no greeting.';
+// Bullets, not a paragraph (owner, Oct 2026): one line per point, each led by
+// a short label the page shows in bold.
+const BIZ_SUMMARY_ASK = 'Write this seller\'s morning summary as 3 to 5 bullet points, one per line, each starting with "- ". '
+  + 'Cover what changed in their business, the 2 or 3 things most worth doing today with the dollars involved, and one thing going well. '
+  + 'Start each bullet with a label of one to three words and a colon (for example "Reprice:", "Check first:", "Going well:"), '
+  + 'then one short sentence. At most 90 words in all. No heading, no greeting, no other text.';
 app.get('/api/biz/summary', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   if (!_bizProvider()) return res.json({ summary: null, reason: 'no-key' });
   const inv = await _bizLoad(who);
   if (!(inv.items || []).length) return res.json({ summary: null, reason: 'empty' });
   const day = new Date().toISOString().slice(0, 10);
-  const key = 'biz:summary:' + crypto.createHash('sha1').update(who + '|' + day + '|' + (inv.updatedAt || '')).digest('hex').slice(0, 20);
+  const key = 'biz:summary2:' + crypto.createHash('sha1').update(who + '|' + day + '|' + (inv.updatedAt || '')).digest('hex').slice(0, 20);
   const hit = req.query.fresh ? null : await cacheGet(key);
   if (hit && hit.summary) return res.json({ summary: hit.summary, at: hit.at, cached: true });
   try {
