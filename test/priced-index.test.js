@@ -82,7 +82,7 @@ const check = (label, ok, detail) => {
   // The weekly Market Movers report (Oct 2026) counts as content: the section
   // is offered to search once it has an article or a report.
   check('Guides & News is noindex while it has no articles, and articles carry the ad tag',
-    /noindex: !list\.length && !reportCard,/.test(server) && /ads: !preview, image, preview, noindex: preview \}\);/.test(server)
+    /noindex: !list\.length && !reportCard,/.test(server) && /ads: !preview, image, preview, noindex: preview(, track: preview \? null : a\.slug)? \}\);/.test(server)
       && /\(opts\.noindex \? 'noindex, follow' : 'index, follow'\)/.test(server));
   const about = fs.readFileSync(path.join(__dirname, '..', 'public', 'about.html'), 'utf8');
   check('  ...and the About page says which pages are offered to search, and why',

@@ -331,6 +331,29 @@
     .art-preview[hidden] { display: none; }
     .art-help { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5; }
     .art-help code { color: var(--text-secondary); }
+    /* ---- Article performance (/api/admin/news/stats) ---- */
+    .ap-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.9rem; }
+    .ap-head select { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 8px;
+      padding: 0.45rem 0.6rem; font: inherit; font-size: 0.85rem; }
+    .ap-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 0.9rem; }
+    @media (max-width: 700px) { .ap-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .ap-tile { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.7rem 0.85rem; }
+    .ap-tile b { display: block; font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .ap-tile span { font-size: 0.75rem; color: var(--text-secondary); }
+    .ap-bars { display: flex; align-items: flex-end; gap: 2px; height: 64px; margin-bottom: 0.9rem; }
+    .ap-bars i { flex: 1; min-width: 2px; background: var(--accent); opacity: 0.75; border-radius: 2px 2px 0 0; }
+    .ap-bars i:hover { opacity: 1; }
+    .ap-table { overflow-x: auto; border: 1px solid var(--border-primary); border-radius: 10px; background: var(--bg-card); }
+    .ap-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+    .ap-table th { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);
+      text-align: right; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-primary); white-space: nowrap; }
+    .ap-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-primary); text-align: right; white-space: nowrap; }
+    .ap-table th:first-child, .ap-table td:first-child { text-align: left; white-space: normal; min-width: 11rem; }
+    .ap-table td:first-child a { color: var(--text-primary); text-decoration: none; font-weight: 600; }
+    .ap-table td:first-child a:hover { color: var(--accent); }
+    .ap-table tr:last-child td { border-bottom: 0; }
+    .ap-table .sub { display: block; font-size: 0.7rem; color: var(--text-muted); }
+    .ap-note { font-size: 0.75rem; color: var(--text-muted); line-height: 1.55; margin: 0.6rem 0 2.5rem; }
   </style>
 </head>
 <body>
@@ -359,6 +382,27 @@
   <div class="page-title">Business waitlist</div>
   <div class="page-subtitle" id="bw-sub">Sellers who asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.</div>
   <div id="bw-list" style="margin-bottom:2.5rem"></div>
+
+  <!-- Article performance: reads counted on each article (/api/admin/news/stats) -->
+  <div class="page-title">Article performance</div>
+  <div class="ap-head">
+    <div class="page-subtitle" style="margin:0;flex:1 1 16rem">Who reads each article, for how long, and where they came from.</div>
+    <select id="ap-days" aria-label="Period" onchange="loadArticleStats()">
+      <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+    </select>
+  </div>
+  <div class="ap-tiles">
+    <div class="ap-tile"><b id="ap-views">&ndash;</b><span>Views</span></div>
+    <div class="ap-tile"><b id="ap-time">&ndash;</b><span>Average time on page</span></div>
+    <div class="ap-tile"><b id="ap-read">&ndash;</b><span>Read to the end</span></div>
+    <div class="ap-tile"><b id="ap-search">&ndash;</b><span>Came from Google or other search</span></div>
+  </div>
+  <div class="ap-bars" id="ap-bars" aria-label="Article views by day"></div>
+  <div class="ap-table"><table>
+    <thead><tr><th>Article</th><th>Views</th><th>Avg time</th><th>Read to end</th><th>From search</th><th>From social</th><th>Clicks to site</th><th>Ad clicks*</th></tr></thead>
+    <tbody id="ap-rows"><tr><td colspan="8" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+  <p class="ap-note">Counts readers whose browser runs the page, so bots are left out. Time is how long the article was on screen. &ldquo;Clicks to site&rdquo; are taps from an article to a price search, player or set page. *Ad clicks are the browser's best guess; your AdSense report has the real clicks and earnings.</p>
 
   <!-- Articles: the posting tool (/api/admin/news, /news) -->
   <div class="page-title">Articles</div>
@@ -551,6 +595,7 @@
       loadCommunityModeration();
       loadEstimateAccuracy();
       loadArticles();
+      loadArticleStats();
       loadWaitlist();
       loadSurveys();
       loadGiveawayEntrants();
@@ -734,6 +779,35 @@
   function artState(a) {
     if (a.status !== 'published') return 'draft';
     return Date.parse(a.publishedAt || '') > Date.now() ? 'scheduled' : 'published';
+  }
+
+  // Article performance (owner, Oct 2026): views, time, read to the end,
+  // sources and clicks, per article, from /api/admin/news/stats.
+  const _apTime = (sec) => { sec = Math.round(sec || 0); return sec < 60 ? sec + 's' : Math.floor(sec / 60) + 'm ' + String(sec % 60).padStart(2, '0') + 's'; };
+  const _apShare = (n, of) => of ? `${n}<span class="sub">${Math.round(100 * n / of)}%</span>` : String(n);
+  async function loadArticleStats() {
+    const rowsEl = artEl('ap-rows');
+    try {
+      const r = await artApi('/api/admin/news/stats?days=' + artEl('ap-days').value);
+      const rows = r.articles || [];
+      let v = 0, sec = 0, end = 0, srch = 0;
+      for (const a of rows) { v += a.views; sec += a.seconds; end += Math.min(a.read_end, a.views); srch += a.from_search; }
+      artEl('ap-views').textContent = v.toLocaleString();
+      artEl('ap-time').textContent = _apTime(v ? sec / v : 0);
+      artEl('ap-read').textContent = (v ? Math.round(100 * end / v) : 0) + '%';
+      artEl('ap-search').textContent = (v ? Math.round(100 * srch / v) : 0) + '%';
+      const byDay = Object.fromEntries((r.daily || []).map(d => [d.day, d.views]));
+      const days = Number(r.days) || 30;
+      const list = Array.from({ length: days }, (_, i) => { const d = new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().slice(0, 10); return [d, byDay[d] || 0]; });
+      const max = Math.max(1, ...list.map(d => d[1]));
+      artEl('ap-bars').innerHTML = list.map(([d, n]) => `<i style="height:${Math.max(2, Math.round(60 * n / max))}px" title="${d}: ${n} view${n === 1 ? '' : 's'}"></i>`).join('');
+      rowsEl.innerHTML = rows.length ? rows.map(a => `<tr><td><a href="${escHtml(a.url)}" target="_blank" rel="noopener">${escHtml(a.title)}</a></td>
+        <td>${a.views.toLocaleString()}</td><td>${_apTime(a.avgSeconds)}</td><td>${a.readPct}%</td>
+        <td>${_apShare(a.from_search, a.views)}</td><td>${_apShare(a.from_social, a.views)}</td><td>${a.site_clicks}</td><td>${a.ad_clicks}</td></tr>`).join('')
+        : '<tr><td colspan="8" style="color:var(--text-muted)">No reads counted yet. Numbers appear here as people open your articles.</td></tr>';
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="8" style="color:var(--red)">Could not load article stats: ${escHtml(err.message)}</td></tr>`;
+    }
   }
 
   async function loadArticles() {
