@@ -69,6 +69,21 @@ check('a sync keeps a held listing (its cost), takes the new price and title, an
 check('  ...adds new listings, moves the ones gone from eBay to ended, and leaves Whatnot cards alone',
   mg.added === 1 && mg.items.some(i => i.ebayItemId === '333' && i.platform === 'eBay') && mg.ended.length === 1 && mg.ended[0].ebayItemId === '222'
   && mg.items.some(i => i.id === 'wn00001'));
+// Sold or taken down (owner, Oct 2026): a card that comes back under the same
+// title was relisted, keeping its cost; one the sold data shows sold is a sale
+// even when a copy with the same title goes up after it.
+const rl = B.mergeEbay(held, [
+  { ebayItemId: '111', title: 'Old title PSA 9', price: 30 },
+  { ebayItemId: '444', title: 'Sold one', price: 9 },
+  { ebayItemId: '555', title: 'Waited a week', price: 15 },
+], now, [{ id: 'eb00009', title: 'Waited a week', ebayItemId: '999', cost: 7, price: 18, endedAt: new Date(now - 7 * DAY).toISOString() }]);
+const back = rl.items.find(i => i.id === 'eb00002');
+check('a card relisted under the same title goes back to inventory with its cost, not to "sold or ended?"',
+  rl.relisted === 2 && back && back.ebayItemId === '444' && back.cost === 5 && back.price === 9 && rl.ended.length === 0
+  && rl.pastEnded.length === 0 && rl.items.find(i => i.id === 'eb00009').cost === 7 && rl.added === 0, JSON.stringify(rl));
+const rs = B.mergeEbay(held, [{ ebayItemId: '111', title: 'Old title PSA 9', price: 30 }, { ebayItemId: '444', title: 'Sold one', price: 9 }], now, [], new Set(['222']));
+check('  ...but one the sold data shows sold stays a sale, and the new copy is a new card',
+  rs.relisted === 0 && rs.ended.length === 1 && rs.ended[0].ebayItemId === '222' && rs.added === 1);
 
 // Sales: fees, profit, groupings; a sale with no cost is revenue, not profit.
 const rep = B.salesReport([
@@ -242,6 +257,25 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('the daily re-price finds the move and keeps it as an alert (owner gets no push)',
     run.alerts === 1 && al.body.alerts.length === 1 && al.body.alerts[0].pct > 15 && pushed.length === 0, JSON.stringify([run, al.body]));
   const sellerInv = { items: [{ id: 'z', title: '2024 Prizm Bo Nix Silver #309', value: { market: 20, n: 5 } }] };
+  {
+    // A card gone from the store that turns up in the sold data is recorded
+    // as sold, on that day, at that price; one that does not keeps waiting.
+    db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, player, best_offer) VALUES (?,?,?,?,?,?)`)
+      .run('812345678', iso(-2), 'Unrelated card', 3350, 'Nobody', 1);
+    const inv = { items: [], sold: [], ended: [
+      { id: 'gone1', title: '2024 Prizm Bo Nix Silver #309', ebayItemId: '700001', price: 45, cost: 20, platform: 'eBay', endedAt: new Date(now - DAY).toISOString() },
+      { id: 'gone2', title: 'Unrelated card', ebayItemId: '812345678', price: 40, platform: 'eBay', endedAt: new Date(now - DAY).toISOString() },
+      { id: 'gone3', title: 'Never sold', ebayItemId: '899999999', price: 12, platform: 'eBay', endedAt: new Date(now - DAY).toISOString() }] };
+    const n = await S._bizSettleEnded(inv);
+    const s1 = inv.sold.find(x => x.id === 'gone1'), s2 = inv.sold.find(x => x.id === 'gone2');
+    check('a card that left the store and shows up in the sold data is recorded as sold, on that day, at that price',
+      n === 2 && s1 && s1.soldFor === 42 && s1.cost === 20 && s1.foundSold && s1.soldAt.slice(0, 10) === iso(-2) && !s1.bestOffer
+      && s2 && s2.soldFor === 33.5 && s2.bestOffer === true, JSON.stringify(inv.sold));
+    check('  ...and one not in the sold data keeps waiting', inv.ended.length === 1 && inv.ended[0].id === 'gone3');
+    const bjs2 = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
+    check('  ...the page says which are still being checked and which most likely ended unsold',
+      /Likely unsold/.test(bjs2) && /Found in eBay sold data/.test(bjs2));
+  }
   const fresh = await S._bizRevalue('u:seller', sellerInv, sellerInv.items, now, { push: async (u, m) => pushed.push([u, m]) });
   check('  ...and a seller gets it on their phone, pointing at /business',
     fresh.length === 1 && pushed.length === 1 && pushed[0][0] === 'seller' && pushed[0][1].url === '/business' && /market up/.test(pushed[0][1].body), JSON.stringify(pushed));

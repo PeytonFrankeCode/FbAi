@@ -306,7 +306,9 @@
     syncing = true; $('ebaysync').disabled = true; $('ebaystatus').textContent = 'Reading your eBay listings…';
     try {
       const r = await api('/api/biz/ebay-sync', { method: 'POST', body: JSON.stringify({ seller }) });
-      $('ebaystatus').textContent = `Synced ${r.listings} listings from ${r.seller}: ${r.added} new, ${r.updated} updated${r.ended ? `, ${r.ended} sold or ended` : ''}.`;
+      const extra = [r.sold ? `${r.sold} sold (found in eBay's sold data)` : '', r.relisted ? `${r.relisted} relisted` : '',
+        r.ended ? `${r.ended} gone, checking whether they sold` : ''].filter(Boolean).join(', ');
+      $('ebaystatus').textContent = `Synced ${r.listings} listings from ${r.seller}: ${r.added} new, ${r.updated} updated${extra ? ', ' + extra : ''}.`;
     } catch (err) { $('ebaystatus').textContent = err.message; }
     $('ebaysync').disabled = false;
     await loadInventory();
@@ -467,14 +469,19 @@
         ['Fees, 30 days', money(m.fees), 'Estimated'],
         ['All-time profit', money(a.profit), a.missingCost ? `${a.missingCost} sale${a.missingCost === 1 ? ' has' : 's have'} no cost` : `${a.sales} sale${a.sales === 1 ? '' : 's'}`],
       ].map(([l, v, x]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${x}</em></div>`).join('');
-      $('endedbox').innerHTML = ended.length ? `<div class="panel" style="margin-bottom:20px"><h2>Gone from eBay: sold or ended?</h2><p class="hint">These left your eBay store since the last sync. Confirm the ones that sold.</p>${
+      // A sale reaches eBay's sold data within a day or two and is recorded
+      // by itself; one still missing after 3 days most likely ended unsold.
+      const waitDays = (it) => (Date.now() - Date.parse(it.endedAt || 0)) / 864e5;
+      $('endedbox').innerHTML = ended.length ? `<div class="panel" style="margin-bottom:20px"><h2>Gone from eBay: sold or ended?</h2><p class="hint">These left your eBay store. Ones that sold are found in eBay's sold data and move to your sales by themselves, usually within a day or two. Relisted cards go back to inventory.</p>${
         ended.slice(-50).reverse().map(it => `<div class="endrow">
-          <span>${esc(it.title)}</span><input class="mini" data-for="${esc(it.id)}" value="${it.price ?? ''}" inputmode="decimal" aria-label="Sold for">
+          <span>${esc(it.title)}<span class="why" style="display:block">${waitDays(it) < 3
+            ? '<span class="pill">Checking</span> No sale found yet. Sales show up within a day or two.'
+            : '<span class="pill warn">Likely unsold</span> No sale found in 3 days, so it most likely ended without selling.'}</span></span><input class="mini" data-for="${esc(it.id)}" value="${it.price ?? ''}" inputmode="decimal" aria-label="Sold for">
           <button class="act go" data-endsold="${esc(it.id)}">Sold</button><button class="act ghost" data-endnot="${esc(it.id)}">Didn't sell</button></div>`).join('')}</div>` : '';
       $('salegroups').innerHTML = tbl('By month', r.byMonth) + tbl('By player', r.byPlayer) + tbl('By set', r.bySet) + tbl('By platform', r.byPlatform);
       const day = (d) => { const t = Date.parse(d); return Number.isFinite(t) ? new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' }) : esc(String(d).slice(0, 10)); };
       $('salelist').innerHTML = sold.length ? `<div class="tablewrap rt"><table><thead><tr><th>Card</th><th class="r">Sold for</th><th class="r">Cost</th><th></th></tr></thead><tbody>${
-        sold.map(x => `<tr><td class="w"><b>${esc(x.title)}</b><span class="why">${[day(x.soldAt), esc(x.platform || '')].filter(Boolean).join(' · ')}</span></td><td class="r" data-label="Sold for">${money(x.soldFor)}</td><td class="r" data-label="Cost">${money(x.cost)}</td>
+        sold.map(x => `<tr><td class="w"><b>${esc(x.title)}</b><span class="why">${[day(x.soldAt), esc(x.platform || ''), x.foundSold ? 'Found in eBay sold data' : '', x.bestOffer ? 'Best offer' : ''].filter(Boolean).join(' · ')}</span></td><td class="r" data-label="Sold for">${money(x.soldFor)}</td><td class="r" data-label="Cost">${money(x.cost)}</td>
           <td class="end"><button class="act ghost" data-undo="${esc(x.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No sales recorded yet. Tap Sold on a card in Inventory, or sync eBay to catch sales automatically.</div>';
     } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('salelist').innerHTML = `<div class="empty">Could not load sales: ${esc(err.message)}</div>`; }
   }
