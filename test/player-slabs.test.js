@@ -55,6 +55,15 @@ const get = async (q) => (await fetch(`http://127.0.0.1:${server.address().port}
   check('  ...and his raw copies, up 300%, are not in it', nix.available && nix.changePct < 50);
   const jd = await get('player=Jayden%20Daniels&days=30');
   check('a player with raw sales only gets no slab reading', jd.available === false, JSON.stringify({ available: jd.available, reason: jd.reason }));
+  // The list under the chart reads the same sales: no raw card in it.
+  const basket = async (q) => (await fetch(`http://127.0.0.1:${server.address().port}/api/market-basket?${q}`)).json();
+  const nb = await basket('player=Bo%20Nix&days=30');
+  check('the cards listed under a player\'s chart are slabs only, like the chart',
+    nb.available && nb.cards.length >= 1 && nb.cards.every(c => /PSA 10/.test(c.detail)), JSON.stringify(nb.cards && nb.cards.map(c => [c.label, c.detail, c.changePct])));
+  const jb = await basket('player=Jayden%20Daniels&days=30');
+  check('  ...so a player with raw sales only lists none', !(jb.cards || []).length, JSON.stringify(jb.cards));
+  const app = require('fs').readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  check('  ...and a card with no move reads 0%, not a dash', /!c\.changePct \? '0%'/.test(app));
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall player-slabs checks passed');
   process.exit(failures ? 1 : 0);
