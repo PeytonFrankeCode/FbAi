@@ -5623,7 +5623,9 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                           junk: true, labels: true, hasImage, useAlias, deny,
-                          ...(follow ? { perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true } : _mkSeriesOpts()) })},
+                          // A player's list reads what their chart reads: slabs only (owner,
+                          // Oct 2026), so no raw sale shows under a slabs-only number.
+                          ...(follow ? { perPlayer: PLAYER_TREND_CARDS, slabsOnly: PLAYER_SLABS_ONLY, graded: !PLAYER_SLABS_ONLY, parallels: true } : _mkSeriesOpts()) })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -9109,8 +9111,9 @@ const _sportRowsSql = (sport, col = 'sport') => sport === 'football' ? _football
 // v4: the move splits the card's own trading days, not the calendar.
 // v5: checklist deny list and robust per-card moves (#658/#659), not in the sig.
 // v6: a player's list follows parallels and graded copies, as their chart does.
+// v8: a player's list is slabs only, as their chart is.
 const _marketBasketKey = (days, player) =>
-  `marketbasket:v7:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+  `marketbasket:v8:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
 async function _computeMarketBasket(db, days, player) {
   try {

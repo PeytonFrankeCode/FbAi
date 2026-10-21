@@ -7781,11 +7781,11 @@ async function loadMarketBasket(basketP, seq = _mkSeq) {
           </div>
           <span class="mb-sales">${(c.sales || 0).toLocaleString('en-US')} sold</span>
           <span class="mb-price">${c.avgPrice != null ? _mkMoney(c.avgPrice) : '—'}</span>
-          <span class="mb-change ${c.changePct == null ? 'flat' : c.changePct >= 0 ? 'up' : 'down'}">${
-            c.changePct == null ? '—' : (c.changePct >= 0 ? '+' : '') + c.changePct + '%'}</span>
+          <span class="mb-change ${!c.changePct ? 'flat' : c.changePct > 0 ? 'up' : 'down'}">${
+            !c.changePct ? '0%' : (c.changePct > 0 ? '+' : '') + c.changePct + '%'}</span>
         </li>`).join('')}
     </ul>
-    <p class="market-basket-note">Each card's move compares its price at the start of the last ${_mkDays} days with its price at the end: its sales in the first and last few days, or its oldest and newest sale when it did not trade then. A dash means it traded on only one day.</p>`;
+    <p class="market-basket-note">Each card's move compares its price at the start of the last ${_mkDays} days with its price at the end: its sales in the first and last few days, or its oldest and newest sale when it did not trade then. 0% means no change was seen: it sold at the same price, or on only one day.</p>`;
 }
 
 function _mkRenderChart(data) {
