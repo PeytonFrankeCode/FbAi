@@ -19442,7 +19442,10 @@ async function bizRevalueAll({ now = Date.now(), push } = {}) {
     const who = k.name.slice('biz:inventory:'.length);
     const inv = await recordGet(k.name); if (!inv || !inv.items) continue;
     const batch = inv.items.filter(it => !it.value || now - Date.parse(it.value.asOf || 0) > BIZ_VALUE_TTL * 1000).slice(0, BIZ_VALUE_BATCH);
-    if (!batch.length) continue;
+    // The daily run also records cards that left the store and have since
+    // shown up in the sold data, so sales land without the page being opened.
+    const settled = (inv.ended || []).length ? await _bizSettleEnded(inv).catch(() => 0) : 0;
+    if (!batch.length) { if (settled) { await _bizSave(who, inv); sellers++; } continue; }
     alerts += (await _bizRevalue(who, inv, batch, now, push ? { push } : {})).length;
     await _bizSave(who, inv); sellers++;
   }
@@ -19472,6 +19475,56 @@ async function _bizEbayListings(seller) {
   }
   return out.filter(l => l.ebayItemId && l.title);
 }
+// Sold or taken down? (owner, Oct 2026). The sold database records each
+// eBay sale by its item number, the same number the store sync keeps, so a
+// card that left the store and turns up there sold, on that day, for that
+// price. One that does not turn up within a few days most likely ended
+// unsold; the seller still has the last word.
+const BIZ_SOLD_WAIT_DAYS = 3;
+async function _bizSoldLookup(ids) {
+  const db = getNflDb();
+  const want = [...new Set((ids || []).map(String).filter(x => /^\d{6,20}$/.test(x)))];
+  const out = new Map();
+  if (!db || !want.length) return out;
+  const offerCol = await _nflHasSaleTypeColumns(db);
+  for (let i = 0; i < want.length; i += 90) {
+    const part = want.slice(i, i + 90);
+    try {
+      const r = await db.prepare(
+        `SELECT item_id, price_cents, sold_date${offerCol ? ', best_offer' : ''} FROM sales
+         WHERE item_id IN (${part.map(() => '?').join(',')}) AND price_cents > 0`).bind(...part).all();
+      for (const row of (r && r.results) || []) {
+        out.set(String(row.item_id), { soldFor: Math.round(Number(row.price_cents)) / 100, soldDate: row.sold_date || null,
+          bestOffer: saleTypeOf({ bestOffer: row.best_offer }) === 'offer' });
+      }
+    } catch (err) {
+      console.error('[biz/sold-lookup]', err && err.message);
+    }
+  }
+  return out;
+}
+// Records every waiting card the sold data shows sold. Returns how many.
+async function _bizSettleEnded(inv, found) {
+  const waiting = inv.ended || [];
+  if (!waiting.length) return 0;
+  found = found || await _bizSoldLookup(waiting.map(it => it.ebayItemId));
+  if (!found.size) return 0;
+  const left = [];
+  let n = 0;
+  for (const it of waiting) {
+    const hit = it.ebayItemId && found.get(String(it.ebayItemId));
+    if (!hit) { left.push(it); continue; }
+    const sale = _bizSale(it, { soldFor: hit.soldFor });
+    if (hit.soldDate) sale.soldAt = new Date(hit.soldDate + 'T12:00:00Z').toISOString();
+    sale.foundSold = true;
+    if (hit.bestOffer) sale.bestOffer = true;
+    delete sale.endedAt;
+    (inv.sold = inv.sold || []).push(sale);
+    n++;
+  }
+  inv.ended = left;
+  return n;
+}
 app.post('/api/biz/ebay-sync', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const inv = await _bizLoad(who);
@@ -19486,13 +19539,21 @@ app.post('/api/biz/ebay-sync', async (req, res) => {
   if (!listings.length && !(inv.items || []).some(it => it.ebayItemId)) {
     return res.status(404).json({ error: `No active card listings found for "${seller}". Check the username.` });
   }
-  const m = BIZ.mergeEbay(inv.items, listings);
+  // Which of the cards no longer listed the sold data already shows sold:
+  // those are sales, never mistaken for a relist of the same title.
+  const live = new Set(listings.map(l => String(l.ebayItemId)));
+  const goneIds = (inv.items || []).filter(it => it.ebayItemId && !live.has(String(it.ebayItemId))).map(it => it.ebayItemId)
+    .concat((inv.ended || []).map(it => it.ebayItemId));
+  const found = await _bizSoldLookup(goneIds);
+  const m = BIZ.mergeEbay(inv.items, listings, Date.now(), inv.ended || [], new Set(found.keys()));
   inv.items = m.items;
-  inv.ended = (inv.ended || []).concat(m.ended).slice(-2000);
+  inv.ended = m.pastEnded.concat(m.ended).slice(-2000);
+  const sold = await _bizSettleEnded(inv, found);
   inv.ebaySeller = seller;
   inv.ebaySyncedAt = new Date().toISOString();
   await _bizSave(who, inv);
-  res.json({ ok: true, seller, listings: listings.length, added: m.added, updated: m.updated, ended: m.ended.length });
+  res.json({ ok: true, seller, listings: listings.length, added: m.added, updated: m.updated,
+    ended: inv.ended.length, sold, relisted: m.relisted });
 });
 // Cards the eBay sync found gone: confirm each as sold (at a price) or as
 // ended unsold (back to nothing, or relisted later by the next sync).
@@ -19509,6 +19570,9 @@ app.post('/api/biz/ended/:id', async (req, res) => {
 app.get('/api/biz/sales', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const inv = await _bizLoad(who);
+  // Sales reach the sold data a day or two after they happen, so the cards
+  // still waiting are checked again each time the page opens.
+  if ((inv.ended || []).length && await _bizSettleEnded(inv)) await _bizSave(who, inv);
   res.set('Cache-Control', 'no-store').json({ report: BIZ.salesReport(inv.sold || []), ended: inv.ended || [],
     sold: (inv.sold || []).slice(-200).reverse() });
 });
@@ -20648,7 +20712,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _bizSetClient, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

@@ -183,7 +183,7 @@ function aiContext(items, brief, maxRows = 300, sales = null) {
 // takes eBay's current price; a new one is added; an eBay card no longer
 // listed has sold or ended, and is moved out to `ended` for the seller to
 // confirm (sales tracking). Cards from other platforms are left alone.
-function mergeEbay(items, listings, now = Date.now()) {
+function mergeEbay(items, listings, now = Date.now(), pastEnded = [], soldIds = new Set()) {
   const byId = new Map(listings.filter(l => l.ebayItemId).map(l => [String(l.ebayItemId), l]));
   const kept = [], ended = [];
   let updated = 0;
@@ -202,13 +202,33 @@ function mergeEbay(items, listings, now = Date.now()) {
     kept.push(next);
     updated++;
   }
-  const added = [];
+  // A card that left and came back under the same title was relisted, not
+  // sold (owner, Oct 2026): it keeps its cost, notes and listed date under
+  // the new item number instead of waiting as "sold or ended?".
+  const key = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const gone = new Map();
+  // Also the cards still waiting from an earlier sync.
+  // One found in eBay's sold data did sell, whatever came up after it.
+  for (const it of ended.concat(pastEnded || [])) {
+    if (!soldIds.has(String(it.ebayItemId)) && !gone.has(key(it.title))) gone.set(key(it.title), it);
+  }
+  const added = [], back = [];
   for (const l of byId.values()) {
+    const was = gone.get(key(l.title));
+    if (was) {
+      gone.delete(key(l.title));
+      const { endedAt, ...rest } = was;
+      back.push({ ...rest, ebayItemId: String(l.ebayItemId), price: l.price != null ? l.price : was.price,
+        imageUrl: l.imageUrl || was.imageUrl || null, itemUrl: l.itemUrl || was.itemUrl || null, relistedAt: new Date(now).toISOString() });
+      continue;
+    }
     const it = normalizeItem({ title: l.title, price: l.price, platform: 'eBay', listed: l.listedAt }, now);
     if (!it) continue;
     added.push({ ...it, ebayItemId: String(l.ebayItemId), imageUrl: l.imageUrl || null, itemUrl: l.itemUrl || null });
   }
-  return { items: kept.concat(added), ended, added: added.length, updated };
+  const relisted = new Set(back.map(b => b.id));
+  return { items: kept.concat(back, added), ended: ended.filter(it => !relisted.has(it.id)),
+    pastEnded: (pastEnded || []).filter(it => !relisted.has(it.id)), added: added.length, updated, relisted: back.length };
 }
 
 // Selling fees, estimated: the platform's standard rate for trading cards
