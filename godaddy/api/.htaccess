@@ -1,5 +1,0 @@
-# Block direct web access to config and helper files
-<FilesMatch "^(config|helper)\.php$">
-    Order Allow,Deny
-    Deny from all
-</FilesMatch>
