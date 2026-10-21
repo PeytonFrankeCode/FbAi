@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="index, follow">
-<meta name="description" content="Inventory software for sports card sellers: every card priced daily against real sold prices, a brief of what to reprice and feature, sales and profit, and an AI analyst. $20 a month.">
+<meta name="description" content="Inventory software for sports card sellers: every store in one inventory, priced daily from real sold prices. Identify up to 40 cards from photos, track sales and profit, and an AI analyst. $20 a month.">
 <link rel="canonical" href="https://thecardhuddle.com/business">
 <title>Card Huddle for Business: Inventory Software for Card Sellers</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
@@ -290,13 +290,37 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
 }
 
 /* ---- landing ---- */
+.proof { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 14px 0 0; padding: 0; color: var(--fg2); font-size: 13.5px }
+.proof b { font-family: var(--display); color: var(--fg); font-size: 15px; margin-right: 3px }
+.shot { margin: 0; min-width: 0 }
+.shot img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 12px 40px -18px rgba(16,26,21,.28), var(--shadow); background: var(--surface) }
+.hero-shot { margin-top: 32px; border: 1px solid var(--line); border-radius: 18px; background: var(--sunk); padding: 0 12px 12px; box-shadow: 0 30px 70px -40px rgba(16,26,21,.45) }
+.hero-shot .frame { display: flex; gap: 6px; padding: 12px 4px }
+.hero-shot .frame i { width: 10px; height: 10px; border-radius: 50%; background: var(--line2) }
+.hero-shot img { border-radius: 10px; box-shadow: none }
+.feat { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px 48px; align-items: center; margin-top: 72px }
+.feat.flip .feat-copy { order: 2 }
+.feat.tall { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr) }
+.feat.tall .shot { max-width: 380px; justify-self: center; width: 100% }
+.feat-copy h2 { font-size: clamp(24px, 3.2vw, 32px); line-height: 1.12; letter-spacing: -.02em; font-weight: 800; margin-top: 8px }
+.feat-copy p { color: var(--fg2); font-size: 15.5px; line-height: 1.6; margin: 12px 0 0; max-width: 46ch }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
+.checks { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 9px }
+.checks li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 14.5px }
+.checks svg { width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: var(--accent-soft); fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round }
+@media (max-width: 860px) {
+  .feat, .feat.tall { grid-template-columns: minmax(0, 1fr); margin-top: 52px; gap: 20px }
+  .feat.flip .feat-copy { order: 0 }
+  .hero-shot { padding: 0 6px 6px; border-radius: 14px; margin-top: 24px }
+}
+
 .hero { padding: 40px 0 8px; display: grid; gap: 14px; max-width: 720px }
 .hero .chip { justify-self: start }
 .herotitle { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -.025em; font-weight: 800 }
 .hero .lede { font-size: 16.5px; line-height: 1.55 }
 .hero .acts { margin-top: 6px }
 .hero .act { padding: 10px 16px; font-size: 14px }
-.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 36px }
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 14px }
 .feats .panel { display: grid; gap: 6px; align-content: start }
 .feats p, .faq p { margin: 0; color: var(--fg2); font-size: 14px }
 .sect { margin: 44px 0 14px }
@@ -368,27 +392,40 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
 
   <section id="landing" hidden>
     <div class="hero">
-      <span class="chip">For eBay, Whatnot and card shop sellers</span>
-      <h1 class="herotitle">Know what every card on your shelf is worth, every morning.</h1>
-      <p class="lede">Your whole inventory priced against real sold prices daily, with a short list of what to reprice, what to feature and what is sitting dead.</p>
+      <span class="chip">For eBay, Whatnot, card shop and card show sellers</span>
+      <h1 class="herotitle">Your whole card business on one screen.</h1>
+      <p class="lede">Every store in one inventory, priced against real sold prices every morning. Add 40 cards from photos in about a minute, and let AI tell you what to fix first.</p>
       <div class="acts"><a class="act go" href="#join">Join the founding sellers</a><a class="act" href="#how">See how it works</a></div>
+      <ul class="proof"><li><b>40</b> cards identified per batch</li><li><b>Daily</b> prices from real sold sales</li><li><b>$20</b> a month, cancel any time</li></ul>
     </div>
-
-    <div class="feats" id="how">
-      <div class="panel"><h3>Your eBay store, synced</h3><p>Type your eBay username and every active listing comes in. No spreadsheets, no eBay login.</p></div>
-      <div class="panel"><h3>Priced from real sales</h3><p>Same card, same grade, last 60 days. Fewer than three sales and it says so instead of guessing.</p></div>
-      <div class="panel"><h3>A brief every morning</h3><p>Overpriced, underpriced, heating up, dead stock. One tap to fix the price.</p></div>
-      <div class="panel"><h3>Profit you can see</h3><p>Profit after fees by month, player, set and platform.</p></div>
-    </div>
-
-    <h2 class="sect">What a morning looks like</h2>
-    <div class="example">
-      <div class="brief" aria-label="Example brief">
-        <div class="item down"><div class="item-main"><span class="tag">Reprice</span><strong>14 Jayden Daniels Prizm Silvers are $22 over market</strong><p>Listed 41 days. It sells for about $42.</p><span class="why">12 sales, $36–$55, last Oct 14</span></div></div>
-        <div class="item"><div class="item-main"><span class="tag">Underpriced</span><strong>2024 Prizm Bo Nix Downtown</strong><p>Listed at $180; recent copies sold for about $248.</p><span class="why">5 sales, $240–$260</span></div></div>
-        <div class="item warn"><div class="item-main"><span class="tag">Dead stock</span><strong>412 cards listed 90+ days</strong><p>$7,960 tied up. Bundle the cheap ones into lots, or move them to auctions.</p></div></div>
-      </div>
-      <p class="sample">Example data.</p>
+    <figure class="shot hero-shot"><div class="frame"><i></i><i></i><i></i></div><picture><source srcset="/business-img/todaym-dark.webp" media="(max-width: 640px) and (prefers-color-scheme: dark)"><source srcset="/business-img/todaym-light.webp" media="(max-width: 640px)"><source srcset="/business-img/today-dark.webp" media="(prefers-color-scheme: dark)"><img src="/business-img/today-light.webp" alt="The Today screen: four moves worth $732, a morning summary written by AI and an inventory health score" width="1400" height="1020" fetchpriority="high"></picture></figure>
+    <div id="how"></div>
+    <section class="feat">
+      <div class="feat-copy"><span class="eyebrow">One inventory</span><h2>All your stores in one spot</h2><p>Your eBay store syncs itself from your username. Whatnot, shop and card show stock comes in from a spreadsheet, a photo or by hand, so every card sits in one list with its cost, your price and what it really sells for.</p>
+        <ul class="checks"><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>eBay syncs from your username, no eBay login</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Every card tagged with where it is listed</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Profit split by platform, so you know where to sell</span></li></ul></div>
+      <figure class="shot"><picture><source srcset="/business-img/stores-dark.webp" media="(prefers-color-scheme: dark)"><img src="/business-img/stores-light.webp" alt="Inventory with cards listed on eBay, Whatnot and in the shop, each with cost, price and market value" width="1400" height="850" loading="lazy" decoding="async"></picture></figure>
+    </section>
+    <section class="feat flip">
+      <div class="feat-copy"><span class="eyebrow">Photo ID</span><h2>Identify up to 40 cards at a time</h2><p>Pick up to 40 card photos and AI reads each one: player, year, set, card number, parallel, serial and the grade off a slab label. Every card comes back priced and ready to add.</p>
+        <ul class="checks"><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Reads 4 at once, about a minute for 40</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Marked Sure, Check it or Unsure, so nothing goes in unchecked</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Priced from real sold sales as it is read</span></li></ul></div>
+      <figure class="shot"><picture><source srcset="/business-img/photos-dark.webp" media="(prefers-color-scheme: dark)"><img src="/business-img/photos-light.webp" alt="Six card photos read by AI, each with its title, grade, price and how sure it is" width="1400" height="1244" loading="lazy" decoding="async"></picture></figure>
+    </section>
+    <section class="feat tall">
+      <div class="feat-copy"><span class="eyebrow">AI analyst</span><h2>AI that does the busywork</h2><p>Every morning a short summary of what to reprice, what to feature and what is sitting dead, written from your own cards and real sales. Ask it anything about your shop and get an answer that names the cards and the dollars.</p>
+        <ul class="checks"><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>A morning summary, every day</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Looks up any card, player or market move in the Card Huddle sold database</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Answers from real sold prices, never guesses</span></li></ul></div>
+      <figure class="shot"><picture><source srcset="/business-img/ask-dark.webp" media="(prefers-color-scheme: dark)"><img src="/business-img/ask-light.webp" alt="Ask your shop: an AI answer naming which cards to reprice, feature and clear out, with prices" width="760" height="1169" loading="lazy" decoding="async"></picture></figure>
+    </section>
+    <section class="feat flip">
+      <div class="feat-copy"><span class="eyebrow">Sales and profit</span><h2>Know what sold and what you made</h2><p>Cards that leave your eBay store are checked against eBay's sold data, so sales record themselves with the real price and date. Relisted cards go back to inventory, and profit is worked out after fees.</p>
+        <ul class="checks"><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Sales found automatically, best offers marked</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Profit after fees by month, player, set and platform</span></li><li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3L15 6.5"/></svg><span>Show and Whatnot sales logged in a tap</span></li></ul></div>
+      <figure class="shot"><picture><source srcset="/business-img/sales-dark.webp" media="(prefers-color-scheme: dark)"><img src="/business-img/sales-light.webp" alt="Sales: $4,860 sold in 30 days with $1,712 profit, and sales found in eBay sold data" width="1400" height="990" loading="lazy" decoding="async"></picture></figure>
+    </section>
+    <h2 class="sect">And everything else a seller needs</h2>
+    <div class="feats">
+      <div class="panel"><h3>Reprice in one tap</h3><p>Over market, under market or heating up: set the new price straight from the morning brief.</p></div>
+      <div class="panel"><h3>Card show price sheets</h3><p>Pick the cards to feature tonight and print a price sheet, or copy it for your Whatnot show.</p></div>
+      <div class="panel"><h3>Buy offers in seconds</h3><p>Type the walk-in cards, pick your percentage of market, and get an offer priced from real sales.</p></div>
+      <div class="panel"><h3>Price alerts</h3><p>A card you hold moves 15% or more and you hear about it, on your phone.</p></div>
     </div>
 
     <div class="grid2 even join" id="join">
@@ -427,6 +464,8 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
       <details><summary>Is The Card Huddle still free for collectors?</summary><p>Yes, forever. Every collector feature stays free. Business is a separate tool for people who sell.</p></details>
       <details><summary>Where do the prices come from?</summary><p>Completed eBay sales we track every day, matched to the exact card and grade. Not asking prices, and never a guess: a card needs 3 recent sales of the same grade to get a price.</p></details>
       <details><summary>Do I have to give you my eBay password?</summary><p>No. Store sync reads your public listings by username. We never see your eBay account.</p></details>
+      <details><summary>How accurate is photo ID?</summary><p>It reads what is printed on the card and on a slab label, and checks it against eBay listings of the same card. Each card is marked Sure, Check it or Unsure, and Unsure cards start unticked, so you look before anything is added.</p></details>
+      <details><summary>I sell on eBay and Whatnot. Does it handle both?</summary><p>Yes. eBay syncs from your username; Whatnot, shop and show cards come in from a spreadsheet, photos or by hand. They all live in one inventory, and sales and profit are split by platform.</p></details>
       <details><summary>Can I cancel?</summary><p>Any time, in one click from Billing. No contract.</p></details>
     </div>
   </section>
