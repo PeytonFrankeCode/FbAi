@@ -37,6 +37,24 @@ check('the next set gets its own list, and its cards are not read as parallels',
 check('a list on one line, and one-of-ones, read right',
   JSON.stringify(parseParallels('Gold /50, Red /25, Black 1/1\nInception - 1/1\nPurple - /150'))
   === JSON.stringify([{ name: 'Gold', printRun: 50 }, { name: 'Red', printRun: 25 }, { name: 'Black', printRun: 1 }, { name: 'Inception', printRun: 1 }, { name: 'Purple', printRun: 150 }]));
+// Which set of ours takes a list (2026 Topps Midnight: its Base and Base
+// Autographs share every number and player, and the Base list landed on the
+// autographs).
+const { matchSetForParallels, fillParallels, cardKey } = require(path.join(__dirname, '..', 'scripts', 'sync-checklistinsider.js'));
+const mk = (name, n, from = 1) => ({ name, cards: Array.from({ length: n }, (_, i) => ({ number: String(i + from), player: 'Player ' + (i + from) })) });
+const pick = (ours, theirs) => { const i = matchSetForParallels(ours, ours.map(o => new Set(o.cards.map(cardKey))), theirs.cards.map(cardKey), theirs); return i < 0 ? null : ours[i].name; };
+const midnight = [mk('Base', 100), mk('Base Autographs', 75)];
+check('a Base list goes to the Base, not to an autograph set with the same numbers and players',
+  pick(midnight, mk('Base', 100)) === 'Base' && pick(midnight, mk('Base Autographs', 75)) === 'Base Autographs');
+const holiday = [mk('Base', 200), mk('Base Chrome', 200)];
+check('  ...a Base of 150 finds our Base of 200 (base and rookies together), and the 50 rookies\' own list goes nowhere',
+  pick(holiday, mk('Base', 150)) === 'Base' && pick(holiday, mk('Base Chrome', 150)) === 'Base Chrome' && pick(holiday, mk('Base Rookies', 50, 151)) === null);
+const gold = [{ name: 'Gold', printRun: 50 }, { name: 'Red', printRun: 5 }];
+const a = { parallels: [] }, b = { parallels: [{ name: 'Silver', printRun: null }] }, c = { parallels: [{ name: 'Gold', printRun: 50 }] };
+check('  ...a set with no parallels takes theirs, one from another source keeps its own, and a short list we built from the site is replaced',
+  fillParallels(a, { parallels: gold }, false) === 2 && a.parallels.length === 2
+  && fillParallels(b, { parallels: gold }, false) === 0 && b.parallels[0].name === 'Silver'
+  && fillParallels(c, { parallels: gold }, true) === 1 && c.parallels.length === 2);
 const src = require('fs').readFileSync(path.join(__dirname, '..', 'scripts', 'sync-checklistinsider.js'), 'utf8');
 check('the sync fills a held set with no parallels (and a short list it built itself), and can re-read unchanged pages to do it',
   /function fillParallels\(/.test(src) && /--parallels/.test(src) && /lacksParallels\(load\(direct\)\)/.test(src));

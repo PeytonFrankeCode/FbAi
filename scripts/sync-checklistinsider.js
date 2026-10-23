@@ -80,6 +80,23 @@ const count = (sets) => (sets || []).reduce((a, s) => a + (s.cards || []).length
 const lacksParallels = (doc) => (doc.sets || []).some(s => !(s.parallels || []).length);
 // Their parallel list for a set of ours: when ours has none, or when we built
 // ours from this site and theirs is longer. Returns how many were added.
+// Which set of ours a set of theirs IS, for its parallels. Not by a map of
+// card to set: a Base and its Base Autographs share every number and player,
+// so a map names whichever came last, and Midnight's Base parallels landed on
+// its autographs. A set of ours holding 80% of theirs, and theirs at least
+// half of ours; the same name wins, then the closest in size. -1 for none.
+const nameKey = (n) => slugify(n).replace(/-?(set|checklist)$/, '');
+function matchSetForParallels(ourSets, ourKeys, keys, theirs) {
+  let best = -1, bestScore = -1;
+  ourKeys.forEach((ok, i) => {
+    if (!ok.size || !keys.length) return;
+    let ov = 0; for (const k of keys) if (ok.has(k)) ov++;
+    if (ov < 0.8 * keys.length || ov < 0.5 * ok.size) return;
+    const score = (nameKey(ourSets[i].name) === nameKey(theirs.name) ? 2 : 0) + ov / Math.max(ok.size, keys.length);
+    if (score > bestScore) { bestScore = score; best = i; }
+  });
+  return best;
+}
 function fillParallels(ours, theirs, fromHere) {
   const tp = (theirs.parallels || []), op = (ours.parallels || []);
   if (!tp.length || (op.length && !(fromHere && tp.length > op.length))) return 0;
@@ -118,7 +135,7 @@ function parseLoose(html) {
   return sets;
 }
 
-(async () => {
+if (require.main === module) (async () => {
   const sm = (await get(`${SITE}/post-sitemap.xml`, 'post-sitemap.xml')) + (await get(`${SITE}/post-sitemap2.xml`, 'post-sitemap2.xml'));
   const posts = sm.split('<url>').slice(1).map(b => ({
     slug: ((b.match(/<loc>([^<]*)<\/loc>/) || [])[1] || '').replace(SITE + '/', '').replace(/\/$/, ''),
@@ -205,16 +222,18 @@ function parseLoose(html) {
       const parSets = (doc.sets || []).map(s => ({ ...s }));
       let nPar = 0, setsPar = 0;
       const givePar = (i, s) => { const n = fillParallels(parSets[i], s, fromHere); if (n > 0) { nPar += n; setsPar++; } };
+      const ourKeys = (doc.sets || []).map(o => new Set((o.cards || []).map(cardKey)));
+      const parMatch = (keys, s) => matchSetForParallels(doc.sets || [], ourKeys, keys, s);
       for (const s of sets) {
         const keys = s.cards.map(cardKey);
         const held = keys.filter(k => where.has(k));
         const share = keys.length ? held.length / keys.length : 1;
+        const pi = parMatch(keys, s);
+        if (pi >= 0) givePar(pi, s);
         if (share < 0.2) addSets.push(s);
         else if (share > 0.8) {
           const votes = {}; for (const k of held) votes[where.get(k)] = (votes[where.get(k)] || 0) + 1;
           const into = Number(Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0]);
-          // The set of ours holding nearly all its cards is the same set.
-          if (held.length >= 0.8 * (doc.sets[into].cards || []).length || held.length === keys.length) givePar(into, s);
           if (held.length === keys.length) continue;
           const have = new Set((doc.sets[into].cards || []).map(c => nnum(c.number)));
           const extra = s.cards.filter(c => !where.has(cardKey(c)) && !have.has(nnum(c.number)));
@@ -224,7 +243,6 @@ function parseLoose(html) {
           // cards whose number that set does not have.
           const twin = (doc.sets || []).findIndex(o => slugify(o.name) === slugify(s.name));
           if (twin >= 0) {
-            givePar(twin, s);
             const have = new Set((doc.sets[twin].cards || []).map(c => nnum(c.number)));
             const extra = s.cards.filter(c => !where.has(cardKey(c)) && !have.has(nnum(c.number)));
             if (extra.length) addCards.push({ into: twin, set: doc.sets[twin].name, cards: extra });
@@ -268,3 +286,5 @@ function parseLoose(html) {
   console.log(WRITE ? '\nwritten. Next: node scripts/rebuild-checklist-index.js && npm run checklist:validate && npm run build:card-index'
                     : '\nreport only; --write to apply');
 })().catch(e => { console.error(e); process.exit(1); });
+
+module.exports = { matchSetForParallels, fillParallels, cardKey };
