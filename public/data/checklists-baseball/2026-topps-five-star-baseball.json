@@ -1,0 +1,4209 @@
+{
+  "id": "2026-topps-five-star-baseball",
+  "name": "2026 Topps Five Star Baseball",
+  "year": 2026,
+  "brand": "Topps Five Star",
+  "sport": "Baseball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "2",
+          "player": "Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "3",
+          "player": "Babe Ruth",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "4",
+          "player": "Ted Williams",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "5",
+          "player": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "rookie": true
+        },
+        {
+          "number": "6",
+          "player": "Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "7",
+          "player": "Jordan Walker",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "8",
+          "player": "Manny Machado",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "9",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels",
+          "rookie": true
+        },
+        {
+          "number": "10",
+          "player": "Willie Mays",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "11",
+          "player": "Sandy Koufax",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "12",
+          "player": "Francisco Lindor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "13",
+          "player": "Corey Seager",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "14",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "15",
+          "player": "Bryce Eldridge",
+          "team": "San Francisco Giants",
+          "rookie": true
+        },
+        {
+          "number": "16",
+          "player": "Wyatt Langford",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "17",
+          "player": "Adley Rutschman",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "18",
+          "player": "Tatsuya Imai",
+          "team": "Houston Astros",
+          "rookie": true
+        },
+        {
+          "number": "19",
+          "player": "Cole Young",
+          "team": "Seattle Mariners",
+          "rookie": true
+        },
+        {
+          "number": "20",
+          "player": "Albert Pujols",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "21",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "22",
+          "player": "Juan Soto",
+          "team": "New York Mets"
+        },
+        {
+          "number": "23",
+          "player": "Ty Cobb",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "24",
+          "player": "CJ Abrams",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "25",
+          "player": "Pete Alonso",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "26",
+          "player": "JJ Wetherholt",
+          "team": "St. Louis Cardinals",
+          "rookie": true
+        },
+        {
+          "number": "27",
+          "player": "Elly De La Cruz",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "28",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "29",
+          "player": "Max Scherzer",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "30",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "31",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers",
+          "rookie": true
+        },
+        {
+          "number": "32",
+          "player": "Yogi Berra",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "33",
+          "player": "Cam Schlittler",
+          "team": "New York Yankees",
+          "rookie": true
+        },
+        {
+          "number": "34",
+          "player": "Mason Miller",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "35",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "36",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "37",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "38",
+          "player": "Stan Musial",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "39",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "40",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds",
+          "rookie": true
+        },
+        {
+          "number": "41",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays",
+          "rookie": true
+        },
+        {
+          "number": "42",
+          "player": "Jackie Robinson",
+          "team": "Brooklyn Dodgers"
+        },
+        {
+          "number": "43",
+          "player": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "44",
+          "player": "Hank Aaron",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "45",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates",
+          "rookie": true
+        },
+        {
+          "number": "46",
+          "player": "TJ Rumfield",
+          "team": "Colorado Rockies",
+          "rookie": true
+        },
+        {
+          "number": "47",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays",
+          "rookie": true
+        },
+        {
+          "number": "48",
+          "player": "Mookie Betts",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "49",
+          "player": "Andrew Painter",
+          "team": "Philadelphia Phillies",
+          "rookie": true
+        },
+        {
+          "number": "50",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "51",
+          "player": "Roberto Clemente",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "52",
+          "player": "Jackson Merrill",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "53",
+          "player": "Nolan Arenado",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "54",
+          "player": "Matt Olson",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "55",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds",
+          "rookie": true
+        },
+        {
+          "number": "56",
+          "player": "Shea Langeliers",
+          "team": "Athletics"
+        },
+        {
+          "number": "57",
+          "player": "Sandy Alcantara",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "58",
+          "player": "Kyle Schwarber",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "59",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals",
+          "rookie": true
+        },
+        {
+          "number": "60",
+          "player": "Shota Imanaga",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "61",
+          "player": "Mickey Mantle",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "62",
+          "player": "Ken Griffey Jr.",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "63",
+          "player": "José Ramírez",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "64",
+          "player": "Nolan McLean",
+          "team": "New York Mets",
+          "rookie": true
+        },
+        {
+          "number": "65",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "66",
+          "player": "Larry Walker",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "67",
+          "player": "Freddie Freeman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "68",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox",
+          "rookie": true
+        },
+        {
+          "number": "69",
+          "player": "Carson Benge",
+          "team": "New York Mets",
+          "rookie": true
+        },
+        {
+          "number": "70",
+          "player": "Justin Crawford",
+          "team": "Philadelphia Phillies",
+          "rookie": true
+        },
+        {
+          "number": "71",
+          "player": "Bryce Harper",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "72",
+          "player": "Andrew McCutchen",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "73",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles",
+          "rookie": true
+        },
+        {
+          "number": "74",
+          "player": "Chris Sale",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "75",
+          "player": "Konnor Griffin",
+          "team": "Pittsburgh Pirates",
+          "rookie": true
+        },
+        {
+          "number": "76",
+          "player": "Ryne Sandberg",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "77",
+          "player": "Kevin McGonigle",
+          "team": "Detroit Tigers",
+          "rookie": true
+        },
+        {
+          "number": "78",
+          "player": "Ben Rice",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "79",
+          "player": "Vladimir Guerrero Jr.",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "80",
+          "player": "Mariano Rivera",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "81",
+          "player": "Jacob Wilson",
+          "team": "Athletics"
+        },
+        {
+          "number": "82",
+          "player": "Chase DeLauter",
+          "team": "Cleveland Guardians",
+          "rookie": true
+        },
+        {
+          "number": "83",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox",
+          "rookie": true
+        },
+        {
+          "number": "84",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "85",
+          "player": "Walter Johnson",
+          "team": "Washington Senators"
+        },
+        {
+          "number": "86",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "87",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "88",
+          "player": "Tony Gwynn",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "89",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "90",
+          "player": "Owen Caissie",
+          "team": "Miami Marlins",
+          "rookie": true
+        },
+        {
+          "number": "91",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "92",
+          "player": "Travis Bazzana",
+          "team": "Cleveland Guardians",
+          "rookie": true
+        },
+        {
+          "number": "93",
+          "player": "Kazuma Okamoto",
+          "team": "Toronto Blue Jays",
+          "rookie": true
+        },
+        {
+          "number": "94",
+          "player": "Seiya Suzuki",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "95",
+          "player": "Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "96",
+          "player": "Christian Yelich",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "97",
+          "player": "Yordan Alvarez",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "98",
+          "player": "Jose Altuve",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "99",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "100",
+          "player": "Noah Schultz",
+          "team": "Chicago White Sox",
+          "rookie": true
+        }
+      ]
+    },
+    {
+      "id": "five-star-active-autographs",
+      "name": "Five Star Active Autographs",
+      "category": "autograph",
+      "totalCards": 68,
+      "parallels": [
+        {
+          "name": "Amethyst",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "FSA-AF",
+          "player": "Alex Freeland",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-APA",
+          "player": "Andrew Painter",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-BBU",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSA-BCH",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FSA-BE",
+          "player": "Bryce Eldridge",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSA-BH",
+          "player": "Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FSA-BR",
+          "player": "Ben Rice",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-CAB",
+          "player": "Carson Benge",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-CBU",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-CE",
+          "player": "Connelly Early",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-CH",
+          "player": "Cade Horton",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-CJE",
+          "player": "Carter Jensen",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FSA-CKA",
+          "player": "C.J. Kayfus",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FSA-CM",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "FSA-CMO",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSA-CSC",
+          "player": "Cam Schlittler",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-CT",
+          "player": "Colby Thomas",
+          "team": "Athletics"
+        },
+        {
+          "number": "FSA-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FSA-CY",
+          "player": "Christian Yelich",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSA-CYO",
+          "player": "Cole Young",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSA-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-DBE",
+          "player": "Dylan Beavers",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-DGI",
+          "player": "Drew Gilbert",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSA-DR",
+          "player": "Dalton Rushing",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-ED",
+          "player": "Elly De La Cruz",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-FTJ",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-GH",
+          "player": "Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-HF",
+          "player": "Harry Ford",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FSA-HH",
+          "player": "Heriberto Hernández",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "FSA-JC",
+          "player": "Justin Crawford",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-JCA",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FSA-JCH",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSA-JCJ",
+          "player": "Jazz Chisholm Jr.",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-JCM",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FSA-JDO",
+          "player": "Jasson Domínguez",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-JG",
+          "player": "Jhostynxon Garcia",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FSA-JL",
+          "player": "Jung Hoo Lee",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSA-JMI",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSA-JQ",
+          "player": "Jeferson Quero",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSA-JRO",
+          "player": "Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSA-JTO",
+          "player": "Jonah Tong",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-JW",
+          "player": "JJ Wetherholt",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSA-KGI",
+          "player": "Konnor Griffin",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FSA-KM",
+          "player": "Kevin McGonigle",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSA-KO",
+          "player": "Kazuma Okamoto",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FSA-LK",
+          "player": "Luke Keaschall",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSA-MF",
+          "player": "Max Fried",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-MM",
+          "player": "Munetaka Murakami",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSA-MMA",
+          "player": "Manny Machado",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-MO",
+          "player": "Matt Olson",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "FSA-NM",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-OA",
+          "player": "Ozzie Albies",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-OC",
+          "player": "Owen Caissie",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "FSA-PC",
+          "player": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-PME",
+          "player": "Parker Messick",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FSA-PT",
+          "player": "Payton Tolle",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-RAN",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-RS",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-SSO",
+          "player": "Sung-Mun Song",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-SST",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-TB",
+          "player": "Travis Bazzana",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FSA-TT",
+          "player": "Trea Turner",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-TY",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FSA-WL",
+          "player": "Wyatt Langford",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSA-WS",
+          "player": "Will Smith",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-YY",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Los Angeles Dodgers"
+        }
+      ]
+    },
+    {
+      "id": "five-star-retired-autographs",
+      "name": "Five Star Retired Autographs",
+      "category": "autograph",
+      "totalCards": 78,
+      "parallels": [
+        {
+          "name": "Amethyst",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "FSA-AB",
+          "player": "Adrian Beltré",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSA-AD",
+          "player": "Andre Dawson",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-AG",
+          "player": "Adrián González",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-AJ",
+          "player": "Andruw Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-AP",
+          "player": "Andy Pettitte",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-APU",
+          "player": "Albert Pujols",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSA-AR",
+          "player": "Anthony Rizzo",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-AT",
+          "player": "Alan Trammell",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSA-BB",
+          "player": "Bert Blyleven",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSA-BL",
+          "player": "Barry Larkin",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-BW",
+          "player": "Billy Wagner",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FSA-BWL",
+          "player": "Bernie Williams",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-CB",
+          "player": "Craig Biggio",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FSA-CBE",
+          "player": "Carlos Beltrán",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-CF",
+          "player": "Cecil Fielder",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSA-CJ",
+          "player": "Chipper Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-CR",
+          "player": "Cal Ripken Jr.",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-DE",
+          "player": "Dennis Eckersley",
+          "team": "Oakland Athletics"
+        },
+        {
+          "number": "FSA-DG",
+          "player": "Dwight Gooden",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-DJ",
+          "player": "Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-DM",
+          "player": "Don Mattingly",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-DMU",
+          "player": "Dale Murphy",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-DO",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-DS",
+          "player": "Darryl Strawberry",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-DW",
+          "player": "David Wright",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-DWI",
+          "player": "Dave Winfield",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-EL",
+          "player": "Evan Longoria",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FSA-EM",
+          "player": "Edgar Martinez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSA-EMU",
+          "player": "Eddie Murray",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-FH",
+          "player": "Félix Hernández",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSA-FJ",
+          "player": "Fergie Jenkins",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-FM",
+          "player": "Fred McGriff",
+          "team": "Tampa Bay Devil Rays"
+        },
+        {
+          "number": "FSA-FT",
+          "player": "Frank Thomas",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSA-HB",
+          "player": "Harold Baines",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSA-IR",
+          "player": "Ivan Rodriguez",
+          "team": "Florida Marlins"
+        },
+        {
+          "number": "FSA-JB",
+          "player": "Johnny Bench",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-JD",
+          "player": "Johnny Damon",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FSA-JP",
+          "player": "Jim Palmer",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSA-JPO",
+          "player": "Jorge Posada",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-JR",
+          "player": "Jim Rice",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-JRE",
+          "player": "José Reyes",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSA-JS",
+          "player": "John Smoltz",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-JT",
+          "player": "Jim Thome",
+          "team": "Cleveland"
+        },
+        {
+          "number": "FSA-JV",
+          "player": "Jason Varitek",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-KG",
+          "player": "Kirk Gibson",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-KL",
+          "player": "Kenny Lofton",
+          "team": "Cleveland"
+        },
+        {
+          "number": "FSA-LG",
+          "player": "Luis Gonzalez",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "FSA-LP",
+          "player": "Lou Piniella",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FSA-LW",
+          "player": "Larry Walker",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "FSA-MMC",
+          "player": "Mark McGwire",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSA-MRI",
+          "player": "Mariano Rivera",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-MS",
+          "player": "Mike Schmidt",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-MY",
+          "player": "Michael Young",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSA-NG",
+          "player": "Nomar Garciaparra",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-NR",
+          "player": "Nolan Ryan",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSA-OH",
+          "player": "Orel Hershiser",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSA-OS",
+          "player": "Ozzie Smith",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSA-PM",
+          "player": "Paul Molitor",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FSA-PO",
+          "player": "Paul O'Neill",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSA-RC",
+          "player": "Rod Carew",
+          "team": "California Angels"
+        },
+        {
+          "number": "FSA-RCL",
+          "player": "Roger Clemens",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FSA-RH",
+          "player": "Ryan Howard",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-RJ",
+          "player": "Reggie Jackson",
+          "team": "Oakland Athletics"
+        },
+        {
+          "number": "FSA-RJO",
+          "player": "Randy Johnson",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "FSA-RP",
+          "player": "Rafael Palmeiro",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSA-RY",
+          "player": "Robin Yount",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSA-RZ",
+          "player": "Ryan Zimmerman",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FSA-SC",
+          "player": "Steve Carlton",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSA-SR",
+          "player": "Scott Rolen",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FSA-SS",
+          "player": "Sammy Sosa",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSA-TG",
+          "player": "Tom Glavine",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSA-TH",
+          "player": "Trevor Hoffman",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSA-TO",
+          "player": "Tony Oliva",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSA-TP",
+          "player": "Tony Pérez",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSA-VG",
+          "player": "Vladimir Guerrero",
+          "team": "Montréal Expos"
+        },
+        {
+          "number": "FSA-VM",
+          "player": "Victor Martinez",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSA-WB",
+          "player": "Wade Boggs",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSA-WC",
+          "player": "Will Clark",
+          "team": "San Francisco Giants"
+        }
+      ]
+    },
+    {
+      "id": "apex-autographs",
+      "name": "Apex Autographs",
+      "category": "autograph",
+      "totalCards": 34,
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "AA-ARI",
+          "player": "Austin Riley",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AA-BL",
+          "player": "Barry Larkin",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "AA-BW",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "AA-CB",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "AA-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "AA-CF",
+          "player": "Carlton Fisk",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "AA-CM",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "AA-CSA",
+          "player": "CC Sabathia",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "AA-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "AA-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AA-DM",
+          "player": "Don Mattingly",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "AA-DO",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "AA-DR",
+          "player": "Dalton Rushing",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "AA-FT",
+          "player": "Frank Thomas",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "AA-GB",
+          "player": "George Brett",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "AA-JC",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "AA-JH",
+          "player": "Jackson Holliday",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "AA-JV",
+          "player": "Joey Votto",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "AA-JW",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "AA-KG",
+          "player": "Konnor Griffin",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "AA-LW",
+          "player": "Larry Walker",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "AA-MO",
+          "player": "Matt Olson",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AA-MS",
+          "player": "Mike Schmidt",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "AA-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "AA-OA",
+          "player": "Ozzie Albies",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AA-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "AA-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "AA-RAJ",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AA-RC",
+          "player": "Rod Carew",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "AA-RS",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "AA-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "AA-SK",
+          "player": "Sandy Koufax",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "AA-SS",
+          "player": "Sammy Sosa",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "AA-TH",
+          "player": "Torii Hunter",
+          "team": "Minnesota Twins"
+        }
+      ]
+    },
+    {
+      "id": "baseball-royalty-autographs",
+      "name": "Baseball Royalty Autographs",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "BR-AP",
+          "player": "Albert Pujols",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "BR-BH",
+          "player": "Bryce Harper",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "BR-BW",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "BR-CJ",
+          "player": "Chipper Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "BR-CR",
+          "player": "Cal Ripken Jr.",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "BR-DJ",
+          "player": "Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "BR-DO",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "BR-ED",
+          "player": "Elly De La Cruz",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "BR-GB",
+          "player": "George Brett",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "BR-JR",
+          "player": "Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "BR-KG",
+          "player": "Ken Griffey Jr.",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "BR-MT",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "BR-NR",
+          "player": "Nolan Ryan",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "BR-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "BR-RJ",
+          "player": "Reggie Jackson",
+          "team": "Oakland Athletics"
+        },
+        {
+          "number": "BR-SK",
+          "player": "Sandy Koufax",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "BR-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        }
+      ]
+    },
+    {
+      "id": "five-tool-phenom-autographs",
+      "name": "Five Tool Phenom Autographs",
+      "category": "autograph",
+      "totalCards": 34,
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "FTPA-AF",
+          "player": "Alex Freeland",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FTPA-BBU",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FTPA-BW",
+          "player": "Bernie Williams",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FTPA-CB",
+          "player": "Carlos Beltrán",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FTPA-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "FTPA-CD",
+          "player": "Chase DeLauter",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FTPA-CJ",
+          "player": "Carter Jensen",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FTPA-CM",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FTPA-CR",
+          "player": "Cal Ripken Jr.",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FTPA-CS",
+          "player": "Cam Smith",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FTPA-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FTPA-CY",
+          "player": "Christian Yelich",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FTPA-DB",
+          "player": "Dylan Beavers",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FTPA-FL",
+          "player": "Francisco Lindor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FTPA-FT",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FTPA-GB",
+          "player": "George Brett",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FTPA-GS",
+          "player": "Gary Sheffield",
+          "team": "Florida Marlins"
+        },
+        {
+          "number": "FTPA-HF",
+          "player": "Harry Ford",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FTPA-JC",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FTPA-JCJ",
+          "player": "Jazz Chisholm Jr.",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FTPA-JH",
+          "player": "Jackson Holliday",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FTPA-JR",
+          "player": "Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FTPA-JW",
+          "player": "Jacob Wilson",
+          "team": "Athletics"
+        },
+        {
+          "number": "FTPA-JWO",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FTPA-KG",
+          "player": "Konnor Griffin",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FTPA-KT",
+          "player": "Kyle Tucker",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FTPA-MB",
+          "player": "Mookie Betts",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FTPA-MT",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "FTPA-RA",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FTPA-RAN",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FTPA-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FTPA-TH",
+          "player": "Torii Hunter",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "FTPA-TT",
+          "player": "Trea Turner",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FTPA-WL",
+          "player": "Wyatt Langford",
+          "team": "Texas Rangers"
+        }
+      ]
+    },
+    {
+      "id": "golden-graphs",
+      "name": "Golden Graphs",
+      "category": "autograph",
+      "totalCards": 33,
+      "parallels": [
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "GG-AB",
+          "player": "Adrian Beltré",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "GG-AT",
+          "player": "Alan Trammell",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "GG-BB",
+          "player": "Barry Bonds",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "GG-BC",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "GG-BWI",
+          "player": "Bernie Williams",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "GG-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "GG-CD",
+          "player": "Chase DeLauter",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "GG-CM",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "GG-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "GG-DP",
+          "player": "Dustin Pedroia",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "GG-DW",
+          "player": "Dave Winfield",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "GG-EM",
+          "player": "Eddie Murray",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "GG-FH",
+          "player": "Félix Hernández",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "GG-GS",
+          "player": "Gary Sheffield",
+          "team": "Florida Marlins"
+        },
+        {
+          "number": "GG-JC",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "GG-JCA",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "GG-JM",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "GG-JS",
+          "player": "John Smoltz",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "GG-JW",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "GG-MM",
+          "player": "Mark McGwire",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "GG-MMU",
+          "player": "Munetaka Murakami",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "GG-NG",
+          "player": "Nomar Garciaparra",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "GG-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "GG-NM",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "GG-RA",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "GG-RAN",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "GG-RJ",
+          "player": "Randy Johnson",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "GG-RY",
+          "player": "Robin Yount",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "GG-SR",
+          "player": "Scott Rolen",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "GG-SS",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "GG-TT",
+          "player": "Trea Turner",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "GG-VG",
+          "player": "Vladimir Guerrero",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "GG-YY",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Los Angeles Dodgers"
+        }
+      ]
+    },
+    {
+      "id": "leaderboard-legend-autographs",
+      "name": "Leaderboard Legend Autographs",
+      "category": "autograph",
+      "totalCards": 38,
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "LLA-AD",
+          "player": "Andre Dawson",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "LLA-BB",
+          "player": "Bert Blyleven",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "LLA-BW",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "LLA-CB",
+          "player": "Charlie Blackmon",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "LLA-CF",
+          "player": "Cecil Fielder",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "LLA-CL",
+          "player": "Cliff Lee",
+          "team": "Cleveland"
+        },
+        {
+          "number": "LLA-CS",
+          "player": "Chris Sale",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "LLA-DM",
+          "player": "Don Mattingly",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "LLA-DMU",
+          "player": "Dale Murphy",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "LLA-DO",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "LLA-DP",
+          "player": "Dustin Pedroia",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "LLA-DS",
+          "player": "Darryl Strawberry",
+          "team": "New York Mets"
+        },
+        {
+          "number": "LLA-DW",
+          "player": "Dave Winfield",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "LLA-EM",
+          "player": "Edgar Martinez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "LLA-FJ",
+          "player": "Fergie Jenkins",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "LLA-FM",
+          "player": "Fred McGriff",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "LLA-GCR",
+          "player": "Garrett Crochet",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "LLA-GF",
+          "player": "George Foster",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "LLA-GS",
+          "player": "Gary Sheffield",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "LLA-JDA",
+          "player": "Johnny Damon",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "LLA-JR",
+          "player": "José Reyes",
+          "team": "New York Mets"
+        },
+        {
+          "number": "LLA-JRI",
+          "player": "Jim Rice",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "LLA-JSM",
+          "player": "John Smoltz",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "LLA-KS",
+          "player": "Kyle Schwarber",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "LLA-LG",
+          "player": "Luis Gonzalez",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "LLA-MF",
+          "player": "Max Fried",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "LLA-MY",
+          "player": "Michael Young",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "LLA-PF",
+          "player": "Prince Fielder",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "LLA-PM",
+          "player": "Paul Molitor",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "LLA-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "LLA-RC",
+          "player": "Roger Clemens",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "LLA-RH",
+          "player": "Ryan Howard",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "LLA-RJ",
+          "player": "Reggie Jackson",
+          "team": "Oakland Athletics"
+        },
+        {
+          "number": "LLA-RP",
+          "player": "Rafael Palmeiro",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "LLA-SC",
+          "player": "Steve Carlton",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "LLA-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "LLA-TO",
+          "player": "Tony Oliva",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "LLA-WC",
+          "player": "Will Clark",
+          "team": "San Francisco Giants"
+        }
+      ]
+    },
+    {
+      "id": "quotable-autographs",
+      "name": "Quotable Autographs",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FQ-BC",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FQ-BH",
+          "player": "Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FQ-CK",
+          "player": "CJ Kayfus",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FQ-CS",
+          "player": "Cam Smith",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FQ-DM",
+          "player": "Don Mattingly",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FQ-DP",
+          "player": "Dustin Pedroia",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FQ-DW",
+          "player": "Dave Winfield",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FQ-FM",
+          "player": "Fred McGriff",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FQ-FT",
+          "player": "Frank Thomas",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FQ-IR",
+          "player": "Ivan Rodriguez",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FQ-JB",
+          "player": "Johnny Bench",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FQ-JC",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FQ-JCA",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FQ-JT",
+          "player": "Jonah Tong",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FQ-LW",
+          "player": "Larry Walker",
+          "team": "Montréal Expos"
+        },
+        {
+          "number": "FQ-MR",
+          "player": "Mariano Rivera",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FQ-MT",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "FQ-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "FQ-OC",
+          "player": "Owen Caissie",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "FQ-OH",
+          "player": "Orel Hershiser",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FQ-OS",
+          "player": "Ozzie Smith",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FQ-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FQ-RH",
+          "player": "Ryan Howard",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FQ-RJ",
+          "player": "Reggie Jackson",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FQ-WB",
+          "player": "Wade Boggs",
+          "team": "Boston Red Sox"
+        }
+      ]
+    },
+    {
+      "id": "silver-signatures",
+      "name": "Silver Signatures",
+      "category": "autograph",
+      "totalCards": 31,
+      "parallels": [
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "FSS-AD",
+          "player": "Andre Dawson",
+          "team": "Montréal Expos"
+        },
+        {
+          "number": "FSS-AJ",
+          "player": "Andruw Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSS-BH",
+          "player": "Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FSS-CB",
+          "player": "Craig Biggio",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FSS-CBU",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSS-CF",
+          "player": "Carlton Fisk",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSS-CK",
+          "player": "C.J. Kayfus",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "FSS-CS",
+          "player": "Chris Sale",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSS-DB",
+          "player": "Dylan Beavers",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSS-DM",
+          "player": "Don Mattingly",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSS-DW",
+          "player": "David Wright",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSS-EM",
+          "player": "Edgar Martinez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSS-FTH",
+          "player": "Frank Thomas",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSS-FTJ",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSS-HF",
+          "player": "Harry Ford",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "FSS-JB",
+          "player": "Johnny Bench",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSS-JP",
+          "player": "Jorge Posada",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSS-JR",
+          "player": "Jimmy Rollins",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSS-JT",
+          "player": "Jonah Tong",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSS-KT",
+          "player": "Kyle Tucker",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSS-LW",
+          "player": "Larry Walker",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "FSS-MS",
+          "player": "Mike Schmidt",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSS-NR",
+          "player": "Nolan Ryan",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSS-OC",
+          "player": "Owen Caissie",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "FSS-OS",
+          "player": "Ozzie Smith",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSS-PA",
+          "player": "Pete Alonso",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSS-PM",
+          "player": "Paul Molitor",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSS-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSS-SS",
+          "player": "Sammy Sosa",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSS-WB",
+          "player": "Wade Boggs",
+          "team": "Tampa Bay Devil Rays"
+        },
+        {
+          "number": "FSS-WL",
+          "player": "Wyatt Langford",
+          "team": "Texas Rangers"
+        }
+      ]
+    },
+    {
+      "id": "stars-and-stitches-autographs",
+      "name": "Stars & Stitches Autographs",
+      "category": "autograph",
+      "totalCards": 26,
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "SS-BB",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "SS-BR",
+          "player": "Ben Rice",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "SS-CB",
+          "player": "Carlos Beltrán",
+          "team": "New York Mets"
+        },
+        {
+          "number": "SS-CF",
+          "player": "Carlton Fisk",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "SS-CJ",
+          "player": "Carter Jensen",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "SS-CM",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "SS-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "SS-DM",
+          "player": "Dale Murphy",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "SS-FM",
+          "player": "Fred McGriff",
+          "team": "Tampa Bay Devil Rays"
+        },
+        {
+          "number": "SS-JC",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "SS-JG",
+          "player": "Jhostynxon Garcia",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "SS-JP",
+          "player": "Jorge Posada",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "SS-JV",
+          "player": "Joey Votto",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "SS-JW",
+          "player": "Jacob Wilson",
+          "team": "Athletics"
+        },
+        {
+          "number": "SS-KS",
+          "player": "Kyle Schwarber",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "SS-KT",
+          "player": "Kyle Tucker",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SS-MP",
+          "player": "Mike Piazza",
+          "team": "New York Mets"
+        },
+        {
+          "number": "SS-NG",
+          "player": "Nomar Garciaparra",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "SS-PF",
+          "player": "Prince Fielder",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "SS-PT",
+          "player": "Payton Tolle",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "SS-SR",
+          "player": "Scott Rolen",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "SS-SS",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "SS-TH",
+          "player": "Torii Hunter",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "SS-THO",
+          "player": "Trevor Hoffman",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "SS-TY",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "SS-VM",
+          "player": "Victor Martinez",
+          "team": "Detroit Tigers"
+        }
+      ]
+    },
+    {
+      "id": "welcome-to-the-club-autographs",
+      "name": "Welcome to the Club Autographs",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "WDA-BO",
+          "player": "Shohei Ohtani/Barry Bonds",
+          "team": "Los Angeles Dodgers/San Francisco Giants"
+        }
+      ]
+    },
+    {
+      "id": "dual-autographs",
+      "name": "Dual Autographs",
+      "category": "autograph",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DA-BL",
+          "player": "Francisco Lindor/Carlos Beltrán",
+          "team": "New York Mets"
+        },
+        {
+          "number": "DA-FH",
+          "player": "Harry Ford/Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "DA-GE",
+          "player": "Ken Griffey Jr./Elly De La Cruz",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "DA-GG",
+          "player": "Vladimir Guerrero Jr./Vladimir Guerrero",
+          "team": "Toronto Blue Jays/Montréal Expos"
+        },
+        {
+          "number": "DA-IR",
+          "player": "Ichiro/Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "DA-JR",
+          "player": "Mariano Rivera/Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "DA-KW",
+          "player": "Nick Kurtz/Jacob Wilson",
+          "team": "Athletics"
+        },
+        {
+          "number": "DA-LA",
+          "player": "Fred Lynn/Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "DA-MCT",
+          "player": "Jonah Tong/Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "DA-MUO",
+          "player": "Kazuma Okamoto/Munetaka Murakami",
+          "team": "Toronto Blue Jays/Chicago White Sox"
+        },
+        {
+          "number": "DA-OG",
+          "player": "David Ortiz/Nomar Garciaparra",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "DA-OH",
+          "player": "Shohei Ohtani/Sadaharu Oh",
+          "team": "Los Angeles Dodgers/Yomiuri Giants"
+        },
+        {
+          "number": "DA-PM",
+          "player": "Albert Pujols/Mark McGwire",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "DA-RT",
+          "player": "Nolan Ryan/Mike Trout",
+          "team": "California Angels/Los Angeles Angels"
+        },
+        {
+          "number": "DA-WJC",
+          "player": "Bobby Witt Jr./Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "DA-YS",
+          "player": "Yoshinobu Yamamoto/Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        }
+      ]
+    },
+    {
+      "id": "triple-autographs",
+      "name": "Triple Autographs",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FST-BWC",
+          "player": "George Brett/Bobby Witt Jr./Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FST-GMW",
+          "player": "Kevin McGonigle/JJ Wetherholt/Konnor Griffin",
+          "team": "Detroit Tigers/St. Louis Cardinals/Pittsburgh Pirates"
+        },
+        {
+          "number": "FST-JGW",
+          "player": "Randy Johnson/Vladimir Guerrero/Larry Walker",
+          "team": "Montréal Expos"
+        },
+        {
+          "number": "FST-JMA",
+          "player": "Chipper Jones/Ronald Acuña Jr./Greg Maddux",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FST-JMK",
+          "player": "Nick Kurtz/Reggie Jackson/Mark McGwire",
+          "team": "Athletics/Oakland Athletics/Oakland Athletics"
+        },
+        {
+          "number": "FST-JMS",
+          "player": "CC Sabathia/Hideki Matsui/Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FST-KFY",
+          "player": "Yoshinobu Yamamoto/Sandy Koufax/Freddie Freeman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FST-OGA",
+          "player": "Nomar Garciaparra/David Ortiz/Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FST-PRS",
+          "player": "Albert Pujols/Juan Soto/Alex Rodriguez",
+          "team": "St. Louis Cardinals/New York Mets/New York Yankees"
+        },
+        {
+          "number": "FST-RCS",
+          "player": "Roger Clemens/Nolan Ryan/Paul Skenes",
+          "team": "Boston Red Sox/California Angels/Pittsburgh Pirates"
+        },
+        {
+          "number": "FST-SPW",
+          "player": "Darryl Strawberry/Mike Piazza/David Wright",
+          "team": "New York Mets"
+        }
+      ]
+    },
+    {
+      "id": "jumbo-prime-autographs",
+      "name": "Jumbo Prime Autographs",
+      "category": "autograph",
+      "totalCards": 73,
+      "parallels": [
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "Ruby Button",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor MLB Logo",
+          "printRun": 1
+        },
+        {
+          "name": "FoilFractor Laundry Tag",
+          "printRun": 1
+        },
+        {
+          "name": "FoilFractor Manufacturer's Patch",
+          "printRun": 1
+        },
+        {
+          "name": "FoilFractor Team Patch",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "JPA-AG",
+          "player": "Adolis García",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "JPA-AJ",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-AM",
+          "player": "Andrew McCutchen",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "JPA-AP",
+          "player": "Albert Pujols",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "JPA-ARI",
+          "player": "Austin Riley",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-BB",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "JPA-BHA",
+          "player": "Bryce Harper",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "JPA-BW",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "JPA-CB",
+          "player": "Carlos Beltrán",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-CBL",
+          "player": "Charlie Blackmon",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "JPA-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "JPA-CJ",
+          "player": "Chipper Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-CM",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "JPA-CRJ",
+          "player": "Cal Ripken Jr.",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "JPA-CSA",
+          "player": "Chris Sale",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-CSB",
+          "player": "CC Sabathia",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-CY",
+          "player": "Christian Yelich",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "JPA-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-DG",
+          "player": "Drew Gilbert",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "JPA-DO",
+          "player": "David Ortiz",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "JPA-DW",
+          "player": "Dontrelle Willis",
+          "team": "Florida Marlins"
+        },
+        {
+          "number": "JPA-EL",
+          "player": "Evan Longoria",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "JPA-FF",
+          "player": "Freddie Freeman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "JPA-FH",
+          "player": "Félix Hernández",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "JPA-FL",
+          "player": "Francisco Lindor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "JPA-FM",
+          "player": "Fred McGriff",
+          "team": "Tampa Bay Devil Rays"
+        },
+        {
+          "number": "JPA-FT",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "JPA-GC",
+          "player": "Garrett Crochet",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "JPA-GH",
+          "player": "Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "JPA-GS",
+          "player": "Gary Sheffield",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "JPA-I",
+          "player": "Ichiro",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "JPA-JC",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "JPA-JCA",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "JPA-JCH",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "JPA-JCJ",
+          "player": "Jazz Chisholm Jr.",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-JH",
+          "player": "Jackson Holliday",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "JPA-JL",
+          "player": "Jung Hoo Lee",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "JPA-JP",
+          "player": "Jorge Posada",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-JRO",
+          "player": "Julio Rodríguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "JPA-JS",
+          "player": "Juan Soto",
+          "team": "New York Mets"
+        },
+        {
+          "number": "JPA-JV",
+          "player": "Joey Votto",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "JPA-JWE",
+          "player": "Jordan Westburg",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "JPA-JWO",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "JPA-LK",
+          "player": "Luke Keaschall",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "JPA-MB",
+          "player": "Mookie Betts",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "JPA-MC",
+          "player": "Miguel Cabrera",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "JPA-MF",
+          "player": "Max Fried",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-MH",
+          "player": "Michael Harris II",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-MM",
+          "player": "Manny Machado",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "JPA-MO",
+          "player": "Matt Olson",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-MR",
+          "player": "Mariano Rivera",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-MSH",
+          "player": "Matt Shaw",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "JPA-MT",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "JPA-MW",
+          "player": "Masyn Winn",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "JPA-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "JPA-OA",
+          "player": "Ozzie Albies",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-PC",
+          "player": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "JPA-PF",
+          "player": "Prince Fielder",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "JPA-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "JPA-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "JPA-RAJ",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "JPA-RAR",
+          "player": "Randy Arozarena",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "JPA-RC",
+          "player": "Roger Clemens",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "JPA-RJ",
+          "player": "Randy Johnson",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "JPA-RS",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "JPA-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "JPA-SS",
+          "player": "Sammy Sosa",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "JPA-SST",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "JPA-TS",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "JPA-TT",
+          "player": "Trea Turner",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "JPA-VG",
+          "player": "Vladimir Guerrero Jr.",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "JPA-WS",
+          "player": "Will Smith",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "JPA-YM",
+          "player": "Yadier Molina",
+          "team": "St. Louis Cardinals"
+        }
+      ]
+    },
+    {
+      "id": "award-winner-autograph-relics",
+      "name": "Award Winner Autograph Relics",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AWAR-AJ",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "AWAR-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AWAR-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "AWAR-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "AWAR-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "AWAR-TS",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        }
+      ]
+    },
+    {
+      "id": "award-winner-autograph-relics-image-variation",
+      "name": "Award Winner Autograph Relics Image Variation",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AWAR-AJ",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "AWAR-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "AWAR-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "AWAR-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "AWAR-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "AWAR-TS",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        }
+      ]
+    },
+    {
+      "id": "five-star-fabric-autographs",
+      "name": "Five Star Fabric Autographs",
+      "category": "autograph",
+      "totalCards": 37,
+      "parallels": [
+        {
+          "name": "Amber",
+          "printRun": 25
+        },
+        {
+          "name": "Emerald",
+          "printRun": 15
+        },
+        {
+          "name": "Onyx",
+          "printRun": 10
+        },
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "FSF-AB",
+          "player": "Adrian Beltré",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "FSF-AJ",
+          "player": "Andruw Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSF-AP",
+          "player": "Andy Pettitte",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-AR",
+          "player": "Alex Rodriguez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSF-BB",
+          "player": "Bert Blyleven",
+          "team": "California Angels"
+        },
+        {
+          "number": "FSF-BBO",
+          "player": "Barry Bonds",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSF-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "FSF-CJ",
+          "player": "Chipper Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSF-CM",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "FSF-CR",
+          "player": "Cal Ripken Jr.",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSF-CS",
+          "player": "CC Sabathia",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-DJ",
+          "player": "Derek Jeter",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-DP",
+          "player": "Dustin Pedroia",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSF-DW",
+          "player": "Dave Winfield",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-FH",
+          "player": "Félix Hernández",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "FSF-GH",
+          "player": "Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSF-I",
+          "player": "Ichiro",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-JB",
+          "player": "Johnny Bench",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSF-JBA",
+          "player": "Jeff Bagwell",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "FSF-JC",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "FSF-JCA",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "FSF-JCH",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSF-JH",
+          "player": "Jackson Holliday",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSF-JM",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "FSF-JS",
+          "player": "Juan Soto",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSF-JV",
+          "player": "Joey Votto",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSF-LW",
+          "player": "Larry Walker",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "FSF-MM",
+          "player": "Manny Machado",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "FSF-MP",
+          "player": "Mike Piazza",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSF-MT",
+          "player": "Mike Trout",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "FSF-RA",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSF-RS",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSF-SR",
+          "player": "Scott Rolen",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSF-TG",
+          "player": "Tom Glavine",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSF-VG",
+          "player": "Vladimir Guerrero Jr.",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "FSF-WB",
+          "player": "Wade Boggs",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSF-WS",
+          "player": "Will Smith",
+          "team": "Los Angeles Dodgers"
+        }
+      ]
+    },
+    {
+      "id": "quintuple-relic-autographs",
+      "name": "Quintuple Relic Autographs",
+      "category": "autograph",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "QRA-AJ",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "QRA-CK",
+          "player": "Clayton Kershaw",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "QRA-CM",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "QRA-FF",
+          "player": "Freddie Freeman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "QRA-FL",
+          "player": "Francisco Lindor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "QRA-JC",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "QRA-MC",
+          "player": "Miguel Cabrera",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "QRA-MR",
+          "player": "Mariano Rivera",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "QRA-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "QRA-PC",
+          "player": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "QRA-PS",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "QRA-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "QRA-RJ",
+          "player": "Reggie Jackson",
+          "team": "California Angels"
+        },
+        {
+          "number": "QRA-VG",
+          "player": "Vladimir Guerrero Jr.",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "QRA-WL",
+          "player": "Wyatt Langford",
+          "team": "Texas Rangers"
+        }
+      ]
+    },
+    {
+      "id": "rookie-cap-patch-autographs-side-logo",
+      "name": "Rookie Cap Patch Autographs Side Logo",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CPA-BC",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "CPA-BE",
+          "player": "Bryce Eldridge",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "CPA-BH",
+          "player": "Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "CPA-CB",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "CPA-CM",
+          "player": "Christian Moore",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "CPA-CMO",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "CPA-CS",
+          "player": "Cam Schlittler",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "CPA-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "CPA-CY",
+          "player": "Cole Young",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "CPA-JC",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "CPA-JM",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "CPA-MM",
+          "player": "Munetaka Murakami",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "CPA-NM",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "CPA-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "CPA-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "CPA-SS",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "CPA-TY",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays"
+        }
+      ]
+    },
+    {
+      "id": "rookie-cap-patch-autographs-mlb-logo",
+      "name": "Rookie Cap Patch Autographs MLB Logo",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CPAM-BC",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "CPAM-BE",
+          "player": "Bryce Eldridge",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "CPAM-BH",
+          "player": "Brady House",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "CPAM-CB",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "CPAM-CM",
+          "player": "Christian Moore",
+          "team": "Angels"
+        },
+        {
+          "number": "CPAM-CMO",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "CPAM-CS",
+          "player": "Cam Schlittler",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "CPAM-CW",
+          "player": "Carson Williams",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "CPAM-CY",
+          "player": "Cole Young",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "CPAM-JC",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "CPAM-JM",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "CPAM-MM",
+          "player": "Munetaka Murakami",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "CPAM-NM",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "CPAM-RA",
+          "player": "Roman Anthony",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "CPAM-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "CPAM-SS",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "CPAM-TY",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays"
+        }
+      ]
+    },
+    {
+      "id": "dual-autograph-patch",
+      "name": "Dual Autograph Patch",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [
+        {
+          "name": "Ruby",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "DPA-JA",
+          "player": "Ronald Acuña Jr./Chipper Jones",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "DPA-MK",
+          "player": "Nick Kurtz/Mark McGwire",
+          "team": "Athletics/Oakland Athletics"
+        },
+        {
+          "number": "DPA-RH",
+          "player": "Cal Ripken Jr./Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "DPA-RR",
+          "player": "Julio Rodríguez/Cal Raleigh",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "DPA-SF",
+          "player": "Max Fried/CC Sabathia",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "DPA-SW",
+          "player": "Masyn Winn/Ozzie Smith",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "DPA-TJ",
+          "player": "Mike Trout/Reggie Jackson",
+          "team": "Los Angeles Angels/California Angels"
+        },
+        {
+          "number": "DPA-WA",
+          "player": "CJ Abrams/James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "DPA-WC",
+          "player": "Jac Caglianone/Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "DPA-WL",
+          "player": "David Wright/Francisco Lindor",
+          "team": "New York Mets"
+        }
+      ]
+    },
+    {
+      "id": "cut-signatures",
+      "name": "Cut Signatures",
+      "category": "autograph",
+      "totalCards": 57,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FSCS-AK",
+          "player": "Al Kaline",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSCS-BD",
+          "player": "Bobby Doerr",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSCS-BDI",
+          "player": "Bill Dickey",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-BF",
+          "player": "Bob Feller",
+          "team": "Cleveland"
+        },
+        {
+          "number": "FSCS-BG",
+          "player": "Bob Gibson",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSCS-BGR",
+          "player": "Burleigh Grimes",
+          "team": "Brooklyn Robins"
+        },
+        {
+          "number": "FSCS-BMU",
+          "player": "Bobby Murcer",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-BT",
+          "player": "Bobby Thomson",
+          "team": "New York Giants"
+        },
+        {
+          "number": "FSCS-CFL",
+          "player": "Curt Flood",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSCS-CS",
+          "player": "Casey Stengel",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-CY",
+          "player": "Cy Young",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSCS-DDE",
+          "player": "Dizzy Dean",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSCS-DL",
+          "player": "Don Larsen",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-DSU",
+          "player": "Don Sutton",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSCS-EB",
+          "player": "Ernie Banks",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "FSCS-EW",
+          "player": "Earl Weaver",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "FSCS-EWY",
+          "player": "Early Wynn",
+          "team": "Cleveland"
+        },
+        {
+          "number": "FSCS-GC",
+          "player": "Gary Carter",
+          "team": "New York Mets"
+        },
+        {
+          "number": "FSCS-GK",
+          "player": "George Kell",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSCS-HA",
+          "player": "Hank Aaron",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSCS-HK",
+          "player": "Harmon Killebrew",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSCS-HN",
+          "player": "Hal Newhouser",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSCS-HW",
+          "player": "Honus Wagner",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FSCS-HWI",
+          "player": "Hoyt Wilhelm",
+          "team": "New York Giants"
+        },
+        {
+          "number": "FSCS-JD",
+          "player": "Joe DiMaggio",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-JMI",
+          "player": "Johnny Mize",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSCS-JP",
+          "player": "Johnny Pesky",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "FSCS-JR",
+          "player": "Jackie Robinson",
+          "team": "Brooklyn Dodgers"
+        },
+        {
+          "number": "FSCS-KP",
+          "player": "Kirby Puckett",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "FSCS-LD",
+          "player": "Larry Doby",
+          "team": "Cleveland"
+        },
+        {
+          "number": "FSCS-LDU",
+          "player": "Leo Durocher",
+          "team": "New York Giants"
+        },
+        {
+          "number": "FSCS-LG",
+          "player": "Lefty Grove",
+          "team": "Philadelphia Athletics"
+        },
+        {
+          "number": "FSCS-MMA",
+          "player": "Mickey Mantle",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-MO",
+          "player": "Mel Ott",
+          "team": "New York Giants"
+        },
+        {
+          "number": "FSCS-OC",
+          "player": "Orlando Cepeda",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSCS-PN",
+          "player": "Phil Niekro",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "FSCS-RC",
+          "player": "Roy Campanella",
+          "team": "Brooklyn Dodgers"
+        },
+        {
+          "number": "FSCS-RM",
+          "player": "Roger Maris",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-RR",
+          "player": "Robin Roberts",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "FSCS-SA",
+          "player": "Sparky Anderson",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "FSCS-SM",
+          "player": "Stan Musial",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "FSCS-TC",
+          "player": "Ty Cobb",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "FSCS-TL",
+          "player": "Tommy Lasorda",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "FSCS-WF",
+          "player": "Whitey Ford",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "FSCS-WMA",
+          "player": "Willie Mays",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "FSCS-WS",
+          "player": "Warren Spahn",
+          "team": "Milwaukee Braves"
+        },
+        {
+          "number": "FSCS-WST",
+          "player": "Willie Stargell",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "FSCS-YB",
+          "player": "Yogi Berra",
+          "team": "New York Yankees"
+        }
+      ]
+    }
+  ]
+}

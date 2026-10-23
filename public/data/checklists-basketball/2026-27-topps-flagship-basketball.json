@@ -11,7 +11,224 @@
       "name": "Base",
       "category": "base",
       "totalCards": 300,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Aqua Rainbow",
+          "printRun": null
+        },
+        {
+          "name": "Gold",
+          "printRun": 2026
+        },
+        {
+          "name": "Yellow Rainbow",
+          "printRun": 399
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Black",
+          "printRun": 75
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Wood",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "First Card",
+          "printRun": 1
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        },
+        {
+          "name": "Hobby Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Victory",
+          "printRun": null
+        },
+        {
+          "name": "Jumbo Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Sandglitter",
+          "printRun": null
+        },
+        {
+          "name": "Blue Sandglitter",
+          "printRun": 500
+        },
+        {
+          "name": "Gold Sandglitter",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Sandglitter",
+          "printRun": 25
+        },
+        {
+          "name": "Black Sandglitter",
+          "printRun": 10
+        },
+        {
+          "name": "Red Sandglitter",
+          "printRun": 5
+        },
+        {
+          "name": "Retail Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Holo Foil",
+          "printRun": null
+        },
+        {
+          "name": "Aqua Holo Foil",
+          "printRun": null
+        },
+        {
+          "name": "Pink Holo Foil",
+          "printRun": null
+        },
+        {
+          "name": "Yellow Holo Foil",
+          "printRun": 399
+        },
+        {
+          "name": "Purple Holo Foil",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Holo Foil",
+          "printRun": 150
+        },
+        {
+          "name": "Green Holo Foil",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Holo Foil",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Holo Foil",
+          "printRun": 25
+        },
+        {
+          "name": "Black Holo Foil",
+          "printRun": 10
+        },
+        {
+          "name": "Red Holo Foil",
+          "printRun": 5
+        },
+        {
+          "name": "Rose Gold Holo Foil",
+          "printRun": 1
+        },
+        {
+          "name": "Hanger Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Diamante",
+          "printRun": null
+        },
+        {
+          "name": "Pink Diamante",
+          "printRun": null
+        },
+        {
+          "name": "Green Diamante",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Diamante",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Diamante",
+          "printRun": 25
+        },
+        {
+          "name": "Black Diamante",
+          "printRun": 10
+        },
+        {
+          "name": "Red Diamante",
+          "printRun": 5
+        },
+        {
+          "name": "Value Blaster Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Season Tip Off",
+          "printRun": null
+        },
+        {
+          "name": "Season Tip Off Pink Foil",
+          "printRun": null
+        },
+        {
+          "name": "Season Tip Off Green Foil",
+          "printRun": 99
+        },
+        {
+          "name": "Season Tip Off Gold Foil",
+          "printRun": 50
+        },
+        {
+          "name": "Season Tip Off Orange Foil",
+          "printRun": 25
+        },
+        {
+          "name": "Season Tip Off Black Foil",
+          "printRun": 10
+        },
+        {
+          "name": "Season Tip Off Red Foil",
+          "printRun": 5
+        },
+        {
+          "name": "Season Tip Off Rose Gold Foil",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -4329,7 +4546,28 @@
       "name": "Flagship Real One Relics",
       "category": "memorabilia",
       "totalCards": 88,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "2",
@@ -4778,7 +5016,28 @@
       "name": "1981-82 Topps Autographs",
       "category": "autograph",
       "totalCards": 47,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "81BA-AB",
@@ -5022,7 +5281,28 @@
       "name": "1981-82 Topps Rookie Autographs",
       "category": "autograph",
       "totalCards": 38,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "81BR-1",
@@ -5669,7 +5949,36 @@
       "name": "Contemporary Marks",
       "category": "autograph",
       "totalCards": 45,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CM-AB",
@@ -5903,7 +6212,36 @@
       "name": "Game Script",
       "category": "autograph",
       "totalCards": 46,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "GS-AB",
@@ -6142,7 +6480,36 @@
       "name": "Level Up Signatures",
       "category": "autograph",
       "totalCards": 39,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "LU-AD",
@@ -6346,7 +6713,36 @@
       "name": "New Applicants Autographs",
       "category": "autograph",
       "totalCards": 39,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "NAA-AD",
@@ -6550,7 +6946,28 @@
       "name": "Rookie Pathway Signatures",
       "category": "autograph",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "PS-AD",
@@ -6659,7 +7076,16 @@
       "name": "Rookie Photo Shoot Autographs",
       "category": "autograph",
       "totalCards": 39,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RPS-AD",
@@ -6863,7 +7289,12 @@
       "name": "Rookie Photo Shoot Dual Autographs",
       "category": "autograph",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RPD-AD",
@@ -6922,7 +7353,36 @@
       "name": "Signed",
       "category": "autograph",
       "totalCards": 19,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SG-AK",
@@ -7026,7 +7486,36 @@
       "name": "Franchise Fabrics",
       "category": "memorabilia",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FF-AD",
@@ -7135,7 +7624,36 @@
       "name": "Impact Relics",
       "category": "memorabilia",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "IR-AB",
@@ -7344,7 +7862,36 @@
       "name": "Own the Game",
       "category": "memorabilia",
       "totalCards": 37,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "OWN-AB",
@@ -7538,7 +8085,36 @@
       "name": "Rise to the Occasion Relics",
       "category": "memorabilia",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RO-AD",
@@ -7747,7 +8323,36 @@
       "name": "Rookie Roundball Remnants",
       "category": "memorabilia",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RRR-AD",
@@ -7956,7 +8561,36 @@
       "name": "Woven Relics",
       "category": "memorabilia",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "WR-AK",
@@ -8374,7 +9008,36 @@
       "name": "1981-82 Topps",
       "category": "insert",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "81BK-AD",
@@ -9392,7 +10055,12 @@
       "name": "All Kings",
       "category": "insert",
       "totalCards": 24,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AK-1",
@@ -9714,7 +10382,16 @@
       "name": "Class of 26",
       "category": "insert",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "C26-1",
@@ -10066,7 +10743,44 @@
       "name": "Drivers",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DR-1",
@@ -10289,7 +11003,32 @@
       "name": "From the Vault",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FV-1",
@@ -10498,7 +11237,44 @@
       "name": "Generation Now",
       "category": "insert",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "GN-1",
@@ -10741,7 +11517,32 @@
       "name": "Levitation",
       "category": "insert",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "LV-1",
@@ -11109,7 +11910,32 @@
       "name": "New School",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "NS-1",
@@ -11318,7 +12144,44 @@
       "name": "No Limit",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "NL-1",
@@ -11616,7 +12479,44 @@
       "name": "Poster Factory",
       "category": "insert",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "PF-1",
@@ -11784,7 +12684,44 @@
       "name": "Rookie Code",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RC-1",
@@ -12495,7 +13432,44 @@
       "name": "Stars of NBA",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Rainbow Foilboard",
+          "printRun": null
+        },
+        {
+          "name": "Purple Rainbow",
+          "printRun": 250
+        },
+        {
+          "name": "Blue Rainbow",
+          "printRun": 150
+        },
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SNBA-1",
@@ -12704,7 +13678,32 @@
       "name": "The Daily Dribble",
       "category": "insert",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green Rainbow",
+          "printRun": 99
+        },
+        {
+          "name": "Gold Rainbow",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Rainbow",
+          "printRun": 25
+        },
+        {
+          "name": "Black Rainbow",
+          "printRun": 10
+        },
+        {
+          "name": "Red Rainbow",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DD-1",

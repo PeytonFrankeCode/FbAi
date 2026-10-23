@@ -11,7 +11,48 @@
       "name": "Base",
       "category": "base",
       "totalCards": 200,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": 150
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Aqua",
+          "printRun": 75
+        },
+        {
+          "name": "Gold Electricity",
+          "printRun": 50
+        },
+        {
+          "name": "Hot Pink",
+          "printRun": 35
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -1070,7 +1111,44 @@
       "name": "Rookie Autographs",
       "category": "autograph",
       "totalCards": 46,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": 150
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Aqua",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RA-AR",
@@ -1309,7 +1387,44 @@
       "name": "Rookie Autograph Variations",
       "category": "autograph",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": 150
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Aqua",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RAV-AR",
@@ -1418,7 +1533,32 @@
       "name": "Charged Particles",
       "category": "autograph",
       "totalCards": 12,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CP-AJ",
@@ -1487,7 +1627,32 @@
       "name": "Dawn of Greatness Autographs",
       "category": "autograph",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DGA-AD",
@@ -1596,7 +1761,28 @@
       "name": "Dual Rookie Autographs",
       "category": "autograph",
       "totalCards": 7,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DRA-AB",
@@ -1640,7 +1826,32 @@
       "name": "Immersion Autographs",
       "category": "autograph",
       "totalCards": 16,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "IA-AJ",
@@ -1729,7 +1940,12 @@
       "name": "Inception Silver Signings",
       "category": "autograph",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Ink Inscription",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "ISS-AR",
@@ -1788,7 +2004,12 @@
       "name": "NFL Draft Commissioner Combo",
       "category": "autograph",
       "totalCards": 16,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DCC-1",
@@ -1877,7 +2098,40 @@
       "name": "Rookie Jumbo Relic Autographs",
       "category": "autograph",
       "totalCards": 39,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Purple",
+          "printRun": 150
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Aqua",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RJRA-AR",
@@ -2081,7 +2335,28 @@
       "name": "Dual Rookie Relic Autographed Book",
       "category": "autograph",
       "totalCards": 8,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 15
+        },
+        {
+          "name": "Blue",
+          "printRun": 10
+        },
+        {
+          "name": "Orange",
+          "printRun": 5
+        },
+        {
+          "name": "Sky",
+          "printRun": 2
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DRRA-AB",
@@ -2130,7 +2405,32 @@
       "name": "Genesis",
       "category": "autograph",
       "totalCards": 24,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Purple",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 15
+        },
+        {
+          "name": "Blue",
+          "printRun": 10
+        },
+        {
+          "name": "Orange",
+          "printRun": 5
+        },
+        {
+          "name": "Sky",
+          "printRun": 2
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "G-CB",
@@ -2259,7 +2559,32 @@
       "name": "NFL First Milestone Autograph Relic",
       "category": "autograph",
       "totalCards": 12,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Team Liner",
+          "printRun": 2
+        },
+        {
+          "name": "2026 NFL Draft Pin",
+          "printRun": 1
+        },
+        {
+          "name": "Brand Logo",
+          "printRun": 1
+        },
+        {
+          "name": "Button",
+          "printRun": 1
+        },
+        {
+          "name": "Laundry Tag",
+          "printRun": 1
+        },
+        {
+          "name": "NFL Shield",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FMRA-ARE",
@@ -2328,7 +2653,40 @@
       "name": "Provenance Patch Autographs",
       "category": "autograph",
       "totalCards": 43,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Purple",
+          "printRun": 150
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Aqua",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Blue",
+          "printRun": 25
+        },
+        {
+          "name": "Orange",
+          "printRun": 10
+        },
+        {
+          "name": "Sky",
+          "printRun": 5
+        },
+        {
+          "name": "Inception",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "PPA-AR",
@@ -2552,7 +2910,12 @@
       "name": "Launch",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Alpha",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "L-1",
@@ -2686,7 +3049,12 @@
       "name": "Rookie Short Prints",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Alpha",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "RSP-1",

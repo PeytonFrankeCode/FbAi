@@ -539,7 +539,28 @@
       "name": "Base Autographs",
       "category": "autograph",
       "totalCards": 64,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": null
+        },
+        {
+          "name": "Deluxe",
+          "printRun": 250
+        },
+        {
+          "name": "UD Exclusives",
+          "printRun": 100
+        },
+        {
+          "name": "Purple",
+          "printRun": 49
+        },
+        {
+          "name": "High Gloss",
+          "printRun": 10
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -868,7 +889,28 @@
       "name": "Base Star Rookies Autographs",
       "category": "autograph",
       "totalCards": 13,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": null
+        },
+        {
+          "name": "Deluxe",
+          "printRun": 250
+        },
+        {
+          "name": "UD Exclusives",
+          "printRun": 100
+        },
+        {
+          "name": "Purple",
+          "printRun": 49
+        },
+        {
+          "name": "High Gloss",
+          "printRun": 10
+        }
+      ],
       "cards": [
         {
           "number": "81",

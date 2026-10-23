@@ -11,7 +11,12 @@
       "name": "Base",
       "category": "base",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "ePack Achievements: Green; Black 1/1; Printing Plates 1/1.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "1",

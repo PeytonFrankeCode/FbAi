@@ -342,7 +342,28 @@
           "team": "Washington Commanders"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 75
+        },
+        {
+          "name": "Blue",
+          "printRun": 50
+        },
+        {
+          "name": "FOTL Emerald",
+          "printRun": 26
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "base-cleats",
@@ -730,7 +751,24 @@
           "team": "Dallas Cowboys"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 25
+        },
+        {
+          "name": "NFL Shield",
+          "printRun": 1
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "cleat-impressions-autographs",
@@ -1603,7 +1641,28 @@
           "team": "San Francisco 49ers"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Gold /25 or less",
+          "printRun": null
+        },
+        {
+          "name": "Metallic",
+          "printRun": 10
+        },
+        {
+          "name": "Laundry Tag Brand Logo",
+          "printRun": 1
+        },
+        {
+          "name": "Laundry Tag NFL Shield",
+          "printRun": 1
+        },
+        {
+          "name": "Laundry Tag Players",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "immaculate-honors-signatures",
@@ -10695,7 +10754,12 @@
           "team": "Houston Texans"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 25
+        }
+      ]
     },
     {
       "id": "rookie-patches",
@@ -14275,7 +14339,16 @@
           "team": "Pittsburgh Steelers"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Prime",
+          "printRun": 49
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "sideline-towel",

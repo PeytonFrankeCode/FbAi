@@ -6183,7 +6183,16 @@
       "name": "Base Flagship Real One Golden Mirror Autograph",
       "category": "autograph",
       "totalCards": 131,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red w/ Red Ink",
+          "printRun": 5
+        },
+        {
+          "name": "Black w/ Gold Ink",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -6847,7 +6856,28 @@
       "name": "Base Real One Relics",
       "category": "memorabilia",
       "totalCards": 18,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "US1",
@@ -7209,7 +7239,28 @@
       "name": "First Pitch Autographs",
       "category": "autograph",
       "totalCards": 5,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FPA-AB",
@@ -7243,7 +7294,24 @@
       "name": "Postseason Performance Autographs",
       "category": "autograph",
       "totalCards": 13,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "PPA-AB",
@@ -8603,7 +8671,28 @@
       "name": "All-Star Stitches",
       "category": "insert",
       "totalCards": 60,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AS-AC",
@@ -8912,7 +9001,28 @@
       "name": "Major League Material",
       "category": "memorabilia",
       "totalCards": 65,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "MLMU-AJ",
@@ -9455,7 +9565,20 @@
       "name": "2026 All-Star Game",
       "category": "insert",
       "totalCards": 50,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "ASG-1",
@@ -9714,7 +9837,12 @@
       "name": "All Aces",
       "category": "insert",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AA-21",
@@ -9773,7 +9901,12 @@
       "name": "All Kings",
       "category": "insert",
       "totalCards": 15,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AK-31",
@@ -9857,7 +9990,40 @@
       "name": "Autumn Ascensions",
       "category": "insert",
       "totalCards": 35,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AA-1",
@@ -10164,7 +10330,40 @@
       "name": "First Pitch",
       "category": "insert",
       "totalCards": 5,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FPU-1",
@@ -10723,7 +10922,36 @@
       "name": "Stars of MLB",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SMLB-61",
@@ -10857,7 +11085,40 @@
       "name": "Stat Stars",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SS-1",
@@ -11919,7 +12180,40 @@
       "name": "Topps Black Gold",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "BG-1",
@@ -12053,7 +12347,28 @@
       "name": "75 Years of Topps Die-Cut Autographs",
       "category": "autograph",
       "totalCards": 6,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "75YA-AB",
@@ -12092,7 +12407,36 @@
       "name": "1991 Topps All-Star Autographs",
       "category": "autograph",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "91AS-BP",
@@ -12201,7 +12545,36 @@
       "name": "1991 Topps Autographs",
       "category": "autograph",
       "totalCards": 107,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "91A-AB",
@@ -13134,7 +13507,36 @@
       "name": "Baseball Stars Autographs",
       "category": "autograph",
       "totalCards": 36,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "BSA-BA",
@@ -13727,7 +14129,24 @@
       "name": "Major League Material Dual Autographs",
       "category": "autograph",
       "totalCards": 7,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "MLMDA-BB",
@@ -14065,7 +14484,36 @@
       "name": "1991 Topps Relics",
       "category": "memorabilia",
       "totalCards": 64,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "91RU-AF",
@@ -14394,7 +14842,68 @@
       "name": "1991 Topps",
       "category": "insert",
       "totalCards": 50,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": null
+        },
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Real One",
+          "printRun": 91
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        },
+        {
+          "name": "Japan Exclusive Parallels",
+          "printRun": null
+        },
+        {
+          "name": "Koi Fish",
+          "printRun": null
+        },
+        {
+          "name": "Koi Fish Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Koi Fish Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Koi Fish Black",
+          "printRun": 10
+        },
+        {
+          "name": "Koi Fish Red",
+          "printRun": 5
+        }
+      ],
       "cards": [
         {
           "number": "U91-1",
@@ -14653,7 +15162,28 @@
       "name": "1991 Topps Chrome (Silver Pack)",
       "category": "insert",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Mojo Refractor",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Mojo Refractor",
+          "printRun": 25
+        },
+        {
+          "name": "Black Mojo Refractor",
+          "printRun": 10
+        },
+        {
+          "name": "Red Mojo Refractor",
+          "printRun": 5
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "U91C-1",
@@ -15243,6 +15773,2538 @@
           "number": "U91O-16",
           "player": "Ronald Acuña Jr.",
           "team": "Atlanta Braves"
+        }
+      ]
+    },
+    {
+      "id": "usa-250-patch-relic-redemptions",
+      "name": "USA 250 Patch Relic Redemptions",
+      "category": "memorabilia",
+      "totalCards": 426,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "USA250-AA",
+          "player": "Andrew Abbott",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-AB",
+          "player": "Alex Bregman",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-ABI",
+          "player": "Andrew Benintendi",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-ABM",
+          "player": "Alec Bohm",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-ABO",
+          "player": "Aaron Boone",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-ABU",
+          "player": "Alec Burleson",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-AC",
+          "player": "Aaron Civale",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-ACA",
+          "player": "Alex Call",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-ACN",
+          "player": "Aroldis Chapman",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-AF",
+          "player": "Alex Freeland",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-AH",
+          "player": "Austin Hedges",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-AHI",
+          "player": "A.J. Hinch",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-AJ",
+          "player": "Aaron Judge",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-AM",
+          "player": "Austin Martin",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-AMN",
+          "player": "Adrian Morejon",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-AMO",
+          "player": "Andruw Monasterio",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-AMZ",
+          "player": "Andrés Muñoz",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-AN",
+          "player": "Aaron Nola",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-AP",
+          "player": "Andy Pages",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-AR",
+          "player": "Austin Riley",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-ARO",
+          "player": "Amed Rosario",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-ARU",
+          "player": "Adley Rutschman",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-AS",
+          "player": "Anthony Seigler",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-ASZ",
+          "player": "Antonio Senzatela",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-AV",
+          "player": "Alex Vesia",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-AVA",
+          "player": "Andrew Vaughn",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-AVO",
+          "player": "Anthony Volpe",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-AW",
+          "player": "Austin Wells",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-BA",
+          "player": "Blaze Alexander",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-BAZ",
+          "player": "Shane Baz",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-BB",
+          "player": "Byron Buxton",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-BBE",
+          "player": "Brendan Beck",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-BBR",
+          "player": "Bryan Baker",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-BBY",
+          "player": "Brett Baty",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-BC",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-BE",
+          "player": "Bryce Eldridge",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-BEL",
+          "player": "Bryce Elder",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-BL",
+          "player": "Brooks Lee",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-BLO",
+          "player": "Brandon Lowe",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-BM",
+          "player": "Brice Matthews",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-BMA",
+          "player": "Brandon Marsh",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-BMI",
+          "player": "Bryce Miller",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-BN",
+          "player": "Brandon Nimmo",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-BO",
+          "player": "Bo Bichette",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-BR",
+          "player": "Ben Rice",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-BRC",
+          "player": "Brayan Rocchio",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-BRE",
+          "player": "Bryan Reynolds",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-BRZ",
+          "player": "Bradgley Rodriguez",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-BS",
+          "player": "Bryson Stott",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-BSI",
+          "player": "Brady Singer",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-BSP",
+          "player": "Brandon Sproat",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-BT",
+          "player": "Brice Turang",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-BW",
+          "player": "Bobby Witt Jr.",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-BWN",
+          "player": "Ben Williamson",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-BWO",
+          "player": "Brandon Woodruff",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-CA",
+          "player": "CJ Abrams",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-CAL",
+          "player": "Cal Raleigh",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-CB",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-CBA",
+          "player": "Chris Bassitt",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-CBE",
+          "player": "Cody Bellinger",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-CBG",
+          "player": "Carson Benge",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-CC",
+          "player": "Corbin Carroll",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-CCO",
+          "player": "Colton Cowser",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-CCV",
+          "player": "Cade Cavalli",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-CD",
+          "player": "Chase DeLauter",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-CDU",
+          "player": "Caleb Durbin",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-CH",
+          "player": "Clay Holmes",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-CJ",
+          "player": "Carter Jensen",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-CJR",
+          "player": "Cristian Javier",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-CK",
+          "player": "Colt Keith",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-CKL",
+          "player": "Craig Kimbrel",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-CKY",
+          "player": "Carson Kelly",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-CM",
+          "player": "Coby Mayo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-CMD",
+          "player": "Curtis Mead",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-CMN",
+          "player": "Colson Montgomery",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-CMR",
+          "player": "Chase Meidroth",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-CMU",
+          "player": "Cedric Mullins",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-CMZ",
+          "player": "Carmen Mlodzinski",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-CN",
+          "player": "Carlos Narváez",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-CR",
+          "player": "Ceddanne Rafaela",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-CS",
+          "player": "Chris Sale",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-CSC",
+          "player": "Christian Scott",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-CSH",
+          "player": "Cade Smith",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-CSM",
+          "player": "Cam Smith",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-CSN",
+          "player": "Chandler Simpson",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-CST",
+          "player": "Casey Schmitt",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-CSZ",
+          "player": "Cristopher Sánchez",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-CW",
+          "player": "Christian Walker",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-CWN",
+          "player": "Connor Wong",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-CY",
+          "player": "Christian Yelich",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-CYG",
+          "player": "Cole Young",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-DAN",
+          "player": "Dansby Swanson",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-DB",
+          "player": "Drake Baldwin",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-DBD",
+          "player": "David Bednar",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-DBV",
+          "player": "Dylan Beavers",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-DC",
+          "player": "Dylan Crews",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-DD",
+          "player": "Dylan Dodd",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-DDR",
+          "player": "Dillon Dingler",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-DF",
+          "player": "Didier Fuentes",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-DG",
+          "player": "Drew Gilbert",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-DH",
+          "player": "David Hamilton",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-DL",
+          "player": "Daylen Lile",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-DM",
+          "player": "Davis Martin",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-DMS",
+          "player": "Drew Millas",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-DMY",
+          "player": "Dustin May",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-DON",
+          "player": "Don Mattingly",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-DP",
+          "player": "Drew Pomeranz",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-DR",
+          "player": "Drew Romo",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-DRA",
+          "player": "Drew Rasmussen",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-DRO",
+          "player": "Dave Roberts",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-DRU",
+          "player": "Dalton Rushing",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-DS",
+          "player": "Dominic Smith",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-DSN",
+          "player": "Daniel Schneemann",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-DW",
+          "player": "Devin Williams",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-EC",
+          "player": "Evan Carter",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-ED",
+          "player": "Elly De La Cruz",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-EDN",
+          "player": "Ezequiel Duran",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-EDZ",
+          "player": "Elias Díaz",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-EF",
+          "player": "Erick Fedde",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-EH",
+          "player": "Emerson Hancock",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-EJ",
+          "player": "Edouard Julien",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-EM",
+          "player": "Edgar Martinez",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-EP",
+          "player": "Eury Pérez",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-EPH",
+          "player": "Evan Phillips",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-ER",
+          "player": "Eduardo Rodriguez",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-ERU",
+          "player": "Esteury Ruiz",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-ERZ",
+          "player": "Endy Rodríguez",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-ES",
+          "player": "Eugenio Suárez",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-ESA",
+          "player": "Edmundo Sosa",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-ESH",
+          "player": "Emmet Sheehan",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-ET",
+          "player": "Ezequiel Tovar",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-FA",
+          "player": "Francisco Alvarez",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-FC",
+          "player": "Fernando Cruz",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-FF",
+          "player": "Freddie Freeman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-FG",
+          "player": "Foster Griffin",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-FL",
+          "player": "Francisco Lindor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-FP",
+          "player": "Freddy Peralta",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-FRY",
+          "player": "David Fry",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-FT",
+          "player": "Fernando Tatis Jr.",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-FV",
+          "player": "Framber Valdez",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-GA",
+          "player": "Gabriel Arias",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-GC",
+          "player": "Gerrit Cole",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-GH",
+          "player": "Grant Holmes",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-GHE",
+          "player": "Gunnar Henderson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-GJ",
+          "player": "Griffin Jax",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-GK",
+          "player": "George Kirby",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-GM",
+          "player": "Garrett Mitchell",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-GMZ",
+          "player": "Germán Márquez",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-GP",
+          "player": "Geraldo Perdomo",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-GS",
+          "player": "Gavin Sheets",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-GSZ",
+          "player": "Gary Sánchez",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-GW",
+          "player": "Gavin Williams",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-GWK",
+          "player": "Garrett Whitlock",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-HB",
+          "player": "Hunter Brown",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-HD",
+          "player": "Henry Davis",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-HG",
+          "player": "Hunter Goodman",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-HGR",
+          "player": "Hunter Greene",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-HL",
+          "player": "Hao-Yu Lee",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-HR",
+          "player": "Heliot Ramos",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-HW",
+          "player": "Hurston Waldrep",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-IC",
+          "player": "Isaac Collins",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-IH",
+          "player": "Ian Happ",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-IHE",
+          "player": "Iván Herrera",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-IP",
+          "player": "Isaac Paredes",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-IV",
+          "player": "Ildemaro Vargas",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-JA",
+          "player": "Jose Altuve",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-JAR",
+          "player": "Jonathan Aranda",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-JB",
+          "player": "Jake Burger",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JBA",
+          "player": "Jake Bauers",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-JBE",
+          "player": "Josh Bell",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-JC",
+          "player": "Jac Caglianone",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-JCA",
+          "player": "Junior Caminero",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-JCD",
+          "player": "Justin Crawford",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-JCH",
+          "player": "Jazz Chisholm Jr.",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-JCI",
+          "player": "Jackson Chourio",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-JCO",
+          "player": "José Caballero",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-JCR",
+          "player": "Jake Cronenworth",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-JD",
+          "player": "Jhoan Duran",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-JDA",
+          "player": "Jonny DeLuca",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-JDE",
+          "player": "Justin Dean",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-JDG",
+          "player": "Jacob deGrom",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JDR",
+          "player": "Jack Dreyer",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-JDZ",
+          "player": "Jasson Domínguez",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-JF",
+          "player": "Jack Flaherty",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-JFO",
+          "player": "Justin Foscue",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JH",
+          "player": "Jackson Holliday",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-JHE",
+          "player": "Jonah Heim",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-JHI",
+          "player": "Jordan Hicks",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-JHL",
+          "player": "Jung Hoo Lee",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-JHR",
+          "player": "Josh Hader",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-JJ",
+          "player": "Josh Jung",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JJB",
+          "player": "JJ Bleday",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-JJN",
+          "player": "Jeremiah Jackson",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-JJS",
+          "player": "Jahmai Jones",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-JL",
+          "player": "Josh Lowe",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-JLR",
+          "player": "Jack Leiter",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JLZ",
+          "player": "Jesús Luzardo",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-JM",
+          "player": "Jakob Marsee",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-JMA",
+          "player": "Joe Mack",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-JMC",
+          "player": "Jeff McNeil",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-JME",
+          "player": "Jackson Merrill",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-JMM",
+          "player": "Jake Mangum",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-JMO",
+          "player": "Jorge Mateo",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-JMV",
+          "player": "Joe Musgrove",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-JMY",
+          "player": "Jake McCarthy",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-JN",
+          "player": "Josh Naylor",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-JO",
+          "player": "James Outman",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-JOR",
+          "player": "Jordan Romano",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-JP",
+          "player": "Joc Pederson",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JPC",
+          "player": "J.P. Crawford",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-JQ",
+          "player": "Jose Quintana",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-JR",
+          "player": "Joe Ryan",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-JRO",
+          "player": "Jake Rogers",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-JS",
+          "player": "Jorge Soler",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-JSA",
+          "player": "Javier Sanoja",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-JSI",
+          "player": "Jose Siri",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-JSM",
+          "player": "Josh Smith",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-JSO",
+          "player": "Juan Soto",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-JSS",
+          "player": "Jeffrey Springs",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-JT",
+          "player": "Jose Trevino",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-JTR",
+          "player": "J.T. Realmuto",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-JV",
+          "player": "Jorbit Vivas",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-JW",
+          "player": "JJ Wetherholt",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-JWA",
+          "player": "Jordan Walker",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-JWI",
+          "player": "Justin Wrobleski",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-JWO",
+          "player": "James Wood",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-JY",
+          "player": "Jacob Young",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-JYO",
+          "player": "Jared Young",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-KA",
+          "player": "Kevin Alcántara",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-KB",
+          "player": "Kyle Bradish",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-KC",
+          "player": "Kerry Carpenter",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-KCL",
+          "player": "Kody Clemens",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-KF",
+          "player": "Kyle Freeland",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-KG",
+          "player": "Konnor Griffin",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-KH",
+          "player": "Kyle Harrison",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-KHA",
+          "player": "Kyle Higashioka",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-KJ",
+          "player": "Kenley Jansen",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-KM",
+          "player": "Kevin McGonigle",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-KMZ",
+          "player": "Kyle Manzardo",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-KR",
+          "player": "Keibert Ruiz",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-KRR",
+          "player": "Kumar Rocker",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-KS",
+          "player": "Kyle Stowers",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-KSC",
+          "player": "Kyle Schwarber",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-KSE",
+          "player": "Kodai Senga",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-KT",
+          "player": "Kyle Teel",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-KTU",
+          "player": "Kyle Tucker",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-LA",
+          "player": "Luisangel Acuña",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-LAZ",
+          "player": "Luis Arraez",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-LC",
+          "player": "Luis Campusano",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-LCO",
+          "player": "Luis Castillo",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-LG",
+          "player": "Logan Gilbert",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-LGA",
+          "player": "Luis García",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-LGO",
+          "player": "Lucas Giolito",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-LH",
+          "player": "Liam Hicks",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-LK",
+          "player": "Luke Keaschall",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-LN",
+          "player": "Lars Nootbaar",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-LO",
+          "player": "Logan O'Hoppe",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-LOD",
+          "player": "Nick Lodolo",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-LR",
+          "player": "Landen Roupp",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-LRY",
+          "player": "Luke Raley",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-LS",
+          "player": "Luis Severino",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-LT",
+          "player": "Leody Taveras",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-LW",
+          "player": "Logan Webb",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-LWD",
+          "player": "LaMonte Wade Jr.",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-LWE",
+          "player": "Luke Weaver",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-MA",
+          "player": "Miguel Amaya",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-MAD",
+          "player": "Miguel Andujar",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-MB",
+          "player": "Michael Busch",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-MBE",
+          "player": "Mookie Betts",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-MBO",
+          "player": "Matt Boyd",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-MC",
+          "player": "Michael Conforto",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-MD",
+          "player": "Mauricio Dubón",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-MG",
+          "player": "MacKenzie Gore",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-MGR",
+          "player": "Mitch Garver",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-MHR",
+          "player": "Michael Harris II",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-MIM",
+          "player": "Michael Massey",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-MIZ",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-MK",
+          "player": "Merrill Kelly",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-MKG",
+          "player": "Michael King",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-MKR",
+          "player": "Max Kepler",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-ML",
+          "player": "Michael Lorenzen",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-MM",
+          "player": "Max Muncy",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-MMC",
+          "player": "Matt McLain",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-MMK",
+          "player": "Mickey Moniak",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-MML",
+          "player": "Mason Miller",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-MMO",
+          "player": "Manny Machado",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-MMS",
+          "player": "Miles Mikolas",
+          "team": "Washington Nationals"
+        },
+        {
+          "number": "USA250-MMY",
+          "player": "Max Muncy",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-MO",
+          "player": "Matt Olson",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-MOZ",
+          "player": "Marcell Ozuna",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-MP",
+          "player": "Martín Pérez",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-MR",
+          "player": "Miguel Rojas",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-MS",
+          "player": "Matt Strahm",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-MSN",
+          "player": "Max Schuemann",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-MV",
+          "player": "Miguel Vargas",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-MVI",
+          "player": "Matt Vierling",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-MVS",
+          "player": "Mark Vientos",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-MW",
+          "player": "Masyn Winn",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-MWC",
+          "player": "Michael Wacha",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-MY",
+          "player": "Masataka Yoshida",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-NA",
+          "player": "Nolan Arenado",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-NC",
+          "player": "Noah Cameron",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-NCH",
+          "player": "Nathan Church",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-NE",
+          "player": "Nathan Eovaldi",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-NF",
+          "player": "Nick Fortes",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-NG",
+          "player": "Nick Gonzales",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-NH",
+          "player": "Nico Hoerner",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-NK",
+          "player": "Nick Kurtz",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-NL",
+          "player": "Nathaniel Lowe",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-NLO",
+          "player": "Nick Loftin",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-NLZ",
+          "player": "Nicky Lopez",
+          "team": "Texas Rangers"
+        },
+        {
+          "number": "USA250-NM",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-NME",
+          "player": "Noelvi Marte",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-NMZ",
+          "player": "Nick Martinez",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-NP",
+          "player": "Nick Pivetta",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-NS",
+          "player": "Nolan Schanuel",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-NSZ",
+          "player": "Noah Schultz",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-OA",
+          "player": "Ozzie Albies",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-OC",
+          "player": "Owen Caissie",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-OK",
+          "player": "Orion Kerkering",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-OL",
+          "player": "Otto Lopez",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-OP",
+          "player": "Oswald Peraza",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-PA",
+          "player": "Pete Alonso",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-PB",
+          "player": "Patrick Bailey",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-PC",
+          "player": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-PG",
+          "player": "Paul Goldschmidt",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-PM",
+          "player": "Parker Messick",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-PMU",
+          "player": "Pat Murphy",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-PP",
+          "player": "Pedro Pagés",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-PT",
+          "player": "Payton Tolle",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-RA",
+          "player": "Ronald Acuña Jr.",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-RAZ",
+          "player": "Randy Arozarena",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-RD",
+          "player": "Rafael Devers",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-RG",
+          "player": "Randal Grichuk",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-RH",
+          "player": "Ryan Helsley",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-RHY",
+          "player": "Rhys Hoskins",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-RI",
+          "player": "Raisel Iglesias",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-RIO",
+          "player": "Riley O'Brien",
+          "team": "St. Louis Cardinals"
+        },
+        {
+          "number": "USA250-RL",
+          "player": "Rhett Lowder",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-RM",
+          "player": "Ronny Mauricio",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-RMC",
+          "player": "Ryan McMahon",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-RO",
+          "player": "Ryan O'Hearn",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "USA250-RR",
+          "player": "Robbie Ray",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-RS",
+          "player": "Ranger Suarez",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-RSK",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-RW",
+          "player": "Ryan Walker",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-RY",
+          "player": "Ryan Yarbrough",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-SA",
+          "player": "Sandy Alcantara",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-SAI",
+          "player": "Sam Antonacci",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-SB",
+          "player": "Samuel Basallo",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-SBC",
+          "player": "Sam Bachman",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-SC",
+          "player": "Slade Cecconi",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-SD",
+          "player": "Seranthony Domínguez",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-SF",
+          "player": "Sal Frelick",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-SG",
+          "player": "Sonny Gray",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-SI",
+          "player": "Shota Imanaga",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-SK",
+          "player": "Steven Kwan",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-SL",
+          "player": "Shea Langeliers",
+          "team": "Athletics"
+        },
+        {
+          "number": "USA250-SLG",
+          "player": "Seth Lugo",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-SM",
+          "player": "Shane McClanahan",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-SMA",
+          "player": "Sean Manaea",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-SME",
+          "player": "Starling Marte",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-SMS",
+          "player": "Sung-Mun Song",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-SMZ",
+          "player": "Steven Matz",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-SN",
+          "player": "Sean Newcomb",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-SO",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-SP",
+          "player": "Salvador Perez",
+          "team": "Kansas City Royals"
+        },
+        {
+          "number": "USA250-SS",
+          "player": "Spencer Schwellenbach",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-SSE",
+          "player": "Sal Stewart",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-SST",
+          "player": "Spencer Steer",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-SSZ",
+          "player": "Seiya Suzuki",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "USA250-ST",
+          "player": "Spencer Torkelson",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-TAJ",
+          "player": "Taj Bradley",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-TB",
+          "player": "Tanner Bibee",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-TBZ",
+          "player": "Travis Bazzana",
+          "team": "Cleveland Guardians"
+        },
+        {
+          "number": "USA250-TC",
+          "player": "Tsung-Che Cheng",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-TE",
+          "player": "Tommy Edman",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-TF",
+          "player": "Tyler Freeman",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-TFF",
+          "player": "Terry Francona",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-TFR",
+          "player": "Ty France",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-TG",
+          "player": "Trent Grisham",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-TH",
+          "player": "Teoscar Hernández",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-THL",
+          "player": "Tim Hill",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "USA250-TI",
+          "player": "Tatsuya Imai",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-TJ",
+          "player": "Troy Johnston",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-TJF",
+          "player": "TJ Friedl",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-TJR",
+          "player": "TJ Rumfield",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-TL",
+          "player": "Trevor Larnach",
+          "team": "Minnesota Twins"
+        },
+        {
+          "number": "USA250-TM",
+          "player": "Trevor Megill",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-TO",
+          "player": "Tyler O'Neill",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-TP",
+          "player": "Tristan Peters",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "USA250-TR",
+          "player": "Trevor Rogers",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-TS",
+          "player": "Tyler Stephenson",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "USA250-TSC",
+          "player": "Tanner Scott",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-TSK",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-TSO",
+          "player": "Tomoyuki Sugano",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-TT",
+          "player": "Trea Turner",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "USA250-TTR",
+          "player": "Tyrone Taylor",
+          "team": "New York Mets"
+        },
+        {
+          "number": "USA250-TW",
+          "player": "Taylor Ward",
+          "team": "Baltimore Orioles"
+        },
+        {
+          "number": "USA250-TWS",
+          "player": "Taylor Walls",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-VG",
+          "player": "Vaughn Grissom",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-VM",
+          "player": "Victor Mesa Jr.",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-VR",
+          "player": "Victor Robles",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-WA",
+          "player": "Wilyer Abreu",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-WAD",
+          "player": "Willy Adames",
+          "team": "San Francisco Giants"
+        },
+        {
+          "number": "USA250-WB",
+          "player": "Walker Buehler",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-WC",
+          "player": "Willson Contreras",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "USA250-WCA",
+          "player": "Willi Castro",
+          "team": "Colorado Rockies"
+        },
+        {
+          "number": "USA250-WCS",
+          "player": "William Contreras",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "USA250-WK",
+          "player": "Will Klein",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-WM",
+          "player": "Wade Meckler",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-WOO",
+          "player": "Bryan Woo",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "USA250-WS",
+          "player": "Will Smith",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-XB",
+          "player": "Xander Bogaerts",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-XE",
+          "player": "Xavier Edwards",
+          "team": "Miami Marlins"
+        },
+        {
+          "number": "USA250-YA",
+          "player": "Yordan Alvarez",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-YAZ",
+          "player": "Mike Yastrzemski",
+          "team": "Atlanta Braves"
+        },
+        {
+          "number": "USA250-YD",
+          "player": "Yandy Díaz",
+          "team": "Tampa Bay Rays"
+        },
+        {
+          "number": "USA250-YDZ",
+          "player": "Yainer Diaz",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-YM",
+          "player": "Yuki Matsui",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "USA250-YY",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "USA250-ZD",
+          "player": "Zach Dezenzo",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "USA250-ZG",
+          "player": "Zac Gallen",
+          "team": "Arizona Diamondbacks"
+        },
+        {
+          "number": "USA250-ZM",
+          "player": "Zach McKinstry",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "USA250-ZN",
+          "player": "Zach Neto",
+          "team": "Los Angeles Angels"
+        },
+        {
+          "number": "USA250-ZW",
+          "player": "Zack Wheeler",
+          "team": "Philadelphia Phillies"
+        }
+      ]
+    },
+    {
+      "id": "strike-zone-heroes",
+      "name": "Strike Zone Heroes",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SZH-1",
+          "player": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-2",
+          "player": "Shota Imanaga",
+          "team": "Chicago Cubs"
+        },
+        {
+          "number": "SZH-3",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-4",
+          "player": "Kodai Senga",
+          "team": "New York Mets"
+        },
+        {
+          "number": "SZH-5",
+          "player": "Roki Sasaki",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-6",
+          "player": "Yu Darvish",
+          "team": "San Diego Padres"
+        },
+        {
+          "number": "SZH-7",
+          "player": "Paul Skenes",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "SZH-8",
+          "player": "Tarik Skubal",
+          "team": "Detroit Tigers"
+        },
+        {
+          "number": "SZH-9",
+          "player": "Hideo Nomo",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-10",
+          "player": "Hiroki Kuroda",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "SZH-11",
+          "player": "Chan Ho Park",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-12",
+          "player": "Nolan Ryan",
+          "team": "California Angels"
+        },
+        {
+          "number": "SZH-13",
+          "player": "Roger Clemens",
+          "team": "Boston Red Sox"
+        },
+        {
+          "number": "SZH-14",
+          "player": "Randy Johnson",
+          "team": "Seattle Mariners"
+        },
+        {
+          "number": "SZH-15",
+          "player": "Clayton Kershaw",
+          "team": "Los Angeles Dodgers"
+        },
+        {
+          "number": "SZH-16",
+          "player": "Tatsuya Imai",
+          "team": "Houston Astros"
+        },
+        {
+          "number": "SZH-17",
+          "player": "Chase Burns",
+          "team": "Cincinnati Reds"
+        },
+        {
+          "number": "SZH-18",
+          "player": "Jacob Misiorowski",
+          "team": "Milwaukee Brewers"
+        },
+        {
+          "number": "SZH-19",
+          "player": "Nolan McLean",
+          "team": "New York Mets"
+        },
+        {
+          "number": "SZH-20",
+          "player": "Cam Schlittler",
+          "team": "New York Yankees"
+        },
+        {
+          "number": "SZH-21",
+          "player": "Bubba Chandler",
+          "team": "Pittsburgh Pirates"
+        },
+        {
+          "number": "SZH-22",
+          "player": "Trey Yesavage",
+          "team": "Toronto Blue Jays"
+        },
+        {
+          "number": "SZH-23",
+          "player": "Noah Schultz",
+          "team": "Chicago White Sox"
+        },
+        {
+          "number": "SZH-24",
+          "player": "Andrew Painter",
+          "team": "Philadelphia Phillies"
+        },
+        {
+          "number": "SZH-25",
+          "player": "Mason Miller",
+          "team": "San Diego Padres"
+        }
+      ]
+    },
+    {
+      "id": "world-baseball-classic-highlights",
+      "name": "World Baseball Classic Highlights",
+      "category": "insert",
+      "totalCards": 50,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "WBCH-1",
+          "player": "Shohei Ohtani",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-2",
+          "player": "Seiya Suzuki",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-3",
+          "player": "Yoshinobu Yamamoto",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-4",
+          "player": "Kazuma Okamoto",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-5",
+          "player": "Munetaka Murakami",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-6",
+          "player": "Masataka Yoshida",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-7",
+          "player": "Yusei Kikuchi",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-8",
+          "player": "Tomoyuki Sugano",
+          "team": "Japan"
+        },
+        {
+          "number": "WBCH-9",
+          "player": "Junior Caminero",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-10",
+          "player": "Vladimir Guerrero Jr.",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-11",
+          "player": "Fernando Tatis Jr.",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-12",
+          "player": "Juan Soto",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-13",
+          "player": "Oneil Cruz",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-14",
+          "player": "Kyle Schwarber",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-15",
+          "player": "Bobby Witt Jr.",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-16",
+          "player": "Aaron Judge",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-17",
+          "player": "Roman Anthony",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-18",
+          "player": "Pete Crow-Armstrong",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-19",
+          "player": "Bryce Harper",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-20",
+          "player": "Gunnar Henderson",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-21",
+          "player": "Brice Turang",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-22",
+          "player": "Jarren Duran",
+          "team": "Mexico"
+        },
+        {
+          "number": "WBCH-23",
+          "player": "Jonathan Aranda",
+          "team": "Mexico"
+        },
+        {
+          "number": "WBCH-24",
+          "player": "Jac Caglianone",
+          "team": "Italy"
+        },
+        {
+          "number": "WBCH-25",
+          "player": "Vinnie Pasquantino",
+          "team": "Italy"
+        },
+        {
+          "number": "WBCH-26",
+          "player": "Travis Bazzana",
+          "team": "Australia"
+        },
+        {
+          "number": "WBCH-27",
+          "player": "Lucas Ramirez",
+          "team": "Brazil"
+        },
+        {
+          "number": "WBCH-28",
+          "player": "Owen Caissie",
+          "team": "Canada"
+        },
+        {
+          "number": "WBCH-29",
+          "player": "Ketel Marte",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-30",
+          "player": "Luis Severino",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-31",
+          "player": "Cristopher Sánchez",
+          "team": "Dominican Republic"
+        },
+        {
+          "number": "WBCH-32",
+          "player": "Eugenio Suárez",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-33",
+          "player": "Harry Ford",
+          "team": "Great Britain"
+        },
+        {
+          "number": "WBCH-34",
+          "player": "Dante Nori",
+          "team": "Italy"
+        },
+        {
+          "number": "WBCH-35",
+          "player": "Sam Antonacci",
+          "team": "Italy"
+        },
+        {
+          "number": "WBCH-36",
+          "player": "Aaron Nola",
+          "team": "Italy"
+        },
+        {
+          "number": "WBCH-37",
+          "player": "Ozzie Albies",
+          "team": "Netherlands"
+        },
+        {
+          "number": "WBCH-38",
+          "player": "Xander Bogaerts",
+          "team": "Netherlands"
+        },
+        {
+          "number": "WBCH-39",
+          "player": "Elmer Rodríguez",
+          "team": "Puerto Rico"
+        },
+        {
+          "number": "WBCH-40",
+          "player": "Nolan Arenado",
+          "team": "Puerto Rico"
+        },
+        {
+          "number": "WBCH-41",
+          "player": "Eduardo Rivera",
+          "team": "Puerto Rico"
+        },
+        {
+          "number": "WBCH-42",
+          "player": "Logan Webb",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-43",
+          "player": "Paul Skenes",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-44",
+          "player": "Nolan McLean",
+          "team": "USA"
+        },
+        {
+          "number": "WBCH-45",
+          "player": "Wilyer Abreu",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-46",
+          "player": "Ronald Acuña Jr.",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-47",
+          "player": "Maikel Garcia",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-48",
+          "player": "Ezequiel Tovar",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-49",
+          "player": "Daniel Palencia",
+          "team": "Venezuela"
+        },
+        {
+          "number": "WBCH-50",
+          "player": "Luis Arraez",
+          "team": "Venezuela"
         }
       ]
     }

@@ -1653,7 +1653,12 @@
       "name": "Base CGL Greatness Game Patch",
       "category": "memorabilia",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "ePack Achievements : Green.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "81",
@@ -1762,7 +1767,12 @@
       "name": "Base Game Patch Auto",
       "category": "autograph",
       "totalCards": 38,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "ePack Achievements : Green; Printing Plates 1/1.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "3",

@@ -2229,7 +2229,12 @@
       "name": "Let's Go",
       "category": "insert",
       "totalCards": 5,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "SuperFractor 1/1 (1:96,924 Hobby; 1:5,000 Delight).",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "LG-1",
@@ -2372,7 +2377,12 @@
       "name": "Mirror Image Fusion",
       "category": "insert",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "SuperFractor 1/1 (1:500 Delight).",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "MIF-1",
@@ -2481,7 +2491,12 @@
       "name": "Shock & Awe",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "SuperFractor 1/1 (1:11,631 Hobby).",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "SA-1",

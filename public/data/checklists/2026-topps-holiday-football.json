@@ -2667,7 +2667,76 @@
       "name": "Base Autographs",
       "category": "autograph",
       "totalCards": 134,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Glitter Holiday",
+          "printRun": null
+        },
+        {
+          "name": "Light Blue & White Glitter Holiday",
+          "printRun": null
+        },
+        {
+          "name": "Blue Metallic Glitter Holiday",
+          "printRun": null
+        },
+        {
+          "name": "Snow Days",
+          "printRun": null
+        },
+        {
+          "name": "Stocking Stuffer Metallic Holly",
+          "printRun": null
+        },
+        {
+          "name": "Stocking Stuffer Metallic Gingerbread Man",
+          "printRun": null
+        },
+        {
+          "name": "Stocking Stuffer Metallic Candy Cane",
+          "printRun": null
+        },
+        {
+          "name": "Stocking Stuffer Metallic Stocking",
+          "printRun": null
+        },
+        {
+          "name": "Stocking Stuffer Metallic Santa Bag",
+          "printRun": null
+        },
+        {
+          "name": "Purple Glitter Holiday",
+          "printRun": 99
+        },
+        {
+          "name": "Metallic Holiday Warm White Lights",
+          "printRun": 50
+        },
+        {
+          "name": "25th",
+          "printRun": 25
+        },
+        {
+          "name": "Red Metallic Holiday",
+          "printRun": 10
+        },
+        {
+          "name": "Menorah",
+          "printRun": 8
+        },
+        {
+          "name": "Green Glitter Holiday",
+          "printRun": 5
+        },
+        {
+          "name": "Metallic Holiday Red Lights",
+          "printRun": 5
+        },
+        {
+          "name": "Golden Glitter Holiday",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -3346,7 +3415,20 @@
       "name": "Dear Santa Autograph Relics",
       "category": "autograph",
       "totalCards": 29,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Glitter Holiday",
+          "printRun": 25
+        },
+        {
+          "name": "Red Glitter Holiday",
+          "printRun": 10
+        },
+        {
+          "name": "Golden Glitter Holiday",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DS-BT",
@@ -3500,7 +3582,12 @@
       "name": "Deck the Fields",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DF-1",
@@ -3634,7 +3721,12 @@
       "name": "Frozen Fields",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FF-1",
@@ -3768,7 +3860,12 @@
       "name": "Hidden Elf",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "HE-1",
@@ -3902,7 +3999,12 @@
       "name": "Snow Globe Moments",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SBM-1",
