@@ -9,9 +9,20 @@ name: Sync checklists
 # reaches main from this job: the branch is opened as a pull request, tested
 # and reviewed like any other change.
 #
-# Manual trigger only, so it costs nothing unless someone asks for it.
+# Started by hand (Run workflow), or by pushing a run/ branch, which is how
+# the agent starts it: it can push a branch but not press the button.
+# run/checklist-parallels also re-reads unchanged pages of products from
+# 2024 on that hold a set with no parallels (--parallels). Never on a
+# schedule, so it costs nothing unless asked.
 on:
   workflow_dispatch:
+    inputs:
+      parallels:
+        description: 'Also fill missing parallels on 2024+ products (slower)'
+        type: boolean
+        default: false
+  push:
+    branches: ['run/checklist-sync', 'run/checklist-parallels']
 
 permissions:
   contents: write
@@ -30,7 +41,9 @@ jobs:
       - name: Sync from checklistinsider.com
         run: |
           set -o pipefail
-          node scripts/sync-checklistinsider.js --write | tee sync-report.txt
+          ARGS="--write"
+          if [ "${{ github.ref_name }}" = "run/checklist-parallels" ] || [ "${{ inputs.parallels }}" = "true" ]; then ARGS="$ARGS --parallels=2024"; fi
+          node scripts/sync-checklistinsider.js $ARGS | tee sync-report.txt
           { echo '## Checklist sync'; echo '```'; tail -150 sync-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Anything new?

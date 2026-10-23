@@ -26,6 +26,16 @@
  * Inception MLB", "Bowman Best University"), so a product is matched to ours
  * by its players within the same year, not by its URL.
  *
+ *   parallels     a set of ours with no parallels takes theirs, and so does
+ *                 one we built from this site whose list is shorter than
+ *                 theirs (the old reader kept only a list's first line).
+ *                 Nothing else in the set changes.
+ *
+ *   node scripts/sync-checklistinsider.js --parallels[=2024] --write
+ *                 also re-reads pages that have not changed, for products
+ *                 from that year on that hold a set with no parallels, so
+ *                 lists the old reader missed are filled.
+ *
  * After --write: node scripts/rebuild-checklist-index.js,
  * npm run checklist:validate, npm run build:card-index, then the tests.
  */
@@ -38,6 +48,10 @@ const ROOT = path.join(__dirname, '..');
 const SITE = 'https://www.checklistinsider.com';
 const SPORTS = { football: ['checklists', 'Football'], baseball: ['checklists-baseball', 'Baseball'], basketball: ['checklists-basketball', 'Basketball'] };
 const WRITE = process.argv.includes('--write');
+// --parallels[=YEAR]: re-read unchanged pages of products from YEAR on that
+// hold a set with no parallels.
+const PAR_ARG = process.argv.find(a => a.startsWith('--parallels'));
+const PAR_FROM = PAR_ARG ? Number(PAR_ARG.split('=')[1]) || 2024 : null;
 const CACHE = process.env.CI_CACHE || path.join(require('os').tmpdir(), 'checklistinsider-cache');
 // Pages that are not card checklists (names with no card numbers), and
 // pages whose list contradicts ours too much to merge by machine (2024
@@ -63,6 +77,15 @@ const npl = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[Ì€-Í
 const nnum = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/^0+(?=\d)/, '');
 const cardKey = (c) => `${nnum(c.number)}|${npl(c.player)}`;
 const count = (sets) => (sets || []).reduce((a, s) => a + (s.cards || []).length, 0);
+const lacksParallels = (doc) => (doc.sets || []).some(s => !(s.parallels || []).length);
+// Their parallel list for a set of ours: when ours has none, or when we built
+// ours from this site and theirs is longer. Returns how many were added.
+function fillParallels(ours, theirs, fromHere) {
+  const tp = (theirs.parallels || []), op = (ours.parallels || []);
+  if (!tp.length || (op.length && !(fromHere && tp.length > op.length))) return 0;
+  ours.parallels = tp.map(x => ({ ...x }));
+  return tp.length - op.length;
+}
 
 // The page's own title names the product, year included where the URL has none.
 function productName(html, slug) {
@@ -117,7 +140,11 @@ function parseLoose(html) {
       const direct = ours.has(p.slug) ? p.slug : byNorm.get(normId(p.slug)) || null;
       // Only pages that changed since we last touched that sport's files, or
       // that we have no file for.
-      if (direct && p.mod <= (since || mtime(direct))) continue;
+      const yearOf = Number((p.slug.match(/^(\d{4})/) || [])[1]) || 0;
+      const recheck = PAR_FROM && yearOf >= PAR_FROM && (!direct || lacksParallels(load(direct)));
+      if (direct && p.mod <= (since || mtime(direct)) && !recheck) continue;
+      // Catch-up runs read only recent products' pages.
+      if (!direct && PAR_FROM && p.mod <= since && !(yearOf >= PAR_FROM)) continue;
       const html = await get(`${SITE}/${p.slug}`, p.slug + '.html');
       let sets = parsePage(html);
       if (!sets.length) sets = parseLoose(html);
@@ -172,15 +199,23 @@ function parseLoose(html) {
       const where = new Map();
       (doc.sets || []).forEach((s, i) => (s.cards || []).forEach(c => where.set(cardKey(c), i)));
       const addSets = [], addCards = [], unsure = [];
+      // Parallels for sets of ours, worked on a copy so a product left for
+      // review is not half-changed.
+      const fromHere = /checklistinsider/i.test(String(doc.note || ''));
+      const parSets = (doc.sets || []).map(s => ({ ...s }));
+      let nPar = 0, setsPar = 0;
+      const givePar = (i, s) => { const n = fillParallels(parSets[i], s, fromHere); if (n > 0) { nPar += n; setsPar++; } };
       for (const s of sets) {
         const keys = s.cards.map(cardKey);
         const held = keys.filter(k => where.has(k));
         const share = keys.length ? held.length / keys.length : 1;
         if (share < 0.2) addSets.push(s);
         else if (share > 0.8) {
-          if (held.length === keys.length) continue;
           const votes = {}; for (const k of held) votes[where.get(k)] = (votes[where.get(k)] || 0) + 1;
           const into = Number(Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0]);
+          // The set of ours holding nearly all its cards is the same set.
+          if (held.length >= 0.8 * (doc.sets[into].cards || []).length || held.length === keys.length) givePar(into, s);
+          if (held.length === keys.length) continue;
           const have = new Set((doc.sets[into].cards || []).map(c => nnum(c.number)));
           const extra = s.cards.filter(c => !where.has(cardKey(c)) && !have.has(nnum(c.number)));
           if (extra.length) addCards.push({ into, set: doc.sets[into].name, cards: extra });
@@ -189,6 +224,7 @@ function parseLoose(html) {
           // cards whose number that set does not have.
           const twin = (doc.sets || []).findIndex(o => slugify(o.name) === slugify(s.name));
           if (twin >= 0) {
+            givePar(twin, s);
             const have = new Set((doc.sets[twin].cards || []).map(c => nnum(c.number)));
             const extra = s.cards.filter(c => !where.has(cardKey(c)) && !have.has(nnum(c.number)));
             if (extra.length) addCards.push({ into: twin, set: doc.sets[twin].name, cards: extra });
@@ -200,7 +236,7 @@ function parseLoose(html) {
       const ids = new Set((doc.sets || []).map(s => s.id));
       for (const s of addSets) { let sid = s.id, n = 2; while (ids.has(sid)) sid = `${s.id}-${n++}`; s.id = sid; ids.add(sid); }
       const nAdd = count(addSets) + addCards.reduce((a, x) => a + x.cards.length, 0);
-      if (!nAdd && !unsure.length) { summary.push({ sport, slug: p.slug, action: `matches ${id}, nothing new` }); continue; }
+      if (!nAdd && !unsure.length && !nPar) { summary.push({ sport, slug: p.slug, action: `matches ${id}, nothing new` }); continue; }
       // When a quarter of their sets match none of ours either way, the two
       // lists disagree too much to merge by machine.
       if (unsure.length > 0.25 * sets.length || nAdd > 0.45 * count(doc.sets)) {
@@ -209,8 +245,9 @@ function parseLoose(html) {
       }
       summary.push({ sport, slug: p.slug, action: 'added to', id, newSets: addSets.length, newCards: nAdd,
         sample: [...addSets.slice(0, 3).map(s => s.name), ...addCards.slice(0, 2).map(x => `+${x.cards.length} in ${x.set}`)],
-        unsure });
-      if (WRITE && nAdd) {
+        unsure, nPar, setsPar });
+      if (WRITE && (nAdd || nPar)) {
+        doc.sets = parSets;
         for (const x of addCards) {
           const set = doc.sets[x.into];
           set.cards = [...set.cards, ...x.cards];
@@ -224,7 +261,7 @@ function parseLoose(html) {
 
   for (const s of summary) {
     const what = s.action === 'added to'
-      ? `added to ${s.id}: ${s.newSets} new sets, ${s.newCards} cards${s.sample.length ? ' (' + s.sample.join('; ') + ')' : ''}${s.unsure.length ? ` | left alone: ${s.unsure.slice(0, 4).join(', ')}${s.unsure.length > 4 ? ` +${s.unsure.length - 4}` : ''}` : ''}`
+      ? `added to ${s.id}: ${s.newSets} new sets, ${s.newCards} cards${s.nPar ? `, ${s.nPar} parallels on ${s.setsPar} sets` : ''}${s.sample.length ? ' (' + s.sample.join('; ') + ')' : ''}${s.unsure.length ? ` | left alone: ${s.unsure.slice(0, 4).join(', ')}${s.unsure.length > 4 ? ` +${s.unsure.length - 4}` : ''}` : ''}`
       : s.id ? `${s.action} ${s.id}: ${s.sets} sets, ${s.cards} cards` : s.action;
     console.log(`${s.sport.padEnd(10)} ${s.slug.padEnd(54)} ${what}`);
   }
