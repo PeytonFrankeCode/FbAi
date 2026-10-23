@@ -1,0 +1,4030 @@
+{
+  "id": "2026-topps-pro-debut-baseball",
+  "name": "2026 Topps Pro Debut Baseball",
+  "year": 2026,
+  "brand": "Topps Pro Debut",
+  "sport": "Baseball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-chrome",
+      "name": "Base Chrome",
+      "category": "base",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDC-1",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-2",
+          "player": "Angel Feliz",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-3",
+          "player": "Carson Benge",
+          "team": "Syracuse Mets"
+        },
+        {
+          "number": "PDC-4",
+          "player": "Caleb Lomavita",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PDC-5",
+          "player": "Dean Livingston",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-6",
+          "player": "Mitch Jebb",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDC-7",
+          "player": "Jordan Sanchez",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-8",
+          "player": "Zachary Root",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PDC-9",
+          "player": "Mason Morris",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PDC-10",
+          "player": "Santiago Suarez",
+          "team": "Durham Bulls"
+        },
+        {
+          "number": "PDC-11",
+          "player": "Jhonny Severino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-12",
+          "player": "David Shields",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-13",
+          "player": "Nolan Schubart",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-14",
+          "player": "Yairo Padilla",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PDC-15",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "PDC-16",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDC-17",
+          "player": "Tyler Bremner",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-18",
+          "player": "Patrick Forbes",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-19",
+          "player": "Matthew Fisher",
+          "team": "FCL Phillies"
+        },
+        {
+          "number": "PDC-20",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "PDC-21",
+          "player": "Jansel Luis",
+          "team": "Hillsboro Hops"
+        },
+        {
+          "number": "PDC-22",
+          "player": "Kyle DeBarge",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-23",
+          "player": "Nolan Sailors",
+          "team": "Quad Cities River Bandits"
+        },
+        {
+          "number": "PDC-24",
+          "player": "Kyle Lodise",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PDC-25",
+          "player": "Josh Hammond",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PDC-26",
+          "player": "Brendan Tunink",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-27",
+          "player": "Blake Burke",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDC-28",
+          "player": "Émilien Pitre",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PDC-29",
+          "player": "Ryan Sloan",
+          "team": "Everett AquaSox"
+        },
+        {
+          "number": "PDC-30",
+          "player": "Murf Gray",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-31",
+          "player": "Dean Moss",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-32",
+          "player": "Wilder Dalis",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-33",
+          "player": "Kellon Lindsey",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-34",
+          "player": "Miguel Sime Jr.",
+          "team": "FCL Nationals"
+        },
+        {
+          "number": "PDC-35",
+          "player": "Gustavo Melendez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-36",
+          "player": "Tommy White",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-37",
+          "player": "Trevor Cohen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-38",
+          "player": "Dax Kilby",
+          "team": "Tampa Tarpons"
+        },
+        {
+          "number": "PDC-39",
+          "player": "AJ Russell",
+          "team": "ACL Rangers"
+        },
+        {
+          "number": "PDC-40",
+          "player": "Nick Becker",
+          "team": "Inland Empire 66ers"
+        },
+        {
+          "number": "PDC-41",
+          "player": "Kayson Cunningham",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-42",
+          "player": "Thomas White",
+          "team": "Jacksonville Jumbo Shrimp"
+        },
+        {
+          "number": "PDC-43",
+          "player": "Max Belyeu",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PDC-44",
+          "player": "Walker Janek",
+          "team": "Asheville Tourists"
+        },
+        {
+          "number": "PDC-45",
+          "player": "Kane Kepley",
+          "team": "Myrtle Beach Pelicans"
+        },
+        {
+          "number": "PDC-46",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDC-47",
+          "player": "Kale Fountain",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-48",
+          "player": "Seth Hernandez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-49",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        },
+        {
+          "number": "PDC-50",
+          "player": "Landon Hodge",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PDC-51",
+          "player": "Ike Irish",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-52",
+          "player": "Josiah Hartshorn",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDC-53",
+          "player": "Paulino Santana",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-54",
+          "player": "Christian Oppor",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "PDC-55",
+          "player": "Charlie Condon",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "PDC-56",
+          "player": "Slater de Brun",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-57",
+          "player": "Gavin Kilen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-58",
+          "player": "Henry Baez",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-59",
+          "player": "Yophery Rodriguez",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PDC-60",
+          "player": "Charlee Soto",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-61",
+          "player": "Jacob Reimer",
+          "team": "Binghamton Rumble Ponies"
+        },
+        {
+          "number": "PDC-62",
+          "player": "Brady Ebel",
+          "team": "Wilson Warbirds"
+        },
+        {
+          "number": "PDC-63",
+          "player": "Gage Wood",
+          "team": "Clearwater Threshers"
+        },
+        {
+          "number": "PDC-64",
+          "player": "Brian Curley",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-65",
+          "player": "Braden Montgomery",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "PDC-66",
+          "player": "Billy Carlson",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PDC-67",
+          "player": "Cody Miller",
+          "team": "Rome Emperors"
+        },
+        {
+          "number": "PDC-68",
+          "player": "Aaron Walton",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-69",
+          "player": "Ethan Petry",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-70",
+          "player": "Jadyn Fielder",
+          "team": "ACL Brewers"
+        },
+        {
+          "number": "PDC-71",
+          "player": "Marek Houston",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-72",
+          "player": "Briggs McKenzie",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-73",
+          "player": "Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-74",
+          "player": "Colin Yeaman",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-75",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "PDC-76",
+          "player": "Ashly Andujar",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PDC-77",
+          "player": "Emil Morales",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-78",
+          "player": "Ryan Wideman",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-79",
+          "player": "José Anderson",
+          "team": "Wilson Warbirds"
+        },
+        {
+          "number": "PDC-80",
+          "player": "Anthony Eyanson",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-81",
+          "player": "Max Williams",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDC-82",
+          "player": "Caden Bodine",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "PDC-83",
+          "player": "Ryan Waldschmidt",
+          "team": "Amarillo Sod Poodles"
+        },
+        {
+          "number": "PDC-84",
+          "player": "Slade Caldwell",
+          "team": "Hillsboro Hops"
+        },
+        {
+          "number": "PDC-85",
+          "player": "Aiva Arquette",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PDC-86",
+          "player": "Tony Blanco",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-87",
+          "player": "Alirio Ferrebus",
+          "team": "FCL Phillies"
+        },
+        {
+          "number": "PDC-88",
+          "player": "Jadher Areinamo",
+          "team": "Montgomery Biscuits"
+        },
+        {
+          "number": "PDC-89",
+          "player": "Ty Harvey",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-90",
+          "player": "Edward Lantigua",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-91",
+          "player": "Zyhir Hope",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PDC-92",
+          "player": "Ethan Frey",
+          "team": "Fayetteville Woodpeckers"
+        },
+        {
+          "number": "PDC-93",
+          "player": "Conor Essenburg",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-94",
+          "player": "Shotaro Morii",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDC-95",
+          "player": "Michael Lombardi",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PDC-96",
+          "player": "Mitch Voit",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PDC-97",
+          "player": "Josh Owens",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-98",
+          "player": "Johnny King",
+          "team": "Dunedin Blue Jays"
+        },
+        {
+          "number": "PDC-99",
+          "player": "Ryan Mitchell",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PDC-100",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-101",
+          "player": "Riley Quick",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PDC-102",
+          "player": "Alessander De La Cruz",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PDC-103",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDC-104",
+          "player": "Luke Dickerson",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-105",
+          "player": "Nate George",
+          "team": "Frederick Keys"
+        },
+        {
+          "number": "PDC-106",
+          "player": "Bryce Rainer",
+          "team": "Lakeland Flying Tigers"
+        },
+        {
+          "number": "PDC-107",
+          "player": "JB Middleton",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PDC-108",
+          "player": "George Klassen",
+          "team": "Salt Lake Bees"
+        },
+        {
+          "number": "PDC-109",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-110",
+          "player": "Jhonny Level",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-111",
+          "player": "Dauri Fernandez",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-112",
+          "player": "Matt Wilkinson",
+          "team": "Lake County Captains"
+        },
+        {
+          "number": "PDC-113",
+          "player": "Arnaldo Lantigua",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PDC-114",
+          "player": "Dean Curley",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-115",
+          "player": "Kendry Chourio",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-116",
+          "player": "John Gil",
+          "team": "Columbus Clingstones"
+        },
+        {
+          "number": "PDC-117",
+          "player": "Travis Sykora",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PDC-118",
+          "player": "Easton Carmichael",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PDC-119",
+          "player": "Trevor Harrison",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PDC-120",
+          "player": "Ethan Hedges",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PDC-121",
+          "player": "Andrew Salas",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDC-122",
+          "player": "Tyson Lewis",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PDC-123",
+          "player": "Devin Taylor",
+          "team": "Stockton Ports"
+        },
+        {
+          "number": "PDC-124",
+          "player": "Ronny Cruz",
+          "team": "FCL Nationals"
+        },
+        {
+          "number": "PDC-125",
+          "player": "Robert Arias",
+          "team": "ACL Guardians"
+        },
+        {
+          "number": "PDC-126",
+          "player": "Alex Clemmey",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PDC-127",
+          "player": "Adolfo Sanchez",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-128",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "PDC-129",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDC-130",
+          "player": "Daniel Pierce",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-131",
+          "player": "Quentin Young",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PDC-132",
+          "player": "Ben Hess",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDC-133",
+          "player": "Cooper Pratt",
+          "team": "Nashville Sounds"
+        },
+        {
+          "number": "PDC-134",
+          "player": "Joswa Lugo",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-135",
+          "player": "Josh Adamczewski",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDC-136",
+          "player": "Elian Peña",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-137",
+          "player": "Tim Piasentin",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PDC-138",
+          "player": "Naibel Mariano",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-139",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-140",
+          "player": "Gage Jump",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-141",
+          "player": "Marcus Phillips",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-142",
+          "player": "Brody Brecht",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-143",
+          "player": "Wyatt Sanford",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-144",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-145",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PDC-146",
+          "player": "Sean Gamble",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PDC-147",
+          "player": "Nate Snead",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-148",
+          "player": "Will Taylor",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PDC-149",
+          "player": "Natanael Yuten",
+          "team": "Salem RidgeYaks"
+        },
+        {
+          "number": "PDC-150",
+          "player": "Brandon Compton",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PDC-151",
+          "player": "Aaron Watson",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-152",
+          "player": "Yandel Ricardo",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-153",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-154",
+          "player": "Taitn Gray",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-155",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDC-156",
+          "player": "Brody Hopkins",
+          "team": "Montgomery Biscuits"
+        },
+        {
+          "number": "PDC-157",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDC-158",
+          "player": "Caleb Bonemer",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PDC-159",
+          "player": "Kaelen Culpepper",
+          "team": "Wichita Wind Surge"
+        },
+        {
+          "number": "PDC-160",
+          "player": "Franklin Arias",
+          "team": "Portland Sea Dogs"
+        },
+        {
+          "number": "PDC-161",
+          "player": "Aidan West",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PDC-162",
+          "player": "Jorge Quintana",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-163",
+          "player": "Chase Shores",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-164",
+          "player": "Jose Perdomo",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-165",
+          "player": "Tate Southisene",
+          "team": "Augusta GreenJackets"
+        },
+        {
+          "number": "PDC-166",
+          "player": "Josh Hartle",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PDC-167",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "PDC-168",
+          "player": "Jake Munroe",
+          "team": "Rancho Cucamonga Quakes"
+        },
+        {
+          "number": "PDC-169",
+          "player": "Alfonsin Rosario",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PDC-170",
+          "player": "Sammy Stafura",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PDC-171",
+          "player": "Antonio Jimenez",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PDC-172",
+          "player": "Justin Gonzales",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PDC-173",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PDC-174",
+          "player": "Charles Davalan",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-175",
+          "player": "Joseph Dzierwa",
+          "team": "FCL Orioles"
+        },
+        {
+          "number": "PDC-176",
+          "player": "Michael Oliveto",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PDC-177",
+          "player": "Blake Mitchell",
+          "team": "Quad Cities River Bandits"
+        },
+        {
+          "number": "PDC-178",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "PDC-179",
+          "player": "Cooper Flemming",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-180",
+          "player": "Yolfran Castillo",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-181",
+          "player": "Jack Gurevitch",
+          "team": "Palm Beach Cardinals"
+        },
+        {
+          "number": "PDC-182",
+          "player": "Wehiwa Aloy",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-183",
+          "player": "Kyson Witherspoon",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-184",
+          "player": "Johnny Slawinski",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-185",
+          "player": "Devin Fitz-Gerald",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-186",
+          "player": "Aidan Miller",
+          "team": "Lehigh Valley IronPigs"
+        },
+        {
+          "number": "PDC-187",
+          "player": "Jordan Yost",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PDC-188",
+          "player": "Daiber De Los Santos",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PDC-189",
+          "player": "Braylon Payne",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDC-190",
+          "player": "Roldy Brito",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-191",
+          "player": "Carlos Lagrange",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDC-192",
+          "player": "Gary Gill Hill",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PDC-193",
+          "player": "Kaeden Kent",
+          "team": "Hudson Valley Renegades"
+        },
+        {
+          "number": "PDC-194",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "PDC-195",
+          "player": "Landon Harmon",
+          "team": "FCL Nationals"
+        },
+        {
+          "number": "PDC-196",
+          "player": "Mason Neville",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PDC-197",
+          "player": "Yovanny Rodriguez",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-198",
+          "player": "Juneiker Caceres",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-199",
+          "player": "Steele Hall",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-200",
+          "player": "Bo Davidson",
+          "team": "Richmond Flying Squirrels"
+        }
+      ]
+    },
+    {
+      "id": "base-autographs",
+      "name": "Base Autographs",
+      "category": "autograph",
+      "totalCards": 172,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PD-1",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PD-2",
+          "player": "Angel Feliz",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PD-3",
+          "player": "Carson Benge",
+          "team": "Syracuse Mets"
+        },
+        {
+          "number": "PD-4",
+          "player": "Caleb Lomavita",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PD-5",
+          "player": "Dean Livingston",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PD-6",
+          "player": "Mitch Jebb",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PD-8",
+          "player": "Zachary Root",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PD-10",
+          "player": "Santiago Suarez",
+          "team": "Durham Bulls"
+        },
+        {
+          "number": "PD-11",
+          "player": "Jhonny Severino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PD-12",
+          "player": "David Shields",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PD-14",
+          "player": "Yairo Padilla",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PD-15",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "PD-16",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PD-17",
+          "player": "Tyler Bremner",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PD-18",
+          "player": "Patrick Forbes",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PD-20",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "PD-21",
+          "player": "Jansel Luis",
+          "team": "Hillsboro Hops"
+        },
+        {
+          "number": "PD-22",
+          "player": "Kyle DeBarge",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PD-23",
+          "player": "Nolan Sailors",
+          "team": "Quad Cities River Bandits"
+        },
+        {
+          "number": "PD-24",
+          "player": "Kyle Lodise",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PD-25",
+          "player": "Josh Hammond",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PD-26",
+          "player": "Brendan Tunink",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PD-27",
+          "player": "Blake Burke",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PD-28",
+          "player": "Émilien Pitre",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PD-29",
+          "player": "Ryan Sloan",
+          "team": "Everett AquaSox"
+        },
+        {
+          "number": "PD-30",
+          "player": "Murf Gray",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PD-33",
+          "player": "Kellon Lindsey",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PD-35",
+          "player": "Gustavo Melendez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PD-36",
+          "player": "Tommy White",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PD-37",
+          "player": "Trevor Cohen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PD-38",
+          "player": "Dax Kilby",
+          "team": "Tampa Tarpons"
+        },
+        {
+          "number": "PD-39",
+          "player": "AJ Russell",
+          "team": "ACL Rangers"
+        },
+        {
+          "number": "PD-40",
+          "player": "Nick Becker",
+          "team": "Inland Empire 66ers"
+        },
+        {
+          "number": "PD-41",
+          "player": "Kayson Cunningham",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PD-42",
+          "player": "Thomas White",
+          "team": "Jacksonville Jumbo Shrimp"
+        },
+        {
+          "number": "PD-43",
+          "player": "Max Belyeu",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PD-44",
+          "player": "Walker Janek",
+          "team": "Asheville Tourists"
+        },
+        {
+          "number": "PD-45",
+          "player": "Kane Kepley",
+          "team": "Myrtle Beach Pelicans"
+        },
+        {
+          "number": "PD-46",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PD-48",
+          "player": "Seth Hernandez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PD-49",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        },
+        {
+          "number": "PD-51",
+          "player": "Ike Irish",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PD-52",
+          "player": "Josiah Hartshorn",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PD-53",
+          "player": "Paulino Santana",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PD-54",
+          "player": "Christian Oppor",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "PD-55",
+          "player": "Charlie Condon",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "PD-56",
+          "player": "Slater de Brun",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PD-57",
+          "player": "Gavin Kilen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PD-59",
+          "player": "Yophery Rodriguez",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PD-60",
+          "player": "Charlee Soto",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PD-61",
+          "player": "Jacob Reimer",
+          "team": "Binghamton Rumble Ponies"
+        },
+        {
+          "number": "PD-62",
+          "player": "Brady Ebel",
+          "team": "Wilson Warbirds"
+        },
+        {
+          "number": "PD-63",
+          "player": "Gage Wood",
+          "team": "Clearwater Threshers"
+        },
+        {
+          "number": "PD-65",
+          "player": "Braden Montgomery",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "PD-66",
+          "player": "Billy Carlson",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PD-67",
+          "player": "Cody Miller",
+          "team": "Rome Emperors"
+        },
+        {
+          "number": "PD-68",
+          "player": "Aaron Walton",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PD-69",
+          "player": "Ethan Petry",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PD-71",
+          "player": "Marek Houston",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PD-72",
+          "player": "Briggs McKenzie",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PD-73",
+          "player": "Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PD-74",
+          "player": "Colin Yeaman",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PD-75",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "PD-77",
+          "player": "Emil Morales",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PD-78",
+          "player": "Ryan Wideman",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PD-80",
+          "player": "Anthony Eyanson",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PD-81",
+          "player": "Max Williams",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PD-82",
+          "player": "Caden Bodine",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "PD-83",
+          "player": "Ryan Waldschmidt",
+          "team": "Amarillo Sod Poodles"
+        },
+        {
+          "number": "PD-84",
+          "player": "Slade Caldwell",
+          "team": "Hillsboro Hops"
+        },
+        {
+          "number": "PD-85",
+          "player": "Aiva Arquette",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PD-86",
+          "player": "Tony Blanco",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PD-88",
+          "player": "Jadher Areinamo",
+          "team": "Montgomery Biscuits"
+        },
+        {
+          "number": "PD-89",
+          "player": "Ty Harvey",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PD-90",
+          "player": "Edward Lantigua",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PD-91",
+          "player": "Zyhir Hope",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PD-92",
+          "player": "Ethan Frey",
+          "team": "Fayetteville Woodpeckers"
+        },
+        {
+          "number": "PD-93",
+          "player": "Conor Essenburg",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PD-94",
+          "player": "Shotaro Morii",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PD-96",
+          "player": "Mitch Voit",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PD-97",
+          "player": "Josh Owens",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PD-98",
+          "player": "Johnny King",
+          "team": "Dunedin Blue Jays"
+        },
+        {
+          "number": "PD-99",
+          "player": "Ryan Mitchell",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PD-100",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PD-101",
+          "player": "Riley Quick",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PD-102",
+          "player": "Alessander De La Cruz",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PD-103",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PD-104",
+          "player": "Luke Dickerson",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PD-106",
+          "player": "Bryce Rainer",
+          "team": "Lakeland Flying Tigers"
+        },
+        {
+          "number": "PD-107",
+          "player": "JB Middleton",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PD-108",
+          "player": "George Klassen",
+          "team": "Salt Lake Bees"
+        },
+        {
+          "number": "PD-109",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PD-110",
+          "player": "Jhonny Level",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PD-111",
+          "player": "Dauri Fernandez",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PD-112",
+          "player": "Matt Wilkinson",
+          "team": "Lake County Captains"
+        },
+        {
+          "number": "PD-113",
+          "player": "Arnaldo Lantigua",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PD-114",
+          "player": "Dean Curley",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PD-115",
+          "player": "Kendry Chourio",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PD-116",
+          "player": "John Gil",
+          "team": "Columbus Clingstones"
+        },
+        {
+          "number": "PD-117",
+          "player": "Travis Sykora",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PD-118",
+          "player": "Easton Carmichael",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PD-119",
+          "player": "Trevor Harrison",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PD-120",
+          "player": "Ethan Hedges",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PD-121",
+          "player": "Andrew Salas",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PD-122",
+          "player": "Tyson Lewis",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PD-123",
+          "player": "Devin Taylor",
+          "team": "Stockton Ports"
+        },
+        {
+          "number": "PD-125",
+          "player": "Robert Arias",
+          "team": "ACL Guardians"
+        },
+        {
+          "number": "PD-127",
+          "player": "Adolfo Sanchez",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PD-128",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "PD-129",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PD-130",
+          "player": "Daniel Pierce",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PD-131",
+          "player": "Quentin Young",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PD-132",
+          "player": "Ben Hess",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PD-133",
+          "player": "Cooper Pratt",
+          "team": "Nashville Sounds"
+        },
+        {
+          "number": "PD-134",
+          "player": "Joswa Lugo",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PD-135",
+          "player": "Josh Adamczewski",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PD-136",
+          "player": "Elian Peña",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PD-137",
+          "player": "Tim Piasentin",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PD-138",
+          "player": "Naibel Mariano",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PD-139",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PD-141",
+          "player": "Marcus Phillips",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PD-142",
+          "player": "Brody Brecht",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PD-143",
+          "player": "Wyatt Sanford",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PD-144",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PD-145",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PD-146",
+          "player": "Sean Gamble",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PD-150",
+          "player": "Brandon Compton",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PD-151",
+          "player": "Aaron Watson",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PD-152",
+          "player": "Yandel Ricardo",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PD-153",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PD-155",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PD-157",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PD-158",
+          "player": "Caleb Bonemer",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PD-159",
+          "player": "Kaelen Culpepper",
+          "team": "Wichita Wind Surge"
+        },
+        {
+          "number": "PD-160",
+          "player": "Franklin Arias",
+          "team": "Portland Sea Dogs"
+        },
+        {
+          "number": "PD-161",
+          "player": "Aidan West",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PD-162",
+          "player": "Jorge Quintana",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PD-163",
+          "player": "Chase Shores",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PD-164",
+          "player": "Jose Perdomo",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PD-165",
+          "player": "Tate Southisene",
+          "team": "Augusta GreenJackets"
+        },
+        {
+          "number": "PD-166",
+          "player": "Josh Hartle",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PD-167",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "PD-168",
+          "player": "Jake Munroe",
+          "team": "Rancho Cucamonga Quakes"
+        },
+        {
+          "number": "PD-169",
+          "player": "Alfonsin Rosario",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PD-170",
+          "player": "Sammy Stafura",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PD-171",
+          "player": "Antonio Jimenez",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PD-172",
+          "player": "Justin Gonzales",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PD-173",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PD-174",
+          "player": "Charles Davalan",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PD-175",
+          "player": "Joseph Dzierwa",
+          "team": "FCL Orioles"
+        },
+        {
+          "number": "PD-176",
+          "player": "Michael Oliveto",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PD-177",
+          "player": "Blake Mitchell",
+          "team": "Quad Cities River Bandits"
+        },
+        {
+          "number": "PD-178",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "PD-179",
+          "player": "Cooper Flemming",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PD-180",
+          "player": "Yolfran Castillo",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PD-181",
+          "player": "Jack Gurevitch",
+          "team": "Palm Beach Cardinals"
+        },
+        {
+          "number": "PD-182",
+          "player": "Wehiwa Aloy",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PD-183",
+          "player": "Kyson Witherspoon",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PD-184",
+          "player": "Johnny Slawinski",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PD-185",
+          "player": "Devin Fitz-Gerald",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PD-186",
+          "player": "Aidan Miller",
+          "team": "Lehigh Valley IronPigs"
+        },
+        {
+          "number": "PD-187",
+          "player": "Jordan Yost",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PD-189",
+          "player": "Braylon Payne",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PD-190",
+          "player": "Roldy Brito",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PD-191",
+          "player": "Carlos Lagrange",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PD-192",
+          "player": "Gary Gill Hill",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PD-193",
+          "player": "Kaeden Kent",
+          "team": "Hudson Valley Renegades"
+        },
+        {
+          "number": "PD-194",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "PD-195",
+          "player": "Landon Harmon",
+          "team": "FCL Nationals"
+        },
+        {
+          "number": "PD-197",
+          "player": "Yovanny Rodriguez",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PD-199",
+          "player": "Steele Hall",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PD-200",
+          "player": "Bo Davidson",
+          "team": "Richmond Flying Squirrels"
+        }
+      ]
+    },
+    {
+      "id": "base-chrome-autographs",
+      "name": "Base Chrome Autographs",
+      "category": "autograph",
+      "totalCards": 159,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDC-1",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-2",
+          "player": "Angel Feliz",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-3",
+          "player": "Carson Benge",
+          "team": "Syracuse Mets"
+        },
+        {
+          "number": "PDC-5",
+          "player": "Dean Livingston",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-6",
+          "player": "Mitch Jebb",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDC-8",
+          "player": "Zachary Root",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PDC-10",
+          "player": "Santiago Suarez",
+          "team": "Durham Bulls"
+        },
+        {
+          "number": "PDC-11",
+          "player": "Jhonny Severino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-12",
+          "player": "David Shields",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-14",
+          "player": "Yairo Padilla",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PDC-15",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "PDC-16",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDC-17",
+          "player": "Tyler Bremner",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-18",
+          "player": "Patrick Forbes",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-20",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "PDC-21",
+          "player": "Jansel Luis",
+          "team": "Hillsboro Hops"
+        },
+        {
+          "number": "PDC-22",
+          "player": "Kyle DeBarge",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-23",
+          "player": "Nolan Sailors",
+          "team": "Quad Cities River Bandits"
+        },
+        {
+          "number": "PDC-24",
+          "player": "Kyle Lodise",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PDC-25",
+          "player": "Josh Hammond",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PDC-26",
+          "player": "Brendan Tunink",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-27",
+          "player": "Blake Burke",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDC-28",
+          "player": "Émilien Pitre",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PDC-29",
+          "player": "Ryan Sloan",
+          "team": "Everett AquaSox"
+        },
+        {
+          "number": "PDC-30",
+          "player": "Murf Gray",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-33",
+          "player": "Kellon Lindsey",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-35",
+          "player": "Gustavo Melendez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-36",
+          "player": "Tommy White",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-37",
+          "player": "Trevor Cohen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-38",
+          "player": "Dax Kilby",
+          "team": "Tampa Tarpons"
+        },
+        {
+          "number": "PDC-39",
+          "player": "AJ Russell",
+          "team": "ACL Rangers"
+        },
+        {
+          "number": "PDC-40",
+          "player": "Nick Becker",
+          "team": "Inland Empire 66ers"
+        },
+        {
+          "number": "PDC-41",
+          "player": "Kayson Cunningham",
+          "team": "ACL Diamondbacks"
+        },
+        {
+          "number": "PDC-42",
+          "player": "Thomas White",
+          "team": "Jacksonville Jumbo Shrimp"
+        },
+        {
+          "number": "PDC-43",
+          "player": "Max Belyeu",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PDC-44",
+          "player": "Walker Janek",
+          "team": "Asheville Tourists"
+        },
+        {
+          "number": "PDC-45",
+          "player": "Kane Kepley",
+          "team": "Myrtle Beach Pelicans"
+        },
+        {
+          "number": "PDC-46",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDC-48",
+          "player": "Seth Hernandez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "PDC-49",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        },
+        {
+          "number": "PDC-51",
+          "player": "Ike Irish",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-52",
+          "player": "Josiah Hartshorn",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDC-53",
+          "player": "Paulino Santana",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-55",
+          "player": "Charlie Condon",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "PDC-57",
+          "player": "Gavin Kilen",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-59",
+          "player": "Yophery Rodriguez",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PDC-60",
+          "player": "Charlee Soto",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-62",
+          "player": "Brady Ebel",
+          "team": "Wilson Warbirds"
+        },
+        {
+          "number": "PDC-63",
+          "player": "Gage Wood",
+          "team": "Clearwater Threshers"
+        },
+        {
+          "number": "PDC-65",
+          "player": "Braden Montgomery",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "PDC-66",
+          "player": "Billy Carlson",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PDC-67",
+          "player": "Cody Miller",
+          "team": "Rome Emperors"
+        },
+        {
+          "number": "PDC-68",
+          "player": "Aaron Walton",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-69",
+          "player": "Ethan Petry",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-70",
+          "player": "Jadyn Fielder",
+          "team": "ACL Brewers"
+        },
+        {
+          "number": "PDC-71",
+          "player": "Marek Houston",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "PDC-72",
+          "player": "Briggs McKenzie",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-73",
+          "player": "Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-74",
+          "player": "Colin Yeaman",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-75",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "PDC-78",
+          "player": "Ryan Wideman",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-80",
+          "player": "Anthony Eyanson",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-81",
+          "player": "Max Williams",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDC-82",
+          "player": "Caden Bodine",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "PDC-83",
+          "player": "Ryan Waldschmidt",
+          "team": "Amarillo Sod Poodles"
+        },
+        {
+          "number": "PDC-85",
+          "player": "Aiva Arquette",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PDC-86",
+          "player": "Tony Blanco",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-88",
+          "player": "Jadher Areinamo",
+          "team": "Montgomery Biscuits"
+        },
+        {
+          "number": "PDC-89",
+          "player": "Ty Harvey",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-90",
+          "player": "Edward Lantigua",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-91",
+          "player": "Zyhir Hope",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PDC-92",
+          "player": "Ethan Frey",
+          "team": "Fayetteville Woodpeckers"
+        },
+        {
+          "number": "PDC-93",
+          "player": "Conor Essenburg",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-94",
+          "player": "Shotaro Morii",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDC-96",
+          "player": "Mitch Voit",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PDC-97",
+          "player": "Josh Owens",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-98",
+          "player": "Johnny King",
+          "team": "Dunedin Blue Jays"
+        },
+        {
+          "number": "PDC-99",
+          "player": "Ryan Mitchell",
+          "team": "FCL Cardinals"
+        },
+        {
+          "number": "PDC-100",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-101",
+          "player": "Riley Quick",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PDC-102",
+          "player": "Alessander De La Cruz",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PDC-103",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDC-104",
+          "player": "Luke Dickerson",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-106",
+          "player": "Bryce Rainer",
+          "team": "Lakeland Flying Tigers"
+        },
+        {
+          "number": "PDC-107",
+          "player": "JB Middleton",
+          "team": "ACL Rockies"
+        },
+        {
+          "number": "PDC-108",
+          "player": "George Klassen",
+          "team": "Salt Lake Bees"
+        },
+        {
+          "number": "PDC-109",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-110",
+          "player": "Jhonny Level",
+          "team": "San Jose Giants"
+        },
+        {
+          "number": "PDC-111",
+          "player": "Dauri Fernandez",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-112",
+          "player": "Matt Wilkinson",
+          "team": "Lake County Captains"
+        },
+        {
+          "number": "PDC-113",
+          "player": "Arnaldo Lantigua",
+          "team": "Daytona Tortugas"
+        },
+        {
+          "number": "PDC-114",
+          "player": "Dean Curley",
+          "team": "Hill City Howlers"
+        },
+        {
+          "number": "PDC-115",
+          "player": "Kendry Chourio",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-116",
+          "player": "John Gil",
+          "team": "Columbus Clingstones"
+        },
+        {
+          "number": "PDC-118",
+          "player": "Easton Carmichael",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PDC-119",
+          "player": "Trevor Harrison",
+          "team": "Bowling Green Hot Rods"
+        },
+        {
+          "number": "PDC-120",
+          "player": "Ethan Hedges",
+          "team": "Spokane Indians"
+        },
+        {
+          "number": "PDC-121",
+          "player": "Andrew Salas",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDC-123",
+          "player": "Devin Taylor",
+          "team": "Stockton Ports"
+        },
+        {
+          "number": "PDC-125",
+          "player": "Robert Arias",
+          "team": "ACL Guardians"
+        },
+        {
+          "number": "PDC-127",
+          "player": "Adolfo Sanchez",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-128",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "PDC-129",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDC-130",
+          "player": "Daniel Pierce",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-131",
+          "player": "Quentin Young",
+          "team": "FCL Twins"
+        },
+        {
+          "number": "PDC-132",
+          "player": "Ben Hess",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDC-134",
+          "player": "Joswa Lugo",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-135",
+          "player": "Josh Adamczewski",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDC-136",
+          "player": "Elian Peña",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-137",
+          "player": "Tim Piasentin",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PDC-138",
+          "player": "Naibel Mariano",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-139",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-141",
+          "player": "Marcus Phillips",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-142",
+          "player": "Brody Brecht",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-143",
+          "player": "Wyatt Sanford",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDC-144",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDC-145",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PDC-146",
+          "player": "Sean Gamble",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PDC-150",
+          "player": "Brandon Compton",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "PDC-151",
+          "player": "Aaron Watson",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-152",
+          "player": "Yandel Ricardo",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDC-153",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDC-155",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDC-158",
+          "player": "Caleb Bonemer",
+          "team": "Winston-Salem Dash"
+        },
+        {
+          "number": "PDC-159",
+          "player": "Kaelen Culpepper",
+          "team": "Wichita Wind Surge"
+        },
+        {
+          "number": "PDC-160",
+          "player": "Franklin Arias",
+          "team": "Portland Sea Dogs"
+        },
+        {
+          "number": "PDC-161",
+          "player": "Aidan West",
+          "team": "ACL Dodgers"
+        },
+        {
+          "number": "PDC-162",
+          "player": "Jorge Quintana",
+          "team": "Lake Elsinore Storm"
+        },
+        {
+          "number": "PDC-163",
+          "player": "Chase Shores",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-164",
+          "player": "Jose Perdomo",
+          "team": "FCL Braves"
+        },
+        {
+          "number": "PDC-165",
+          "player": "Tate Southisene",
+          "team": "Augusta GreenJackets"
+        },
+        {
+          "number": "PDC-166",
+          "player": "Josh Hartle",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PDC-167",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "PDC-168",
+          "player": "Jake Munroe",
+          "team": "Rancho Cucamonga Quakes"
+        },
+        {
+          "number": "PDC-169",
+          "player": "Alfonsin Rosario",
+          "team": "Akron RubberDucks"
+        },
+        {
+          "number": "PDC-170",
+          "player": "Sammy Stafura",
+          "team": "Greensboro Grasshoppers"
+        },
+        {
+          "number": "PDC-171",
+          "player": "Antonio Jimenez",
+          "team": "St. Lucie Mets"
+        },
+        {
+          "number": "PDC-172",
+          "player": "Justin Gonzales",
+          "team": "Greenville Drive"
+        },
+        {
+          "number": "PDC-173",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "PDC-174",
+          "player": "Charles Davalan",
+          "team": "Ontario Tower Buzzers"
+        },
+        {
+          "number": "PDC-175",
+          "player": "Joseph Dzierwa",
+          "team": "FCL Orioles"
+        },
+        {
+          "number": "PDC-176",
+          "player": "Michael Oliveto",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PDC-178",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "PDC-179",
+          "player": "Cooper Flemming",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PDC-180",
+          "player": "Yolfran Castillo",
+          "team": "Hickory Crawdads"
+        },
+        {
+          "number": "PDC-181",
+          "player": "Jack Gurevitch",
+          "team": "Palm Beach Cardinals"
+        },
+        {
+          "number": "PDC-182",
+          "player": "Wehiwa Aloy",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDC-183",
+          "player": "Kyson Witherspoon",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PDC-184",
+          "player": "Johnny Slawinski",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "PDC-185",
+          "player": "Devin Fitz-Gerald",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDC-186",
+          "player": "Aidan Miller",
+          "team": "Lehigh Valley IronPigs"
+        },
+        {
+          "number": "PDC-187",
+          "player": "Jordan Yost",
+          "team": "FCL Tigers"
+        },
+        {
+          "number": "PDC-190",
+          "player": "Roldy Brito",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "PDC-193",
+          "player": "Kaeden Kent",
+          "team": "Hudson Valley Renegades"
+        },
+        {
+          "number": "PDC-194",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "PDC-195",
+          "player": "Landon Harmon",
+          "team": "FCL Nationals"
+        },
+        {
+          "number": "PDC-197",
+          "player": "Yovanny Rodriguez",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDC-199",
+          "player": "Steele Hall",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "PDC-200",
+          "player": "Bo Davidson",
+          "team": "Richmond Flying Squirrels"
+        }
+      ]
+    },
+    {
+      "id": "2025-arizona-fall-league-stars-autographs",
+      "name": "2025 Arizona Fall League Stars Autographs",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AFL-1",
+          "player": "Kevin McGonigle",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-2",
+          "player": "Charlie Condon",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-3",
+          "player": "Tommy White",
+          "team": "Mesa Solar Sox"
+        },
+        {
+          "number": "AFL-4",
+          "player": "Hagen Smith",
+          "team": "Glendale Desert Dogs"
+        },
+        {
+          "number": "AFL-5",
+          "player": "Esmerlyn Valdez",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-6",
+          "player": "Jonny Farmelo",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-7",
+          "player": "Jansel Luis",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-8",
+          "player": "Blake Mitchell",
+          "team": "Surprise Saguaros"
+        },
+        {
+          "number": "AFL-9",
+          "player": "Seaver King",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-10",
+          "player": "Max Anderson",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-11",
+          "player": "Cam Collier",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-12",
+          "player": "Leonardo Balcazar",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-13",
+          "player": "Enrique Bradfield Jr.",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-16",
+          "player": "Jared Thomas",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-18",
+          "player": "Fenwick Trimble",
+          "team": "Mesa Solar Sox"
+        },
+        {
+          "number": "AFL-19",
+          "player": "Ethan Anderson",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-20",
+          "player": "Brayden Taylor",
+          "team": "Mesa Solar Sox"
+        }
+      ]
+    },
+    {
+      "id": "future-cornerstones-autographs",
+      "name": "Future Cornerstones Autographs",
+      "category": "autograph",
+      "totalCards": 26,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FC-AA",
+          "player": "Aiva Arquette",
+          "team": "Beloit Sky Carp"
+        },
+        {
+          "number": "FC-AM",
+          "player": "Aidan Miller",
+          "team": "Lehigh Valley IronPigs"
+        },
+        {
+          "number": "FC-CB",
+          "player": "Carson Benge",
+          "team": "Syracuse Mets"
+        },
+        {
+          "number": "FC-CC",
+          "player": "Cam Caminiti",
+          "team": "Augusta GreenJackets"
+        },
+        {
+          "number": "FC-CE",
+          "player": "Colt Emerson",
+          "team": "Tacoma Rainiers"
+        },
+        {
+          "number": "FC-EC",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "FC-EH",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "FC-EQ",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "FC-EW",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "FC-GL",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "FC-JG",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "FC-JM",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "FC-JP",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "FC-JW",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "FC-KG",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "FC-KM",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "FC-LD",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "FC-RR",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "FC-SH",
+          "player": "Steele Hall",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "FC-SHE",
+          "player": "Seth Hernandez",
+          "team": "FCL Pirates"
+        },
+        {
+          "number": "FC-TB",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "FC-TBR",
+          "player": "Tyler Bremner",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "FC-TG",
+          "player": "Theo Gillen",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "FC-WA",
+          "player": "Wehiwa Aloy",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "FC-WJ",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "FC-XN",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        }
+      ]
+    },
+    {
+      "id": "pro-debut-gamers-autographs",
+      "name": "Pro Debut Gamers Autographs",
+      "category": "autograph",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDG-1",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDG-2",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDG-6",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDG-7",
+          "player": "Shotaro Morii",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDG-8",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "PDG-9",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDG-10",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDG-11",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDG-12",
+          "player": "Billy Carlson",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PDG-13",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDG-14",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "PDG-15",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "PDG-16",
+          "player": "Elian Peña",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDG-17",
+          "player": "Zyhir Hope",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PDG-18",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PDG-19",
+          "player": "Thomas White",
+          "team": "Jacksonville Jumbo Shrimp"
+        },
+        {
+          "number": "PDG-20",
+          "player": "Dax Kilby",
+          "team": "Tampa Tarpons"
+        },
+        {
+          "number": "PDG-21",
+          "player": "Gage Wood",
+          "team": "Clearwater Threshers"
+        },
+        {
+          "number": "PDG-22",
+          "player": "Ryan Sloan",
+          "team": "Everett AquaSox"
+        },
+        {
+          "number": "PDG-24",
+          "player": "Mike Sirota",
+          "team": "Great Lakes Loons"
+        }
+      ]
+    },
+    {
+      "id": "stars-of-milb-autographs",
+      "name": "Stars of MiLB Autographs",
+      "category": "autograph",
+      "totalCards": 19,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "STAR-1",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "STAR-4",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "STAR-5",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "STAR-6",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "STAR-7",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "STAR-8",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "STAR-9",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "STAR-10",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "STAR-11",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "STAR-12",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        },
+        {
+          "number": "STAR-13",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "STAR-14",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "STAR-15",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "STAR-16",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "STAR-17",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "STAR-20",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "STAR-22",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "STAR-23",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "STAR-24",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        }
+      ]
+    },
+    {
+      "id": "dual-autographs",
+      "name": "Dual Autographs",
+      "category": "autograph",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDD-AG",
+          "player": "Justin Gonzales/Franklin Arias",
+          "team": "Greenville Drive/Portland Sea Dogs"
+        },
+        {
+          "number": "PDD-AS",
+          "player": "Kade Anderson/Ryan Sloan",
+          "team": "ACL Mariners/Everett AquaSox"
+        },
+        {
+          "number": "PDD-BW",
+          "player": "Eli Willits/Travis Bazzana",
+          "team": "Fredericksburg Nationals/Columbus Clippers"
+        },
+        {
+          "number": "PDD-DG",
+          "player": "Leo De Vries/Josuar Gonzalez",
+          "team": "Midland Rockhounds/ACL Giants"
+        },
+        {
+          "number": "PDD-GH",
+          "player": "Seth Hernandez/Konnor Griffin",
+          "team": "FCL Pirates/Altoona Curve"
+        },
+        {
+          "number": "PDD-GM",
+          "player": "Kevin McGonigle/Konnor Griffin",
+          "team": "Erie Seawolves/Altoona Curve"
+        },
+        {
+          "number": "PDD-GP",
+          "player": "Theo Gillen/Daniel Pierce",
+          "team": "Charleston Riverdogs/FCL Rays"
+        },
+        {
+          "number": "PDD-HC",
+          "player": "Billy Carlson/Seth Hernandez",
+          "team": "ACL White Sox/FCL Pirates"
+        },
+        {
+          "number": "PDD-LK",
+          "player": "George Lombard Jr./Dax Kilby",
+          "team": "Somerset Patriots/Tampa Tarpons"
+        },
+        {
+          "number": "PDD-MC",
+          "player": "Max Clark/Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDD-MP",
+          "player": "Luis Peña/Jesús Made",
+          "team": "Wisconsin Timber Rattlers/Biloxi Shuckers"
+        },
+        {
+          "number": "PDD-QH",
+          "player": "Zyhir Hope/Eduardo Quintero",
+          "team": "Tulsa Drillers/Great Lakes Loons"
+        },
+        {
+          "number": "PDD-SC",
+          "player": "Kendry Chourio/David Shields",
+          "team": "Columbia Fireflies"
+        },
+        {
+          "number": "PDD-WD",
+          "player": "JJ Wetherholt/Liam Doyle",
+          "team": "Memphis Redbirds/Springfield Cardinals"
+        },
+        {
+          "number": "PDD-WH",
+          "player": "Ethan Holliday/Eli Willits",
+          "team": "Fresno Grizzlies/Fredericksburg Nationals"
+        }
+      ]
+    },
+    {
+      "id": "triple-autographs",
+      "name": "Triple Autographs",
+      "category": "autograph",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDT-BER",
+          "player": "Carson Benge/A.J. Ewing/Jacob Reimer",
+          "team": "Syracuse Mets/Binghamton Rumble Ponies/Binghamton Rumble Ponies"
+        },
+        {
+          "number": "PDT-DMG",
+          "player": "Josuar Gonzalez/Jesús Made/Leo De Vries",
+          "team": "ACL Giants/Biloxi Shuckers/Midland Rockhounds"
+        },
+        {
+          "number": "PDT-GHF",
+          "player": "Edward Florentino/Konnor Griffin/Seth Hernandez",
+          "team": "Bradenton Marauders/Altoona Curve/FCL Pirates"
+        },
+        {
+          "number": "PDT-GMW",
+          "player": "Konnor Griffin/Kevin McGonigle/JJ Wetherholt",
+          "team": "Altoona Curve/Erie Seawolves/Memphis Redbirds"
+        },
+        {
+          "number": "PDT-GPD",
+          "player": "Daniel Pierce/Theo Gillen/Slater de Brun",
+          "team": "FCL Rays/Charleston Riverdogs/FCL Rays"
+        },
+        {
+          "number": "PDT-HCE",
+          "player": "Brady Ebel/Seth Hernandez/Billy Carlson",
+          "team": "Wilson Warbirds/FCL Pirates/ACL White Sox"
+        },
+        {
+          "number": "PDT-HWL",
+          "player": "Eli Willits/George Lombard Jr./Ethan Holliday",
+          "team": "Fredericksburg Nationals/Somerset Patriots/Fresno Grizzlies"
+        },
+        {
+          "number": "PDT-LCH",
+          "player": "Bryce Cunningham/Ben Hess/Carlos Lagrange",
+          "team": "Hudson Valley Renegades/Somerset Patriots/Somerset Patriots"
+        },
+        {
+          "number": "PDT-MCB",
+          "player": "Max Clark/Kevin McGonigle/Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDT-MGH",
+          "player": "Blake Mitchell/Sean Gamble/Josh Hammond",
+          "team": "Quad Cities River Bandits/ACL Royals/ACL Royals"
+        },
+        {
+          "number": "PDT-MWC",
+          "player": "Kevin McGonigle/Colt Emerson/JJ Wetherholt",
+          "team": "Erie Seawolves/Tacoma Rainiers/Memphis Redbirds"
+        },
+        {
+          "number": "PDT-NFJ",
+          "player": "Ethan Frey/Xavier Neyens/Walker Janek",
+          "team": "Fayetteville Woodpeckers/FCL Astros/Asheville Tourists"
+        },
+        {
+          "number": "PDT-WFF",
+          "player": "Eli Willits/Gavin Fien/Devin Fitz-Gerald",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDT-WHP",
+          "player": "Eli Willits/JoJo Parker/Ethan Holliday",
+          "team": "Fredericksburg Nationals/FCL Blue Jays/Fresno Grizzlies"
+        }
+      ]
+    },
+    {
+      "id": "jumbo-autograph-relic",
+      "name": "Jumbo Autograph Relic",
+      "category": "autograph",
+      "totalCards": 21,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDJAR-AS",
+          "player": "Andrew Salas",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDJAR-CC",
+          "player": "Charlie Condon",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "PDJAR-EV",
+          "player": "Esmerlyn Valdez",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDJAR-GL",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "PDJAR-II",
+          "player": "Ike Irish",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDJAR-JB",
+          "player": "Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDJAR-JT",
+          "player": "James Tibbs III",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PDJAR-KC",
+          "player": "Kaelen Culpepper",
+          "team": "Cedar Rapids Kernals"
+        },
+        {
+          "number": "PDJAR-KM",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDJAR-LD",
+          "player": "Leo De Vries",
+          "team": "Lansing Lugnuts"
+        },
+        {
+          "number": "PDJAR-LDO",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PDJAR-LP",
+          "player": "Luis Peña",
+          "team": "Carolina Mudcats"
+        },
+        {
+          "number": "PDJAR-MC",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDJAR-MS",
+          "player": "Mike Sirota",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "PDJAR-PM",
+          "player": "PJ Morlando",
+          "team": "Jupiter Hammerheads"
+        },
+        {
+          "number": "PDJAR-RR",
+          "player": "Rainiel Rodriguez",
+          "team": "Palm Beach Cardinals"
+        },
+        {
+          "number": "PDJAR-RW",
+          "player": "Ryan Waldschmidt",
+          "team": "Amarillo Sod Poodles"
+        },
+        {
+          "number": "PDJAR-SK",
+          "player": "Seaver King",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "PDJAR-TB",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "PDJAR-TG",
+          "player": "Theo Gillen",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "PDJAR-WJ",
+          "player": "Walker Janek",
+          "team": "Asheville Tourists"
+        }
+      ]
+    },
+    {
+      "id": "2025-arizona-fall-league-stars",
+      "name": "2025 Arizona Fall League Stars",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AFL-1",
+          "player": "Kevin McGonigle",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-2",
+          "player": "Charlie Condon",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-3",
+          "player": "Tommy White",
+          "team": "Mesa Solar Sox"
+        },
+        {
+          "number": "AFL-4",
+          "player": "Hagen Smith",
+          "team": "Glendale Desert Dogs"
+        },
+        {
+          "number": "AFL-5",
+          "player": "Esmerlyn Valdez",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-6",
+          "player": "Jonny Farmelo",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-7",
+          "player": "Jansel Luis",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-8",
+          "player": "Blake Mitchell",
+          "team": "Surprise Saguaros"
+        },
+        {
+          "number": "AFL-9",
+          "player": "Seaver King",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-10",
+          "player": "Max Anderson",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-11",
+          "player": "Cam Collier",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-12",
+          "player": "Leonardo Balcazar",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-13",
+          "player": "Enrique Bradfield Jr.",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-14",
+          "player": "Sam Antonacci",
+          "team": "Glendale Desert Dogs"
+        },
+        {
+          "number": "AFL-15",
+          "player": "Joshua Kuroda-Grauer",
+          "team": "Mesa Solar Sox"
+        },
+        {
+          "number": "AFL-16",
+          "player": "Jared Thomas",
+          "team": "Salt River Rafters"
+        },
+        {
+          "number": "AFL-17",
+          "player": "Ethan Petry",
+          "team": "Scottsdale Scorpions"
+        },
+        {
+          "number": "AFL-18",
+          "player": "Fenwick Trimble",
+          "team": "Mesa Solar Sox"
+        },
+        {
+          "number": "AFL-19",
+          "player": "Ethan Anderson",
+          "team": "Peoria Javelinas"
+        },
+        {
+          "number": "AFL-20",
+          "player": "Brayden Taylor",
+          "team": "Mesa Solar Sox"
+        }
+      ]
+    },
+    {
+      "id": "ballpark-promos",
+      "name": "Ballpark Promos",
+      "category": "insert",
+      "totalCards": 22,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BP-1",
+          "player": "Jesús Made",
+          "team": "Carolina Mudcats"
+        },
+        {
+          "number": "BP-2",
+          "player": "Luis Peña",
+          "team": "Carolina Mudcats"
+        },
+        {
+          "number": "BP-3",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "BP-4",
+          "player": "Josue Briceño",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "BP-5",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "BP-6",
+          "player": "Caleb Bonemer",
+          "team": "Kannapolis Cannon Ballers"
+        },
+        {
+          "number": "BP-7",
+          "player": "Braden Montgomery",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "BP-8",
+          "player": "Hagen Smith",
+          "team": "Birmingham Barons"
+        },
+        {
+          "number": "BP-9",
+          "player": "Charlie Condon",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "BP-10",
+          "player": "Cam Caminiti",
+          "team": "Augusta GreenJackets"
+        },
+        {
+          "number": "BP-11",
+          "player": "Kaelen Culpepper",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "BP-12",
+          "player": "Theo Gillen",
+          "team": "Charleston Riverdogs"
+        },
+        {
+          "number": "BP-13",
+          "player": "Jared Thomas",
+          "team": "Hartford Yard Goats"
+        },
+        {
+          "number": "BP-14",
+          "player": "A.J. Ewing",
+          "team": "Brooklyn Cyclones"
+        },
+        {
+          "number": "BP-15",
+          "player": "Jacob Reimer",
+          "team": "Brooklyn Cyclones"
+        },
+        {
+          "number": "BP-16",
+          "player": "Robert Calaz",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "BP-17",
+          "player": "Seaver King",
+          "team": "Harrisburg Senators"
+        },
+        {
+          "number": "BP-18",
+          "player": "Tommy White",
+          "team": "Lansing Lugnuts"
+        },
+        {
+          "number": "BP-19",
+          "player": "Charles McAdoo",
+          "team": "New Hampshire Fisher Cats"
+        },
+        {
+          "number": "BP-20",
+          "player": "George Wolkow",
+          "team": "Kannapolis Cannon Ballers"
+        },
+        {
+          "number": "BP-21",
+          "player": "Kyle DeBarge",
+          "team": "Cedar Rapids Kernels"
+        },
+        {
+          "number": "BP-22",
+          "player": "John Gil",
+          "team": "Augusta GreenJackets"
+        }
+      ]
+    },
+    {
+      "id": "pipeline-pairings",
+      "name": "Pipeline Pairings",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PP-1",
+          "player": "Konnor Griffin/Seth Hernandez",
+          "team": "Altoona Curve/FCL Pirates"
+        },
+        {
+          "number": "PP-2",
+          "player": "Max Clark/Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PP-3",
+          "player": "Luis Peña/Jesús Made",
+          "team": "Wisconsin Timber Rattlers/Biloxi Shuckers"
+        },
+        {
+          "number": "PP-4",
+          "player": "Shotaro Morii/Leo De Vries",
+          "team": "ACL Athletics/Midland Rockhounds"
+        },
+        {
+          "number": "PP-5",
+          "player": "Liam Doyle/JJ Wetherholt",
+          "team": "Springfield Cardinals/Memphis Redbirds"
+        },
+        {
+          "number": "PP-6",
+          "player": "Ryan Sloan/Kade Anderson",
+          "team": "Everett AquaSox/ACL Mariners"
+        },
+        {
+          "number": "PP-7",
+          "player": "Eli Willits/Gavin Fien",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PP-8",
+          "player": "Kaelen Culpepper/Walker Jenkins",
+          "team": "Wichita Wind Surge/St. Paul Saints"
+        },
+        {
+          "number": "PP-9",
+          "player": "Mitch Voit/Carson Benge",
+          "team": "St. Lucie Mets/Syracuse Mets"
+        },
+        {
+          "number": "PP-10",
+          "player": "Thomas White/Aiva Arquette",
+          "team": "Jacksonville Jumbo Shrimp/Beloit Sky Carp"
+        },
+        {
+          "number": "PP-11",
+          "player": "Juneiker Caceres/Travis Bazzana",
+          "team": "Hill City Howlers/Columbus Clippers"
+        },
+        {
+          "number": "PP-12",
+          "player": "Dante Nori/Aidan Miller",
+          "team": "Reading Fightin Phils/Lehigh Valley IronPigs"
+        },
+        {
+          "number": "PP-13",
+          "player": "Mike Sirota/Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "PP-14",
+          "player": "Marcus Phillips/Kyson Witherspoon",
+          "team": "FCL Red Sox"
+        },
+        {
+          "number": "PP-15",
+          "player": "Dax Kilby/George Lombard Jr.",
+          "team": "Tampa Tarpons/Somerset Patriots"
+        },
+        {
+          "number": "PP-16",
+          "player": "Billy Carlson/Caleb Bonemer",
+          "team": "ACL White Sox/Winston-Salem Dash"
+        },
+        {
+          "number": "PP-17",
+          "player": "Johnny King/JoJo Parker",
+          "team": "Dunedin Blue Jays/FCL Blue Jays"
+        },
+        {
+          "number": "PP-18",
+          "player": "Kane Kepley/Ethan Conrad",
+          "team": "Myrtle Beach Pelicans/ACL Cubs"
+        },
+        {
+          "number": "PP-19",
+          "player": "Slade Caldwell/Kayson Cunningham",
+          "team": "Hillsboro Hops/ACL Diamondbacks"
+        },
+        {
+          "number": "PP-20",
+          "player": "Briggs McKenzie/Cam Caminiti",
+          "team": "FCL Braves/Augusta GreenJackets"
+        },
+        {
+          "number": "PP-21",
+          "player": "Charlie Condon/Ethan Holliday",
+          "team": "Hartford Yard Goats/Fresno Grizzlies"
+        },
+        {
+          "number": "PP-22",
+          "player": "Josh Hammond/Sean Gamble",
+          "team": "ACL Royals"
+        },
+        {
+          "number": "PP-23",
+          "player": "Slater de Brun/Daniel Pierce",
+          "team": "FCL Rays"
+        },
+        {
+          "number": "PP-24",
+          "player": "George Klassen/Tyler Bremner",
+          "team": "Salt Lake Bees/ACL Angels"
+        }
+      ]
+    },
+    {
+      "id": "pro-debut-gamers",
+      "name": "Pro Debut Gamers",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "PDG-1",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "PDG-2",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "PDG-3",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "PDG-4",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "PDG-5",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "PDG-6",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "PDG-7",
+          "player": "Shotaro Morii",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDG-8",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "PDG-9",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "PDG-10",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "PDG-11",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "PDG-12",
+          "player": "Billy Carlson",
+          "team": "ACL White Sox"
+        },
+        {
+          "number": "PDG-13",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        },
+        {
+          "number": "PDG-14",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "PDG-15",
+          "player": "Josuar Gonzalez",
+          "team": "ACL Giants"
+        },
+        {
+          "number": "PDG-16",
+          "player": "Elian Peña",
+          "team": "FCL Mets"
+        },
+        {
+          "number": "PDG-17",
+          "player": "Zyhir Hope",
+          "team": "Tulsa Drillers"
+        },
+        {
+          "number": "PDG-18",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "PDG-19",
+          "player": "Thomas White",
+          "team": "Jacksonville Jumbo Shrimp"
+        },
+        {
+          "number": "PDG-20",
+          "player": "Dax Kilby",
+          "team": "Tampa Tarpons"
+        },
+        {
+          "number": "PDG-21",
+          "player": "Gage Wood",
+          "team": "Clearwater Threshers"
+        },
+        {
+          "number": "PDG-22",
+          "player": "Ryan Sloan",
+          "team": "Everett AquaSox"
+        },
+        {
+          "number": "PDG-23",
+          "player": "Wehiwa Aloy",
+          "team": "Delmarva Shorebirds"
+        },
+        {
+          "number": "PDG-24",
+          "player": "Mike Sirota",
+          "team": "Great Lakes Loons"
+        }
+      ]
+    },
+    {
+      "id": "stars-of-milb",
+      "name": "Stars of MiLB",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "STAR-1",
+          "player": "Konnor Griffin",
+          "team": "Altoona Curve"
+        },
+        {
+          "number": "STAR-2",
+          "player": "Kevin McGonigle",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "STAR-3",
+          "player": "JJ Wetherholt",
+          "team": "Memphis Redbirds"
+        },
+        {
+          "number": "STAR-4",
+          "player": "Max Clark",
+          "team": "Erie Seawolves"
+        },
+        {
+          "number": "STAR-5",
+          "player": "Walker Jenkins",
+          "team": "St. Paul Saints"
+        },
+        {
+          "number": "STAR-6",
+          "player": "Travis Bazzana",
+          "team": "Columbus Clippers"
+        },
+        {
+          "number": "STAR-7",
+          "player": "Leo De Vries",
+          "team": "Midland Rockhounds"
+        },
+        {
+          "number": "STAR-8",
+          "player": "Jesús Made",
+          "team": "Biloxi Shuckers"
+        },
+        {
+          "number": "STAR-9",
+          "player": "Eli Willits",
+          "team": "Fredericksburg Nationals"
+        },
+        {
+          "number": "STAR-10",
+          "player": "Ethan Holliday",
+          "team": "Fresno Grizzlies"
+        },
+        {
+          "number": "STAR-11",
+          "player": "JoJo Parker",
+          "team": "FCL Blue Jays"
+        },
+        {
+          "number": "STAR-12",
+          "player": "Xavier Neyens",
+          "team": "FCL Astros"
+        },
+        {
+          "number": "STAR-13",
+          "player": "Ethan Conrad",
+          "team": "ACL Cubs"
+        },
+        {
+          "number": "STAR-14",
+          "player": "George Lombard Jr.",
+          "team": "Somerset Patriots"
+        },
+        {
+          "number": "STAR-15",
+          "player": "Eduardo Quintero",
+          "team": "Great Lakes Loons"
+        },
+        {
+          "number": "STAR-16",
+          "player": "Luis Peña",
+          "team": "Wisconsin Timber Rattlers"
+        },
+        {
+          "number": "STAR-17",
+          "player": "Edward Florentino",
+          "team": "Bradenton Marauders"
+        },
+        {
+          "number": "STAR-18",
+          "player": "Steele Hall",
+          "team": "ACL Reds"
+        },
+        {
+          "number": "STAR-19",
+          "player": "Carson Benge",
+          "team": "Syracuse Mets"
+        },
+        {
+          "number": "STAR-20",
+          "player": "Rainiel Rodriguez",
+          "team": "Peoria Chiefs"
+        },
+        {
+          "number": "STAR-21",
+          "player": "Tyler Bremner",
+          "team": "ACL Angels"
+        },
+        {
+          "number": "STAR-22",
+          "player": "Kade Anderson",
+          "team": "ACL Mariners"
+        },
+        {
+          "number": "STAR-23",
+          "player": "Liam Doyle",
+          "team": "Springfield Cardinals"
+        },
+        {
+          "number": "STAR-24",
+          "player": "Jamie Arnold",
+          "team": "ACL Athletics"
+        }
+      ]
+    }
+  ]
+}

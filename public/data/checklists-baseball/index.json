@@ -312,6 +312,16 @@
       "totalCards": 1051
     },
     {
+      "id": "2026-topps-five-star-baseball",
+      "name": "2026 Topps Five Star Baseball",
+      "year": 2026,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 650,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-topps-heritage-baseball",
       "name": "2026 Topps Heritage Baseball",
       "year": 2026,
@@ -376,6 +386,16 @@
       "sport": "Baseball",
       "setCount": 18,
       "totalCards": 705
+    },
+    {
+      "id": "2026-topps-pro-debut-baseball",
+      "name": "2026 Topps Pro Debut Baseball",
+      "year": 2026,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 777,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-topps-series-1-baseball",
@@ -2234,6 +2254,16 @@
       "sport": "Baseball",
       "setCount": 5,
       "totalCards": 798
+    },
+    {
+      "id": "2023-topps-chrome-platinum-baseball",
+      "name": "2023 Topps Chrome Platinum Baseball",
+      "year": 2023,
+      "brand": "Topps Chrome Platinum",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 297,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2023-topps-chrome-update-sapphire-edition-baseball",
