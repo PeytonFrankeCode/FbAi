@@ -2249,12 +2249,13 @@ async function fetchVariants(query) {
 // announcement shows it to everyone again instead of staying hidden for
 // anyone who ever dismissed one.
 const BANNER = {
-  id: '2026-beta-survey',
+  id: '2026-10-topps-midnight-checklist',
   // What clicking it does: survey opens the beta survey (and the banner is not
   // shown to anyone who already answered it); productId deep-links a checklist,
-  // staying in the SPA rather than reloading the page.
-  survey: true,
-  productId: null,
+  // staying in the SPA rather than reloading the page. The beta survey still
+  // asks through its own banner after a few searches.
+  survey: false,
+  productId: '2026-topps-midnight-football',
 };
 
 function bannerDismissed() {

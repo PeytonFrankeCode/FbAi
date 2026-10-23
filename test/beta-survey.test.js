@@ -106,7 +106,7 @@ const post = (body, addr) => fetch(base + '/api/survey', {
   check('  ...a second "no" or an answer is final', !mayAsk('dismissed2', {}, now + 999 * DAY) && !mayAsk('done', {}, now + 999 * DAY));
   check('  ...closing the footer survey is not a "no"', /if \(_surveySource !== 'footer' && _surveyState\(\) !== 'done'\) _surveyDeclined\(\);/.test(js));
 
-  check('the announcement asks too, and hides once answered', /survey: true/.test(js) && /openSurvey\('announce'\)/.test(js)
+  check('the announcement can ask too, and hides once answered', /survey: (true|false)/.test(js) && /openSurvey\('announce'\)/.test(js)
     && /if \(BANNER\.survey && _surveyState\(\) === 'done'\) return;/.test(js));
   {
     const d = require(path.join(ROOT, 'market-digest.js'));
