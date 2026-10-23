@@ -9,9 +9,13 @@ name: Sync checklists
 # reaches main from this job: the branch is opened as a pull request, tested
 # and reviewed like any other change.
 #
-# Manual trigger only, so it costs nothing unless someone asks for it.
+# Started by hand (Run workflow), or by pushing the run/checklist-sync
+# branch, which is how the agent starts it: it can push a branch but not
+# press the button. Never on a schedule, so it costs nothing unless asked.
 on:
   workflow_dispatch:
+  push:
+    branches: ['run/checklist-sync']
 
 permissions:
   contents: write
