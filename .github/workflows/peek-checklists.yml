@@ -1,0 +1,21 @@
+name: Peek at checklist pages
+
+# Print how checklistinsider.com writes parallels on a few product pages
+# (scripts/peek-checklistinsider.js), for checking the importer against the
+# real markup. The agent sandbox cannot reach the site; GitHub's runner can.
+# Read-only: nothing is written or pushed. Started by hand, or by pushing the
+# run/checklist-peek branch.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['run/checklist-peek']
+
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/peek-checklistinsider.js inception midnight holiday
