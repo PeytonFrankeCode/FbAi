@@ -730,7 +730,24 @@
           "team": "Dallas Cowboys"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Emerald",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 25
+        },
+        {
+          "name": "NFL Shield",
+          "printRun": 1
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "cleat-impressions-autographs",
@@ -1303,7 +1320,28 @@
           "team": "San Francisco 49ers"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Gold /25 or less",
+          "printRun": null
+        },
+        {
+          "name": "Metallic",
+          "printRun": 10
+        },
+        {
+          "name": "Laundry Tag Brand Logo",
+          "printRun": 1
+        },
+        {
+          "name": "Laundry Tag NFL Shield",
+          "printRun": 1
+        },
+        {
+          "name": "Laundry Tag Players",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "immaculate-eye-black-jersey-gold",
@@ -11755,7 +11793,24 @@
           "team": "Pittsburgh Steelers"
         }
       ],
-      "parallels": []
+      "parallels": [
+        {
+          "name": "Brand Logo",
+          "printRun": 3
+        },
+        {
+          "name": "Button",
+          "printRun": 1
+        },
+        {
+          "name": "Shield",
+          "printRun": 1
+        },
+        {
+          "name": "Team Logo",
+          "printRun": 1
+        }
+      ]
     },
     {
       "id": "rookie-player-caps-brand-logo",

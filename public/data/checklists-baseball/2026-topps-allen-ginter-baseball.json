@@ -3832,7 +3832,24 @@
       "name": "Base Mini Chrome Variation",
       "category": "base",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Refractor",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Refractor",
+          "printRun": 25
+        },
+        {
+          "name": "Red Refractor",
+          "printRun": 5
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -8182,7 +8199,12 @@
       "name": "Carte De Visite Autographs",
       "category": "autograph",
       "totalCards": 60,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red Ink",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CDVA-AJO",
@@ -8491,7 +8513,12 @@
       "name": "Full-Size Autographs",
       "category": "autograph",
       "totalCards": 3,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red Ink",
+          "printRun": 10
+        }
+      ],
       "cards": [
         {
           "number": "A-BB",
@@ -8553,7 +8580,28 @@
       "name": "Autograph Relics",
       "category": "autograph",
       "totalCards": 62,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Filigree",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Filigree",
+          "printRun": 25
+        },
+        {
+          "name": "Black Filigree",
+          "printRun": 10
+        },
+        {
+          "name": "Red Filigree",
+          "printRun": 5
+        },
+        {
+          "name": "Purple Filigree",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AGLC-AK",
@@ -9310,7 +9358,16 @@
       "name": "Dynasty Autographed Patch Redemption",
       "category": "autograph",
       "totalCards": 9,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Silver",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CDA-CY",
@@ -10301,7 +10358,28 @@
       "name": "Full-Size Relic A",
       "category": "memorabilia",
       "totalCards": 91,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "A&G Back",
+          "printRun": 50
+        },
+        {
+          "name": "No Number",
+          "printRun": 25
+        },
+        {
+          "name": "Brooklyn Back",
+          "printRun": 10
+        },
+        {
+          "name": "Topps Back",
+          "printRun": 5
+        },
+        {
+          "name": "A&G Man Back",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FSRA-AJ",
@@ -10765,7 +10843,28 @@
       "name": "Full-Size Relic B",
       "category": "memorabilia",
       "totalCards": 73,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Filigree",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Filigree",
+          "printRun": 25
+        },
+        {
+          "name": "Black Filigree",
+          "printRun": 10
+        },
+        {
+          "name": "Red Filigree",
+          "printRun": 5
+        },
+        {
+          "name": "Purple Filigree",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FSRB-AG",
@@ -14506,7 +14605,16 @@
       "name": "Dual Autograph Relics",
       "category": "autograph",
       "totalCards": 29,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Red Filigree",
+          "printRun": 5
+        },
+        {
+          "name": "Purple Filigree",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "AGDAR-AO",

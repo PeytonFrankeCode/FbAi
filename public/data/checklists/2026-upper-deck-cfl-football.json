@@ -13,8 +13,24 @@
       "totalCards": 80,
       "parallels": [
         {
-          "name": "Gold (1:1)",
+          "name": "Gold",
           "printRun": null
+        },
+        {
+          "name": "Deluxe",
+          "printRun": 250
+        },
+        {
+          "name": "UD Exclusives",
+          "printRun": 100
+        },
+        {
+          "name": "Purple",
+          "printRun": 49
+        },
+        {
+          "name": "High Gloss",
+          "printRun": 10
         }
       ],
       "cards": [
@@ -427,8 +443,24 @@
       "totalCards": 20,
       "parallels": [
         {
-          "name": "Gold (1:4)",
+          "name": "Gold",
           "printRun": null
+        },
+        {
+          "name": "Deluxe",
+          "printRun": 250
+        },
+        {
+          "name": "UD Exclusives",
+          "printRun": 100
+        },
+        {
+          "name": "Purple",
+          "printRun": 49
+        },
+        {
+          "name": "High Gloss",
+          "printRun": 10
         }
       ],
       "cards": [
