@@ -56,7 +56,9 @@ function parseParallels(text) {
     if (!line || /^(tba|none|n\/a)$/i.test(line) || /^parallels?:?$/i.test(line)) continue;
     // A one-of-one first: read as "/1" it left "Inception - 1" as the name.
     const m = line.match(/^(.*?)\s*[-–]?\s*(?:#\s*)?1\s*\/\s*(1)\s*$/) || line.match(/^(.*?)\s*[-–]?\s*(?:#\s*)?\/\s*(\d+)\s*$/);
-    const name = (m ? m[1] : line).replace(/[-–:\s]+$/, '').trim();
+    // A leading year is the product's own ("2026 NFL Draft Pin"): the name is
+    // what follows it.
+    const name = (m ? m[1] : line).replace(/[-–:\s]+$/, '').replace(/^(?:19|20)\d{2}\s+(?=\S)/, '').trim();
     if (!name || name.length > 60) continue;
     out.push({ name, printRun: m ? Number(m[2]) : null });
   }

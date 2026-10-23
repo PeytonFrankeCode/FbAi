@@ -142,8 +142,8 @@
       "year": 2026,
       "brand": "Panini",
       "sport": "Baseball",
-      "setCount": 14,
-      "totalCards": 700
+      "setCount": 18,
+      "totalCards": 805
     },
     {
       "id": "2026-panini-prizm-premium-box-set-baseball",
@@ -217,8 +217,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 50,
-      "totalCards": 1466
+      "setCount": 54,
+      "totalCards": 1574
     },
     {
       "id": "2026-topps-chrome-black-baseball",
@@ -312,6 +312,16 @@
       "totalCards": 1051
     },
     {
+      "id": "2026-topps-five-star-baseball",
+      "name": "2026 Topps Five Star Baseball",
+      "year": 2026,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 750,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-topps-heritage-baseball",
       "name": "2026 Topps Heritage Baseball",
       "year": 2026,
@@ -345,8 +355,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 29,
-      "totalCards": 1343,
+      "setCount": 36,
+      "totalCards": 1492,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -355,8 +365,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 4,
-      "totalCards": 559,
+      "setCount": 5,
+      "totalCards": 578,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -378,13 +388,23 @@
       "totalCards": 705
     },
     {
+      "id": "2026-topps-pro-debut-baseball",
+      "name": "2026 Topps Pro Debut Baseball",
+      "year": 2026,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 977,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-topps-series-1-baseball",
       "name": "2026 Topps Series 1 Baseball",
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 42,
-      "totalCards": 2281
+      "setCount": 60,
+      "totalCards": 3107
     },
     {
       "id": "2026-topps-series-2-baseball",
@@ -420,8 +440,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 22,
-      "totalCards": 730,
+      "setCount": 24,
+      "totalCards": 770,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -430,8 +450,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 62,
-      "totalCards": 2908,
+      "setCount": 65,
+      "totalCards": 3409,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -476,8 +496,8 @@
       "year": 2025,
       "brand": "Bowman",
       "sport": "Baseball",
-      "setCount": 24,
-      "totalCards": 872
+      "setCount": 27,
+      "totalCards": 888
     },
     {
       "id": "2025-bowman-draft-mega-box-baseball",
@@ -531,7 +551,7 @@
       "brand": "Donruss",
       "sport": "Baseball",
       "setCount": 31,
-      "totalCards": 1196
+      "totalCards": 1198
     },
     {
       "id": "2025-leaf-a-bronx-legacy-baseball",
@@ -658,7 +678,7 @@
       "brand": "Panini",
       "sport": "Baseball",
       "setCount": 18,
-      "totalCards": 721
+      "totalCards": 722
     },
     {
       "id": "2025-panini-prizm-premium-box-set-baseball",
@@ -675,8 +695,8 @@
       "year": 2025,
       "brand": "Panini",
       "sport": "Baseball",
-      "setCount": 17,
-      "totalCards": 1366,
+      "setCount": 32,
+      "totalCards": 1392,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -731,8 +751,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 37,
-      "totalCards": 2687,
+      "setCount": 40,
+      "totalCards": 2787,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -778,8 +798,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 40,
-      "totalCards": 1193,
+      "setCount": 45,
+      "totalCards": 1252,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -806,8 +826,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 3,
-      "totalCards": 718
+      "setCount": 10,
+      "totalCards": 970
     },
     {
       "id": "2025-topps-chrome-sapphire-baseball",
@@ -833,8 +853,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 30,
-      "totalCards": 1167
+      "setCount": 33,
+      "totalCards": 1241
     },
     {
       "id": "2025-topps-chrome-x-cactus-jack-baseball",
@@ -879,8 +899,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 34,
-      "totalCards": 1463
+      "setCount": 35,
+      "totalCards": 1470
     },
     {
       "id": "2025-topps-dynamic-duals-baseball",
@@ -942,8 +962,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 24,
-      "totalCards": 1579,
+      "setCount": 32,
+      "totalCards": 1688,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -952,8 +972,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 25,
-      "totalCards": 855
+      "setCount": 28,
+      "totalCards": 896
     },
     {
       "id": "2025-topps-holiday-baseball",
@@ -961,8 +981,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 21,
-      "totalCards": 978,
+      "setCount": 22,
+      "totalCards": 994,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1008,7 +1028,7 @@
       "brand": "Topps",
       "sport": "Baseball",
       "setCount": 30,
-      "totalCards": 1395
+      "totalCards": 1397
     },
     {
       "id": "2025-topps-now-all-star-game-set-baseball",
@@ -1025,8 +1045,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 18,
-      "totalCards": 808
+      "setCount": 19,
+      "totalCards": 814
     },
     {
       "id": "2025-topps-pro-debut-baseball",
@@ -1043,8 +1063,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 42,
-      "totalCards": 2819,
+      "setCount": 62,
+      "totalCards": 3708,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1063,8 +1083,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 8,
-      "totalCards": 298
+      "setCount": 10,
+      "totalCards": 320
     },
     {
       "id": "2025-topps-stadium-club-baseball",
@@ -1118,8 +1138,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 19,
-      "totalCards": 657
+      "setCount": 21,
+      "totalCards": 684
     },
     {
       "id": "2025-topps-update-japan-baseball",
@@ -1155,8 +1175,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 7,
-      "totalCards": 255
+      "setCount": 8,
+      "totalCards": 275
     },
     {
       "id": "2024-bowman-baseball",
@@ -1173,8 +1193,8 @@
       "year": 2024,
       "brand": "Bowman",
       "sport": "Baseball",
-      "setCount": 25,
-      "totalCards": 689
+      "setCount": 31,
+      "totalCards": 842
     },
     {
       "id": "2024-bowman-chrome-mega-box-baseball",
@@ -1200,8 +1220,8 @@
       "year": 2024,
       "brand": "Bowman",
       "sport": "Baseball",
-      "setCount": 21,
-      "totalCards": 723
+      "setCount": 28,
+      "totalCards": 768
     },
     {
       "id": "2024-bowman-draft-sapphire-baseball",
@@ -1227,8 +1247,8 @@
       "year": 2024,
       "brand": "Bowman",
       "sport": "Baseball",
-      "setCount": 19,
-      "totalCards": 391
+      "setCount": 20,
+      "totalCards": 496
     },
     {
       "id": "2024-bowman-sapphire-baseball",
@@ -1255,7 +1275,7 @@
       "brand": "Donruss",
       "sport": "Baseball",
       "setCount": 20,
-      "totalCards": 1081,
+      "totalCards": 1082,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1347,8 +1367,8 @@
       "year": 2024,
       "brand": "Panini",
       "sport": "Baseball",
-      "setCount": 50,
-      "totalCards": 1044
+      "setCount": 51,
+      "totalCards": 1074
     },
     {
       "id": "2024-panini-impeccable-baseball",
@@ -1366,7 +1386,7 @@
       "brand": "Panini",
       "sport": "Baseball",
       "setCount": 40,
-      "totalCards": 1605
+      "totalCards": 1615
     },
     {
       "id": "2024-panini-prizm-baseball",
@@ -1419,8 +1439,8 @@
       "year": 2024,
       "brand": "Panini",
       "sport": "Baseball",
-      "setCount": 29,
-      "totalCards": 888
+      "setCount": 30,
+      "totalCards": 907
     },
     {
       "id": "2024-press-pass-premium-baseball",
@@ -1446,8 +1466,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 44,
-      "totalCards": 2655,
+      "setCount": 49,
+      "totalCards": 2826,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1503,8 +1523,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 29,
-      "totalCards": 1213
+      "setCount": 33,
+      "totalCards": 1286
     },
     {
       "id": "2024-topps-chrome-black-baseball",
@@ -1559,8 +1579,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 28,
-      "totalCards": 1110
+      "setCount": 32,
+      "totalCards": 1182
     },
     {
       "id": "2024-topps-complete-factory-set-exclusives-baseball",
@@ -1651,8 +1671,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 25,
-      "totalCards": 2115,
+      "setCount": 38,
+      "totalCards": 2288,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1661,8 +1681,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 25,
-      "totalCards": 1264
+      "setCount": 28,
+      "totalCards": 1302
     },
     {
       "id": "2024-topps-heritage-mini-baseball",
@@ -1697,8 +1717,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 8,
-      "totalCards": 329
+      "setCount": 11,
+      "totalCards": 446
     },
     {
       "id": "2024-topps-luminaries-baseball",
@@ -1716,8 +1736,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 34,
-      "totalCards": 1571
+      "setCount": 43,
+      "totalCards": 1760
     },
     {
       "id": "2024-topps-pristine-baseball",
@@ -1725,8 +1745,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 17,
-      "totalCards": 733
+      "setCount": 19,
+      "totalCards": 748
     },
     {
       "id": "2024-topps-pro-debut-baseball",
@@ -1743,8 +1763,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 39,
-      "totalCards": 1811
+      "setCount": 46,
+      "totalCards": 2452
     },
     {
       "id": "2024-topps-series-2-baseball",
@@ -1770,8 +1790,8 @@
       "year": 2024,
       "brand": "Stadium Club",
       "sport": "Baseball",
-      "setCount": 22,
-      "totalCards": 1292,
+      "setCount": 23,
+      "totalCards": 1302,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -1807,8 +1827,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 20,
-      "totalCards": 617
+      "setCount": 23,
+      "totalCards": 676
     },
     {
       "id": "2024-topps-triple-threads-baseball",
@@ -1826,8 +1846,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 35,
-      "totalCards": 1463,
+      "setCount": 50,
+      "totalCards": 1959,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {

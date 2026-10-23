@@ -11034,7 +11034,16 @@
       "name": "Flagship First Signatures",
       "category": "autograph",
       "totalCards": 38,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Ink",
+          "printRun": 50
+        },
+        {
+          "name": "Red Ink",
+          "printRun": 5
+        }
+      ],
       "cards": [
         {
           "number": "FFS-AR",
@@ -11233,7 +11242,16 @@
       "name": "Flagship First Dual Signatures",
       "category": "autograph",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold Ink",
+          "printRun": 50
+        },
+        {
+          "name": "Red Ink",
+          "printRun": 5
+        }
+      ],
       "cards": [
         {
           "number": "FDS-BA",
@@ -12830,7 +12848,32 @@
       "name": "Victory Ink",
       "category": "autograph",
       "totalCards": 36,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "VI-AS",
@@ -14804,7 +14847,28 @@
       "name": "Real One Relics",
       "category": "memorabilia",
       "totalCards": 32,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "ROR-AC",
@@ -14973,7 +15037,28 @@
       "name": "Rookie Real One Relics",
       "category": "memorabilia",
       "totalCards": 42,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "ROR-ARE",
@@ -15192,7 +15277,36 @@
       "name": "NFL Material",
       "category": "memorabilia",
       "totalCards": 48,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "NFLM-AS",
@@ -15441,7 +15555,36 @@
       "name": "NFL Rookies Material",
       "category": "memorabilia",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RMC-ARE",
@@ -15650,7 +15793,36 @@
       "name": "NFL Material Dual Relics",
       "category": "memorabilia",
       "totalCards": 34,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "MDR-AC",
@@ -15829,7 +16001,36 @@
       "name": "Field Fit Swatch Collection",
       "category": "memorabilia",
       "totalCards": 41,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "FFSC-AC",
@@ -16043,7 +16244,36 @@
       "name": "1991 Topps Football Relics",
       "category": "memorabilia",
       "totalCards": 26,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "91TFR-AJ",
@@ -16182,7 +16412,36 @@
       "name": "1991 Topps Football Rookie Relics",
       "category": "memorabilia",
       "totalCards": 40,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "91RR-ARE",
@@ -20304,7 +20563,40 @@
       "name": "Big Time Players",
       "category": "insert",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Purple",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "BTP-1",
@@ -20363,7 +20655,40 @@
       "name": "Highlight Reels",
       "category": "insert",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue Refractor",
+          "printRun": 150
+        },
+        {
+          "name": "Green Refractor",
+          "printRun": 99
+        },
+        {
+          "name": "Purple Refractor",
+          "printRun": 75
+        },
+        {
+          "name": "Gold Refractor",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Refractor",
+          "printRun": 25
+        },
+        {
+          "name": "Black Refractor",
+          "printRun": 10
+        },
+        {
+          "name": "Red Refractor",
+          "printRun": 5
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "HR-1",
@@ -20422,7 +20747,12 @@
       "name": "Struttin’",
       "category": "insert",
       "totalCards": 30,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "S-1",
@@ -21271,7 +21601,40 @@
       "category": "insert",
       "totalCards": 90,
       "notes": "Super Box Exclusive",
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": 150
+        },
+        {
+          "name": "Green",
+          "printRun": 99
+        },
+        {
+          "name": "Purple",
+          "printRun": 75
+        },
+        {
+          "name": "Gold",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "TFC-1",
@@ -21731,7 +22094,40 @@
       "category": "insert",
       "totalCards": 90,
       "notes": "Super Box Exclusive",
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Blue Refractor",
+          "printRun": 150
+        },
+        {
+          "name": "Green Refractor",
+          "printRun": 99
+        },
+        {
+          "name": "Purple Refractor",
+          "printRun": 75
+        },
+        {
+          "name": "Gold Refractor",
+          "printRun": 50
+        },
+        {
+          "name": "Orange Refractor",
+          "printRun": 25
+        },
+        {
+          "name": "Black Refractor",
+          "printRun": 10
+        },
+        {
+          "name": "Red Refractor",
+          "printRun": 5
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "TFCC-1",
@@ -22191,7 +22587,24 @@
       "category": "insert",
       "totalCards": 16,
       "notes": "Exclusive to Club Super Boxes",
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Black",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "FoilFractor",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CEOC-2",

@@ -11,7 +11,12 @@
       "name": "Base",
       "category": "base",
       "totalCards": 80,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "ePack Achievements : Green; Printing Plates 1/1.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -420,7 +425,12 @@
       "name": "Base CFL Greatness",
       "category": "base",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "ePack Achievements : Green.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "81",

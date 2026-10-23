@@ -11,7 +11,60 @@
       "name": "Base",
       "category": "base",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Zodiac",
+          "printRun": null
+        },
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -557,7 +610,56 @@
       "name": "Base Autographs",
       "category": "autograph",
       "totalCards": 75,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "1",
@@ -941,7 +1043,56 @@
       "name": "Countdown Calligraphy",
       "category": "autograph",
       "totalCards": 37,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CC-AG",
@@ -1135,7 +1286,56 @@
       "name": "Dark Matter Autographs",
       "category": "autograph",
       "totalCards": 29,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DMA-AP",
@@ -1289,7 +1489,56 @@
       "name": "Horizon Signatures",
       "category": "autograph",
       "totalCards": 19,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "HS-AJ",
@@ -1393,7 +1642,56 @@
       "name": "Midnight Oil Marks",
       "category": "autograph",
       "totalCards": 28,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "MOM-AW",
@@ -1542,7 +1840,56 @@
       "name": "Rookie Horizon Signatures",
       "category": "autograph",
       "totalCards": 35,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RHS-AK",
@@ -1726,7 +2073,56 @@
       "name": "Stroke of Midnight Autographs",
       "category": "autograph",
       "totalCards": 15,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SMA-BN",
@@ -1810,7 +2206,56 @@
       "name": "Tenebrous Traces",
       "category": "autograph",
       "totalCards": 20,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "TT-AR",
@@ -1919,7 +2364,56 @@
       "name": "Moonlit Materials Signatures",
       "category": "autograph",
       "totalCards": 24,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "MMS-BT",
@@ -2048,7 +2542,56 @@
       "name": "REM Relic Autographs",
       "category": "autograph",
       "totalCards": 23,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "REM-CB",
@@ -2172,7 +2715,56 @@
       "name": "Rookie Jersey Autographs",
       "category": "autograph",
       "totalCards": 31,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "RJA-BT",
@@ -2336,7 +2928,12 @@
       "name": "Celestial Roots",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "CR-1",
@@ -2470,7 +3067,56 @@
       "name": "Constellations",
       "category": "insert",
       "totalCards": 15,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "C-1",
@@ -2554,7 +3200,12 @@
       "name": "Dream Land",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "DL-1",
@@ -2688,7 +3339,56 @@
       "name": "Earthshine",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "E-1",
@@ -2822,7 +3522,56 @@
       "name": "Insomnia",
       "category": "insert",
       "totalCards": 30,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "I-1",
@@ -2981,7 +3730,12 @@
       "name": "Night Night",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "NN-1",
@@ -3115,7 +3869,56 @@
       "name": "Nightball",
       "category": "insert",
       "totalCards": 30,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Morning",
+          "printRun": 125
+        },
+        {
+          "name": "Twilight",
+          "printRun": 99
+        },
+        {
+          "name": "Dusk",
+          "printRun": 75
+        },
+        {
+          "name": "Moon Beam",
+          "printRun": null
+        },
+        {
+          "name": "Summer Solstice",
+          "printRun": 50
+        },
+        {
+          "name": "Winter Solstice",
+          "printRun": 35
+        },
+        {
+          "name": "Moonrise",
+          "printRun": 25
+        },
+        {
+          "name": "Equinox",
+          "printRun": 20
+        },
+        {
+          "name": "Midnight",
+          "printRun": 12
+        },
+        {
+          "name": "Daybreak",
+          "printRun": 5
+        },
+        {
+          "name": "Witching Hour",
+          "printRun": 3
+        },
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "N-1",
@@ -3274,7 +4077,12 @@
       "name": "Twilight",
       "category": "insert",
       "totalCards": 25,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Black Light",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "T-1",
