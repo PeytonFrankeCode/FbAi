@@ -46,12 +46,16 @@ function categoryOf(group, set) {
 }
 
 // "Gold Refractor /50", "Gold - #/50", "Red 1/1", "Superfractor - 1/1", "Rainbow Foil".
+// The site follows most with pack odds, "Red Metallic /10 (1:4,318)": the
+// odds are not part of the name, and left on they hid the print run.
+const ODDS = /\s*\((?:[^)]*\d\s*:\s*[\d,]+[^)]*|[^)]*\bodds\b[^)]*|[^)]*\bper (?:pack|box|case)\b[^)]*)\)\s*$/i;
 function parseParallels(text) {
   const out = [];
-  for (let line of text.split(/\n|,(?![^()]*\))/)) {
-    line = line.replace(/^\s*[-•*]\s*/, '').trim();
+  for (let line of text.split(/\n|,(?![^()]*\))(?!\d{3}\b)/)) {
+    line = line.replace(/^\s*[-•*]\s*/, '').replace(ODDS, '').trim();
     if (!line || /^(tba|none|n\/a)$/i.test(line) || /^parallels?:?$/i.test(line)) continue;
-    const m = line.match(/^(.*?)\s*[-–]?\s*(?:#\s*)?\/\s*(\d+)\s*$/) || line.match(/^(.*?)\s*[-–]?\s*1\s*\/\s*(1)\s*$/);
+    // A one-of-one first: read as "/1" it left "Inception - 1" as the name.
+    const m = line.match(/^(.*?)\s*[-–]?\s*(?:#\s*)?1\s*\/\s*(1)\s*$/) || line.match(/^(.*?)\s*[-–]?\s*(?:#\s*)?\/\s*(\d+)\s*$/);
     const name = (m ? m[1] : line).replace(/[-–:\s]+$/, '').trim();
     if (!name || name.length > 60) continue;
     out.push({ name, printRun: m ? Number(m[2]) : null });
@@ -103,10 +107,34 @@ function parseCards(text) {
   return cards;
 }
 
+// The lines of a set's "Parallels:" block. The site ends each with a <br />
+// and a line break, so the decoded list has a blank line between entries:
+// the block runs to the set's first card (or its odds or card count), not
+// to the first blank line, which kept only the first parallel of every set.
+function parallelLines(text) {
+  const at = text.search(/Parallels?\s*:/i);
+  if (at < 0) return '';
+  const lines = text.slice(at).replace(/^Parallels?\s*:\s*/i, '').split('\n');
+  const out = [];
+  for (const raw of lines) {
+    const line = raw.replace(/\s+/g, ' ').trim();
+    if (!line) continue;
+    const m = CARD_LINE.exec(line);
+    if (m && isNumber(m[1])) break;
+    if (/^\d+\s+cards?\b|^odds\b|^print run\b|^(?:base|insert|autograph)s?\b.*\bchecklist$/i.test(line)) break;
+    out.push(line);
+    if (out.length >= 120) break;
+  }
+  return out.join('\n');
+}
+
 function parsePage(html) {
   // Only the "Checklist" tab: it ends where the team lists begin.
   const start = html.search(/<h2[^>]*>[^<]*Checklist<\/h2>\s*<\/p>\s*<h2>/i);
-  const from = start >= 0 ? start : html.indexOf('Base Checklist');
+  // Without the tab heading, from the Base heading itself: from its text,
+  // the heading's own tag was cut off and the Base set went unread.
+  const base = html.indexOf('Base Checklist');
+  const from = start >= 0 ? start : (base >= 0 ? Math.max(0, html.lastIndexOf('<h', base)) : -1);
   const end = html.indexOf('Team Checklist</h2>', from);
   const body = html.slice(from, end > from ? end : undefined);
 
@@ -120,14 +148,14 @@ function parsePage(html) {
     if (h[1] === '2') { group = title; continue; }
     const name = title.replace(/\s*Checklist\s*$/i, '').trim();
     const text = decode(parts[i + 1] || '');
-    const pm = text.match(/Parallels?\s*:?\s*\n([\s\S]*?)(?:\n\s*\n|\n(?=[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\s+\S.*\s-\s))/i);
+    const pl = parallelLines(text);
     const cards = parseCards(text);
     if (!cards.length) continue;
     const countMatch = text.match(/(\d+)\s+cards?\./i);
     const set = {
       id: slug(name), name, category: categoryOf(group, name),
       totalCards: countMatch ? Number(countMatch[1]) : cards.length,
-      parallels: pm ? parseParallels(pm[1]) : [],
+      parallels: pl ? parseParallels(pl) : [],
       cards,
     };
     // A whole set at one print run ("Print run: 25" / "#/25").
@@ -138,7 +166,7 @@ function parsePage(html) {
   return sets;
 }
 
-module.exports = { parsePage, parseCards, parseParallels, categoryOf };
+module.exports = { parsePage, parseCards, parseParallels, parallelLines, categoryOf };
 if (require.main !== module) return;
 
 (async () => {
