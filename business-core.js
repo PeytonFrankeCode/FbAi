@@ -314,6 +314,80 @@ function ebayReviseCsv(plan) {
     .concat(rows.map(p => `Revise,${p.ebayItemId},${p.to.toFixed(2)}`)).join('\n') + '\n';
 }
 
+// New eBay listings from cards read off photos (owner, Oct 2026): a file the
+// seller uploads at Seller Hub > Reports > Uploads, eBay's bulk "Add" format.
+// Category 261328 (Sports Trading Card Singles). A card in a slab is
+// condition 2750 (Graded) with eBay's grader and grade codes; a raw card is
+// 4000 (Ungraded) with a card condition, near mint unless the seller picks
+// otherwise. The codes are eBay's own (condition descriptors 27501 grader,
+// 27502 grade, 27503 cert number, 40001 card condition).
+const EBAY_CARD_CATEGORY = 261328;
+const EBAY_GRADERS = { PSA: 275010, BCCG: 275011, BVG: 275012, BGS: 275013, CSG: 275014, CGC: 275015, SGC: 275016,
+  KSA: 275017, GMA: 275018, HGA: 275019, ISA: 2750110, PCA: 2750111, GSG: 2750112, PGS: 2750113, MNT: 2750114,
+  TAG: 2750115 };
+// 10 is 275020, 9.5 is 275021 ... 5 is 2750210 ... 1 is 2750218.
+const EBAY_GRADE_STEPS = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4.5', '4', '3.5', '3', '2.5', '2', '1.5', '1'];
+const ebayGradeId = (g) => { const i = EBAY_GRADE_STEPS.indexOf(String(Number(g))); return i < 0 ? null : Number('27502' + i); };
+const EBAY_RAW_CONDITION = { 'near mint': 400010, excellent: 400011, 'very good': 400012, poor: 400013 };
+// The maker a collector searches by, from the product name.
+const MAKERS = [[/\bupper deck\b/i, 'Upper Deck'], [/\b(topps|bowman|finest|stadium club|heritage|allen & ginter|gypsy queen)\b/i, 'Topps'],
+  [/\b(panini|prizm|donruss|optic|select|mosaic|contenders|national treasures|immaculate|flawless|score|phoenix|absolute|certified|spectra|obsidian|origins|chronicles|zenith|playoff|elite|revolution|hoops|impeccable)\b/i, 'Panini'],
+  [/\bleaf\b/i, 'Leaf'], [/\bfleer\b/i, 'Fleer'], [/\bsage\b/i, 'Sage']];
+const makerOf = (set) => { for (const [re, name] of MAKERS) if (re.test(String(set || ''))) return name; return ''; };
+const csvCell = (v) => { const s = v == null ? '' : String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+// A title of at most 80 characters (eBay's limit), cut at a word.
+function ebayTitle(t) {
+  const s = String(t || '').replace(/\s+/g, ' ').trim();
+  if (s.length <= 80) return s;
+  const cut = s.slice(0, 81); const at = cut.lastIndexOf(' ');
+  return (at > 40 ? cut.slice(0, at) : s.slice(0, 80)).trim();
+}
+const EBAY_ADD_COLUMNS = ['*Action(SiteID=US|Country=US|Currency=USD|Version=1193)', 'CustomLabel', '*Category', '*Title',
+  '*ConditionID', 'CD:Professional Grader - (ID: 27501)', 'CD:Grade - (ID: 27502)', 'CDA:Certification Number - (ID: 27503)',
+  'CD:Card Condition - (ID: 40001)', 'C:Sport', 'C:Player/Athlete', 'C:Season', 'C:Manufacturer', 'C:Set', 'C:Card Number',
+  'C:Parallel/Variety', 'C:Features', 'C:Autographed', 'C:Graded', 'C:Print Run', 'PicURL', '*Description', '*Format',
+  '*Duration', '*StartPrice', '*Quantity', 'PostalCode', 'ShippingProfileName', 'ReturnProfileName', 'PaymentProfileName'];
+// cards: [{ title, price, grade ("PSA 10" or ""), player, year, set, cardNumber, parallel, printRun,
+// auto, rookie, sport, cert, photoUrl, id }]. defaults: { zip, shipping, returns, payment, condition }.
+// Returns { csv, listed, skipped: [{ title, why }] }.
+function ebayAddCsv(cards, defaults = {}) {
+  const rows = [EBAY_ADD_COLUMNS.join(',')], skipped = [];
+  const rawCond = EBAY_RAW_CONDITION[String(defaults.condition || 'near mint').toLowerCase()] || 400010;
+  for (const c of cards || []) {
+    const title = ebayTitle(c.title);
+    const price = Number(String(c.price == null ? '' : c.price).replace(/[$,]/g, ''));
+    if (!title) { skipped.push({ title: '', why: 'no title' }); continue; }
+    if (!(price > 0)) { skipped.push({ title, why: 'no price' }); continue; }
+    const g = readGrade(c.grade || '');
+    // A grade written but not read is a slab of some kind: never listed as raw.
+    if (!g && c.grade && !/^\s*(raw|ungraded|none)?\s*$/i.test(c.grade)) { skipped.push({ title, why: `could not read the grade "${c.grade}"` }); continue; }
+    let graderId = null, gradeId = null;
+    if (g) {
+      graderId = EBAY_GRADERS[String(g.grader).toUpperCase()] || null;
+      gradeId = ebayGradeId(g.grade);
+      if (!graderId || !gradeId) { skipped.push({ title, why: `eBay has no code for ${c.grade}` }); continue; }
+    }
+    const parallel = c.parallel && !/^base$/i.test(c.parallel) ? c.parallel : '';
+    const features = [c.rookie ? 'Rookie' : '', c.printRun ? 'Serial Numbered' : '', parallel ? 'Parallel/Variety' : ''].filter(Boolean).join('|');
+    const desc = `<p>${[c.year, c.set, c.player, parallel, c.cardNumber ? '#' + String(c.cardNumber).replace(/^#/, '') : ''].filter(Boolean).join(' ')}</p>`
+      + `<p>${g ? `Graded ${c.grade}${c.cert ? `, cert ${c.cert}` : ''}.` : 'Ungraded.'} The photo is of the card you will receive.</p>`;
+    const row = {
+      '*Action(SiteID=US|Country=US|Currency=USD|Version=1193)': 'Add', CustomLabel: c.id || '', '*Category': EBAY_CARD_CATEGORY,
+      '*Title': title, '*ConditionID': g ? 2750 : 4000,
+      'CD:Professional Grader - (ID: 27501)': graderId || '', 'CD:Grade - (ID: 27502)': gradeId || '',
+      'CDA:Certification Number - (ID: 27503)': g && c.cert ? c.cert : '', 'CD:Card Condition - (ID: 40001)': g ? '' : rawCond,
+      'C:Sport': c.sport || '', 'C:Player/Athlete': c.player || '', 'C:Season': c.year || '', 'C:Manufacturer': makerOf(c.set),
+      'C:Set': c.set || '', 'C:Card Number': c.cardNumber ? String(c.cardNumber).replace(/^#/, '') : '', 'C:Parallel/Variety': parallel,
+      'C:Features': features, 'C:Autographed': c.auto ? 'Yes' : 'No', 'C:Graded': g ? 'Yes' : 'No', 'C:Print Run': c.printRun || '',
+      PicURL: c.photoUrl || '', '*Description': desc, '*Format': 'FixedPrice', '*Duration': 'GTC', '*StartPrice': price.toFixed(2),
+      '*Quantity': 1, PostalCode: defaults.zip || '', ShippingProfileName: defaults.shipping || '', ReturnProfileName: defaults.returns || '',
+      PaymentProfileName: defaults.payment || '',
+    };
+    rows.push(EBAY_ADD_COLUMNS.map(k => csvCell(row[k])).join(','));
+  }
+  return { csv: rows.join('\n') + '\n', listed: rows.length - 1, skipped };
+}
+
 // A show list: the cards worth featuring tonight. Priced cards only, ranked
 // by what they bring and whether they are heating up (a card up 20% counts
 // as 20% more), most valuable first.
@@ -415,4 +489,4 @@ function alertText(a) {
   const dir = a.pct > 0 ? 'up' : 'down';
   return `${a.title}: market ${dir} ${Math.abs(a.pct)}% to $${a.to.toFixed(2)} (was $${a.from.toFixed(2)})`;
 }
-module.exports = { priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS, MAX_X };
+module.exports = { ebayAddCsv, ebayTitle, EBAY_ADD_COLUMNS, priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS, MAX_X };

@@ -328,6 +328,36 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
       id1.status === 200 && id1.body.card.player === 'Bo Nix' && id1.body.card.grade === 'PSA 10' && id1.body.card.confidence === 'high'
       && img && img.source.media_type === 'image/jpeg' && calls[0].output_config.format.type === 'json_schema' && !calls[0].tools
       && 'value' in id1.body, JSON.stringify({ status: id1.status, body: id1.body }));
+    // The photo is kept for the eBay listing file, at an address eBay can fetch.
+    const kept = id1.body.photoUrl && await fetch(`http://127.0.0.1:${port}${id1.body.photoUrl}`);
+    check('  ...and its photo is kept at a public address, named by its content, for the eBay listing',
+      /^\/biz\/img\/[a-f0-9]{24}\.jpg$/.test(id1.body.photoUrl || '') && kept && kept.status === 200 && kept.headers.get('content-type') === 'image/jpeg'
+      && (await fetch(`http://127.0.0.1:${port}/biz/img/..%2Fsecret.jpg`)).status === 404, JSON.stringify(id1.body.photoUrl));
+    const lf = await call('/api/biz/ebay-listings', { method: 'POST', headers: K, body: JSON.stringify({
+      cards: [{ title: id1.body.card.title, grade: 'PSA 10', price: 214, player: 'Bo Nix', year: '2024', set: 'Panini Prizm', cardNumber: '309',
+        parallel: 'Silver', rookie: true, sport: 'Football', cert: '81234567', photoUrl: id1.body.photoUrl },
+        { title: '2024 Prizm Jayden Daniels #347 RC', grade: '', price: '9.50', player: 'Jayden Daniels', set: 'Panini Prizm', photoUrl: 'https://evil.example/x.jpg' },
+        { title: 'Mystery slab', grade: 'XYZ 10', price: 5 }],
+      defaults: { zip: '80202', shipping: 'PWE', condition: 'excellent' } }) });
+    const lines = (lf.body.csv || '').trim().split('\n');
+    const head = lines[0] ? lines[0].split(',') : [];
+    const col = (row, name) => { const cells = []; let cur = '', q = false; for (const ch of row) { if (ch === '"') q = !q; else if (ch === ',' && !q) { cells.push(cur); cur = ''; } else cur += ch; } cells.push(cur); return cells[head.indexOf(name)]; };
+    check('the eBay listing file lists the ticked cards in eBay\'s bulk format, graded with eBay\'s grader, grade and cert codes',
+      lf.status === 200 && lf.body.listed === 2 && col(lines[1], '*Category') === '261328' && col(lines[1], '*ConditionID') === '2750'
+      && col(lines[1], 'CD:Professional Grader - (ID: 27501)') === '275010' && col(lines[1], 'CD:Grade - (ID: 27502)') === '275020'
+      && col(lines[1], 'CDA:Certification Number - (ID: 27503)') === '81234567' && col(lines[1], 'C:Player/Athlete') === 'Bo Nix'
+      && col(lines[1], 'C:Manufacturer') === 'Panini' && col(lines[1], 'PicURL') === 'https://thecardhuddle.com' + id1.body.photoUrl
+      && col(lines[1], 'PostalCode') === '80202' && col(lines[1], 'ShippingProfileName') === 'PWE', lf.body.csv);
+    check('  ...a raw card as ungraded in the condition picked, with no outside photo address passed through',
+      col(lines[2], '*ConditionID') === '4000' && col(lines[2], 'CD:Card Condition - (ID: 40001)') === '400011' && col(lines[2], 'PicURL') === '' && col(lines[2], '*StartPrice') === '9.50');
+    check('  ...and a grade it cannot read is left out with the reason, never listed as raw',
+      lf.body.skipped.length === 1 && /could not read the grade/.test(lf.body.skipped[0].why));
+    check('  ...a title over 80 characters is cut at a word for eBay',
+      B.ebayTitle('2024 Panini Prizm Football Bo Nix Silver Prizm Rookie Card RC #309 PSA 10 Gem Mint Broncos Denver QB').length <= 80
+      && !/\s$/.test(B.ebayTitle('2024 Panini Prizm Football Bo Nix Silver Prizm Rookie Card RC #309 PSA 10 Gem Mint Broncos Denver QB')));
+    const bjs3 = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
+    check('  ...downloaded from the photo drawer, with the ZIP and eBay policy names kept on the device',
+      /\/api\/biz\/ebay-listings/.test(bjs3) && /bizEbayListing/.test(bjs3) && /id="ph-ebay"/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')));
     const id2 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({}) });
     check('  ...a request with no photo is turned away', id2.status === 400);
     script = [{ stop_reason: 'end_turn', content: [{ type: 'text', text: 'not json' }] }];
