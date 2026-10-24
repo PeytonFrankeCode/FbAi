@@ -289,6 +289,10 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
   .aipanel { right: 8px; left: 8px; bottom: max(8px, env(safe-area-inset-bottom, 0px)); width: auto; height: min(78dvh, calc(100dvh - 24px)); border-radius: 18px }
 }
 
+.pe-box { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px }
+.pe-box summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fg2) }
+.pe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 10px }
+
 /* ---- landing ---- */
 .proof { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 14px 0 0; padding: 0; color: var(--fg2); font-size: 13.5px }
 .proof b { font-family: var(--display); color: var(--fg); font-size: 15px; margin-right: 3px }
@@ -539,8 +543,18 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
             <div class="acts" id="ph-acts" hidden>
               <button class="act go" type="button" id="ph-add">Add cards</button>
               <label class="field" style="min-width:8rem">Listed on<select id="ph-platform"><option>eBay</option><option>Whatnot</option><option>Instagram</option><option>TikTok</option><option>Shop</option><option>Other</option></select></label>
+              <button class="act" type="button" id="ph-ebay" title="A file for eBay's bulk upload: Seller Hub, Reports, Uploads">Download eBay listing file</button>
               <button class="act ghost" type="button" id="ph-clear">Clear</button>
             </div>
+            <details class="pe-box"><summary>eBay listing settings</summary>
+              <p class="hint" style="margin:6px 0 10px">Used in the listing file. The policy names are the ones in eBay under Account, Business policies. Kept on this device.</p>
+              <div class="pe-grid">
+                <label class="field">ZIP code<input id="pe-zip" inputmode="numeric" autocomplete="postal-code" placeholder="80202"></label>
+                <label class="field">Raw card condition<select id="pe-condition"><option value="near mint">Near mint or better</option><option value="excellent">Excellent</option><option value="very good">Very good</option><option value="poor">Poor</option></select></label>
+                <label class="field">Shipping policy<input id="pe-shipping" placeholder="e.g. PWE or BMWT"></label>
+                <label class="field">Return policy<input id="pe-returns" placeholder="e.g. No returns"></label>
+                <label class="field">Payment policy<input id="pe-payment" placeholder="e.g. eBay Payments"></label>
+              </div></details>
           </div></details>
         <details class="panel"><summary>Import a spreadsheet<span class="hint">CSV or an eBay active-listings export</span></summary>
           <div class="drawer">

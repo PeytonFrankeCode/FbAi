@@ -19896,9 +19896,10 @@ app.post('/api/biz/compare', async (req, res) => {
 const BIZ_IDENTIFY_PER_DAY = 400;          // photos a seller may identify a day (owner unmetered)
 const BIZ_IDENTIFY_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['player', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'title', 'confidence', 'note'],
+  required: ['player', 'sport', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'cert', 'title', 'confidence', 'note'],
   properties: {
     player: { type: ['string', 'null'] },
+    sport: { type: ['string', 'null'], enum: ['Football', 'Baseball', 'Basketball', 'Hockey', 'Soccer', 'Racing', 'Other', null] },
     year: { type: ['string', 'null'], description: 'Card year as printed, e.g. "2024" or "2023-24"' },
     set: { type: ['string', 'null'], description: 'Maker and product, e.g. "Panini Prizm", "Topps Chrome"' },
     cardNumber: { type: ['string', 'null'] },
@@ -19908,6 +19909,7 @@ const BIZ_IDENTIFY_SCHEMA = {
     auto: { type: 'boolean' }, relic: { type: 'boolean' }, rookie: { type: 'boolean' },
     grader: { type: ['string', 'null'], description: 'PSA, BGS, SGC or CGC when the card is in a slab' },
     grade: { type: ['string', 'null'], description: 'The grade on the slab label, e.g. "10" or "9.5"' },
+    cert: { type: ['string', 'null'], description: 'The certification number on the slab label, digits only, else null' },
     title: { type: 'string', description: 'An eBay-style title: year, set, player, parallel, #number, /print run, RC, AUTO, grader grade' },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
     note: { type: ['string', 'null'], description: 'One short line on anything unsure, else null' },
@@ -19924,6 +19926,43 @@ const _imgMedia = (dataUrl) => {
   const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,/.exec(String(dataUrl || ''));
   return m ? m[1] : 'image/jpeg';
 };
+// Card photos for eBay listings (owner, Oct 2026). eBay copies a listing's
+// picture from a public address (PicURL), so a photo read by /api/biz/identify
+// is kept in the R2 bucket under biz/, named by its content: unguessable, and
+// the same photo twice is one file. worker.js serves /biz/img/ from R2; this
+// route serves them off-Workers (local and tests) from memory.
+const BIZ_IMG_NAME = /^[a-f0-9]{24}\.jpg$/;
+const _bizImgMem = new Map();
+async function _bizStorePhoto(b64) {
+  const bytes = new Uint8Array(Buffer.from(String(b64 || ''), 'base64'));
+  if (!bytes.length || bytes.length > 6 * 1024 * 1024) return null;
+  const name = Buffer.from(await webCrypto.subtle.digest('SHA-256', bytes)).toString('hex').slice(0, 24) + '.jpg';
+  const bucket = getPhotos();
+  if (bucket) await bucket.put('biz/' + name, bytes, { httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' } });
+  else _bizImgMem.set(name, bytes);
+  return '/biz/img/' + name;
+}
+app.get('/biz/img/:name', (req, res) => {
+  const name = String(req.params.name || '');
+  const hit = BIZ_IMG_NAME.test(name) && _bizImgMem.get(name);
+  if (!hit) return res.status(404).send('Not found');
+  res.set('Content-Type', 'image/jpeg').set('Cache-Control', 'public, max-age=31536000, immutable').send(Buffer.from(hit));
+});
+// The eBay listing file for cards read off photos: Seller Hub > Reports >
+// Uploads takes it as is (BIZ.ebayAddCsv). Photo addresses are made absolute.
+app.post('/api/biz/ebay-listings', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const cards = Array.isArray(req.body && req.body.cards) ? req.body.cards.slice(0, 200) : [];
+  if (!cards.length) return res.status(400).json({ error: 'Pick the cards to list.' });
+  const site = process.env.SITE_URL || 'https://thecardhuddle.com';
+  const d = (req.body && req.body.defaults) || {};
+  const clean = (v, n) => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').trim().slice(0, n);
+  const out = BIZ.ebayAddCsv(cards.map(c => ({ ...c,
+    photoUrl: /^\/biz\/img\/[a-f0-9]{24}\.jpg$/.test(String(c.photoUrl || '')) ? site + c.photoUrl : '' })), {
+    zip: clean(d.zip, 12), shipping: clean(d.shipping, 80), returns: clean(d.returns, 80), payment: clean(d.payment, 80),
+    condition: clean(d.condition, 20) });
+  res.set('Cache-Control', 'no-store').json(out);
+});
 app.post('/api/biz/identify', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const b64 = _cleanImageBase64(req.body && req.body.image);
@@ -19957,7 +19996,11 @@ app.post('/api/biz/identify', async (req, res) => {
     const grade = card.grader && card.grade ? `${String(card.grader).toUpperCase()} ${card.grade}` : null;
     let value = null;
     try { value = card.title ? await _bizValue({ title: String(card.title).slice(0, 200), grade }) : null; } catch (_) { value = null; }
-    res.json({ card: { ...card, grade: grade || null, gradeNumber: card.grade || null }, value, hints });
+    // The photo is kept for the eBay listing file, which links each card's
+    // picture (_bizStorePhoto). A failure only leaves the listing without one.
+    let photoUrl = null;
+    try { photoUrl = await _bizStorePhoto(b64); } catch (err) { console.error('[biz/identify] photo:', err && err.message); }
+    res.json({ card: { ...card, grade: grade || null, gradeNumber: card.grade || null }, value, hints, photoUrl });
   } catch (err) {
     console.error('[biz/identify]', err && err.status, err && err.message);
     res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' });

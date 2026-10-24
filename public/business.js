@@ -364,6 +364,7 @@
     $('ph-acts').hidden = !phRows.length;
     $('ph-add').textContent = `Add ${n} card${n === 1 ? '' : 's'}`;
     $('ph-add').disabled = !n;
+    $('ph-ebay').disabled = !n;
     const done = phRows.length - busy;
     $('ph-status').textContent = !phRows.length ? '' : busy ? `Reading ${done} of ${phRows.length}…` : `${phRows.length} photo${phRows.length === 1 ? '' : 's'} read. Check each one, then add.`;
   }
@@ -375,7 +376,7 @@
       try {
         const out = await api('/api/biz/identify', { method: 'POST', body: JSON.stringify({ image: await shrinkPhoto(r.file) }) });
         const c = out.card || {};
-        r.state = 'done'; r.confidence = c.confidence; r.note = c.note; r.value = out.value;
+        r.state = 'done'; r.confidence = c.confidence; r.note = c.note; r.value = out.value; r.card = c; r.photoUrl = out.photoUrl || null;
         const f = (k) => r.el.querySelector('.ph-' + k);
         f('title').value = c.title || '';
         f('grade').value = c.grade || '';
@@ -425,6 +426,51 @@
       $('invstatus').textContent = `Added ${items.length} card${items.length === 1 ? '' : 's'} from photos.`;
       loadInventory();
     } catch (err) { $('ph-status').textContent = err.message; phCount(); }
+  });
+
+  // The eBay listing file (owner, Oct 2026): the ticked cards, as read and as
+  // edited here, in eBay's bulk upload format (/api/biz/ebay-listings). The
+  // seller's ZIP and eBay policy names are kept on this device.
+  const EBAY_DEFAULTS_KEY = 'bizEbayListing';
+  const ebayDefaults = () => { try { return JSON.parse(localStorage.getItem(EBAY_DEFAULTS_KEY) || '{}'); } catch (_) { return {}; } };
+  (() => {
+    const d = ebayDefaults();
+    for (const k of ['zip', 'shipping', 'returns', 'payment', 'condition']) {
+      const el = $('pe-' + k); if (!el) continue;
+      if (d[k]) el.value = d[k];
+      el.addEventListener('change', () => {
+        const next = ebayDefaults(); next[k] = el.value.trim();
+        try { localStorage.setItem(EBAY_DEFAULTS_KEY, JSON.stringify(next)); } catch (_) { /* private mode: asked again next time */ }
+      });
+    }
+  })();
+  $('ph-ebay').addEventListener('click', async () => {
+    const take = phRows.filter(r => r.state === 'done' && r.el.querySelector('.ph-pick').checked);
+    const cards = take.map(r => {
+      const c = r.card || {};
+      return { title: r.el.querySelector('.ph-title').value.trim(), grade: r.el.querySelector('.ph-grade').value.trim(),
+        price: r.el.querySelector('.ph-price').value, player: c.player, year: c.year, set: c.set, cardNumber: c.cardNumber,
+        parallel: c.parallel, printRun: c.printRun, auto: c.auto, rookie: c.rookie, sport: c.sport, cert: c.cert, photoUrl: r.photoUrl };
+    });
+    if (!cards.length) return;
+    $('ph-ebay').disabled = true;
+    let msg;
+    try {
+      const d = ebayDefaults();
+      const out = await api('/api/biz/ebay-listings', { method: 'POST', body: JSON.stringify({ cards, defaults: d }) });
+      if (out.listed) {
+        const url = URL.createObjectURL(new Blob([out.csv], { type: 'text/csv' }));
+        const a = Object.assign(document.createElement('a'), { href: url, download: `ebay-listings-${new Date().toISOString().slice(0, 10)}.csv` });
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+      const why = out.skipped.length ? ` Left out ${out.skipped.length}: ${out.skipped.slice(0, 3).map(x => `${x.title || 'a card'} (${x.why})`).join('; ')}.` : '';
+      const missing = !d.zip ? ' Add your ZIP and eBay policies under eBay listing settings so the upload goes through.' : '';
+      msg = out.listed
+        ? `Downloaded ${out.listed} listing${out.listed === 1 ? '' : 's'}. Upload the file in eBay: Seller Hub, Reports, Uploads.${why}${missing}`
+        : `Nothing to list.${why}`;
+    } catch (err) { msg = err.message; }
+    phCount();
+    $('ph-status').textContent = msg;
   });
 
   // CSV: quoted fields, commas inside quotes, a header row.

@@ -985,6 +985,16 @@ export default {
           'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable' } });
       }
+      // Business card photos for eBay listings (server.js _bizStorePhoto),
+      // under biz/ in R2, named by content.
+      if (url.pathname.startsWith('/biz/img/') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
+        const name = url.pathname.slice('/biz/img/'.length);
+        if (!/^[a-f0-9]{24}\.jpg$/.test(name)) return new Response('Not found', { status: 404 });
+        const obj = await env.PHOTOS.get('biz/' + name);
+        if (!obj) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'public, max-age=60' } });
+        return new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers: {
+          'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
+      }
       if (url.pathname === '/api/photo' && (request.method === 'GET' || request.method === 'HEAD')) {
         return servePhoto(request, env, ctx, url);
       }
