@@ -19913,25 +19913,30 @@ app.post('/api/biz/compare', async (req, res) => {
 // over them. The answer comes back in a fixed shape (structured output), then
 // is priced like any inventory card.
 const BIZ_IDENTIFY_PER_DAY = 400;          // photos a seller may identify a day (owner unmetered)
+// Written the way the structured-output docs list as supported: a value that
+// may be missing is anyOf [type, null], not a type array. The type-array form
+// (["string", "null"]) is not on that list, and every photo read failed with
+// "The AI did not answer" while Ask, which sends no schema, worked.
+const _orNull = (t, extra = {}) => ({ anyOf: [{ type: t, ...extra }, { type: 'null' }] });
 const BIZ_IDENTIFY_SCHEMA = {
   type: 'object', additionalProperties: false,
   required: ['player', 'sport', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'cert', 'title', 'confidence', 'note'],
   properties: {
-    player: { type: ['string', 'null'] },
-    sport: { type: ['string', 'null'], enum: ['Football', 'Baseball', 'Basketball', 'Hockey', 'Soccer', 'Racing', 'Other', null] },
-    year: { type: ['string', 'null'], description: 'Card year as printed, e.g. "2024" or "2023-24"' },
-    set: { type: ['string', 'null'], description: 'Maker and product, e.g. "Panini Prizm", "Topps Chrome"' },
-    cardNumber: { type: ['string', 'null'] },
-    parallel: { type: ['string', 'null'], description: 'Parallel or insert name, "Base" if none' },
-    printRun: { type: ['integer', 'null'], description: 'The N in a serial stamp like 12/N, else null' },
-    serial: { type: ['string', 'null'], description: 'The serial stamp as printed, e.g. "12/99"' },
+    player: _orNull('string'),
+    sport: _orNull('string', { enum: ['Football', 'Baseball', 'Basketball', 'Hockey', 'Soccer', 'Racing', 'Other'] }),
+    year: { ..._orNull('string'), description: 'Card year as printed, e.g. "2024" or "2023-24"' },
+    set: { ..._orNull('string'), description: 'Maker and product, e.g. "Panini Prizm", "Topps Chrome"' },
+    cardNumber: _orNull('string'),
+    parallel: { ..._orNull('string'), description: 'Parallel or insert name, "Base" if none' },
+    printRun: { ..._orNull('integer'), description: 'The N in a serial stamp like 12/N, else null' },
+    serial: { ..._orNull('string'), description: 'The serial stamp as printed, e.g. "12/99"' },
     auto: { type: 'boolean' }, relic: { type: 'boolean' }, rookie: { type: 'boolean' },
-    grader: { type: ['string', 'null'], description: 'PSA, BGS, SGC or CGC when the card is in a slab' },
-    grade: { type: ['string', 'null'], description: 'The grade on the slab label, e.g. "10" or "9.5"' },
-    cert: { type: ['string', 'null'], description: 'The certification number on the slab label, digits only, else null' },
+    grader: { ..._orNull('string'), description: 'PSA, BGS, SGC or CGC when the card is in a slab' },
+    grade: { ..._orNull('string'), description: 'The grade on the slab label, e.g. "10" or "9.5"' },
+    cert: { ..._orNull('string'), description: 'The certification number on the slab label, digits only, else null' },
     title: { type: 'string', description: 'An eBay-style title: year, set, player, parallel, #number, /print run, RC, AUTO, grader grade' },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-    note: { type: ['string', 'null'], description: 'One short line on anything unsure, else null' },
+    note: { ..._orNull('string'), description: 'One short line on anything unsure, else null' },
   },
 };
 const BIZ_IDENTIFY_SYSTEM = 'You identify sports trading cards from a photo for a card seller\'s inventory. '
@@ -19941,6 +19946,19 @@ const BIZ_IDENTIFY_SYSTEM = 'You identify sports trading cards from a photo for 
   + 'the wrong parallel, number or print run, so trust what you can read on the card over them. '
   + 'Never invent a serial number or grade you cannot see. Use null for anything you cannot read, and say "low" confidence '
   + 'when the photo does not show enough to be sure.';
+// The same shape in words, for the retry without a schema.
+const BIZ_IDENTIFY_JSON_NOTE = 'Reply with only one JSON object, no other text, with exactly these keys: player, sport '
+  + '(Football, Baseball, Basketball, Hockey, Soccer, Racing or Other), year, set, cardNumber, parallel, printRun (a number), '
+  + 'serial, auto, relic, rookie (true or false), grader, grade, cert, title, confidence (high, medium or low), note. '
+  + 'Use null for anything you cannot read.';
+// The card object from the reply: the whole text, else the first {...} in it.
+function _bizCardJson(text) {
+  const t = String(text || '').trim();
+  for (const s of [t, (t.match(/\{[\s\S]*\}/) || [''])[0]]) {
+    try { const o = JSON.parse(s); if (o && typeof o === 'object' && !Array.isArray(o)) return o; } catch (_) { /* next */ }
+  }
+  return null;
+}
 const _imgMedia = (dataUrl) => {
   const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,/.exec(String(dataUrl || ''));
   return m ? m[1] : 'image/jpeg';
@@ -19997,21 +20015,33 @@ app.post('/api/biz/identify', async (req, res) => {
   try {
     const hints = await ebayImageSearch(b64, 6).then(r => (r || []).map(x => x.title).filter(Boolean).slice(0, 6)).catch(() => []);
     if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
-    const r = await _bizClient.messages.create({
+    const ask = (strict) => _bizClient.messages.create({
       model: BIZ_AI_MODEL,
-      max_tokens: 2000,
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: BIZ_IDENTIFY_SCHEMA } },
-      system: BIZ_IDENTIFY_SYSTEM,
+      // Room for the model's thinking as well as the answer: Haiku 5.5 thinks
+      // by default, and a cap of 2,000 could cut the JSON off.
+      max_tokens: 16000,
+      output_config: strict ? { effort: 'low', format: { type: 'json_schema', schema: BIZ_IDENTIFY_SCHEMA } } : { effort: 'low' },
+      system: BIZ_IDENTIFY_SYSTEM + (strict ? '' : ' ' + BIZ_IDENTIFY_JSON_NOTE),
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: _imgMedia(req.body.image), data: b64 } },
         { type: 'text', text: hints.length
           ? 'Image-search listing titles (hints, may be wrong):\n' + hints.map(t => '- ' + t).join('\n') + '\n\nIdentify this card.'
           : 'No image-search hints for this photo. Identify this card.' }] }],
     });
+    // Strict JSON first; if the API turns the schema down (a 400), the same
+    // question once more with the shape asked for in words and read leniently,
+    // so a schema the API will not take never stops photos being read.
+    let r;
+    try { r = await ask(true); }
+    catch (err) {
+      if (!(err && err.status === 400)) throw err;
+      console.error('[biz/identify] schema refused, asking without it:', err.message);
+      r = await ask(false);
+    }
     if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'This photo could not be read.' });
     const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    let card;
-    try { card = JSON.parse(text); } catch (_) { return res.status(502).json({ error: 'The card could not be read. Try another photo.' }); }
+    const card = _bizCardJson(text);
+    if (!card) return res.status(502).json({ error: 'The card could not be read. Try another photo.' });
     const grade = card.grader && card.grade ? `${String(card.grader).toUpperCase()} ${card.grade}` : null;
     let value = null;
     try { value = card.title ? await _bizValue({ title: String(card.title).slice(0, 200), grade }) : null; } catch (_) { value = null; }
@@ -20022,7 +20052,9 @@ app.post('/api/biz/identify', async (req, res) => {
     res.json({ card: { ...card, grade: grade || null, gradeNumber: card.grade || null }, value, hints, photoUrl });
   } catch (err) {
     console.error('[biz/identify]', err && err.status, err && err.message);
-    res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' });
+    // The owner sees why, so a failure can be fixed from a screenshot.
+    const why = who === 'owner' && err ? ` (${err.status || 'no status'}: ${String(err.message || err).slice(0, 160)})` : '';
+    res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' + why });
   }
 });
 
@@ -20777,7 +20809,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { BIZ_IDENTIFY_SCHEMA, _bizCardJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

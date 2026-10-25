@@ -287,7 +287,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     // then answers from what came back.
     const calls = [];
     let script = [];
-    S._bizSetClient({ messages: { create: async (body) => { calls.push(JSON.parse(JSON.stringify(body))); return script.shift() || { stop_reason: 'end_turn', content: [{ type: 'text', text: 'done' }] }; } } });
+    S._bizSetClient({ messages: { create: async (body) => { calls.push(JSON.parse(JSON.stringify(body))); const x = script.shift(); if (x instanceof Error) throw x; return x || { stop_reason: 'end_turn', content: [{ type: 'text', text: 'done' }] }; } } });
     process.env.ANTHROPIC_API_KEY = 'test'; process.env.BIZ_AI_PROVIDER = 'anthropic';
     script = [
       { stop_reason: 'tool_use', content: [
@@ -363,6 +363,23 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     const bjs3 = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
     check('  ...downloaded from the photo drawer, with the ZIP and eBay policy names kept on the device',
       /\/api\/biz\/ebay-listings/.test(bjs3) && /bizEbayListing/.test(bjs3) && /id="ph-ebay"/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')));
+    // Every photo read failed while Ask worked (owner, Oct 2026): the schema
+    // used type arrays, which the structured-output docs do not list.
+    const typeArrays = (o) => o && typeof o === 'object' && (Array.isArray(o.type) || Object.values(o).some(typeArrays));
+    check('the photo schema uses only forms structured outputs supports (anyOf for a missing value, no type arrays)',
+      !typeArrays(S.BIZ_IDENTIFY_SCHEMA) && S.BIZ_IDENTIFY_SCHEMA.properties.player.anyOf.length === 2);
+    calls.length = 0;
+    const apiErr = (status, message) => Object.assign(new Error(message), { status });
+    script = [apiErr(400, 'output_config.format.schema: unsupported'), { stop_reason: 'end_turn', content: [{ type: 'text',
+      text: 'Here it is:\n{"player":"Bo Nix","sport":"Football","year":"2024","set":"Panini Prizm","cardNumber":"309","parallel":"Base","printRun":null,"serial":null,"auto":false,"relic":false,"rookie":true,"grader":null,"grade":null,"cert":null,"title":"2024 Panini Prizm Bo Nix #309 RC","confidence":"high","note":null}' }] }];
+    const id5 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('  ...and if the API still turns the schema down, the photo is read again without it, and the card still comes back',
+      id5.status === 200 && id5.body.card.player === 'Bo Nix' && calls.length === 2 && calls[0].output_config.format
+      && !calls[1].output_config.format && /only one JSON object/.test(calls[1].system) && calls[1].max_tokens >= 16000, JSON.stringify(id5.body));
+    script = [apiErr(529, 'Overloaded')];
+    const id6 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('  ...and when the AI fails the owner sees why, so it can be fixed from a screenshot',
+      id6.status === 502 && /\(529: Overloaded\)/.test(id6.body.error), JSON.stringify(id6.body));
     const id2 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({}) });
     check('  ...a request with no photo is turned away', id2.status === 400);
     script = [{ stop_reason: 'end_turn', content: [{ type: 'text', text: 'not json' }] }];
