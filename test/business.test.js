@@ -315,6 +315,11 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     calls.length = 0; script = [];
     await call('/api/biz/summary?fresh=1', { headers: K });
     check('  ...while the morning summary stays a single, cheaper call with no tools', calls.length === 1 && !calls[0].tools);
+    check('  ...and only Ask carries the how-to guide, so it can walk a seller through listing on eBay',
+      !/Seller Hub/.test(calls[0].system) && /Seller Hub, Reports, Uploads/.test(S._bizAskSystem()) && /do not\s+also tap "Add cards"/.test(S._bizAskSystem()));
+    const gpage = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');
+    check('  ...and the photo drawer shows the same steps, with links to Seller Hub uploads and eBay business policies',
+      /id="pe-guide"/.test(gpage) && /ebay\.com\/sh\/reports\/uploads/.test(gpage) && /ebay\.com\/bp\/manage/.test(gpage) && /show up twice/.test(gpage));
     // Bulk add from photos (owner, Oct 2026): each photo is one call that
     // reads the card into fields, then it is priced like any other card.
     calls.length = 0;
