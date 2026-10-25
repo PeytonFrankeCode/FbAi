@@ -466,7 +466,7 @@
       const why = out.skipped.length ? ` Left out ${out.skipped.length}: ${out.skipped.slice(0, 3).map(x => `${x.title || 'a card'} (${x.why})`).join('; ')}.` : '';
       const missing = !d.zip ? ' Add your ZIP and eBay policies under eBay listing settings so the upload goes through.' : '';
       msg = out.listed
-        ? `Downloaded ${out.listed} listing${out.listed === 1 ? '' : 's'}. Upload the file in eBay: Seller Hub, Reports, Uploads.${why}${missing}`
+        ? `Downloaded ${out.listed} listing${out.listed === 1 ? '' : 's'}. Upload the file in eBay: Seller Hub, Reports, Uploads (steps below, under "How to list these on eBay").${why}${missing}`
         : `Nothing to list.${why}`;
     } catch (err) { msg = err.message; }
     phCount();

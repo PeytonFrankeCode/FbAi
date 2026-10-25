@@ -19723,7 +19723,7 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
       model: BIZ_AI_MODEL,
       max_tokens: 16000,
       output_config: { effort: 'low' },
-      system: BIZ_AI_SYSTEM + (tools ? ' ' + BIZ_AI_TOOLS_NOTE : ''),
+      system: tools ? _bizAskSystem() : BIZ_AI_SYSTEM,
       ...(tools ? { tools, tool_choice: { type: last ? 'none' : 'auto' } } : {}),
       messages,
     });
@@ -19746,9 +19746,28 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // Each one answers from the same data the collector site shows, through the
 // site's own handlers, so the AI and the pages never disagree.
 const BIZ_AI_TOOL_ROUNDS = 4;
+// How Business itself works, so Ask can answer "how do I…" questions (owner,
+// Oct 2026). The same steps as the guide under the photo drawer's eBay button.
+const BIZ_AI_HELP = 'If the seller asks how to use Card Huddle for Business, answer from this guide with numbered steps. '
+  + 'Listing cards on eBay from photos: (1) Inventory tab, "Add cards from photos": choose up to 40 photos, one card each, '
+  + 'front, straight on; a slab is read from its label. (2) Check each row: title, grade (e.g. "PSA 10", blank for raw) and '
+  + 'price, and untick any marked Unsure that are wrong. (3) The first time, open "eBay listing settings" and enter the ZIP '
+  + 'code, the condition for raw cards, and the shipping, return and payment policy names exactly as they appear in eBay '
+  + 'under Account, Business policies (ebay.com/bp/manage). (4) Tap "Download eBay listing file". (5) On eBay in a web '
+  + 'browser (not the eBay app; on a phone use the desktop site): Seller Hub, Reports, Uploads (ebay.com/sh/reports/uploads), '
+  + 'then "Upload template" and choose the file. (6) eBay takes a few minutes; the results file on that page shows each '
+  + 'listing created or the error to fix, and new listings appear under Seller Hub, Listings. (7) Then on the Inventory tab '
+  + 'tap Sync for the eBay store so the cards come in with their eBay item numbers, which is how sales are tracked; do not '
+  + 'also tap "Add cards" for the same cards, or they appear twice. Other features: the eBay store syncs by username with no '
+  + 'eBay login; "Import a spreadsheet" takes a CSV or an eBay active-listings export; "Bulk reprice to market" downloads an '
+  + 'eBay revise file uploaded the same way; Sales shows profit after fees, and cards gone from eBay are matched to eBay sold '
+  + 'data; Shows builds a price sheet and buy offers. If something is not covered here, say so rather than guess.';
 const BIZ_AI_TOOLS_NOTE = 'You can also look up the rest of Card Huddle with your tools: any card\'s recent sold prices, '
   + 'price estimates, the whole market\'s trend, a player\'s trend and their most-traded cards. Use them whenever a card, '
   + 'player or market question goes beyond the seller\'s own rows, and say the numbers came from Card Huddle sales.';
+// Ask's instructions: the analyst, its lookups, and the how-to guide. The
+// morning summary is sent BIZ_AI_SYSTEM alone, the cheaper call.
+const _bizAskSystem = () => BIZ_AI_SYSTEM + ' ' + BIZ_AI_TOOLS_NOTE + ' ' + BIZ_AI_HELP;
 const BIZ_AI_TOOLS = [
   { name: 'search_sold_sales',
     description: 'Recent completed eBay sales of one card from the Card Huddle database, newest first, with the median. '
@@ -20758,7 +20777,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

@@ -291,6 +291,8 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
 
 .pe-box { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px }
 .pe-box summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fg2) }
+.pe-steps { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 7px; font-size: 13.5px; color: var(--fg2) }
+.pe-steps b { color: var(--fg) } .pe-steps a { color: var(--accent) }
 .pe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 10px }
 
 /* ---- landing ---- */
@@ -546,6 +548,17 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
               <button class="act" type="button" id="ph-ebay" title="A file for eBay's bulk upload: Seller Hub, Reports, Uploads">Download eBay listing file</button>
               <button class="act ghost" type="button" id="ph-clear">Clear</button>
             </div>
+            <details class="pe-box" id="pe-guide"><summary>How to list these on eBay</summary>
+              <ol class="pe-steps">
+                <li><b>Check each card above.</b> Title, grade ("PSA 10", or blank if raw) and price. Untick any that are wrong.</li>
+                <li><b>First time only:</b> fill in <i>eBay listing settings</i> below. Your policy names are in eBay under <a href="https://www.ebay.com/bp/manage" target="_blank" rel="noopener">Account, Business policies</a>; copy them exactly.</li>
+                <li>Tap <b>Download eBay listing file</b>.</li>
+                <li>On eBay in a web browser (not the app; on a phone, use the desktop site), open <a href="https://www.ebay.com/sh/reports/uploads" target="_blank" rel="noopener">Seller Hub, Reports, Uploads</a>, tap <b>Upload template</b> and choose the file.</li>
+                <li>Give eBay a few minutes. The <b>results file</b> on that page shows each listing made, or the error to fix. New listings appear under Seller Hub, Listings.</li>
+                <li>Back here, tap <b>Sync</b> for your eBay store so the cards come in with their eBay item numbers and their sales are tracked. Don't also tap <i>Add cards</i> for them, or they show up twice.</li>
+              </ol>
+              <p class="hint" style="margin:6px 0 0">Stuck? Ask AI, bottom right: "How do I list these on eBay?"</p>
+            </details>
             <details class="pe-box"><summary>eBay listing settings</summary>
               <p class="hint" style="margin:6px 0 10px">Used in the listing file. The policy names are the ones in eBay under Account, Business policies. Kept on this device.</p>
               <div class="pe-grid">
