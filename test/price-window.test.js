@@ -21,6 +21,11 @@ let n = 0;
 for (let c = 1; c <= 13; c++) for (const d of [-60 - c, -95 - c]) ins.run(`b${n++}`, iso(d), `2024 Prizm Bo Nix #${c}`, 2000 + c * 100, 'Bo Nix', '2024', 'Panini Prizm', String(c));
 // Jayden Daniels: 26 sales over 13 cards in the last month.
 for (let c = 1; c <= 13; c++) for (const d of [-3 - c, -10 - c]) ins.run(`j${n++}`, iso(d), `2024 Prizm Jayden Daniels #${c}`, 3000 + c * 100, 'Jayden Daniels', '2024', 'Panini Prizm', String(100 + c));
+// Caleb Williams: repeated prices, the case the folded query counts rather
+// than lists. #1 sells 100, 100, 100, 300, 900 (median 100, the 3rd);
+// #2 sells 100, 300, 300, 900 (median 300, the 2nd); the rest twice at 1000.
+const cw = { 1: [100, 100, 100, 300, 900], 2: [900, 300, 100, 300] };
+for (let c = 1; c <= 13; c++) for (const [i, pr] of (cw[c] || [1000, 1000]).entries()) ins.run(`c${n++}`, iso(-2 - i), `2024 Prizm Caleb Williams #${c}`, pr, 'Caleb Williams', '2024', 'Panini Prizm', String(200 + c));
 // Brock Purdy: too few sales in either window.
 for (let c = 1; c <= 4; c++) ins.run(`p${n++}`, iso(-20 - c), `2022 Prizm Brock Purdy #${c}`, 5000, 'Brock Purdy', '2022', 'Panini Prizm', String(c));
 
@@ -57,6 +62,10 @@ const core = require(path.join(__dirname, '..', 'price-block-core.js'));
     nix && nix.sales === 26 && nix.cards === 13 && nix.from && nix.from <= iso(-100) && nix.to === blocks.to, JSON.stringify(nix && { sales: nix.sales, from: nix.from, to: nix.to }));
   check('  ...while a player who clears the bar in 45 days keeps the 45-day numbers and the site-wide dates',
     jd && jd.sales === 26 && !jd.from, JSON.stringify(jd && { sales: jd.sales, from: jd.from }));
+  const cwp = blocks && blocks.pages['player:caleb-williams'];
+  const med = (no) => { const c = cwp && cwp.top && cwp.top.concat(cwp.rest || []).find(x => / #20[12]$/.test(x.label) && x.label.endsWith('#' + no)); return c && [c.sales, c.median]; };
+  check('each card is priced at its middle sale, repeated prices counted one by one',
+    cwp && cwp.sales === 31 && JSON.stringify(med(201)) === '[5,100]' && JSON.stringify(med(202)) === '[4,300]', JSON.stringify(cwp && { sales: cwp.sales, a: med(201), b: med(202), keys: Object.keys(cwp) }));
   check('  ...and a page short in both windows still prints nothing', blocks && !blocks.pages['player:brock-purdy']);
   check('  ...and the window the page prints is its own', blocks && blocks.from > nix.from
     && core.render(nix, { noun: nix.noun, from: nix.from || blocks.from, to: nix.to || blocks.to }).includes(`${nix.from} to ${nix.to}`));

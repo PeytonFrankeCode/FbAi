@@ -20200,6 +20200,8 @@ const PRICE_BLOCKS_KEY = 'priceblocks:v1';
 const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
 const PRICE_BLOCK_WINDOW_DAYS = 45;
 const PRICE_BLOCK_WIDE_DAYS = 120;
+// The 45-day pass, in ms, past which the 120-day one is not tried that day.
+const PRICE_BLOCK_WIDE_MAX_MAIN_MS = 8000;
 
 // Records that a build was tried, separately from whether it worked.
 //
@@ -20339,19 +20341,43 @@ async function _buildPriceBlocks() {
   // deployment may predate it. Absent, the map simply carries no photos and
   // the block renders exactly as it does today.
   const hasImg = await _nflHasImageColumn(db).catch(() => false);
-  const IMG = hasImg ? ', image_url' : '';
-  const IMGSEL = hasImg ? ', image_url AS img' : '';
 
+  // Shaped like the market queries ("WHY IT IS SHAPED LIKE THIS" there), and
+  // for the same reason (Oct 2026). The first form cleaned the card key for
+  // every sale, and SQLite evaluated each cleaned expression in the SELECT,
+  // in both window PARTITIONs and in the WHERE: some six times a sale. At
+  // ~55,000 sales a day a 45-day window is 2.5M sales, and every build from
+  // Oct 24 on came back "D1 DB exceeded its CPU time limit and was reset",
+  // so the 2-day map expired and the pages lost their prices. On 2.5M
+  // synthetic sales: 86s before, 11s now, the same medians row for row.
+  //
+  //   raw     the filters, then identical sales (same card, same price)
+  //           folded into one row with a count. MATERIALIZED: computed once.
+  //   base    the cleaned keys, once per raw row rather than six times a sale.
+  //   ranked  the median by running count. Position (n + 1) / 2 is the row
+  //           the old ROW_NUMBER picked, so it is the same median; the photo
+  //           is from a real sale at that price.
   const cardAgg = (groupCols, labelCols) => `
-    WITH base AS (
-      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents${IMG},
-             ROW_NUMBER() OVER (PARTITION BY ${groupCols}, ${labelCols} ORDER BY price_cents) AS rn,
-             COUNT(*)   OVER (PARTITION BY ${groupCols}, ${labelCols}) AS n
+    WITH raw AS MATERIALIZED (
+      SELECT year, set_name, player, card_number, price_cents, COUNT(*) AS c${hasImg ? ', MIN(image_url) AS img' : ''}
         FROM sales
-       WHERE ${WHERE} AND sold_date >= ? AND ${groupCols} <> '' AND ${labelCols} <> ''
+       WHERE sold_date >= ? AND ${WHERE}
+       GROUP BY year, set_name, player, card_number, price_cents
+    ),
+    base AS MATERIALIZED (
+      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents, c${hasImg ? ', img' : ''} FROM raw
+    ),
+    ranked AS (
+      SELECT g, label, price_cents, c${hasImg ? ', img' : ''},
+             SUM(c) OVER (PARTITION BY g, label ORDER BY price_cents ROWS UNBOUNDED PRECEDING) AS cum,
+             SUM(c) OVER (PARTITION BY g, label) AS n
+        FROM base WHERE g <> '' AND label <> ''
     )
-    SELECT g, label, n AS sales, price_cents AS median${IMGSEL}
-      FROM base WHERE rn = (n + 1) / 2`;
+    SELECT g, label, n AS sales, price_cents AS median${hasImg ? ', img' : ''}
+      FROM ranked WHERE cum - c < (n + 1) / 2 AND cum >= (n + 1) / 2`;
+  const SET_G = `${Y} || '|' || ${S}`, SET_L = `${P} || ' #' || ${CARDNO}`;
+  const PLAYER_L = `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`;
+  const SPAN = `SELECT MIN(sold_date) AS first, MAX(sold_date) AS last FROM sales WHERE ${WHERE} AND sold_date >= ?`;
 
   // A page that misses the bar on the last 45 days gets a second look over
   // the last 120 (owner, Oct 2026). Plenty of real players and sets trade
@@ -20359,28 +20385,36 @@ async function _buildPriceBlocks() {
   // and those pages sat without prices (and so without ads) for it. The bar
   // itself does not move, and a page priced from the longer window prints its
   // own dates, so the number never claims to be fresher than it is.
+  //
+  // One query at a time, not Promise.all: D1 runs them one after another
+  // anyway, and side by side they only competed for the same CPU budget.
   const wideSince = new Date(Date.now() - PRICE_BLOCK_WIDE_DAYS * 86400000).toISOString().slice(0, 10);
   let setCards, playerCards, span, wideSet, widePlayer, wideSpan;
+  const t0 = Date.now();
   try {
-    [setCards, playerCards, span] = await Promise.all([
-      db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(since).all(),
-      db.prepare(cardAgg(P, `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`)).bind(since).all(),
-      db.prepare(`SELECT MIN(sold_date) AS first, MAX(sold_date) AS last
-                    FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(since).first(),
-    ]);
+    setCards = await db.prepare(cardAgg(SET_G, SET_L)).bind(since).all();
+    playerCards = await db.prepare(cardAgg(P, PLAYER_L)).bind(since).all();
+    span = await db.prepare(SPAN).bind(since).first();
   } catch (err) {
     return failed(`query-failed: ${err && err.message}`);
   }
-  try {
-    [wideSet, widePlayer, wideSpan] = await Promise.all([
-      db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(wideSince).all(),
-      db.prepare(cardAgg(P, `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`)).bind(wideSince).all(),
-      db.prepare(`SELECT MIN(sold_date) AS first, MAX(sold_date) AS last
-                    FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(wideSince).first(),
-    ]);
-  } catch (err) {
-    // The longer look is a bonus: without it the 45-day pages still ship.
-    console.error('[prices] 120-day pass skipped:', err && err.message);
+  // The 120-day window holds nearly three times the sales. When the 45-day
+  // pass was already slow, the longer one would run into D1's CPU limit, and
+  // a query over it resets the database for the whole site, so it is left
+  // out that day rather than tried.
+  const mainMs = Date.now() - t0;
+  if (mainMs > PRICE_BLOCK_WIDE_MAX_MAIN_MS) {
+    console.error(`[prices] 120-day pass skipped: the 45-day pass took ${mainMs}ms`);
+  } else {
+    try {
+      wideSet = await db.prepare(cardAgg(SET_G, SET_L)).bind(wideSince).all();
+      widePlayer = await db.prepare(cardAgg(P, PLAYER_L)).bind(wideSince).all();
+      wideSpan = await db.prepare(SPAN).bind(wideSince).first();
+    } catch (err) {
+      // The longer look is a bonus: without it the 45-day pages still ship.
+      console.error('[prices] 120-day pass skipped:', err && err.message);
+      wideSet = widePlayer = wideSpan = undefined;
+    }
   }
   let attribution = null;
   try { attribution = await _loadJson('subsets/attribution.json'); }
