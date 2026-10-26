@@ -3636,7 +3636,12 @@
       "name": "1954 Topps Chrome City Variations",
       "category": "insert",
       "totalCards": 100,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Refractor (1:2,880 Hobby packs).",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "54CV-1",
