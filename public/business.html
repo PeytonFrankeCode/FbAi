@@ -289,6 +289,17 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
   .aipanel { right: 8px; left: 8px; bottom: max(8px, env(safe-area-inset-bottom, 0px)); width: auto; height: min(78dvh, calc(100dvh - 24px)); border-radius: 18px }
 }
 
+/* AI usage today: bars on Today, a line where each is used */
+.usage { display: grid; gap: 12px }
+.ubar { display: grid; gap: 6px }
+.ubar-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--fg2) }
+.ubar-top b { color: var(--fg); font-variant-numeric: tabular-nums; font-weight: 600 }
+.ubar-track { height: 8px; border-radius: 999px; background: var(--sunk); overflow: hidden }
+.ubar-track i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .4s ease }
+.ubar-track i.warn { background: var(--warn) } .ubar-track i.full { background: var(--down) }
+.usage-line { font-size: 12.5px; color: var(--fg3); font-variant-numeric: tabular-nums }
+.usage-line:empty { display: none }
+.ai-usage { padding: 0 16px 10px; text-align: center }
 .pe-box { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px }
 .pe-box summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fg2) }
 .pe-steps { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 7px; font-size: 13.5px; color: var(--fg2) }
@@ -509,6 +520,7 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
             <div class="acts"><span class="why" id="summaryat"></span><button class="act ghost sm" type="button" id="summaryfresh">Rewrite</button></div>
           </div>
           <div class="panel health" id="health" hidden></div>
+          <div class="panel usage" id="usagebox" hidden></div>
         </div>
       </div>
     </section>
@@ -535,11 +547,12 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
               <button class="act go" type="button" id="a-add" style="padding-block:9px">Add</button>
             </div>
           </div></details>
-        <details class="panel" id="photobox"><summary>Add cards from photos<span class="hint">Up to 40 at once, read by AI</span></summary>
+        <details class="panel" id="photobox"><summary>Add cards from photos<span class="hint">Up to 40 cards a photo, read by AI</span></summary>
           <div class="drawer">
             <label class="photopick"><input type="file" id="ph-files" accept="image/*" multiple>
               <span class="photopick-btn">&#128247; Choose card photos</span>
-              <span class="hint" style="margin:0">One card per photo, the front, straight on and in focus. A slab is read from its label.</span></label>
+              <span class="hint" style="margin:0">One card or up to 40 in a photo: a binder page or cards laid flat, fronts up, straight on and in focus. Fewer cards per photo reads small print (numbers, serials, slab labels) better.</span></label>
+            <div class="usage-line" id="ph-usage"></div>
             <div class="status" id="ph-status" role="status"></div>
             <div class="ph-list" id="ph-list"></div>
             <div class="acts" id="ph-acts" hidden>
@@ -654,6 +667,7 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
       </div>
       <form class="aiform" id="askform"><input id="askq" aria-label="Your question" placeholder="Ask about your business…" autocomplete="off" maxlength="500">
         <button type="submit" id="asksend" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
+      <div class="usage-line ai-usage" id="ai-usage"></div>
     </div>
   </div>
   <p class="foot">Card Huddle for Business &middot; The collector site stays free forever.</p>

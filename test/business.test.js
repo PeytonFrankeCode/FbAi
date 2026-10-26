@@ -367,7 +367,24 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     // used type arrays, which the structured-output docs do not list.
     const typeArrays = (o) => o && typeof o === 'object' && (Array.isArray(o.type) || Object.values(o).some(typeArrays));
     check('the photo schema uses only forms structured outputs supports (anyOf for a missing value, no type arrays)',
-      !typeArrays(S.BIZ_IDENTIFY_SCHEMA) && S.BIZ_IDENTIFY_SCHEMA.properties.player.anyOf.length === 2);
+      !typeArrays(S.BIZ_IDENTIFY_SCHEMA) && S.BIZ_IDENTIFY_SCHEMA.properties.cards.items.properties.player.anyOf.length === 2);
+    // Up to 40 cards in one photo (owner, Oct 2026): one call returns them
+    // all, each priced, with its outline for the page to cut out its picture.
+    calls.length = 0;
+    const two = { cards: [
+      { player: 'Bo Nix', sport: 'Football', year: '2024', set: 'Panini Prizm', cardNumber: '309', parallel: 'Silver', printRun: null, serial: null, auto: false, relic: false, rookie: true, grader: null, grade: null, cert: null, title: '2024 Prizm Bo Nix Silver #309 RC', confidence: 'high', note: null, box: { x: 0.05, y: 0.05, w: 0.3, h: 0.4 } },
+      { player: 'Jayden Daniels', sport: 'Football', year: '2024', set: 'Panini Prizm', cardNumber: '347', parallel: 'Base', printRun: null, serial: null, auto: false, relic: false, rookie: true, grader: 'PSA', grade: '10', cert: null, title: '2024 Prizm Jayden Daniels #347 RC PSA 10', confidence: 'medium', note: 'Small in the photo', box: { x: 0.4, y: 0.05, w: 0.3, h: 0.4 } }] };
+    script = [{ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(two) }] }];
+    const before = (await call('/api/biz/usage', { headers: K })).body;
+    const id7 = await call('/api/biz/identify', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('a photo of several cards comes back as one row per card, each priced, with its outline in the photo',
+      id7.status === 200 && id7.body.cards.length === 2 && id7.body.cards[0].card.player === 'Bo Nix' && id7.body.cards[0].value
+      && id7.body.cards[1].card.grade === 'PSA 10' && id7.body.cards[1].card.box.x === 0.4 && /up to 40/.test(calls[0].system), JSON.stringify(id7.body).slice(0, 400));
+    const crop = await call('/api/biz/photo', { method: 'POST', headers: K, body: JSON.stringify({ image: photo }) });
+    check('  ...and each card\'s own cut-out picture can be stored for its eBay listing',
+      crop.status === 200 && /^\/biz\/img\/[a-f0-9]{24}\.jpg$/.test(crop.body.photoUrl));
+    check('the usage bars read today\'s cards and questions against the limits, and when they reset (the owner has none)',
+      before.unlimited === true && before.cards.limit === 400 && before.asks.limit === 40 && Date.parse(before.resetsAt) > Date.now());
     calls.length = 0;
     const apiErr = (status, message) => Object.assign(new Error(message), { status });
     script = [apiErr(400, 'output_config.format.schema: unsupported'), { stop_reason: 'end_turn', content: [{ type: 'text',
