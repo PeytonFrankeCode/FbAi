@@ -172,6 +172,19 @@ const port = server.address().port;
 const K = { 'x-admin-key': process.env.ADMIN_PASSWORD, 'content-type': 'application/json' };
 const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${port}${p}`, o); return { status: r.status, body: await r.json().catch(() => ({})) }; };
 (async () => {
+  // Paused (owner, Oct 2026): closed to everyone but the owner, who keeps it all.
+  const me0 = await call('/api/biz/me');
+  const brief0 = await call('/api/biz/brief');
+  const own0 = await call('/api/biz/brief', { headers: K });
+  const co0 = await call('/api/biz/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const wl0 = await call('/api/biz/waitlist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'shop@example.com', website: 'bot' }) });  // the bot path: answered, not stored
+  const bhtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');
+  check('while paused, Business answers 503 to everyone but the owner, checkout is shut and the waitlist stays open',
+    me0.body.paused === true && me0.body.checkoutOpen === false && brief0.status === 503 && brief0.body.paused === true
+    && own0.status === 200 && co0.status === 503 && wl0.status === 200 && wl0.body.ok,
+    JSON.stringify({ me: me0.body, brief: brief0.status, own: own0.status, co: co0.status, wl: wl0.status }));
+  check('  ...and the page says so and is kept out of search', /id="pausedbar"/.test(bhtml) && /content="noindex/.test(bhtml));
+  S._bizSetPaused(false);
   check('the business API is closed without the admin key', (await call('/api/biz/inventory')).status === 401 && (await call('/api/biz/brief')).status === 401);
   await call('/api/biz/inventory', { method: 'POST', headers: K, body: JSON.stringify({ mode: 'replace', items: [{ title: '2024 Prizm Bo Nix Silver #309', price: 80, cost: 20, listed: new Date(now - 30 * DAY).toISOString() }] }) });
   const val = await call('/api/biz/value', { method: 'POST', headers: K, body: '{}' });
