@@ -8400,6 +8400,24 @@ to { opacity: 1; transform: translateY(0); }
 .ca-chg.down { color: #e0655f; background: rgba(224,101,95,0.12); }
 .ca-chart-wrap { position: relative; height: 190px; }
 .ca-note { font-size: 0.64rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4; }
+/* ---- Card analysis: price by grade ---- */
+.ca-grades { margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
+.ca-grades-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.4rem; }
+.ca-grades-sub { font-size: 0.68rem; color: var(--text-muted); }
+.ca-grades-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.ca-grades-table th { font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); text-align: left; padding: 0.3rem 0.45rem; }
+.ca-grades-table td { white-space: nowrap; padding: 0.45rem; border-top: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+.ca-grades-table .r { text-align: right; }
+.ca-grades-table td b { color: var(--text-primary); }
+.ca-grades-table tbody tr { cursor: pointer; }
+.ca-grades-table tbody tr:hover td { background: rgba(94, 206, 153, 0.06); }
+.ca-grades-table tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ca-grades-table tr.on td { background: rgba(94, 206, 153, 0.12); }
+.ca-grades-table tr.on td:first-child { box-shadow: inset 3px 0 0 var(--accent); color: var(--text-primary); font-weight: 600; }
+.ca-grades-x { font-size: 0.64rem; color: var(--accent); font-weight: 600; margin-left: 0.25rem; }
+.ca-grades-when { font-size: 0.68rem; color: var(--text-muted); }
+.ca-grades { container-type: inline-size; }
+@container (max-width: 380px) { .ca-grades-range { display: none; } }
 /* ---- Card analysis: grade selector ---- */
 .ca-chart-empty {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;

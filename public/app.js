@@ -18351,6 +18351,8 @@ function _caReset(keepVisible) {
   if (listEl) listEl.innerHTML = '';
   const liveEl = document.getElementById('ca-live');
   if (liveEl) { liveEl.innerHTML = ''; liveEl.classList.add('hidden'); }
+  const gradesEl = document.getElementById('ca-grades');
+  if (gradesEl) { gradesEl.innerHTML = ''; gradesEl.classList.add('hidden'); }
   // Hidden on every reset: a stale list would offer to switch to parallels of
   // whichever card was open before this one.
   const parSel = document.getElementById('ca-parallel-select');
@@ -18470,6 +18472,40 @@ function _caRenderEstimatedView(entry) {
   _caSyncCombos();
   _caRenderPrice({ ...entry.estimate, parallelName: _caParallelLabel(entry) });
   renderChartReadout('ca-point', '');
+  const gradesEl = document.getElementById('ca-grades');
+  if (gradesEl) gradesEl.classList.add('hidden');
+}
+
+// "Price by grade": each grade this card has sold in, most sold first (the
+// server's order), with its typical price, range, sales and last sale. The
+// grade on the chart is marked; a row switches the chart to its grade.
+const _caShortDate = (d) => { const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? `${d}T12:00:00` : d); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+function _caRenderGrades(active) {
+  const el = document.getElementById('ca-grades');
+  if (!el) return;
+  const grades = (_caData && _caData.grades) || [];
+  if (!grades.length) { el.innerHTML = ''; el.classList.add('hidden'); return; }
+  const money = (v) => (v == null ? '-' : `$${_caNum(v)}`);
+  const raw = grades.find(g => g.label === 'Raw');
+  el.innerHTML = `<div class="ca-grades-head"><span class="ca-title">Price by grade</span><span class="ca-grades-sub">All sales on record</span></div>
+    <table class="ca-grades-table"><thead><tr><th>Grade</th><th class="r">Typical</th><th class="r ca-grades-range">Range</th><th class="r">Sales</th><th class="r">Last sold</th></tr></thead><tbody>${
+    grades.slice(0, 8).map(g => {
+      const x = raw && g !== raw && raw.median > 0 && g.median > 0 ? g.median / raw.median : null;
+      return `<tr class="${g.label === active ? 'on' : ''}" data-grade="${escHtml(g.label)}" tabindex="0" role="button" aria-pressed="${g.label === active}">
+        <td class="ca-grades-g">${escHtml(g.label)}${x && x >= 1.5 ? ` <span class="ca-grades-x">${x >= 10 ? Math.round(x) : x.toFixed(1)}x raw</span>` : ''}</td>
+        <td class="r"><b>${money(g.median)}</b></td>
+        <td class="r ca-grades-range">${g.low != null && g.high != null && g.high !== g.low ? `${money(g.low)}–${money(g.high)}` : '-'}</td>
+        <td class="r">${g.sales}</td>
+        <td class="r">${g.lastSale ? `${money(g.lastSale.price)} <span class="ca-grades-when">${_caShortDate(g.lastSale.date)}</span>` : '-'}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  el.classList.remove('hidden');
+  const pick = (tr) => {
+    const sel = document.getElementById('ca-grade-select');
+    if (!tr || !sel || sel.disabled || sel.value === tr.dataset.grade) return;
+    sel.value = tr.dataset.grade; _caSyncCombos(); _caRenderChart(sel.value);
+  };
+  el.onclick = (e) => pick(e.target.closest('tr[data-grade]'));
+  el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target.closest('tr[data-grade]')); } };
 }
 
 const _caParallelLabel = (e) => `${e.name}${e.printRun ? (e.printRun === 1 ? ' 1/1' : ` /${e.printRun}`) : ''}`;
@@ -18536,6 +18572,7 @@ function _caRenderChart(label) {
     _caRange = gAll && _caRangePoints(gAll, '30').length >= 2 ? '30' : 'all';
   }
   _caRenderRange(gAll);
+  _caRenderGrades(gAll && gAll.label);
   const rangePts = _caRangePoints(gAll, _caRange);
   const rs = _caRangeStats(rangePts);
   const span = { '7': '7d', '30': '30d', '90': '90d', '365': '1y' }[_caRange];

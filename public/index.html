@@ -280,7 +280,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=2e5e5958ee" />
+  <link rel="stylesheet" href="style.css?v=1f64c6cfa0" />
 
 
 </head>
@@ -1481,6 +1481,10 @@
             <p class="chart-readout-hint">Tap or drag along the chart to see each day's price.</p>
             <p id="ca-spikes" class="ca-note hidden"></p>
             <p class="ca-note">Each grade is tracked separately — a graded copy and a raw one are the same card but different markets.</p>
+            <!-- Every grade at a glance (owner, Oct 2026): what each sells for,
+                 its range and its last sale, beside the chart on a computer
+                 where the column below it sat empty. A row picks that grade. -->
+            <div id="ca-grades" class="ca-grades hidden"></div>
             </div>
             <!-- Recommended price for the selected grade: the answer most
                  people opened this for, so it sits with the sale price. -->
@@ -2006,7 +2010,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
-  <script src="app.js?v=22cf7e30b2"></script>
+  <script src="app.js?v=e73acb6b08"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
   {
