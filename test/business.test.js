@@ -362,7 +362,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
       && !/\s$/.test(B.ebayTitle('2024 Panini Prizm Football Bo Nix Silver Prizm Rookie Card RC #309 PSA 10 Gem Mint Broncos Denver QB')));
     const bjs3 = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.js'), 'utf8');
     check('  ...downloaded from the photo drawer, with the ZIP and eBay policy names kept on the device',
-      /\/api\/biz\/ebay-listings/.test(bjs3) && /bizEbayListing/.test(bjs3) && /id="ph-ebay"/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')));
+      /\/api\/biz\/ebay-listings/.test(bjs3) && /bizEbayListing/.test(bjs3) && /navigator\.share\(\{ files/.test(bjs3) && /id="ph-ebay-out"/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')) && /id="ph-ebay"/.test(fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8')));
     // Every photo read failed while Ask worked (owner, Oct 2026): the schema
     // used type arrays, which the structured-output docs do not list.
     const typeArrays = (o) => o && typeof o === 'object' && (Array.isArray(o.type) || Object.values(o).some(typeArrays));

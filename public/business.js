@@ -458,7 +458,7 @@
   });
   function phClear() {
     phRows.forEach(r => { if (r.thumb) URL.revokeObjectURL(r.thumb); });
-    phRows = []; $('ph-list').innerHTML = ''; phCount();
+    phRows = []; $('ph-list').innerHTML = ''; $('ph-ebay-out').hidden = true; phCount();
   }
   $('ph-clear').addEventListener('click', phClear);
   $('ph-add').addEventListener('click', async () => {
@@ -521,9 +521,12 @@
         price: r.el.querySelector('.ph-price').value, player: c.player, year: c.year, set: c.set, cardNumber: c.cardNumber,
         parallel: c.parallel, printRun: c.printRun, auto: c.auto, rookie: c.rookie, sport: c.sport, cert: c.cert, photoUrl: r.photoUrl };
     });
-    if (!cards.length) return;
+    const out = $('ph-ebay-out');
+    if (!cards.length) { out.hidden = false; out.textContent = 'Tick at least one card that has been read.'; return; }
     $('ph-ebay').disabled = true;
-    let msg;
+    $('ph-ebay').textContent = 'Making the file…';
+    out.hidden = false; out.textContent = 'Making the eBay file…';
+    let msg, file = null;
     try {
       // A card cut from a photo of several gets its own picture stored now,
       // four at a time, so its listing shows that card alone.
@@ -538,21 +541,44 @@
         }
       }));
       const d = ebayDefaults();
-      const out = await api('/api/biz/ebay-listings', { method: 'POST', body: JSON.stringify({ cards, defaults: d }) });
-      if (out.listed) {
-        const url = URL.createObjectURL(new Blob([out.csv], { type: 'text/csv' }));
-        const a = Object.assign(document.createElement('a'), { href: url, download: `ebay-listings-${new Date().toISOString().slice(0, 10)}.csv` });
-        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+      const res = await api('/api/biz/ebay-listings', { method: 'POST', body: JSON.stringify({ cards, defaults: d }) });
+      if (res.listed) {
+        file = new File([res.csv], `ebay-listings-${new Date().toISOString().slice(0, 10)}.csv`, { type: 'text/csv' });
+        // Elsewhere the file saves at once. An iPhone ignores a download that
+        // does not come straight from a tap, and the pictures and the file
+        // took a while, so there it waits for the Save button below.
+        if (!IS_IOS) saveFile(file);
       }
-      const why = out.skipped.length ? ` Left out ${out.skipped.length}: ${out.skipped.slice(0, 3).map(x => `${x.title || 'a card'} (${x.why})`).join('; ')}.` : '';
+      const why = res.skipped.length ? ` Left out ${res.skipped.length}: ${res.skipped.slice(0, 3).map(x => `${x.title || 'a card'} (${x.why})`).join('; ')}.` : '';
       const missing = !d.zip ? ' Add your ZIP and eBay policies under eBay listing settings so the upload goes through.' : '';
-      msg = out.listed
-        ? `Downloaded ${out.listed} listing${out.listed === 1 ? '' : 's'}. Upload the file in eBay: Seller Hub, Reports, Uploads (steps below, under "How to list these on eBay").${why}${missing}`
+      msg = res.listed
+        ? `${IS_IOS ? 'Ready' : 'Downloaded'}: ${res.listed} listing${res.listed === 1 ? '' : 's'}. Upload the file in eBay: Seller Hub, Reports, Uploads (steps below, under "How to list these on eBay").${why}${missing}`
         : `Nothing to list.${why}`;
-    } catch (err) { msg = err.message; }
+    } catch (err) { msg = `Could not make the file: ${err.message}`; }
     phCount();
-    $('ph-status').textContent = msg;
+    $('ph-ebay').textContent = 'Download eBay listing file';
+    // Shown by the button, where it was tapped: the status line sits above
+    // the list and is off screen after scrolling down a long one.
+    out.textContent = msg;
+    if (file) {
+      const b = Object.assign(document.createElement('button'), { type: 'button', className: 'act go', textContent: IS_IOS ? `Save ${file.name}` : 'Download again' });
+      b.addEventListener('click', () => saveFile(file));
+      out.appendChild(b);
+    }
   });
+  const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // On a phone the share sheet saves to Files (or AirDrops to a computer),
+  // which works in Safari and from the home-screen app alike; a blob link,
+  // the usual way, does nothing in the home-screen app.
+  async function saveFile(file) {
+    if (IS_IOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: file.name }); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(file);
+    const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
 
   // CSV: quoted fields, commas inside quotes, a header row.
   function parseCsv(text) {
