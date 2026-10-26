@@ -125,6 +125,14 @@ const bo = B.buyOffer([{ title: 'A', value: { market: 100, n: 5 } }, { title: 'B
 check('a buy offer is 60% of the priced market value, the unpriced card listed apart',
   bo.market === 150 && bo.offer === 90 && bo.cards.length === 2 && bo.unpriced.length === 1 && bo.unpriced[0].title === 'C', JSON.stringify(bo));
 
+const ba = B.buyOffer([{ title: 'A', value: { market: 100, n: 5 }, agreed: 70 }, { title: 'B', qty: 2, value: { market: 25, n: 4 } }, { title: 'C', value: { market: null, n: 1 }, agreed: 15 }, { title: 'D', value: null }], 60);
+check('a price both sides agreed replaces the offer for that card, and counts a card sales could not price',
+  ba.market === 150 && ba.offer === 90 && ba.pay === 70 + 30 + 15 && ba.agreedCount === 2 && ba.cards.length === 3
+  && ba.cards.find(c => c.title === 'C').pay === 15 && ba.unpriced.length === 1 && ba.unpriced[0].title === 'D', JSON.stringify(ba));
+check('  ...read from a line ending "= 45", while "#309" and "PSA 10" stay part of the card',
+  JSON.stringify(B.parseOfferLine('2023 Prizm CJ Stroud #339 PSA 10 = $1,200.50')) === '{"title":"2023 Prizm CJ Stroud #339 PSA 10","agreed":1200.5}'
+  && B.parseOfferLine('2024 Prizm Bo Nix Silver #309').agreed === null && B.parseOfferLine('Bo Nix PSA 10').title === 'Bo Nix PSA 10');
+
 // Health: money-weighted parts that add to 100, with what would raise it.
 const hh = B.health([
   { title: 'Right', price: 50, cost: 10, listedAt: new Date(now - 5 * DAY).toISOString(), value: { market: 50, n: 5 } },
@@ -189,6 +197,10 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const off = await call('/api/biz/offer', { method: 'POST', headers: K, body: JSON.stringify({ cards: ['2024 Prizm Bo Nix Silver #309', 'Zzyzx Nobody Card'], pct: 60 }) });
   check('the buy-offer calculator prices a walk-in card from our sales and says which it cannot',
     off.body.market === 41 && off.body.offer === 24.6 && off.body.unpriced.length === 1, JSON.stringify(off.body));
+  const offA = await call('/api/biz/offer', { method: 'POST', headers: K, body: JSON.stringify({ cards: ['2024 Prizm Bo Nix Silver #309 = 30', 'Zzyzx Nobody Card = 12'], pct: 60 }) });
+  check('  ...and an agreed price on a line is what is paid, priced or not',
+    offA.body.market === 41 && offA.body.pay === 42 && offA.body.cards.length === 2 && offA.body.unpriced.length === 0
+    && offA.body.cards[0].title === '2024 Prizm Bo Nix Silver #309' && offA.body.cards[0].line === 0, JSON.stringify(offA.body));
   const sales = await call('/api/biz/sales', { headers: K });
   const sale = sales.body.sold[0];
   check('marking a card sold records the sale with its player and set, and the report counts it',

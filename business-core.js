@@ -403,14 +403,35 @@ function showList(items, n = 20, minValue = 0) {
 // left out of the offer rather than guessed.
 function buyOffer(rows, pct = 60) {
   const p = Math.max(10, Math.min(100, Number(pct) || 60)) / 100;
-  const priced = rows.filter(r => r.value && r.value.market != null);
+  const has = (r) => r.value && r.value.market != null;
+  const agreedOf = (r) => (Number.isFinite(r.agreed) && r.agreed >= 0 ? round2(r.agreed) : null);
+  const priced = rows.filter(has);
   const market = round2(priced.reduce((a, r) => a + r.value.market * (r.qty || 1), 0));
+  // A price both sides agreed on for a card (owner, Oct 2026) is what is paid
+  // for it, in place of the percentage, and it counts a card no sales could
+  // price. `agreed` on a row is the whole line's price, not each.
+  const cards = rows.filter(r => has(r) || agreedOf(r) != null).map(r => {
+    const qty = r.qty || 1, m = has(r) ? r.value.market : null, agreed = agreedOf(r);
+    const offer = m != null ? round2(m * p * qty) : null;
+    return { title: r.title, grade: r.grade, qty, market: m, n: (r.value && r.value.n) || 0, offer, agreed,
+      pay: agreed != null ? agreed : offer, line: r.line };
+  }).sort((a, b) => (b.market ?? -1) - (a.market ?? -1));
   return {
     pct: Math.round(p * 100), market, offer: round2(market * p),
-    cards: priced.map(r => ({ title: r.title, grade: r.grade, qty: r.qty || 1, market: r.value.market, n: r.value.n,
-      offer: round2(r.value.market * p * (r.qty || 1)) })).sort((a, b) => b.market - a.market),
-    unpriced: rows.filter(r => !(r.value && r.value.market != null)).map(r => ({ title: r.title, grade: r.grade, n: (r.value && r.value.n) || 0 })),
+    pay: round2(cards.reduce((a, c) => a + (c.pay || 0), 0)), agreedCount: cards.filter(c => c.agreed != null).length,
+    cards,
+    unpriced: rows.filter(r => !has(r) && agreedOf(r) == null).map(r => ({ title: r.title, grade: r.grade, n: (r.value && r.value.n) || 0, line: r.line })),
   };
+}
+
+// One line of the buy-offer box: the card, and the price agreed for it when
+// the line ends "= 45" or "= $45.50". "#309" and "PSA 10" are part of the
+// card, so a bare number at the end is not read as a price.
+function parseOfferLine(line) {
+  const s = String(line || '').trim();
+  const m = s.match(/\s*=\s*\$?\s*(\d[\d,]*(?:\.\d{1,2})?)\s*$/);
+  if (!m) return { title: s, agreed: null };
+  return { title: s.slice(0, m.index).trim(), agreed: Number(m[1].replace(/,/g, '')) };
 }
 
 // Inventory health, 0 to 100, from four parts weighted by money (a $500 card
@@ -489,4 +510,4 @@ function alertText(a) {
   const dir = a.pct > 0 ? 'up' : 'down';
   return `${a.title}: market ${dir} ${Math.abs(a.pct)}% to $${a.to.toFixed(2)} (was $${a.from.toFixed(2)})`;
 }
-module.exports = { ebayAddCsv, ebayTitle, EBAY_ADD_COLUMNS, priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS, MAX_X };
+module.exports = { ebayAddCsv, ebayTitle, EBAY_ADD_COLUMNS, priceAlert, alertText, ALERT_MOVE, splitLotCost, health, showList, buyOffer, parseOfferLine, repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS, MAX_X };
