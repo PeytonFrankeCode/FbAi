@@ -93,6 +93,8 @@ nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .act.ghost:hover { background: var(--sunk); color: var(--fg) }
 .act.sm, td .act { padding: 4px 9px; font-size: 12.5px; border-radius: 8px }
 .act:disabled { opacity: .55; cursor: default }
+.ph-ebay-out { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line2); border-radius: 10px; font-size: 13.5px; display: grid; gap: 8px; justify-items: start }
+.ph-ebay-out[hidden] { display: none }
 .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
 input, select, textarea { font: inherit; font-size: 14px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line2);
   background: var(--surface); color: var(--fg); width: 100%; min-width: 0 }
@@ -561,11 +563,12 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
               <button class="act" type="button" id="ph-ebay" title="A file for eBay's bulk upload: Seller Hub, Reports, Uploads">Download eBay listing file</button>
               <button class="act ghost" type="button" id="ph-clear">Clear</button>
             </div>
+            <div class="ph-ebay-out" id="ph-ebay-out" role="status" hidden></div>
             <details class="pe-box" id="pe-guide"><summary>How to list these on eBay</summary>
               <ol class="pe-steps">
                 <li><b>Check each card above.</b> Title, grade ("PSA 10", or blank if raw) and price. Untick any that are wrong.</li>
                 <li><b>First time only:</b> fill in <i>eBay listing settings</i> below. Your policy names are in eBay under <a href="https://www.ebay.com/bp/manage" target="_blank" rel="noopener">Account, Business policies</a>; copy them exactly.</li>
-                <li>Tap <b>Download eBay listing file</b>.</li>
+                <li>Tap <b>Download eBay listing file</b>. On an iPhone, then tap the green <b>Save</b> button and choose <i>Save to Files</i> (or AirDrop it to a computer).</li>
                 <li>On eBay in a web browser (not the app; on a phone, use the desktop site), open <a href="https://www.ebay.com/sh/reports/uploads" target="_blank" rel="noopener">Seller Hub, Reports, Uploads</a>, tap <b>Upload template</b> and choose the file.</li>
                 <li>Give eBay a few minutes. The <b>results file</b> on that page shows each listing made, or the error to fix. New listings appear under Seller Hub, Listings.</li>
                 <li>Back here, tap <b>Sync</b> for your eBay store so the cards come in with their eBay item numbers and their sales are tracked. Don't also tap <i>Add cards</i> for them, or they show up twice.</li>
