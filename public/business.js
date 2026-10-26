@@ -143,6 +143,7 @@
   $('alertsclear').addEventListener('click', async () => renderAlerts((await api('/api/biz/alerts/all', { method: 'DELETE' })).alerts));
   async function loadBrief() {
     loadSummary(false);
+    loadUsage();
     loadAlerts();
     try {
       const b = await api('/api/biz/brief');
@@ -331,7 +332,9 @@
   // row is editable, and only the ticked ones go in.
   const PH_MAX = 40, PH_AT_ONCE = 4;
   let phRows = [];
-  async function shrinkPhoto(file, max = 1280) {
+  // 1568px: the most detail the AI takes in (larger is scaled down there),
+  // which a photo of a binder page or a table of cards needs.
+  async function shrinkPhoto(file, max = 1568) {
     const url = URL.createObjectURL(file);
     try {
       const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
@@ -365,8 +368,46 @@
     $('ph-add').textContent = `Add ${n} card${n === 1 ? '' : 's'}`;
     $('ph-add').disabled = !n;
     $('ph-ebay').disabled = !n;
-    const done = phRows.length - busy;
-    $('ph-status').textContent = !phRows.length ? '' : busy ? `Reading ${done} of ${phRows.length}…` : `${phRows.length} photo${phRows.length === 1 ? '' : 's'} read. Check each one, then add.`;
+    const photos = new Set(phRows.map(r => r.photo)).size;
+    const cards = phRows.filter(r => r.state === 'done').length;
+    $('ph-status').textContent = !phRows.length ? '' : busy
+      ? `Reading ${photos - busy} of ${photos} photo${photos === 1 ? '' : 's'}… ${cards} card${cards === 1 ? '' : 's'} found so far.`
+      : `${cards} card${cards === 1 ? '' : 's'} found in ${photos} photo${photos === 1 ? '' : 's'}. Check each one, then add.`;
+  }
+  // One card cut out of a photo of several, by the outline the AI gave
+  // (fractions of the photo), with a little margin: the row's thumbnail and,
+  // when listed, its eBay picture.
+  async function cropCard(file, box, max = 900) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+      const W = img.naturalWidth, H = img.naturalHeight, pad = 0.03;
+      const x = Math.max(0, (box.x - pad) * W), y = Math.max(0, (box.y - pad) * H);
+      const w = Math.min(W - x, (box.w + 2 * pad) * W), h = Math.min(H - y, (box.h + 2 * pad) * H);
+      if (!(w > 8 && h > 8)) return null;
+      const k = Math.min(1, max / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(img, x, y, w, h, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.86);
+    } catch (_) { return null; } finally { URL.revokeObjectURL(url); }
+  }
+  function phRowEl(thumb) {
+    const el = document.createElement('div');
+    el.innerHTML = `<input type="checkbox" class="ph-pick" aria-label="Add this card"><img src="${thumb}" alt="">
+      <div class="ph-fields"><input class="ph-title" aria-label="Card" placeholder="Card title">
+        <input class="ph-grade" aria-label="Grade" placeholder="Raw or PSA 10"><input class="ph-price" inputmode="decimal" aria-label="Your price" placeholder="$ price">
+        <div class="ph-meta"></div></div>`;
+    el.querySelector('.ph-pick').addEventListener('change', phCount);
+    return el;
+  }
+  function phFill(r, c, value) {
+    r.state = 'done'; r.confidence = c.confidence; r.note = c.note; r.value = value; r.card = c;
+    const f = (k) => r.el.querySelector('.ph-' + k);
+    f('title').value = c.title || '';
+    f('grade').value = c.grade || '';
+    if (value && value.market != null) f('price').value = value.market;
+    f('pick').checked = !!c.title && c.confidence !== 'low';
   }
   async function phWork() {
     for (;;) {
@@ -375,40 +416,48 @@
       r.state = 'reading'; phPaint(r); phCount();
       try {
         const out = await api('/api/biz/identify', { method: 'POST', body: JSON.stringify({ image: await shrinkPhoto(r.file) }) });
-        const c = out.card || {};
-        r.state = 'done'; r.confidence = c.confidence; r.note = c.note; r.value = out.value; r.card = c; r.photoUrl = out.photoUrl || null;
-        const f = (k) => r.el.querySelector('.ph-' + k);
-        f('title').value = c.title || '';
-        f('grade').value = c.grade || '';
-        if (out.value && out.value.market != null) f('price').value = out.value.market;
-        f('pick').checked = !!c.title && c.confidence !== 'low';
+        const found = Array.isArray(out.cards) && out.cards.length ? out.cards : [{ card: out.card || {}, value: out.value }];
+        if (found.length === 1) { phFill(r, found[0].card || {}, found[0].value); r.photoUrl = out.photoUrl || null; }
+        else {
+          // Several cards: this row becomes the first, the rest go in after it,
+          // each with its own picture cut from the photo.
+          let after = r.el;
+          for (let i = 0; i < found.length; i++) {
+            const c = found[i].card || {};
+            const crop = c.box ? await cropCard(r.file, c.box) : null;
+            let row = r;
+            if (i === 0) { if (crop) r.el.querySelector('img').src = crop; r.crop = crop; }
+            else {
+              row = { file: r.file, el: phRowEl(crop || r.thumb), thumb: null, crop, state: 'done', photo: r.photo };
+              after.after(row.el); after = row.el;
+              phRows.splice(phRows.indexOf(r) + i, 0, row);
+            }
+            phFill(row, c, found[i].value); phPaint(row);
+          }
+        }
       } catch (err) { r.state = 'failed'; r.error = err.message; }
-      phPaint(r); phCount();
+      phPaint(r); phCount(); loadUsage();
     }
   }
   $('ph-files').addEventListener('change', () => {
     const files = [...$('ph-files').files].filter(f => /^image\//.test(f.type));
     $('ph-files').value = '';
-    const room = PH_MAX - phRows.length;
+    const photos = new Set(phRows.map(r => r.photo)).size;
+    const room = PH_MAX - photos;
     if (!room) { $('ph-status').textContent = `That's ${PH_MAX} photos. Add these first, then choose more.`; return; }
     for (const file of files.slice(0, room)) {
-      const el = document.createElement('div');
       const thumb = URL.createObjectURL(file);
-      el.innerHTML = `<input type="checkbox" class="ph-pick" aria-label="Add this card"><img src="${thumb}" alt="">
-        <div class="ph-fields"><input class="ph-title" aria-label="Card" placeholder="Card title">
-          <input class="ph-grade" aria-label="Grade" placeholder="Raw or PSA 10"><input class="ph-price" inputmode="decimal" aria-label="Your price" placeholder="$ price">
-          <div class="ph-meta"></div></div>`;
-      el.querySelector('.ph-pick').addEventListener('change', phCount);
+      const el = phRowEl(thumb);
       $('ph-list').appendChild(el);
-      const r = { file, el, thumb, state: 'wait' };
+      const r = { file, el, thumb, state: 'wait', photo: file.name + ':' + file.size + ':' + Math.random() };
       phRows.push(r); phPaint(r);
     }
-    if (files.length > room) $('ph-status').textContent = `Only the first ${room} were taken: ${PH_MAX} at a time.`;
+    if (files.length > room) $('ph-status').textContent = `Only the first ${room} were taken: ${PH_MAX} photos at a time.`;
     phCount();
     for (let i = 0; i < PH_AT_ONCE; i++) phWork();
   });
   function phClear() {
-    phRows.forEach(r => URL.revokeObjectURL(r.thumb));
+    phRows.forEach(r => { if (r.thumb) URL.revokeObjectURL(r.thumb); });
     phRows = []; $('ph-list').innerHTML = ''; phCount();
   }
   $('ph-clear').addEventListener('click', phClear);
@@ -421,12 +470,32 @@
     try {
       await api('/api/biz/inventory', { method: 'POST', body: JSON.stringify({ items }) });
       phRows = phRows.filter(r => !take.includes(r));
-      take.forEach(r => { URL.revokeObjectURL(r.thumb); r.el.remove(); });
+      take.forEach(r => { if (r.thumb && !phRows.some(x => x.thumb === r.thumb)) URL.revokeObjectURL(r.thumb); r.el.remove(); });
       phCount();
       $('invstatus').textContent = `Added ${items.length} card${items.length === 1 ? '' : 's'} from photos.`;
       loadInventory();
     } catch (err) { $('ph-status').textContent = err.message; phCount(); }
   });
+
+  // AI usage today (owner, Oct 2026): cards read from photos and questions
+  // asked, against the daily limits, as bars on Today and a line where each
+  // is used. The owner's account has no limit and is shown as such.
+  function usageWhen(iso) { const h = Math.max(1, Math.ceil((Date.parse(iso) - Date.now()) / 36e5)); return `resets in ${h} hour${h === 1 ? '' : 's'}`; }
+  function usageBar(label, x, unlimited) {
+    const pct = unlimited ? 0 : Math.min(100, Math.round(100 * x.used / Math.max(1, x.limit)));
+    return `<div class="ubar"><div class="ubar-top"><span>${label}</span><b>${unlimited ? `${x.used} today` : `${x.used} of ${x.limit}`}</b></div>
+      <div class="ubar-track" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="${x.limit}" aria-valuenow="${x.used}"><i class="${pct >= 90 ? 'full' : pct >= 70 ? 'warn' : ''}" style="width:${unlimited ? Math.min(100, x.used) : pct}%"></i></div></div>`;
+  }
+  async function loadUsage() {
+    let u; try { u = await api('/api/biz/usage'); } catch (_) { return; }
+    const when = usageWhen(u.resetsAt);
+    $('usagebox').hidden = false;
+    $('usagebox').innerHTML = `<h2>AI usage today</h2>${usageBar('Cards read from photos', u.cards, u.unlimited)}${usageBar('Questions asked', u.asks, u.unlimited)}
+      <p class="hint" style="margin:0">${u.unlimited ? 'Owner account: no daily limit.' : `Limits ${when.replace('resets', 'reset')} (midnight UTC).`}</p>`;
+    $('ph-usage').textContent = u.unlimited ? `${u.cards.used} cards read today (no limit on the owner account).`
+      : `${u.cards.used} of ${u.cards.limit} cards read today, ${when}.`;
+    $('ai-usage').textContent = u.unlimited ? `${u.asks.used} questions today` : `${u.asks.used} of ${u.asks.limit} questions today, ${when}`;
+  }
 
   // The eBay listing file (owner, Oct 2026): the ticked cards, as read and as
   // edited here, in eBay's bulk upload format (/api/biz/ebay-listings). The
@@ -456,6 +525,18 @@
     $('ph-ebay').disabled = true;
     let msg;
     try {
+      // A card cut from a photo of several gets its own picture stored now,
+      // four at a time, so its listing shows that card alone.
+      const need = take.map((r, i) => [r, i]).filter(([r]) => !r.photoUrl && r.crop);
+      if (need.length) $('ph-status').textContent = `Saving ${need.length} card picture${need.length === 1 ? '' : 's'} for eBay…`;
+      let at = 0;
+      await Promise.all(Array.from({ length: Math.min(4, need.length) }, async () => {
+        for (let j = at++; j < need.length; j = at++) {
+          const [r, i] = need[j];
+          try { r.photoUrl = (await api('/api/biz/photo', { method: 'POST', body: JSON.stringify({ image: r.crop }) })).photoUrl; cards[i].photoUrl = r.photoUrl; }
+          catch (_) { /* listed without a picture */ }
+        }
+      }));
       const d = ebayDefaults();
       const out = await api('/api/biz/ebay-listings', { method: 'POST', body: JSON.stringify({ cards, defaults: d }) });
       if (out.listed) {
@@ -685,6 +766,7 @@
       done(); answer(fmt(r.answer));
     } catch (err) { done(); bubble('ai', `<p class="err">${esc(err.message)}</p>`); }
     busy = false; $('asksend').disabled = false; $('aifab').classList.remove('busy');
+    loadUsage();
     if (!$('aipanel').hidden) $('askq').focus();
   }
   document.querySelectorAll('.q').forEach(b => b.addEventListener('click', () => ask(b.textContent)));

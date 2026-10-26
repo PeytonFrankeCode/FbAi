@@ -19912,16 +19912,24 @@ app.post('/api/biz/compare', async (req, res) => {
 // get wrong. Claude is shown eBay's titles as hints and told to trust the card
 // over them. The answer comes back in a fixed shape (structured output), then
 // is priced like any inventory card.
-const BIZ_IDENTIFY_PER_DAY = 400;          // photos a seller may identify a day (owner unmetered)
+// Counted in cards read, not photos (owner, Oct 2026: one photo may hold up
+// to 40 cards, and the cost follows the cards). The owner is unmetered.
+const BIZ_IDENTIFY_PER_DAY = 400;
+const BIZ_CARDS_PER_PHOTO = 40;
 // Written the way the structured-output docs list as supported: a value that
 // may be missing is anyOf [type, null], not a type array. The type-array form
 // (["string", "null"]) is not on that list, and every photo read failed with
 // "The AI did not answer" while Ask, which sends no schema, worked.
 const _orNull = (t, extra = {}) => ({ anyOf: [{ type: t, ...extra }, { type: 'null' }] });
-const BIZ_IDENTIFY_SCHEMA = {
+// One card. box is where it sits in the photo, as fractions of the photo's
+// width and height, so the page can cut out each card's own picture.
+const BIZ_CARD_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['player', 'sport', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'cert', 'title', 'confidence', 'note'],
+  required: ['player', 'sport', 'year', 'set', 'cardNumber', 'parallel', 'printRun', 'serial', 'auto', 'relic', 'rookie', 'grader', 'grade', 'cert', 'title', 'confidence', 'note', 'box'],
   properties: {
+    box: { anyOf: [{ type: 'object', additionalProperties: false, required: ['x', 'y', 'w', 'h'],
+      properties: { x: { type: 'number' }, y: { type: 'number' }, w: { type: 'number' }, h: { type: 'number' } },
+      description: 'The card\'s outline in the photo: left, top, width and height as fractions of the photo (0 to 1)' }, { type: 'null' }] },
     player: _orNull('string'),
     sport: _orNull('string', { enum: ['Football', 'Baseball', 'Basketball', 'Hockey', 'Soccer', 'Racing', 'Other'] }),
     year: { ..._orNull('string'), description: 'Card year as printed, e.g. "2024" or "2023-24"' },
@@ -19939,23 +19947,37 @@ const BIZ_IDENTIFY_SCHEMA = {
     note: { ..._orNull('string'), description: 'One short line on anything unsure, else null' },
   },
 };
+// Every card in the photo, one to forty.
+const BIZ_IDENTIFY_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['cards'],
+  properties: { cards: { type: 'array', items: BIZ_CARD_SCHEMA, description: 'Every card in the photo, left to right, top to bottom' } },
+};
 const BIZ_IDENTIFY_SYSTEM = 'You identify sports trading cards from a photo for a card seller\'s inventory. '
-  + 'Read what is printed on the card: year, maker and set, player, card number, any serial stamp (e.g. 12/99), '
+  + `The photo may show one card or many (a binder page, cards laid out on a table): list every card you can see, `
+  + `left to right and top to bottom, up to ${BIZ_CARDS_PER_PHOTO}, each with its outline in the photo as fractions of the `
+  + 'photo\'s width and height. A card too small or blurred to read still gets a row, with "low" confidence. '
+  + 'Read what is printed on each card: year, maker and set, player, card number, any serial stamp (e.g. 12/99), '
   + 'autograph or memorabilia, rookie marks, and for a graded slab the grader and grade on its label. '
-  + 'Listing titles from an image search are given as hints: they often name the right product and player but '
-  + 'the wrong parallel, number or print run, so trust what you can read on the card over them. '
+  + 'Listing titles from an image search are given as hints for a photo of one card: they often name the right product '
+  + 'and player but the wrong parallel, number or print run, so trust what you can read on the card over them, and '
+  + 'ignore them when the photo shows several cards. '
   + 'Never invent a serial number or grade you cannot see. Use null for anything you cannot read, and say "low" confidence '
   + 'when the photo does not show enough to be sure.';
 // The same shape in words, for the retry without a schema.
-const BIZ_IDENTIFY_JSON_NOTE = 'Reply with only one JSON object, no other text, with exactly these keys: player, sport '
-  + '(Football, Baseball, Basketball, Hockey, Soccer, Racing or Other), year, set, cardNumber, parallel, printRun (a number), '
-  + 'serial, auto, relic, rookie (true or false), grader, grade, cert, title, confidence (high, medium or low), note. '
+const BIZ_IDENTIFY_JSON_NOTE = 'Reply with only one JSON object, no other text: {"cards": [...]}, one entry per card with '
+  + 'exactly these keys: player, sport (Football, Baseball, Basketball, Hockey, Soccer, Racing or Other), year, set, '
+  + 'cardNumber, parallel, printRun (a number), serial, auto, relic, rookie (true or false), grader, grade, cert, title, '
+  + 'confidence (high, medium or low), note, box ({"x","y","w","h"} as fractions of the photo). '
   + 'Use null for anything you cannot read.';
-// The card object from the reply: the whole text, else the first {...} in it.
-function _bizCardJson(text) {
+// The cards from the reply: {"cards": [...]}, a bare list, or one card
+// object, found in the whole text or its first {...} / [...].
+function _bizCardsJson(text) {
   const t = String(text || '').trim();
-  for (const s of [t, (t.match(/\{[\s\S]*\}/) || [''])[0]]) {
-    try { const o = JSON.parse(s); if (o && typeof o === 'object' && !Array.isArray(o)) return o; } catch (_) { /* next */ }
+  for (const s of [t, (t.match(/\{[\s\S]*\}/) || [''])[0], (t.match(/\[[\s\S]*\]/) || [''])[0]]) {
+    let o; try { o = JSON.parse(s); } catch (_) { continue; }
+    const list = Array.isArray(o) ? o : o && Array.isArray(o.cards) ? o.cards : o && typeof o === 'object' ? [o] : null;
+    const cards = (list || []).filter(c => c && typeof c === 'object' && !Array.isArray(c)).slice(0, BIZ_CARDS_PER_PHOTO);
+    if (cards.length) return cards;
   }
   return null;
 }
@@ -20000,17 +20022,35 @@ app.post('/api/biz/ebay-listings', async (req, res) => {
     condition: clean(d.condition, 20) });
   res.set('Cache-Control', 'no-store').json(out);
 });
+// A seller's AI use today, for the usage bars (owner, Oct 2026): cards read
+// from photos and questions asked, against the daily limits, and when they
+// reset (midnight UTC). The owner is unmetered.
+const _bizUsageKey = (kind, who) => `biz:${kind}:${who}:${new Date().toISOString().slice(0, 10)}`;
+app.get('/api/biz/usage', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const [cards, asks] = await Promise.all(['ident', 'asks'].map(async k => ((await cacheGet(_bizUsageKey(k, who))) || {}).n || 0));
+  const reset = new Date(); reset.setUTCHours(24, 0, 0, 0);
+  res.set('Cache-Control', 'no-store').json({ unlimited: who === 'owner', resetsAt: reset.toISOString(),
+    cards: { used: cards, limit: BIZ_IDENTIFY_PER_DAY }, asks: { used: asks, limit: BIZ_ASKS_PER_DAY } });
+});
+// One card's picture cut from a photo of several, stored for its eBay listing.
+app.post('/api/biz/photo', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const b64 = _cleanImageBase64(req.body && req.body.image);
+  if (!b64 || b64.length > 3_000_000) return res.status(400).json({ error: 'Send one card photo under 2 MB.' });
+  try { res.json({ photoUrl: await _bizStorePhoto(b64) }); }
+  catch (err) { console.error('[biz/photo]', err && err.message); res.status(500).json({ error: 'The photo could not be saved.' }); }
+});
 app.post('/api/biz/identify', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const b64 = _cleanImageBase64(req.body && req.body.image);
   if (!b64) return res.status(400).json({ error: 'Add a photo of the card.' });
   if (b64.length > 6_000_000) return res.status(413).json({ error: 'That photo is too large. Try a smaller one.' });
   if (_bizProvider() !== 'anthropic') return res.status(503).json({ error: 'Photo identification needs the ANTHROPIC_API_KEY on the Worker.' });
+  const ck = _bizUsageKey('ident', who);
   if (who !== 'owner') {
-    const ck = 'biz:ident:' + who + ':' + new Date().toISOString().slice(0, 10);
     const used = ((await cacheGet(ck)) || {}).n || 0;
-    if (used >= BIZ_IDENTIFY_PER_DAY) return res.status(429).json({ error: `That's today's ${BIZ_IDENTIFY_PER_DAY} photos. More tomorrow.` });
-    cachePut(ck, { n: used + 1 }, 2 * 86400);
+    if (used >= BIZ_IDENTIFY_PER_DAY) return res.status(429).json({ error: `That's today's ${BIZ_IDENTIFY_PER_DAY} cards. More tomorrow.` });
   }
   try {
     const hints = await ebayImageSearch(b64, 6).then(r => (r || []).map(x => x.title).filter(Boolean).slice(0, 6)).catch(() => []);
@@ -20040,16 +20080,34 @@ app.post('/api/biz/identify', async (req, res) => {
     }
     if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'This photo could not be read.' });
     const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const card = _bizCardJson(text);
-    if (!card) return res.status(502).json({ error: 'The card could not be read. Try another photo.' });
-    const grade = card.grader && card.grade ? `${String(card.grader).toUpperCase()} ${card.grade}` : null;
-    let value = null;
-    try { value = card.title ? await _bizValue({ title: String(card.title).slice(0, 200), grade }) : null; } catch (_) { value = null; }
+    const found = _bizCardsJson(text);
+    if (!found) return res.status(502).json({ error: 'No card could be read. Try another photo.' });
+    // Each card priced like any inventory card, a few at a time.
+    const cards = new Array(found.length);
+    let next = 0;
+    await Promise.all(Array.from({ length: Math.min(6, found.length) }, async () => {
+      for (let i = next++; i < found.length; i = next++) {
+        const c = found[i];
+        const grade = c.grader && c.grade ? `${String(c.grader).toUpperCase()} ${c.grade}` : null;
+        let value = null;
+        try { value = c.title ? await _bizValue({ title: String(c.title).slice(0, 200), grade }) : null; } catch (_) { value = null; }
+        const b = c.box && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(Number(c.box[k]))) ? c.box : null;
+        cards[i] = { card: { ...c, box: b, grade: grade || null, gradeNumber: c.grade || null }, value };
+      }
+    }));
+    if (who !== 'owner') {
+      const used = ((await cacheGet(ck)) || {}).n || 0;
+      cachePut(ck, { n: used + cards.length }, 2 * 86400);
+    }
     // The photo is kept for the eBay listing file, which links each card's
-    // picture (_bizStorePhoto). A failure only leaves the listing without one.
+    // picture (_bizStorePhoto); a photo of several cards has each card cut
+    // out by the page and stored on its own (/api/biz/photo).
     let photoUrl = null;
-    try { photoUrl = await _bizStorePhoto(b64); } catch (err) { console.error('[biz/identify] photo:', err && err.message); }
-    res.json({ card: { ...card, grade: grade || null, gradeNumber: card.grade || null }, value, hints, photoUrl });
+    if (cards.length === 1) {
+      try { photoUrl = await _bizStorePhoto(b64); } catch (err) { console.error('[biz/identify] photo:', err && err.message); }
+    }
+    // card/value/photoUrl at the top too: the first card, for older pages.
+    res.json({ cards, card: cards[0].card, value: cards[0].value, hints, photoUrl });
   } catch (err) {
     console.error('[biz/identify]', err && err.status, err && err.message);
     // The owner sees why, so a failure can be fixed from a screenshot.
@@ -20066,7 +20124,7 @@ app.post('/api/biz/ask', async (req, res) => {
   // Fair use: a seller's questions a day, so one account cannot run up the
   // AI bill a $20 plan pays for. The owner is not counted.
   if (who !== 'owner') {
-    const ck = 'biz:asks:' + who + ':' + new Date().toISOString().slice(0, 10);
+    const ck = _bizUsageKey('asks', who);
     const used = ((await cacheGet(ck)) || {}).n || 0;
     if (used >= BIZ_ASKS_PER_DAY) return res.status(429).json({ error: `That's today's ${BIZ_ASKS_PER_DAY} questions. More tomorrow.` });
     cachePut(ck, { n: used + 1 }, 2 * 86400);
@@ -20809,7 +20867,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { BIZ_IDENTIFY_SCHEMA, _bizCardJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
