@@ -95,6 +95,10 @@ nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .act:disabled { opacity: .55; cursor: default }
 .ph-ebay-out { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line2); border-radius: 10px; font-size: 13.5px; display: grid; gap: 8px; justify-items: start }
 .ph-ebay-out[hidden] { display: none }
+.o-photo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+.o-photo .act { cursor: pointer }
+.o-agreed { width: 6.5rem; font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1px solid var(--line2); border-radius: 8px; background: var(--bg); color: var(--fg); text-align: right }
+.o-paid { text-decoration: line-through; color: var(--fg2) }
 .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
 input, select, textarea { font: inherit; font-size: 14px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line2);
   background: var(--surface); color: var(--fg); width: 100%; min-width: 0 }
@@ -636,8 +640,10 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
       </div>
       <div class="grid2 even">
         <div class="panel stack" id="offerpanel">
-          <div><h2>Buy-offer calculator</h2><p class="hint">One card per line, with the grade if it's slabbed. Each is priced from real sales.</p></div>
-          <textarea id="o-cards" placeholder="2024 Prizm Bo Nix Silver #309&#10;2023 Prizm CJ Stroud #339 PSA 10&#10;2024 Donruss Optic Caleb Williams Rated Rookie"></textarea>
+          <div><h2>Buy-offer calculator</h2><p class="hint">One card per line, with the grade if it's slabbed, or read them from photos. Each is priced from real sales. Agreed on a price for one? End its line with "= 45", or type it in the Agreed box.</p></div>
+          <textarea id="o-cards" placeholder="2024 Prizm Bo Nix Silver #309&#10;2023 Prizm CJ Stroud #339 PSA 10 = 120&#10;2024 Donruss Optic Caleb Williams Rated Rookie"></textarea>
+          <label class="photopick o-photo"><input type="file" id="o-files" accept="image/*" multiple><span class="act">&#128247; Add cards from photos</span><span class="hint" style="margin:0">One card or a whole binder page a photo.</span></label>
+          <div class="status" id="o-status" role="status"></div>
           <div class="acts" style="align-items:end"><label class="field" style="min-width:10rem">Offer at<select id="o-pct"><option value="50">50% of market</option><option value="60" selected>60% of market</option><option value="65">65% of market</option><option value="70">70% of market</option><option value="75">75% of market</option><option value="80">80% of market</option></select></label>
             <button class="act go" type="button" id="o-go" style="padding-block:9px">Price it</button></div>
           <div id="o-out"></div>

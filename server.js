@@ -19612,8 +19612,15 @@ app.get('/api/biz/show', async (req, res) => {
 });
 app.post('/api/biz/offer', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
-  const rows = (Array.isArray(req.body && req.body.cards) ? req.body.cards : []).slice(0, 50)
-    .map(r => BIZ.normalizeItem(typeof r === 'string' ? { title: r } : r)).filter(Boolean);
+  // Each line is a card, or { title, agreed }; a line ending "= 45" carries
+  // the price both sides agreed on (BIZ.parseOfferLine). `line` is where it
+  // came from in the box, so the page can write an agreed price back to it.
+  const rows = (Array.isArray(req.body && req.body.cards) ? req.body.cards : []).slice(0, 50).map((r, line) => {
+    const o = typeof r === 'string' ? BIZ.parseOfferLine(r) : { ...(r || {}), ...BIZ.parseOfferLine(r && r.title) };
+    if (r && typeof r === 'object' && r.agreed != null && r.agreed !== '') o.agreed = Number(r.agreed);
+    const it = BIZ.normalizeItem(o);
+    return it && { ...it, agreed: Number.isFinite(o.agreed) ? o.agreed : null, line };
+  }).filter(Boolean);
   if (!rows.length) return res.status(400).json({ error: 'Add at least one card, one per line.' });
   const now = Date.now();
   for (const r of rows) { try { r.value = await _bizValue(r, now); } catch (_) { r.value = null; } }

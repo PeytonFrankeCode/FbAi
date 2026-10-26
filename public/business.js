@@ -651,20 +651,80 @@
   });
 
   // ---- shows ----
-  $('o-go').addEventListener('click', async () => {
-    const cards = $('o-cards').value.split(/\n+/).map(l => l.trim()).filter(Boolean);
-    if (!cards.length) { $('o-out').innerHTML = '<p class="status">Type at least one card.</p>'; return; }
+  // The buy offer (owner, Oct 2026): each card at the chosen share of its
+  // market, unless both sides agreed a price for it, which is then what is
+  // paid. An agreed price typed in the table is written onto the card's line
+  // ("= 45"), so pricing again keeps it.
+  let offer = null;
+  const offerLines = () => $('o-cards').value.split('\n');
+  function offerPaint() {
+    const r = offer; if (!r) return;
+    const rows = r.rows;
+    const pay = Math.round(100 * rows.reduce((a, c) => a + (c.agreed != null ? c.agreed : (c.offer || 0)), 0)) / 100;
+    const nAgreed = rows.filter(c => c.agreed != null).length;
+    $('o-out').innerHTML = `<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));margin:0 0 12px">
+        <div class="kpi"><small>Market value</small><b>${money(r.market)}</b><em>${r.cards.filter(c => c.market != null).length} priced</em></div>
+        <div class="kpi"><small>Offer at ${r.pct}%</small><b>${money(r.offer)}</b><em>Room to resell</em></div>
+        <div class="kpi"><small>You pay</small><b class="up" id="o-pay">${money(pay)}</b><em>${nAgreed ? `${nAgreed} at an agreed price` : `At ${r.pct}%`}</em></div></div>
+      <div class="tablewrap flat"><table><thead><tr><th>Card</th><th class="r">Market</th><th class="r">Offer</th><th class="r">Agreed</th></tr></thead><tbody>${
+        rows.map((c, i) => `<tr><td>${esc(c.title)}<div class="why">${esc(c.grade || 'Raw')} · ${c.market != null ? `${c.n} sales` : 'not enough sales to price'}</div></td>
+          <td class="r" data-label="Market">${c.market != null ? money(c.market) : '-'}</td>
+          <td class="r${c.agreed != null ? ' o-paid' : ''}" data-label="Offer">${c.offer != null ? money(c.offer) : '-'}</td>
+          <td class="r" data-label="Agreed"><input class="o-agreed" type="number" inputmode="decimal" min="0" step="0.01" data-i="${i}" aria-label="Agreed price for ${esc(c.title)}" placeholder="${c.offer != null ? c.offer : '$'}" value="${c.agreed != null ? c.agreed : ''}"></td></tr>`).join('')}</tbody></table></div>
+      ${rows.some(c => c.market == null) ? `<p class="status">Not enough recent sales to price ${rows.filter(c => c.market == null).length === 1 ? 'one card' : rows.filter(c => c.market == null).length + ' cards'}. Check by hand, and type what you agree in its Agreed box.</p>` : ''}`;
+  }
+  $('o-out').addEventListener('change', (e) => {
+    const el = e.target.closest('.o-agreed'); if (!el || !offer) return;
+    const c = offer.rows[Number(el.dataset.i)]; if (!c) return;
+    const v = el.value.trim() === '' ? null : Math.max(0, Math.round(100 * Number(el.value)) / 100);
+    c.agreed = Number.isFinite(v) ? v : null;
+    // Back onto its line in the box, by its place among the non-blank lines.
+    const lines = offerLines(), at = lines.map((l, i) => (l.trim() ? i : -1)).filter(i => i >= 0)[c.line];
+    if (at != null) {
+      const base = lines[at].replace(/\s*=\s*\$?\s*\d[\d,]*(?:\.\d{1,2})?\s*$/, '');
+      lines[at] = c.agreed != null ? `${base} = ${c.agreed}` : base;
+      $('o-cards').value = lines.join('\n');
+    }
+    offerPaint();
+  });
+  async function priceOffer() {
+    const cards = offerLines().map(l => l.trim()).filter(Boolean);
+    if (!cards.length) { $('o-out').innerHTML = '<p class="status">Type at least one card, or add them from photos.</p>'; return; }
     $('o-go').disabled = true; $('o-out').innerHTML = `<p class="status">Pricing ${cards.length} card${cards.length === 1 ? '' : 's'}…</p>`;
     try {
-      const r = await api('/api/biz/offer', { method: 'POST', body: JSON.stringify({ cards, pct: Number($('o-pct').value) }) });
-      $('o-out').innerHTML = `<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0 0 12px">
-          <div class="kpi"><small>Market value</small><b>${money(r.market)}</b><em>${r.cards.length} priced</em></div>
-          <div class="kpi"><small>Offer at ${r.pct}%</small><b class="up">${money(r.offer)}</b><em>Room to resell</em></div></div>
-        ${r.cards.length ? `<div class="tablewrap flat"><table><thead><tr><th>Card</th><th class="r">Market</th><th class="r">Offer</th></tr></thead><tbody>${
-          r.cards.map(c => `<tr><td>${esc(c.title)}<div class="why">${esc(c.grade || 'Raw')} · ${c.n} sales</div></td><td class="r">${money(c.market)}</td><td class="r">${money(c.offer)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-        ${r.unpriced.length ? `<p class="status">Not enough recent sales to price: ${r.unpriced.map(u => esc(u.title)).join('; ')}. Check these by hand.</p>` : ''}`;
+      offer = await api('/api/biz/offer', { method: 'POST', body: JSON.stringify({ cards, pct: Number($('o-pct').value) }) });
+      offer.rows = offer.cards.concat(offer.unpriced.map(u => ({ ...u, market: null, offer: null, agreed: null })));
+      offerPaint();
     } catch (err) { $('o-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
     $('o-go').disabled = false;
+  }
+  $('o-go').addEventListener('click', priceOffer);
+  // Photos into the box: each card the AI reads goes in as a line (title and
+  // grade), then the whole box is priced as if typed.
+  $('o-files').addEventListener('change', async () => {
+    const files = [...$('o-files').files].slice(0, PH_MAX); $('o-files').value = '';
+    if (!files.length) return;
+    let added = 0, unsure = 0, failed = '';
+    for (let i = 0; i < files.length; i++) {
+      $('o-status').textContent = `Reading photo ${i + 1} of ${files.length}… ${added} card${added === 1 ? '' : 's'} so far.`;
+      try {
+        const out = await api('/api/biz/identify', { method: 'POST', body: JSON.stringify({ image: await shrinkPhoto(files[i]) }) });
+        const found = Array.isArray(out.cards) && out.cards.length ? out.cards : [{ card: out.card || {} }];
+        const lines = offerLines().filter(l => l.trim());
+        for (const f of found) {
+          const c = f.card || {};
+          if (!c.title) continue;
+          const g = c.grade && !c.title.toLowerCase().includes(String(c.grade).toLowerCase()) ? ' ' + c.grade : '';
+          lines.push(c.title + g); added++;
+          if (c.confidence === 'low') unsure++;
+        }
+        $('o-cards').value = lines.join('\n');
+      } catch (err) { failed = err.message; }
+    }
+    loadUsage();
+    $('o-status').textContent = (added ? `Added ${added} card${added === 1 ? '' : 's'} from ${files.length} photo${files.length === 1 ? '' : 's'}.` : 'No cards read from the photos.')
+      + (unsure ? ` ${unsure} the AI was unsure of: check those lines.` : '') + (failed ? ` ${failed}` : '');
+    if (added) priceOffer();
   });
   let showText = '';
   $('s-go').addEventListener('click', async () => {
