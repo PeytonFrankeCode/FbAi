@@ -30,9 +30,13 @@
     try { me = await api('/api/biz/me'); } catch (_) { me = {}; }
     if (me.active) return start(me);
     $('app').hidden = true; $('landing').hidden = false;
+    // Paused (server.js BIZ_PAUSED): the page says so and still takes
+    // waitlist emails; owner sign-in works as before.
+    $('pausedbar').hidden = !me.paused;
     $('subscribe').hidden = !(me.user && me.checkoutOpen);
-    $('logintosite').hidden = !!me.user;
-    $('gatemsg').textContent = !me.user ? 'Log in to your Card Huddle account first, then come back here.'
+    $('logintosite').hidden = !!me.user || !!me.paused;
+    $('gatemsg').textContent = me.paused ? 'Paused for now. Join the list and we will email you when it is back.'
+      : !me.user ? 'Log in to your Card Huddle account first, then come back here.'
       : me.checkoutOpen ? `Signed in as ${me.user}.` : `Signed in as ${me.user}. Business opens to founding sellers soon.`;
   }
   function showLogin(msg) { gate(); if (msg) $('loginerr').textContent = msg; }

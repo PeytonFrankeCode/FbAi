@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="index, follow">
+<!-- noindex while Business is paused (server.js BIZ_PAUSED); back to "index, follow" when it reopens. -->
+<meta name="robots" content="noindex, follow">
 <meta name="description" content="Inventory software for sports card sellers: every store in one inventory, priced daily from real sold prices. Identify up to 40 cards from photos, track sales and profit, and an AI analyst. $20 a month.">
 <link rel="canonical" href="https://thecardhuddle.com/business">
 <title>Card Huddle for Business: Inventory Software for Card Sellers</title>
@@ -404,6 +405,9 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
   body { background: #fff; color: #000; padding: 0 } .panel, .tablewrap { border: 0; box-shadow: none } #p-shows .grid2 { display: block }
   #s-out::before { content: "Price sheet"; font: 800 20px var(--display); display: block; margin-bottom: 8px }
 }
+.pausedbar { margin: 0 0 18px; padding: 12px 16px; border: 1px solid var(--line2); border-left: 4px solid var(--accent); border-radius: 12px; background: var(--sunk); font-size: 14.5px; line-height: 1.5 }
+.pausedbar[hidden] { display: none }
+.pausedbar a { color: var(--accent) }
 </style>
 </head>
 <body>
@@ -414,6 +418,7 @@ details.panel > summary .hint { font-weight: 400; margin: 0; flex: 1; text-align
   </header>
 
   <section id="landing" hidden>
+    <div class="pausedbar" id="pausedbar" role="status" hidden><b>Card Huddle for Business is paused for now.</b> Join the list below and we'll email you when it's back. Everything collectors use on <a href="/">The Card Huddle</a> is free and working as always.</div>
     <div class="hero">
       <span class="chip">For eBay, Whatnot, card shop and card show sellers</span>
       <h1 class="herotitle">Your whole card business on one screen.</h1>
