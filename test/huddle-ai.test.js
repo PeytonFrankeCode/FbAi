@@ -80,6 +80,9 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     const after = await call('/api/ai/usage', { token: plus });
     check('a declined question says so and is not counted', ref.status === 422 && after.body.used === 0, JSON.stringify(after.body));
 
+    const owner = await reg('cardhuddlecollectors') || (await call('/api/auth/login', { method: 'POST', body: { username: 'cardhuddlecollectors', password: 'secret123' } })).body.token;
+    const uo = await call('/api/ai/usage', { token: owner });
+    check('the owner\'s account (cardhuddlecollectors) has Huddle AI, unlimited, with no plan', uo.body.plus === true && uo.body.unlimited === true, JSON.stringify(uo.body));
     check('questions have their own rate limit', S.RL_TIERS.some(t => t.name === 'ai' && t.match('/api/ai/ask')));
 
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');

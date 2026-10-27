@@ -10374,8 +10374,17 @@ html.install-open { overflow: hidden; }
 .hai-fine { font-size: 0.74rem; color: var(--text-muted); text-align: center; margin: 0.5rem 0 0 !important; }
 @media (max-width: 600px) { .hai-box { width: 100%; border-left: none; } }
 
-/* Ask AI beside the bell (owner, Oct 2026): the menu drawer hid it. */
-.nav-tab.ai-tab { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.42rem 0.75rem; border: 1px solid var(--accent-border); border-radius: 999px; color: var(--accent); font-weight: 700; font-size: 0.85rem; background: rgba(94, 206, 153, 0.08); }
-.nav-tab.ai-tab:hover { background: rgba(94, 206, 153, 0.16); }
-.ai-tab + .alerts-tab { margin-left: 0.4rem; }
-@media (max-width: 360px) { .nav-tab.ai-tab span { display: none; } }
+/* Huddle AI's bubble, bottom left (owner, Oct 2026), and its panel opens
+   from that side. Lifted above the get-the-app hint while that shows. */
+.hai-fab { position: fixed; z-index: 950; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  display: inline-flex; align-items: center; gap: 0.45rem; height: 48px; padding: 0 1.05rem 0 0.9rem; border: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-weight: 700; font-size: 0.92rem; color: var(--accent-on); background: var(--accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.18); transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
+.hai-fab:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), 0 3px 8px rgba(0, 0, 0, 0.2); }
+.hai-fab:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+body:has(#install-hint:not(.hidden)) .hai-fab { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transform: scale(0.85); }
+.hai { justify-content: flex-start; }
+.hai-box { border-left: none; border-right: 1px solid var(--border); box-shadow: 12px 0 40px rgba(0, 0, 0, 0.35); }
+@media (prefers-reduced-motion: reduce) { .hai-fab { transition: none; } }
+@media print { .hai-fab { display: none; } }
