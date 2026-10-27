@@ -5596,8 +5596,8 @@ function _adFreeModal() {
     <div class="adfree-box">
       <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close">&times;</button>
       <div class="adfree-icon" aria-hidden="true">&#10024;</div>
-      <h3 id="adfree-title" class="adfree-title">Go ad-free</h3>
-      <p class="adfree-sub">No ads anywhere on The Card Huddle. Your plan also helps keep the site free for every collector.</p>
+      <h3 id="adfree-title" class="adfree-title">Get Huddle+</h3>
+      <p class="adfree-sub">No ads anywhere on The Card Huddle, plus <b>Huddle AI</b>: ask what any card is worth, whether to grade it, and where a player&#39;s market is heading, answered from real sales. Your plan also helps keep the site free for every collector.</p>
       <div class="adfree-plans" id="adfree-plans">
         <button type="button" class="adfree-plan" data-period="monthly">
           <span class="adfree-price">$2.99</span><span class="adfree-per">per month</span>
@@ -5608,7 +5608,7 @@ function _adFreeModal() {
         </button>
       </div>
       <div class="adfree-done hidden" id="adfree-done">
-        <p class="adfree-done-text">&#127881; Thanks for supporting The Card Huddle! No more ads on your account.</p>
+        <p class="adfree-done-text">&#127881; Thanks for supporting The Card Huddle! No ads on your account, and Huddle AI is on: tap Ask AI in the menu.</p>
         <button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button>
       </div>
       <p class="adfree-fine" id="adfree-fine">Cancel anytime. Secure checkout by Stripe.</p>
@@ -5624,7 +5624,7 @@ async function openAdFree() {
   const msg = m.querySelector('#adfree-msg');
   msg.textContent = '';
   const showDone = (billing) => {
-    m.querySelector('#adfree-title').textContent = "You're ad-free";
+    m.querySelector('#adfree-title').textContent = "You're on Huddle+";
     m.querySelector('.adfree-sub').classList.add('hidden');
     m.querySelector('#adfree-plans').classList.add('hidden');
     m.querySelector('#adfree-fine').classList.add('hidden');
@@ -5632,7 +5632,7 @@ async function openAdFree() {
     m.querySelector('#adfree-manage').classList.toggle('hidden', !billing);
   };
   const showPlans = () => {
-    m.querySelector('#adfree-title').textContent = 'Go ad-free';
+    m.querySelector('#adfree-title').textContent = 'Get Huddle+';
     m.querySelector('.adfree-sub').classList.remove('hidden');
     m.querySelector('#adfree-plans').classList.remove('hidden');
     m.querySelector('#adfree-fine').classList.remove('hidden');
@@ -5694,6 +5694,126 @@ async function _openAdFreeBilling() {
     msg.textContent = d.error || 'Billing is not available right now.';
   } catch (_) { msg.textContent = 'Could not reach billing. Try again soon.'; }
 }
+// ---- Huddle AI (owner, Oct 2026) ----
+// Part of Huddle+ (the plan that was Ad-free): AI answers about any card's
+// value, grading and the market, from Card Huddle's own sales (/api/ai/ask).
+// A panel from the menu; without the plan it explains Huddle+ instead.
+const _hai = { msgs: [], busy: false, usage: null };
+function _haiEl() {
+  let el = document.getElementById('hai');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'hai'; el.className = 'hai hidden';
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'hai-title');
+  el.innerHTML = `<div class="hai-overlay" onclick="closeHuddleAI()"></div>
+    <div class="hai-box">
+      <div class="hai-head"><span class="hai-av" aria-hidden="true">&#10024;</span>
+        <div class="hai-titles"><b id="hai-title">Huddle AI</b><span id="hai-usage">Answers from real Card Huddle sales</span></div>
+        <button type="button" class="hai-x" onclick="closeHuddleAI()" aria-label="Close">&times;</button></div>
+      <div class="hai-log" id="hai-log" aria-live="polite"></div>
+      <div class="hai-gate hidden" id="hai-gate"></div>
+      <form class="hai-form" id="hai-form"><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
+        <button type="submit" class="hai-send" id="hai-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
+    </div>`;
+  document.body.appendChild(el);
+  el.querySelector('#hai-form').addEventListener('submit', (e) => { e.preventDefault(); _haiAsk(); });
+  const q = el.querySelector('#hai-q');
+  q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _haiAsk(); } });
+  q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(120, q.scrollHeight) + 'px'; });
+  return el;
+}
+// The answer's light markdown: paragraphs, "- " bullets and **bold**, on
+// escaped text, so nothing the model writes runs as HTML.
+function _haiFormat(text) {
+  const inline = (t) => escHtml(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  return String(text || '').split(/\n{2,}/).map(block => {
+    const lines = block.split('\n').filter(l => l.trim());
+    if (lines.length && lines.every(l => /^\s*[-*•]\s+/.test(l))) return `<ul>${lines.map(l => `<li>${inline(l.replace(/^\s*[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+    return `<p>${lines.map(inline).join('<br>')}</p>`;
+  }).join('');
+}
+const HAI_EXAMPLES = ['What is a 2024 Prizm Jayden Daniels Silver worth?', 'Should I grade a raw Bo Nix Prizm rookie?', "How are Brock Purdy's cards doing this month?"];
+function _haiPaint() {
+  const log = document.getElementById('hai-log');
+  if (!log) return;
+  const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
+    <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
+  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>`).join('')
+    + (_hai.busy ? '<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span></div>' : '');
+  log.querySelectorAll('.hai-chip').forEach(b => b.addEventListener('click', () => {
+    if (!_hai.usage || !_hai.usage.plus) return;
+    document.getElementById('hai-q').value = b.textContent; _haiAsk();
+  }));
+  log.scrollTop = log.scrollHeight;
+}
+function _haiUsageLine(u) {
+  const el = document.getElementById('hai-usage');
+  if (!el || !u) return;
+  if (!u.plus) { el.textContent = 'Part of Huddle+'; return; }
+  if (u.unlimited) { el.textContent = 'Answers from real Card Huddle sales'; return; }
+  const h = Math.max(1, Math.ceil((Date.parse(u.resetsAt) - Date.now()) / 36e5));
+  el.textContent = `${u.used} of ${u.limit} questions today · resets in ${h} hour${h === 1 ? '' : 's'}`;
+}
+function _haiGate(u) {
+  const gate = document.getElementById('hai-gate'), form = document.getElementById('hai-form');
+  const locked = !u || !u.plus;
+  gate.classList.toggle('hidden', !locked); form.classList.toggle('hidden', locked);
+  document.getElementById('hai').classList.toggle('hai-locked', locked);
+  if (!locked) return;
+  gate.innerHTML = !u || !u.signedIn
+    ? '<p><b>Huddle AI comes with Huddle+</b>: no ads, plus AI answers from real sales, for $2.99 a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>'
+    : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus up to ${u.limit} AI questions a day, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">Get Huddle+ · $2.99/month</button><p class="hai-fine">Or $24.99 a year. Cancel anytime.</p>`;
+}
+async function _haiLoadUsage() {
+  try {
+    const r = await authFetch('/api/ai/usage');
+    const u = await r.json();
+    _hai.usage = u; _haiUsageLine(u); _haiGate(u);
+  } catch (_) { /* keeps the last state */ }
+}
+async function openHuddleAI() {
+  const el = _haiEl();
+  el.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  _haiPaint();
+  if (_hai.usage) { _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+  await _haiLoadUsage();
+  const q = document.getElementById('hai-q');
+  if (q && !document.getElementById('hai-form').classList.contains('hidden')) setTimeout(() => q.focus(), 30);
+}
+function closeHuddleAI() {
+  const el = document.getElementById('hai');
+  if (el) el.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', (e) => {
+  const el = document.getElementById('hai');
+  if (e.key === 'Escape' && el && !el.classList.contains('hidden')) closeHuddleAI();
+});
+async function _haiAsk() {
+  const qEl = document.getElementById('hai-q');
+  const q = (qEl.value || '').trim();
+  if (!q || _hai.busy) return;
+  const history = _hai.msgs.filter(m => !m.error).slice(-6).map(m => ({ role: m.role, text: m.text }));
+  _hai.msgs.push({ role: 'user', text: q });
+  qEl.value = ''; qEl.style.height = 'auto';
+  _hai.busy = true; _haiPaint();
+  try {
+    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      _hai.msgs.push({ role: 'assistant', text: d.answer });
+      if (_hai.usage && !d.unlimited) { _hai.usage.used = d.used; _haiUsageLine(_hai.usage); }
+    } else {
+      _hai.msgs.push({ role: 'assistant', text: d.error || 'Huddle AI did not answer. Try again.', error: true });
+      if (r.status === 401 || r.status === 402) _haiLoadUsage();
+    }
+  } catch (_) {
+    _hai.msgs.push({ role: 'assistant', text: 'Could not reach Huddle AI. Check your connection and try again.', error: true });
+  }
+  _hai.busy = false; _haiPaint();
+}
+
 // Back from Stripe: say thanks, and wait for the payment to land on the
 // account (the webhook can trail the redirect by a few seconds).
 (function adFreeReturn() {

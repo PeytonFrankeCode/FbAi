@@ -66,7 +66,7 @@ const call = (p, { method = 'GET', token, body, raw, headers = {} } = {}) => fet
     && !/create-checkout-adfree[^\n]*username/.test(app));
   check('a paid plan marks the device as from a subscription, and the mark is taken back when it ends',
     /localStorage\.setItem\(AD_FREE_SRC_KEY, 'sub'\)/.test(app) && /if \(localStorage\.getItem\(AD_FREE_SRC_KEY\) === 'sub'\)/.test(app));
-  check('Settings offers the plan', /onclick="closeSettings\(\); openAdFree\(\);">Go ad-free</.test(html));
+  check('Settings offers the plan, as Huddle+', /onclick="closeSettings\(\); openAdFree\(\);">Get Huddle\+</.test(html));
 
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall adfree-plan checks passed');
