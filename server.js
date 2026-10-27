@@ -20180,13 +20180,17 @@ const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.co
   + 'When the sales are thin or the card is unclear, say so and ask for the year, set, parallel, card number or grade. '
   + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (about $25 to $75 a card at PSA, more for high values), and say it depends on the card\'s condition. '
   + 'Never promise a price will rise or call a card an investment. Answer in plain language, short paragraphs or a few bullets, no tables wider than three columns.';
-const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || PRO_GRANT_USERS.has(String(user).toLowerCase())));
+// The owner's accounts: unlimited and never charged. cardhuddlecollectors is
+// the one the owner signs in with (app.js NO_AFFILIATE_ACCOUNTS).
+const HUDDLE_AI_OWNERS = new Set([...PRO_GRANT_USERS, 'cardhuddlecollectors']);
+const _huddleAiOwner = (user) => !!user && HUDDLE_AI_OWNERS.has(String(user).toLowerCase());
+const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || _huddleAiOwner(user)));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
 const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
-  const unlimited = isAdminReq(req) || (!!user && PRO_GRANT_USERS.has(String(user).toLowerCase()));
+  const unlimited = isAdminReq(req) || _huddleAiOwner(user);
   const used = user ? (((await cacheGet(_huddleAiKey(user))) || {}).n || 0) : 0;
   res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, used, limit: HUDDLE_AI_PER_DAY, resetsAt: _nextUtcMidnight(),
     available: !!process.env.ANTHROPIC_API_KEY });
@@ -20199,7 +20203,7 @@ app.post('/api/ai/ask', async (req, res) => {
   const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
   if (!q) return res.status(400).json({ error: 'Ask a question.' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Huddle AI is not switched on yet.' });
-  const unlimited = admin || PRO_GRANT_USERS.has(String(user).toLowerCase());
+  const unlimited = admin || _huddleAiOwner(user);
   const ck = user && _huddleAiKey(user);
   let used = 0;
   if (!unlimited) {
