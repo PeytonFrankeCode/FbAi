@@ -666,6 +666,8 @@ const RL_DISABLED = process.env.DISABLE_RATE_LIMIT === '1';
 // The hour window is what stops a caller pacing itself just under the minute.
 const RL_TIERS = [
   { name: 'scan', minute: 20, hour: 200, match: (p) => p === '/api/scan-card' },
+  // Huddle AI: each question is an AI call; the daily limit is the real cap.
+  { name: 'ai', minute: 10, hour: 60, match: (p) => p === '/api/ai/ask' },
   { name: 'search', minute: 60, hour: 600, match: (p) => p === '/api/search' },
   // A page of old sales asks once per gone photo, and each may cost an eBay
   // listing search on a miss.
@@ -17916,8 +17918,9 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
   }
 });
 
-// ---- Ad-free plan (owner, Oct 2026) ----
-// $2.99 a month or $24.99 a year; Google ads are switched off for the account.
+// ---- Ad-free plan, now Huddle+ (owner, Oct 2026) ----
+// $2.99 a month or $24.99 a year; Google ads are switched off for the account,
+// and Huddle AI is on (/api/ai/ask). The plan id stays 'adfree'.
 // The Stripe product is found or made on first use (by its metadata) and its
 // id cached, so there is nothing to set up in the dashboard; STRIPE_PRODUCT_ADFREE
 // overrides it.
@@ -17934,7 +17937,7 @@ async function _adFreeProductId() {
     id = found && found.data && found.data[0] && found.data[0].id;
   } catch (_) { /* search unavailable: create below */ }
   if (!id) {
-    const made = await stripe.products.create({ name: 'The Card Huddle Ad-free', description: 'No ads on thecardhuddle.com.', metadata: { plan: 'adfree' } });
+    const made = await stripe.products.create({ name: 'Huddle+', description: 'No ads on thecardhuddle.com, plus Huddle AI.', metadata: { plan: 'adfree' } });
     id = made.id;
   }
   cachePut(ADFREE_PRODUCT_KEY, { id }, 365 * 86400);
@@ -19730,16 +19733,24 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
     { type: 'text', text: BIZ.aiContext(inv.items, brief, 300, sales), cache_control: { type: 'ephemeral' } },
     { type: 'text', text: instruction }] }];
   // With tools, the AI looks up the rest of Card Huddle as it answers: any
-  // card's sold prices, the market index, a player's trend. It may take a few
-  // rounds of lookups; the last round has no tools, so it must answer.
+  // card's sold prices, the market index, a player's trend.
   const tools = opts.tools ? BIZ_AI_TOOLS : null;
+  return _aiToolLoop(tools ? _bizAskSystem() : BIZ_AI_SYSTEM, messages, tools);
+}
+
+// One answer from Claude, with Card Huddle's lookups as tools. It may take a
+// few rounds of lookups; the last round has no tools, so it must answer.
+// null when the model declined. Shared by Business Ask and Huddle AI.
+async function _aiToolLoop(system, messages, tools) {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
+  if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
   for (let round = 0; ; round++) {
     const last = !tools || round >= BIZ_AI_TOOL_ROUNDS;
     const r = await _bizClient.messages.create({
       model: BIZ_AI_MODEL,
       max_tokens: 16000,
       output_config: { effort: 'low' },
-      system: tools ? _bizAskSystem() : BIZ_AI_SYSTEM,
+      system,
       ...(tools ? { tools, tool_choice: { type: last ? 'none' : 'auto' } } : {}),
       messages,
     });
@@ -20153,6 +20164,66 @@ app.post('/api/biz/ask', async (req, res) => {
   } catch (err) {
     console.error('[biz/ask]', err && err.status, err && err.message);
     res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' });
+  }
+});
+
+// ---- Huddle AI, for collectors on Huddle+ (owner, Oct 2026) ----
+// The one paid collector feature: AI answers about cards, grading and the
+// market, from the same lookups Business Ask uses (BIZ_AI_TOOLS). It comes
+// with the Ad-free plan, renamed Huddle+ ($2.99 a month, $24.99 a year); no
+// free questions. A daily limit keeps one account's questions inside what
+// its plan pays: Haiku 5.5 runs about a quarter of a cent a question.
+const HUDDLE_AI_PER_DAY = 30;
+const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.com), a sports card price site built on real completed eBay sales. '
+  + 'You help collectors: what a card is worth, whether it is worth grading, how a player\'s cards are moving, which parallel or grade sells for what. '
+  + 'Look the numbers up with your tools rather than recalling them, and say they come from Card Huddle sales and over which days. '
+  + 'When the sales are thin or the card is unclear, say so and ask for the year, set, parallel, card number or grade. '
+  + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (about $25 to $75 a card at PSA, more for high values), and say it depends on the card\'s condition. '
+  + 'Never promise a price will rise or call a card an investment. Answer in plain language, short paragraphs or a few bullets, no tables wider than three columns.';
+const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || PRO_GRANT_USERS.has(String(user).toLowerCase())));
+const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
+const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };
+app.get('/api/ai/usage', async (req, res) => {
+  const user = getSessionUser(req);
+  const plus = !!_huddleAiAllowed(req, user);
+  const unlimited = isAdminReq(req) || (!!user && PRO_GRANT_USERS.has(String(user).toLowerCase()));
+  const used = user ? (((await cacheGet(_huddleAiKey(user))) || {}).n || 0) : 0;
+  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, used, limit: HUDDLE_AI_PER_DAY, resetsAt: _nextUtcMidnight(),
+    available: !!process.env.ANTHROPIC_API_KEY });
+});
+app.post('/api/ai/ask', async (req, res) => {
+  const user = getSessionUser(req);
+  const admin = isAdminReq(req);
+  if (!user && !admin) return res.status(401).json({ error: 'Log in to use Huddle AI.', needs: 'login' });
+  if (!_huddleAiAllowed(req, user)) return res.status(402).json({ error: 'Huddle AI comes with Huddle+.', needs: 'plus' });
+  const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
+  if (!q) return res.status(400).json({ error: 'Ask a question.' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Huddle AI is not switched on yet.' });
+  const unlimited = admin || PRO_GRANT_USERS.has(String(user).toLowerCase());
+  const ck = user && _huddleAiKey(user);
+  let used = 0;
+  if (!unlimited) {
+    used = ((await cacheGet(ck)) || {}).n || 0;
+    if (used >= HUDDLE_AI_PER_DAY) return res.status(429).json({ error: `That's today's ${HUDDLE_AI_PER_DAY} questions. More at midnight UTC.`, used, limit: HUDDLE_AI_PER_DAY });
+  }
+  // The conversation so far, so a follow-up ("and in PSA 10?") makes sense:
+  // the last few turns as plain text, roles alternating, ending on the user.
+  const hist = (Array.isArray(req.body && req.body.history) ? req.body.history : []).slice(-6)
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string' && m.text.trim())
+    .map(m => ({ role: m.role, content: m.text.slice(0, 2000) }));
+  while (hist.length && hist[0].role !== 'user') hist.shift();
+  const messages = [];
+  for (const m of hist) { if (messages.length && messages[messages.length - 1].role === m.role) messages[messages.length - 1].content += '\n\n' + m.content; else messages.push(m); }
+  if (messages.length && messages[messages.length - 1].role === 'user') messages.pop();
+  messages.push({ role: 'user', content: q });
+  try {
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS);
+    if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
+    if (!unlimited) { used += 1; cachePut(ck, { n: used }, 2 * 86400); }
+    res.json({ answer: text || 'No answer came back. Try asking another way.', used, limit: HUDDLE_AI_PER_DAY, unlimited });
+  } catch (err) {
+    console.error('[ai/ask]', err && err.status, err && err.message);
+    res.status(502).json({ error: 'Huddle AI did not answer. Try again in a minute.' });
   }
 });
 
@@ -20917,7 +20988,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
