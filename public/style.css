@@ -10388,3 +10388,27 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-box { border-left: none; border-right: 1px solid var(--border); box-shadow: 12px 0 40px rgba(0, 0, 0, 0.35); }
 @media (prefers-reduced-motion: reduce) { .hai-fab { transition: none; } }
 @media print { .hai-fab { display: none; } }
+
+/* Huddle AI's pictures under an answer (owner, Oct 2026). */
+.hai-vis { align-self: stretch; display: flex; flex-direction: column; gap: 0.5rem; max-width: 100%; }
+.hai-card { display: flex; gap: 0.75rem; padding: 0.65rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-primary); }
+.hai-photo { flex-shrink: 0; width: 84px; }
+.hai-photo img { width: 84px; height: 116px; object-fit: cover; border-radius: 8px; background: var(--bg-tertiary); display: block; }
+.hai-card-body { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+.hai-card-k { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
+.hai-card-v { font-size: 1.25rem; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.hai-card-v.hai-up { color: var(--accent); }
+.hai-card-v.hai-down { color: #ef6b6b; }
+.hai-card-sub { font-size: 0.72rem; color: var(--text-muted); }
+.hai-spark { width: 100%; height: 56px; margin: 0.25rem 0 0.1rem; display: block; }
+.hai-spark-line { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.hai-spark-area { fill: var(--accent); opacity: 0.12; }
+.hai-spark-dot { fill: var(--accent); }
+.hai-more { font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; margin-top: 0.2rem; }
+.hai-live { padding: 0.65rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-primary); display: flex; flex-direction: column; gap: 0.45rem; }
+.hai-live-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.hai-live-item { display: flex; flex-direction: column; gap: 0.2rem; text-decoration: none; color: var(--text-secondary); font-size: 0.72rem; line-height: 1.3; min-width: 0; }
+.hai-live-item img, .hai-live-noimg { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; background: var(--bg-tertiary); display: block; }
+.hai-live-item b { color: var(--accent); font-size: 0.9rem; }
+.hai-live-item span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hai-aff { font-size: 0.64rem; color: var(--text-muted); }

@@ -5732,13 +5732,60 @@ function _haiFormat(text) {
     return `<p>${lines.map(inline).join('<br>')}</p>`;
   }).join('');
 }
+// The pictures under an answer (owner, Oct 2026): the card's photo with its
+// sold prices by day, a player's trend line, and copies for sale on eBay now
+// (affiliate links). Drawn from what the AI looked up, as small inline SVG.
+function _haiSpark(points, key) {
+  const pts = (points || []).filter(p => Number.isFinite(p[key]));
+  if (pts.length < 2) return '';
+  const W = 240, H = 64, P = 4;
+  const vs = pts.map(p => p[key]), lo = Math.min(...vs), hi = Math.max(...vs), span = hi - lo || 1;
+  const xy = pts.map((p, i) => [P + (i * (W - 2 * P)) / (pts.length - 1), H - P - ((p[key] - lo) * (H - 2 * P)) / span]);
+  const line = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const area = `${P},${H - P} ${line} ${W - P},${H - P}`;
+  const [lx, ly] = xy[xy.length - 1];
+  return `<svg class="hai-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Trend over ${pts.length} points">
+    <polygon points="${area}" class="hai-spark-area"/><polyline points="${line}" class="hai-spark-line"/><circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" class="hai-spark-dot"/></svg>`;
+}
+function _haiMoney(v) { return v == null ? '-' : '$' + Number(v).toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 0 : 2 }); }
+function _haiDay(d) { const t = new Date(`${d}T12:00:00`); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function _haiVisuals(list) {
+  return `<div class="hai-vis">${list.map(v => {
+    if (v.kind === 'sales') {
+      const pts = v.points || [];
+      const span = pts.length >= 2 ? `${_haiDay(pts[0].date)} – ${_haiDay(pts[pts.length - 1].date)}` : '';
+      const photo = v.photo && v.photo.src
+        ? `<a class="hai-photo" ${v.photo.url ? `href="${escHtml(v.photo.url)}" target="_blank" rel="noopener"` : ''}><img src="${escHtml(v.photo.src)}" alt="${escHtml(v.query || 'Card')}" loading="lazy" referrerpolicy="no-referrer"></a>` : '';
+      return `<div class="hai-card">${photo}<div class="hai-card-body">
+        <span class="hai-card-k">Sold prices</span><b class="hai-card-v">${_haiMoney(v.median)}</b>
+        <span class="hai-card-sub">typical of ${v.n} sale${v.n === 1 ? '' : 's'}${v.low != null && v.high != null && v.low !== v.high ? ` · ${_haiMoney(v.low)}–${_haiMoney(v.high)}` : ''}</span>
+        ${_haiSpark(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
+        <a class="hai-more" href="/?prefill=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>`;
+    }
+    if (v.kind === 'trend') {
+      const up = v.changePct > 0, flat = !v.changePct;
+      return `<div class="hai-card"><div class="hai-card-body">
+        <span class="hai-card-k">${escHtml(v.player || 'Player')} · ${v.days} days</span>
+        <b class="hai-card-v ${flat ? '' : up ? 'hai-up' : 'hai-down'}">${v.changePct > 0 ? '+' : ''}${v.changePct != null ? v.changePct + '%' : '-'}</b>
+        ${_haiSpark(v.points, 'value')}</div></div>`;
+    }
+    if (v.kind === 'listings') {
+      return `<div class="hai-live"><span class="hai-card-k">For sale on eBay now</span><div class="hai-live-row">${v.items.map(it => `
+        <a class="hai-live-item" href="${escHtml(epnUrl(it.url))}" target="_blank" rel="noopener sponsored">
+          ${it.image ? `<img src="${escHtml(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="hai-live-noimg"></span>'}
+          <b>${_haiMoney(it.price)}</b><span>${escHtml(it.title)}</span>${EBAY_TAG}</a>`).join('')}</div>
+        <span class="hai-aff">Asking prices, not sold prices · affiliate links</span></div>`;
+    }
+    return '';
+  }).join('')}</div>`;
+}
 const HAI_EXAMPLES = ['What is a 2024 Prizm Jayden Daniels Silver worth?', 'Should I grade a raw Bo Nix Prizm rookie?', "How are Brock Purdy's cards doing this month?"];
 function _haiPaint() {
   const log = document.getElementById('hai-log');
   if (!log) return;
   const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
     <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
-  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>`).join('')
+  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`).join('')
     + (_hai.busy ? '<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span></div>' : '');
   log.querySelectorAll('.hai-chip').forEach(b => b.addEventListener('click', () => {
     if (!_hai.usage || !_hai.usage.plus) return;
@@ -5802,7 +5849,7 @@ async function _haiAsk() {
     const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
-      _hai.msgs.push({ role: 'assistant', text: d.answer });
+      _hai.msgs.push({ role: 'assistant', text: d.answer, visuals: Array.isArray(d.visuals) ? d.visuals : [] });
       if (_hai.usage && !d.unlimited) { _hai.usage.used = d.used; _haiUsageLine(_hai.usage); }
     } else {
       _hai.msgs.push({ role: 'assistant', text: d.error || 'Huddle AI did not answer. Try again.', error: true });

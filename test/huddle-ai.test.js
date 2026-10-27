@@ -83,6 +83,27 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     const owner = await reg('cardhuddlecollectors') || (await call('/api/auth/login', { method: 'POST', body: { username: 'cardhuddlecollectors', password: 'secret123' } })).body.token;
     const uo = await call('/api/ai/usage', { token: owner });
     check('the owner\'s account (cardhuddlecollectors) has Huddle AI, unlimited, with no plan', uo.body.plus === true && uo.body.unlimited === true, JSON.stringify(uo.body));
+    // The pictures: built from what the AI looked up.
+    const vis = S._huddleAiVisuals([
+      { name: 'search_sold_sales', out: { query: 'old search', matched: 1, sales: [] } },
+      { name: 'search_sold_sales', out: { query: '2024 Prizm Bo Nix Silver', matched: 4, median: 60, low: 50, high: 75, sales: [
+        { date: '2026-10-20', price: 75, imageUrl: 'https://i.ebayimg.com/a.jpg', itemUrl: 'https://www.ebay.com/itm/1', grade: 'Raw' },
+        { date: '2026-10-20', price: 55, imageUrl: null },
+        { date: '2026-10-12', price: 60, imageUrl: 'javascript:alert(1)' },
+        { date: '2026-10-05', price: 50 }] } },
+      { name: 'player_trend', out: { available: true, player: 'Bo Nix', days: 30, changePct: 12.5, series: [{ date: '2026-09-22', score: 100 }, { date: '2026-10-22', score: 112.5 }] } },
+      { name: 'current_listings', out: { query: 'x', listed: 2, items: [
+        { title: 'Bo Nix Silver', price: 70, imageUrl: 'https://i.ebayimg.com/b.jpg', itemUrl: 'https://www.ebay.com/itm/2' },
+        { title: 'Phish', price: 1, imageUrl: 'https://i.ebayimg.com/c.jpg', itemUrl: 'https://evil.example/itm/3' }] } },
+    ]);
+    const vs = vis.find(v => v.kind === 'sales'), vt = vis.find(v => v.kind === 'trend'), vl = vis.find(v => v.kind === 'listings');
+    check('an answer brings the card\'s photo and its sold prices by day, from the AI\'s last search',
+      vs && vs.query === '2024 Prizm Bo Nix Silver' && vs.photo.src === 'https://i.ebayimg.com/a.jpg' && vs.photo.url === 'https://www.ebay.com/itm/1'
+      && JSON.stringify(vs.points) === '[{"date":"2026-10-05","price":50},{"date":"2026-10-12","price":60},{"date":"2026-10-20","price":65}]', JSON.stringify(vs));
+    check('  ...a player\'s trend line, and copies for sale now, only eBay links and https photos kept',
+      vt && vt.points.length === 2 && vt.changePct === 12.5 && vl && vl.items.length === 1 && vl.items[0].url === 'https://www.ebay.com/itm/2', JSON.stringify(vl));
+    check('  ...and nothing when the AI looked nothing up', JSON.stringify(S._huddleAiVisuals([])) === '[]' && Array.isArray(a.body.visuals) && a.body.visuals.length === 0);
+    check('the AI can look up what is for sale now', S.BIZ_AI_TOOLS.some(t => t.name === 'current_listings'));
     check('questions have their own rate limit', S.RL_TIERS.some(t => t.name === 'ai' && t.match('/api/ai/ask')));
 
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
@@ -90,6 +111,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('the menu opens Huddle AI, and the plan is sold as Huddle+',
       /openHuddleAI\(\)/.test(html) && /Huddle\+/.test(html) && /function openHuddleAI/.test(app) && /\/api\/ai\/ask/.test(app) && /Get Huddle\+/.test(app));
     check('  ...answers are escaped before their light formatting', /function _haiFormat[\s\S]{0,200}escHtml\(t\)/.test(app));
+    check('  ...and the pictures are drawn under the answer, listings through affiliate links', /function _haiVisuals/.test(app) && /epnUrl\(it\.url\)/.test(app));
   } catch (e) { console.error(e); failures++; }
   server.close();
   // The test account's plan is not left in the repo's data file.

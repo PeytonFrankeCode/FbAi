@@ -19741,7 +19741,7 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // One answer from Claude, with Card Huddle's lookups as tools. It may take a
 // few rounds of lookups; the last round has no tools, so it must answer.
 // null when the model declined. Shared by Business Ask and Huddle AI.
-async function _aiToolLoop(system, messages, tools) {
+async function _aiToolLoop(system, messages, tools, onTool) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
   if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
   for (let round = 0; ; round++) {
@@ -19763,6 +19763,7 @@ async function _aiToolLoop(system, messages, tools) {
     const results = await Promise.all(calls.map(async (c) => {
       let out;
       try { out = await _bizRunTool(c.name, c.input || {}); } catch (err) { out = { error: String((err && err.message) || err) }; }
+      if (onTool && out && !out.error) { try { onTool(c.name, c.input || {}, out); } catch (_) { /* pictures are extra */ } }
       return { type: 'tool_result', tool_use_id: c.id, content: _bizToolText(out), ...(out && out.error ? { is_error: true } : {}) };
     }));
     messages.push({ role: 'user', content: results });
@@ -19799,6 +19800,10 @@ const BIZ_AI_TOOLS = [
   { name: 'search_sold_sales',
     description: 'Recent completed eBay sales of one card from the Card Huddle database, newest first, with the median. '
       + 'Put the grade in the query when it matters, e.g. "2024 Prizm Bo Nix Silver PSA 10".',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Year, set, player, parallel, card number and grade' } }, required: ['query'] } },
+  { name: 'current_listings',
+    description: 'Copies of one card for sale on eBay right now: price, condition and title. Use it when someone asks what is '
+      + 'available, where to buy, or what sellers are asking. Asking prices are not sold prices; say which is which.',
     input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Year, set, player, parallel, card number and grade' } }, required: ['query'] } },
   { name: 'price_estimate',
     description: 'Card Huddle\'s estimated value for a card, with the grades it has seen sell.',
@@ -19849,8 +19854,18 @@ async function _bizRunTool(name, input) {
       const mid = prices.length ? (prices.length % 2 ? prices[prices.length >> 1] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
       return { query: q, matched: rows.length, median: mid, low: prices[0] ?? null, high: prices[prices.length - 1] ?? null,
         loosenedBy: m.relaxedBy || null,
-        sales: rows.slice(0, 20).map(r => ({ date: String(r.soldDate || '').slice(0, 10), price: Number(r.price), title: r.title,
-          grade: r.grader ? `${r.grader} ${r.grade || ''}`.trim() : (r.condition || 'Raw') })) };
+        // The photo and link ride along for Huddle AI's pictures; _bizTrim
+        // keeps them (and all but 24 rows) out of what the model reads.
+        sales: rows.slice(0, 40).map(r => ({ date: String(r.soldDate || '').slice(0, 10), price: Number(r.price), title: r.title,
+          grade: r.grader ? `${r.grader} ${r.grade || ''}`.trim() : (r.condition || 'Raw'),
+          imageUrl: r.imageUrl || null, itemUrl: r.itemUrl || null })) };
+    }
+    case 'current_listings': {
+      if (q.length < 3) return { error: 'Give a card to search for.' };
+      const data = await fetchEbayItems(q, 24, 'forsale', 'ai-forsale');
+      const items = filterByVariant(data.results || [], q, { strict: true }).filter(r => Number(r.price) > 0).slice(0, 8)
+        .map(r => ({ title: r.title, price: Number(r.price), condition: r.condition || null, imageUrl: r.imageUrl || null, itemUrl: r.itemUrl || null }));
+      return { query: q, listed: items.length, items };
     }
     case 'price_estimate': return _routeJson('/api/price-estimate', { q });
     case 'market_index': return _routeJson('/api/market-index', { days: String(_bizDays(input.days)) });
@@ -20179,6 +20194,8 @@ const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.co
   + 'Look the numbers up with your tools rather than recalling them, and say they come from Card Huddle sales and over which days. '
   + 'When the sales are thin or the card is unclear, say so and ask for the year, set, parallel, card number or grade. '
   + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (about $25 to $75 a card at PSA, more for high values), and say it depends on the card\'s condition. '
+  + 'When someone asks what is for sale or where to buy, look up current listings, and keep asking prices apart from sold prices. '
+  + 'The page shows the card\'s photo, a chart of its sold prices, a player\'s trend line and the listings you looked up beside your answer, so do not paste links or image addresses. '
   + 'Never promise a price will rise or call a card an investment. Answer in plain language, short paragraphs or a few bullets, no tables wider than three columns.';
 // The owner's accounts: unlimited and never charged. cardhuddlecollectors is
 // the one the owner signs in with (app.js NO_AFFILIATE_ACCOUNTS).
@@ -20187,6 +20204,38 @@ const _huddleAiOwner = (user) => !!user && HUDDLE_AI_OWNERS.has(String(user).toL
 const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || _huddleAiOwner(user)));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
 const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };
+// The pictures under an answer (owner, Oct 2026), from what the AI looked
+// up: a card's photo and its sold prices by day, a player's trend line, and
+// copies for sale now. At most one of each kind, the last lookup winning,
+// since a later lookup is the AI's refined search.
+const _aiPhoto = (u) => (typeof u === 'string' && /^https:\/\//.test(u) ? u : null);
+const _aiLink = (u) => (typeof u === 'string' && /^https:\/\/(www\.)?ebay\.com\//.test(u) ? u : null);
+function _huddleAiVisuals(looked) {
+  const last = (n) => [...looked].reverse().find(x => x.name === n && x.out);
+  const out = [];
+  const sold = last('search_sold_sales');
+  if (sold && sold.out.matched > 0) {
+    const sales = sold.out.sales || [];
+    const byDay = new Map();
+    for (const r of sales) if (r.date && r.price > 0) (byDay.get(r.date) || byDay.set(r.date, []).get(r.date)).push(r.price);
+    const points = [...byDay].sort((a, b) => a[0].localeCompare(b[0])).map(([date, ps]) => ({ date, price: Math.round(_median(ps.sort((a, b) => a - b)) * 100) / 100 }));
+    const pic = sales.find(r => _aiPhoto(r.imageUrl));
+    out.push({ kind: 'sales', query: sold.out.query, median: sold.out.median, low: sold.out.low, high: sold.out.high, n: sold.out.matched, points,
+      photo: pic ? { src: _aiPhoto(pic.imageUrl), url: _aiLink(pic.itemUrl), price: pic.price, date: pic.date, grade: pic.grade } : null });
+  }
+  const trend = last('player_trend');
+  if (trend && trend.out.available && Array.isArray(trend.out.series) && trend.out.series.length >= 2) {
+    out.push({ kind: 'trend', player: trend.out.player, days: trend.out.days, changePct: trend.out.changePct,
+      points: trend.out.series.map(p => ({ date: p.date, value: p.score })).filter(p => p.date && Number.isFinite(p.value)) });
+  }
+  const live = last('current_listings');
+  if (live && live.out.listed > 0) {
+    out.push({ kind: 'listings', query: live.out.query, items: live.out.items.slice(0, 4)
+      .map(r => ({ title: String(r.title || '').slice(0, 90), price: r.price, condition: r.condition, image: _aiPhoto(r.imageUrl), url: _aiLink(r.itemUrl) }))
+      .filter(r => r.url) });
+  }
+  return out.filter(v => v.kind !== 'listings' || v.items.length);
+}
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
@@ -20221,10 +20270,11 @@ app.post('/api/ai/ask', async (req, res) => {
   if (messages.length && messages[messages.length - 1].role === 'user') messages.pop();
   messages.push({ role: 'user', content: q });
   try {
-    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS);
+    const looked = [];
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }));
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
     if (!unlimited) { used += 1; cachePut(ck, { n: used }, 2 * 86400); }
-    res.json({ answer: text || 'No answer came back. Try asking another way.', used, limit: HUDDLE_AI_PER_DAY, unlimited });
+    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), used, limit: HUDDLE_AI_PER_DAY, unlimited });
   } catch (err) {
     console.error('[ai/ask]', err && err.status, err && err.message);
     res.status(502).json({ error: 'Huddle AI did not answer. Try again in a minute.' });
@@ -20992,7 +21042,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

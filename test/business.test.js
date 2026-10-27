@@ -326,7 +326,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     const sold = back && JSON.parse(back.find(b => b.tool_use_id === 't1').content);
     check('Ask can look up any card\'s sales, the market and a player, then answers from them',
       a1.body.answer === 'Bo Nix Silvers sell for about $60.' && calls.length === 2
-      && calls[0].tools.map(t => t.name).join() === 'search_sold_sales,price_estimate,market_index,player_trend,player_cards'
+      && calls[0].tools.map(t => t.name).join() === 'search_sold_sales,current_listings,price_estimate,market_index,player_trend,player_cards'
       && calls[0].tool_choice.type === 'auto' && back.length === 3
       && sold.matched >= 5 && sold.median > 0 && sold.sales[0].date && !/imageUrl/.test(back.find(b => b.tool_use_id === 't1').content)
       && !/^\{"error"/.test(back.find(b => b.tool_use_id === 't2').content) && /Bo Nix/.test(back.find(b => b.tool_use_id === 't3').content),
