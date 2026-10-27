@@ -5773,7 +5773,7 @@ function _haiVisuals(list) {
       return `<div class="hai-live"><span class="hai-card-k">For sale on eBay now</span><div class="hai-live-row">${v.items.map(it => `
         <a class="hai-live-item" href="${escHtml(epnUrl(it.url))}" target="_blank" rel="noopener sponsored">
           ${it.image ? `<img src="${escHtml(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="hai-live-noimg"></span>'}
-          <b>${_haiMoney(it.price)}</b><span>${escHtml(it.title)}</span></a>`).join('')}</div>
+          <b>${_haiMoney(it.price)}</b><span>${escHtml(it.title)}</span>${EBAY_TAG}</a>`).join('')}</div>
         <span class="hai-aff">Asking prices, not sold prices · affiliate links</span></div>`;
     }
     return '';
