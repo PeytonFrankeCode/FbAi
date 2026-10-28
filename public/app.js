@@ -2078,6 +2078,7 @@ const SEARCH_ATTEMPT_MS = 35000;
 
 function _beginSearch() {
   const seq = ++_searchSeq;
+  _diagMark('search');
   _showSportNote(null);
   if (_searchCtl) _searchCtl.abort();
   _searchCtl = new AbortController();
@@ -2096,6 +2097,7 @@ function _searchStale(seq) { return seq !== _searchSeq; }
 
 function _endSearch(seq) {
   if (_searchStale(seq)) return;
+  _diagMark('search-done');
   _searchSlowTimers.forEach(clearTimeout);
   _searchSlowTimers = [];
   setLoading(false);
@@ -5412,6 +5414,7 @@ const cardModalMeta = document.getElementById('card-modal-meta');
 const cardModalLink = document.getElementById('card-modal-link');
 
 function openCardModal(item, opts = {}) {
+  _diagMark('card');
   // "Showing X card" header with parsed details
   cardModalShowing.textContent = buildShowingText(item);
 
@@ -19434,5 +19437,46 @@ document.addEventListener('keydown', (e) => {
   const s = document.getElementById('install-sheet');
   if (e.key === 'Escape' && s && !s.classList.contains('hidden')) closeInstallApp();
 });
+
+// ---- Frame stall watch (owner, Oct 2026) ----
+// "The spinner freezes, and in other places too", on the owner's iPad, where
+// the test browser here cannot follow. On the owner's own account only, for
+// 20 minutes after each page load, this notes every moment the page stopped
+// drawing for 250ms or more, what was on screen and what had just started,
+// and sends them to /api/diag/stalls. Visitors never run it.
+// A function declaration on window, so a mark made while the page is still
+// starting up (before this code runs) is safe.
+function _diagMark(what) { window.__diag = { what, at: performance.now() }; }
+(function stallWatch() {
+  let owner = false;
+  try { owner = _noAffiliate() && !!getSessionToken(); } catch (_) { owner = false; }
+  if (!owner || typeof requestAnimationFrame !== 'function') return;
+  const until = performance.now() + 20 * 60 * 1000;
+  const batch = [];
+  let last = performance.now();
+  const shown = (sel) => { const el = document.querySelector(sel); return !!(el && !el.classList.contains('hidden') && el.offsetParent !== null); };
+  const tick = (now) => {
+    const gap = now - last; last = now;
+    if (gap >= 250 && !document.hidden && batch.length < 200) {
+      const tab = document.querySelector('.nav-tab.active');
+      batch.push({ t: Math.round(now), gap: Math.round(gap), view: (tab && tab.dataset.view) || '', what: (window.__diag || {}).what || 'load',
+        since: Math.round(now - ((window.__diag || {}).at || 0)), loading: shown('#loading'), modal: shown('#card-modal'), ai: shown('#hai') });
+    }
+    if (now < until) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  document.addEventListener('visibilitychange', () => { last = performance.now(); });
+  window.addEventListener('error', (e) => { if (batch.length < 200) batch.push({ t: Math.round(performance.now()), gap: 0, what: 'error', err: String((e && e.message) || e) }); });
+  const send = () => {
+    if (!batch.length) return;
+    const body = JSON.stringify({ token: getSessionToken(), ua: navigator.userAgent, stalls: batch.splice(0, 60) });
+    try {
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/diag/stalls', new Blob([body], { type: 'application/json' }));
+      else fetch('/api/diag/stalls', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true });
+    } catch (_) { /* a lost batch is fine */ }
+  };
+  setInterval(send, 30000);
+  window.addEventListener('pagehide', send);
+})();
 
 _mountHomeAd();
