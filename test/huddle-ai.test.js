@@ -54,7 +54,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('a Huddle+ account gets an answer, counted against the day',
       a.status === 200 && /\$60/.test(a.body.answer) && a.body.used === 1 && a.body.limit === 30, JSON.stringify(a.body));
     check('  ...from Haiku with Card Huddle\'s lookups as tools and the collector\'s instructions',
-      c && c.model === 'claude-haiku-5-5' && c.tools.some(t => t.name === 'search_sold_sales') && /Huddle AI/.test(c.system) && /Never promise/.test(c.system));
+      c && c.model === 'claude-haiku-5-5' && c.tools.some(t => t.name === 'search_sold_sales') && /Huddle AI/.test(c.system) && /Never promise/.test(c.system) && c.output_config.effort === 'medium' && /comparable players/.test(c.system));
 
     calls.length = 0;
     await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'And in PSA 10?', history: [
@@ -104,6 +104,23 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       vt && vt.points.length === 2 && vt.changePct === 12.5 && vl && vl.items.length === 1 && vl.items[0].url === 'https://www.ebay.com/itm/2', JSON.stringify(vl));
     check('  ...and nothing when the AI looked nothing up', JSON.stringify(S._huddleAiVisuals([])) === '[]' && Array.isArray(a.body.visuals) && a.body.visuals.length === 0);
     check('the AI can look up what is for sale now', S.BIZ_AI_TOOLS.some(t => t.name === 'current_listings'));
+    // Comparable players, from the nightly price map.
+    const pg = (median, sales, top) => ({ sales, cards: top.length, median, low: 1, high: 999, top });
+    store.set('priceblocks:v1', { built: 'x', from: '2026-09-11', to: '2026-10-22', pages: {
+      'player:bo-nix': pg(40, 120, [{ label: '2024 Panini Prizm #301', sales: 30, median: 30 }, { label: '2024 Donruss Optic #1', sales: 20, median: 60 }]),
+      'player:jayden-daniels': pg(80, 300, [{ label: '2024 Panini Prizm #347', sales: 60, median: 70 }]),
+      'player:caleb-williams': pg(44, 200, [{ label: '2024 Panini Prizm #300', sales: 50, median: 33 }]),
+      'player:drake-maye': pg(38, 150, [{ label: '2024 Donruss Optic #3', sales: 20, median: 41 }]),
+      'player:brock-purdy': pg(41, 3, [{ label: '2022 Panini Prizm #1', sales: 3, median: 41 }]),
+      'set:2024-panini-prizm-football': pg(50, 999, []) } });
+    const cp = await S._comparablePlayers('Bo Nix', '');
+    check('comparable players are the closest in typical card price, thin sellers left out',
+      cp.player === 'Bo Nix' && cp.typical === 40 && cp.comparable.map(x => x.player).join() === 'Drake Maye,Caleb Williams,Jayden Daniels' && cp.comparable[0].ratio === 0.95, JSON.stringify(cp.comparable.map(x => [x.player, x.typical, x.ratio])));
+    const cs = await S._comparablePlayers('Bo Nix', '2024 Prizm');
+    check('  ...and within one set when asked: their Prizm cards against his', cs.typical === 30 && cs.comparable.map(x => x.player).join() === 'Caleb Williams,Jayden Daniels' && cs.comparable[0].cards[0].card === '2024 Panini Prizm #300', JSON.stringify(cs));
+    check('  ...a player with no priced cards says so', !!(await S._comparablePlayers('Nobody Atall', '')).error);
+    check('the AI has the grading, checklist, market and comparable lookups, and more rounds to use them',
+      ['comparable_players', 'grading_advice', 'find_checklist', 'checklist_prices', 'market_top_sales'].every(n => S.BIZ_AI_TOOLS.some(t => t.name === n)));
     check('questions have their own rate limit', S.RL_TIERS.some(t => t.name === 'ai' && t.match('/api/ai/ask')));
 
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');

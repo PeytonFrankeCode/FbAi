@@ -326,16 +326,16 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     const sold = back && JSON.parse(back.find(b => b.tool_use_id === 't1').content);
     check('Ask can look up any card\'s sales, the market and a player, then answers from them',
       a1.body.answer === 'Bo Nix Silvers sell for about $60.' && calls.length === 2
-      && calls[0].tools.map(t => t.name).join() === 'search_sold_sales,current_listings,price_estimate,market_index,player_trend,player_cards'
+      && calls[0].tools.map(t => t.name).join() === 'search_sold_sales,current_listings,comparable_players,grading_advice,find_checklist,checklist_prices,market_top_sales,price_estimate,market_index,player_trend,player_cards'
       && calls[0].tool_choice.type === 'auto' && back.length === 3
       && sold.matched >= 5 && sold.median > 0 && sold.sales[0].date && !/imageUrl/.test(back.find(b => b.tool_use_id === 't1').content)
       && !/^\{"error"/.test(back.find(b => b.tool_use_id === 't2').content) && /Bo Nix/.test(back.find(b => b.tool_use_id === 't3').content),
       JSON.stringify({ answer: a1.body, back: back && back.map(b => b.content.slice(0, 160)) }));
     calls.length = 0;
     script = Array.from({ length: 9 }, (_, k) => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'x' + k, name: 'price_estimate', input: { query: 'Bo Nix Prizm' } }] }));
-    script[4] = { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Answer after looking.' }] };
+    script[6] = { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Answer after looking.' }] };
     const a2 = await call('/api/biz/ask', { method: 'POST', headers: K, body: JSON.stringify({ q: 'Keep looking' }) });
-    check('  ...and after 4 rounds of lookups it must answer', a2.body.answer === 'Answer after looking.' && calls.length === 5 && calls[4].tool_choice.type === 'none', JSON.stringify(calls.map(c => c.tool_choice)));
+    check('  ...and after 6 rounds of lookups it must answer', a2.body.answer === 'Answer after looking.' && calls.length === 7 && calls[6].tool_choice.type === 'none', JSON.stringify(calls.map(c => c.tool_choice)));
     check('  ...a tool answer is capped and never carries photos', S._bizToolText({ imageUrl: 'x', rows: Array.from({ length: 500 }, (_, k) => ({ k, title: 'y'.repeat(300) })) }).length <= 9010);
     calls.length = 0; script = [];
     await call('/api/biz/summary?fresh=1', { headers: K });
