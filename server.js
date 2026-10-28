@@ -681,6 +681,7 @@ const RL_TIERS = [
   // An article's read beacons (/api/news/beacon): a reader sends a handful;
   // each is one D1 write, so a script must not be able to post thousands.
   { name: 'beacon', minute: 30, hour: 300, match: (p) => p === '/api/news/beacon' },
+  { name: 'diag', minute: 10, hour: 120, match: (p) => p === '/api/diag/stalls' },
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
@@ -20314,6 +20315,29 @@ function _huddleAiVisuals(looked) {
   }
   return out.filter(v => v.kind !== 'listings' || v.items.length);
 }
+// Frame stalls from the owner's own device (owner, Oct 2026: "the spinner
+// freezes, in other places too"). The page notes each time it stopped drawing
+// for a quarter second or more and what was on screen; only the owner's
+// accounts are kept, the last 400, for a week. Read on /api/admin/diag/stalls.
+const DIAG_STALLS_KEY = 'diag:stalls:v1';
+app.post('/api/diag/stalls', async (req, res) => {
+  const b = req.body || {};
+  const user = typeof b.token === 'string' ? getSessionUserByToken(b.token) : null;
+  if (!_huddleAiOwner(user) || !Array.isArray(b.stalls)) return res.status(204).end();
+  const clean = b.stalls.slice(0, 60).map(x => ({
+    at: new Date().toISOString(), t: Number(x.t) || 0, gap: Math.min(600000, Number(x.gap) || 0),
+    view: String(x.view || '').slice(0, 20), what: String(x.what || '').slice(0, 60), since: Number(x.since) || null,
+    loading: !!x.loading, modal: !!x.modal, ai: !!x.ai, err: x.err ? String(x.err).slice(0, 200) : undefined,
+  }));
+  const prev = (await cacheGet(DIAG_STALLS_KEY)) || { ua: '', rows: [] };
+  const rows = prev.rows.concat(clean).slice(-400);
+  cachePut(DIAG_STALLS_KEY, { ua: String(b.ua || '').slice(0, 200), rows }, 7 * 86400);
+  res.status(204).end();
+});
+app.get('/api/admin/diag/stalls', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  res.json((await cacheGet(DIAG_STALLS_KEY)) || { rows: [] });
+});
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);

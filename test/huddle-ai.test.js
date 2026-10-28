@@ -26,6 +26,7 @@ const call = async (p, { method = 'GET', token, body } = {}) => {
     headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) } });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 };
+const app0 = () => fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 const calls = [];
 let reply = { stop_reason: 'end_turn', content: [{ type: 'text', text: 'A Bo Nix Silver sells for about **$60**.' }] };
 S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return reply; } } });
@@ -121,6 +122,15 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('  ...a player with no priced cards says so', !!(await S._comparablePlayers('Nobody Atall', '')).error);
     check('the AI has the grading, checklist, market and comparable lookups, and more rounds to use them',
       ['comparable_players', 'grading_advice', 'find_checklist', 'checklist_prices', 'market_top_sales'].every(n => S.BIZ_AI_TOOLS.some(t => t.name === n)));
+    // The owner-only frame stall recorder.
+    const stall = [{ t: 1200, gap: 900, view: 'search', what: 'search', since: 40, loading: true }];
+    await call('/api/diag/stalls', { method: 'POST', body: { token: free, ua: 'x', stalls: stall } });
+    check('a stranger\'s stall reports are not kept', !store.get('diag:stalls:v1'));
+    await call('/api/diag/stalls', { method: 'POST', body: { token: owner, ua: 'iPad Safari', stalls: stall } });
+    const kept = store.get('diag:stalls:v1');
+    check('  ...the owner\'s are, with what was on screen', kept && kept.ua === 'iPad Safari' && kept.rows.length === 1 && kept.rows[0].gap === 900 && kept.rows[0].what === 'search' && kept.rows[0].loading === true, JSON.stringify(kept));
+    check('  ...readable with the admin key only', (await call('/api/admin/diag/stalls')).status === 401);
+    check('  ...and the page records only on the owner\'s account', /function stallWatch\(\) \{\s*let owner = false;\s*try \{ owner = _noAffiliate\(\) && !!getSessionToken\(\)/.test(app0()));
     check('questions have their own rate limit', S.RL_TIERS.some(t => t.name === 'ai' && t.match('/api/ai/ask')));
 
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
