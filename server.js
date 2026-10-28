@@ -19741,7 +19741,7 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // One answer from Claude, with Card Huddle's lookups as tools. It may take a
 // few rounds of lookups; the last round has no tools, so it must answer.
 // null when the model declined. Shared by Business Ask and Huddle AI.
-async function _aiToolLoop(system, messages, tools, onTool) {
+async function _aiToolLoop(system, messages, tools, onTool, effort = 'low') {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
   if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
   for (let round = 0; ; round++) {
@@ -19749,7 +19749,7 @@ async function _aiToolLoop(system, messages, tools, onTool) {
     const r = await _bizClient.messages.create({
       model: BIZ_AI_MODEL,
       max_tokens: 16000,
-      output_config: { effort: 'low' },
+      output_config: { effort },
       system,
       ...(tools ? { tools, tool_choice: { type: last ? 'none' : 'auto' } } : {}),
       messages,
@@ -19773,7 +19773,7 @@ async function _aiToolLoop(system, messages, tools, onTool) {
 // ---- the AI's lookups into the rest of Card Huddle (owner, Oct 2026) ----
 // Each one answers from the same data the collector site shows, through the
 // site's own handlers, so the AI and the pages never disagree.
-const BIZ_AI_TOOL_ROUNDS = 4;
+const BIZ_AI_TOOL_ROUNDS = 6;
 // How Business itself works, so Ask can answer "how do I…" questions (owner,
 // Oct 2026). The same steps as the guide under the photo drawer's eBay button.
 const BIZ_AI_HELP = 'If the seller asks how to use Card Huddle for Business, answer from this guide with numbered steps. '
@@ -19805,6 +19805,25 @@ const BIZ_AI_TOOLS = [
     description: 'Copies of one card for sale on eBay right now: price, condition and title. Use it when someone asks what is '
       + 'available, where to buy, or what sellers are asking. Asking prices are not sold prices; say which is which.',
     input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Year, set, player, parallel, card number and grade' } }, required: ['query'] } },
+  { name: 'comparable_players',
+    description: 'Players whose cards sell at the closest price level to one player\'s, from Card Huddle\'s per-player card prices '
+      + '(each player\'s typical card price over the last weeks, and their best-selling cards). Give a set (e.g. "2024 Prizm") to '
+      + 'compare inside that set only. Use it to price a card with no sales of its own from similar players\' same card, or to answer '
+      + '"whose cards sell like X\'s".',
+    input_schema: { type: 'object', properties: { player: { type: 'string', description: 'Full name, e.g. "Bo Nix"' },
+      set: { type: 'string', description: 'Optional year and set words, e.g. "2024 Prizm"' } }, required: ['player'] } },
+  { name: 'grading_advice',
+    description: 'Sold prices for one card raw and in PSA 8, 9 and 10, for deciding whether grading pays after fees.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Year, set, player, parallel and card number, without a grade' } }, required: ['query'] } },
+  { name: 'find_checklist',
+    description: 'Find a product\'s checklist id by year and set name, e.g. "2024 Prizm" or "2025 Donruss Optic".',
+    input_schema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
+  { name: 'checklist_prices',
+    description: 'Every card one player has in a product (from its checklist), with sold prices where they exist and estimates for the rest, parallels included.',
+    input_schema: { type: 'object', properties: { product: { type: 'string', description: 'Product id from find_checklist' }, player: { type: 'string' } }, required: ['product', 'player'] } },
+  { name: 'market_top_sales',
+    description: 'The football card market over a period: total sold, the most expensive sales and the most sold cards.',
+    input_schema: { type: 'object', properties: { days: { type: 'integer', enum: [7, 30, 90, 365] } }, required: ['days'] } },
   { name: 'price_estimate',
     description: 'Card Huddle\'s estimated value for a card, with the grades it has seen sell.',
     input_schema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
@@ -19867,6 +19886,27 @@ async function _bizRunTool(name, input) {
         .map(r => ({ title: r.title, price: Number(r.price), condition: r.condition || null, imageUrl: r.imageUrl || null, itemUrl: r.itemUrl || null }));
       return { query: q, listed: items.length, items };
     }
+    case 'comparable_players': {
+      if (!player) return { error: 'Name a player.' };
+      return _comparablePlayers(player, String(input.set || '').trim().slice(0, 80));
+    }
+    case 'grading_advice':
+      if (q.length < 3) return { error: 'Give a card to look up.' };
+      return _routeJson('/api/grading-advisor', { q });
+    case 'find_checklist': {
+      if (q.length < 3) return { error: 'Give a year and set, e.g. "2024 Prizm".' };
+      const idx = await _loadJson('checklists/index.json');
+      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const hits = ((idx && idx.products) || []).filter(p => words.every(w => String(p.name || '').toLowerCase().includes(w)))
+        .slice(0, 8).map(p => ({ product: p.id, name: p.name, sets: p.setCount, cards: p.totalCards, unreleased: !!p.unreleased }));
+      return { query: q, products: hits };
+    }
+    case 'checklist_prices': {
+      const product = String(input.product || '').trim().slice(0, 120);
+      if (!product || !player) return { error: 'Give a product id from find_checklist and a player.' };
+      return _routeJson('/api/checklist-prices', { product, player });
+    }
+    case 'market_top_sales': return _routeJson('/api/sold-stats', { days: String([7, 30, 90, 365].includes(Number(input.days)) ? Number(input.days) : 30) });
     case 'price_estimate': return _routeJson('/api/price-estimate', { q });
     case 'market_index': return _routeJson('/api/market-index', { days: String(_bizDays(input.days)) });
     case 'player_trend':
@@ -19878,6 +19918,41 @@ async function _bizRunTool(name, input) {
     default: return { error: 'Unknown tool ' + name };
   }
 }
+// Players whose cards sell like one player's (owner, Oct 2026: "what player
+// should I compare to Bo Nix's cards if his card doesn't have a sale"). From
+// the price block map (priceblocks:v1): every priced player's typical card
+// price and best-selling cards, built nightly, so this costs no D1 rows. With
+// a set, each player's level is the median of their cards in that set.
+let _cmpMap = null, _cmpAt = 0;
+async function _comparablePlayers(name, set) {
+  if (!_cmpMap || Date.now() - _cmpAt > 10 * 60000) { _cmpMap = await cacheGet(PRICE_BLOCKS_KEY).catch(() => null); _cmpAt = Date.now(); }
+  const pages = (_cmpMap && _cmpMap.pages) || {};
+  const idx = await _loadJson('players/index.json').catch(() => null);
+  const bySlug = new Map((((idx && idx.players) || [])).map(p => [p.slug, p.name]));
+  const want = String(name).toLowerCase().trim();
+  const words = String(set || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const med = (xs) => { const a = xs.slice().sort((x, y) => x - y), m = a.length >> 1; return a.length ? (a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2) : null; };
+  const level = (pg) => {
+    if (!words.length) return { level: pg.median, cards: (pg.top || []).slice(0, 2) };
+    const cards = (pg.top || []).filter(c => words.every(w => String(c.label).toLowerCase().includes(w)));
+    return cards.length ? { level: med(cards.map(c => c.median)), cards: cards.slice(0, 2) } : null;
+  };
+  const players = Object.entries(pages).filter(([k]) => k.startsWith('player:'))
+    .map(([k, pg]) => ({ slug: k.slice(7), name: bySlug.get(k.slice(7)) || k.slice(7).replace(/-/g, ' '), pg }));
+  if (!players.length) return { error: 'Player prices are not built yet.' };
+  const me = players.find(p => p.name.toLowerCase() === want) || players.find(p => p.slug === want.replace(/[^a-z0-9]+/g, '-'));
+  if (!me) return { error: `No priced cards for ${name} in the last weeks.`, built: _cmpMap.built };
+  const mine = level(me.pg);
+  if (!mine || !(mine.level > 0)) return { error: `No sold ${set} cards for ${me.name} to compare from.`, player: me.name };
+  const others = players.filter(p => p !== me).map(p => ({ p, l: level(p.pg) })).filter(x => x.l && x.l.level > 0)
+    .map(x => ({ player: x.p.name, typical: x.l.level, ratio: Math.round((x.l.level / mine.level) * 100) / 100, sales: x.p.pg.sales,
+      cards: x.l.cards.map(c => ({ card: c.label, median: c.median, sales: c.sales })), d: Math.abs(Math.log(x.l.level / mine.level)) }))
+    .filter(x => x.sales >= 5).sort((a, b) => a.d - b.d).slice(0, 8).map(({ d, ...x }) => x);
+  return { player: me.name, set: set || null, typical: mine.level, sales: me.pg.sales, window: `${_cmpMap.from}..${_cmpMap.to}`,
+    cards: mine.cards.map(c => ({ card: c.label, median: c.median, sales: c.sales })), comparable: others,
+    note: 'typical = median of the player\'s card medians' + (set ? ' in that set' : '') + '; ratio = their level over this player\'s' };
+}
+
 // A tool's answer, cut to what is worth the AI's attention: no photos or
 // links, long series thinned to 24 evenly spaced points (the last kept), and
 // a hard cap on the whole.
@@ -20195,6 +20270,9 @@ const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.co
   + 'When the sales are thin or the card is unclear, say so and ask for the year, set, parallel, card number or grade. '
   + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (about $25 to $75 a card at PSA, more for high values), and say it depends on the card\'s condition. '
   + 'When someone asks what is for sale or where to buy, look up current listings, and keep asking prices apart from sold prices. '
+  + 'When a card has no sales of its own, do not stop there: find comparable players (inside the same set when you can), look up their same card, '
+  + 'and estimate from the ratio, saying it is an estimate and which players it leans on. Use several lookups when a question needs them. '
+  + 'For grading questions use the grading lookup; for a player\'s cards in one product, find the checklist and use its prices. '
   + 'The page shows the card\'s photo, a chart of its sold prices, a player\'s trend line and the listings you looked up beside your answer, so do not paste links or image addresses. '
   + 'Never promise a price will rise or call a card an investment. Answer in plain language, short paragraphs or a few bullets, no tables wider than three columns.';
 // The owner's accounts: unlimited and never charged. cardhuddlecollectors is
@@ -20271,7 +20349,7 @@ app.post('/api/ai/ask', async (req, res) => {
   messages.push({ role: 'user', content: q });
   try {
     const looked = [];
-    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }));
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium');
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
     if (!unlimited) { used += 1; cachePut(ck, { n: used }, 2 * 86400); }
     res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), used, limit: HUDDLE_AI_PER_DAY, unlimited });
@@ -21042,7 +21120,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
