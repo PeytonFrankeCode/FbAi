@@ -1299,7 +1299,10 @@ export default {
         if (typeof backfillPlayerAliases === 'function') {
           // Skipped ticks are deliberately silent — logging four times an hour
           // about work not done is how real signal gets lost.
-          if (aliasTick) {
+          // Every 6 hours (Oct 2026), not hourly: each run scans the sales
+          // table (~4M rows read), ~100M a day hourly, for new name spellings
+          // that can wait a few hours.
+          if (aliasTick && scheduledAt.getUTCHours() % 6 === 0) {
             await backfillPlayerAliases().catch(err => console.error('[Cron] alias backfill failed:', err && err.message || err));
           }
         } else {
@@ -1389,7 +1392,10 @@ export default {
         // 06:xx UTC — its own hour, like the boards, so a slow run of one heavy
         // job never starves another — or right away when there is none.
         if (typeof warmParallelLadder === 'function') {
-          const due = (scheduledAt.getUTCHours() === 6 && aliasTick)
+          // Every third day (Oct 2026): a build reads ~155M rows, and the
+          // ratios between parallels move slowly.
+          const ladderDay = Math.floor(scheduledAt.getTime() / 86400000) % 3 === 0;
+          const due = (scheduledAt.getUTCHours() === 6 && aliasTick && ladderDay)
             || (typeof parallelLadderMissing === 'function' && await parallelLadderMissing().catch(() => false));
           if (due) {
             const r = await warmParallelLadder().catch(err => {
