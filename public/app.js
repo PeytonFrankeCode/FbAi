@@ -7635,11 +7635,18 @@ function _mkGet(url) {
   _mkResp.set(url, { t: Date.now(), p });
   return p;
 }
-const _mkIndexUrl = (days, player) => player
+// The sports with a market (owner, Oct 2026: basketball and baseball joined
+// football). The sport rides on every market URL except football's, so each
+// sport has its own answers here and on the server.
+// A function declaration, not a const: _applyMarketSport runs while the page
+// is still starting up (the sport switch), before a const here would exist.
+function _isMarketSport(id) { return id === 'football' || id === 'basketball' || id === 'baseball'; }
+const _mkSportQ = () => { const s = activeSport(); return s && s !== 'football' && _isMarketSport(s) ? `&sport=${s}` : ''; };
+const _mkIndexUrl = (days, player) => (player
   ? `/api/player-index?player=${encodeURIComponent(player)}&days=${days}`
-  : `/api/market-index?days=${days}`;
+  : `/api/market-index?days=${days}`) + _mkSportQ();
 const _mkBasketUrl = (days, player) =>
-  `/api/market-basket?days=${days}` + (player ? `&player=${encodeURIComponent(player)}` : '');
+  `/api/market-basket?days=${days}` + (player ? `&player=${encodeURIComponent(player)}` : '') + _mkSportQ();
 
 // Once a view has drawn, fetch the other periods for the same scope, so the
 // next tap on 7d or 90d is already answered. After a pause, so it never
@@ -7664,20 +7671,29 @@ function _mkPrefetch(days, player) {
   else setTimeout(run, 400);
 }
 
-// Only football has the sales behind a market index. Basketball and baseball
-// say "coming soon" rather than show an index built on too little.
+// Football, basketball and baseball have a market (_isMarketSport); any other
+// sport says "coming soon" rather than show an index built on too little.
 function _applyMarketSport() {
   const view = document.getElementById('market-view');
   const soon = document.getElementById('market-coming-soon');
   if (!view || !soon) return;
   const id = activeSport();
   const sport = SPORTS[id];
-  const football = id === 'football';
+  const football = _isMarketSport(id);
   view.classList.toggle('market-other-sport', !football);
+  // The player search reads football's roster, so it is football's alone.
+  view.classList.toggle('market-no-search', id !== 'football');
   soon.classList.toggle('hidden', football);
   const sub = document.getElementById('market-sub');
-  if (sub) sub.textContent = football ? 'How the football-card market is moving, from the sales we track.'
-    : `How the ${sport.label.toLowerCase()}-card market is moving.`;
+  if (sub) sub.textContent = `How the ${sport.label.toLowerCase()}-card market is moving, from the sales we track.`;
+  // A different sport than the page last drew: back to the whole market of
+  // that sport, loaded now if the page is on screen.
+  if (football && view.dataset.sport && view.dataset.sport !== id) {
+    view.dataset.sport = id;
+    _mkPlayer = null;
+    if (!view.classList.contains('hidden')) { _mkRenderScope(); loadMarketIndex(); }
+  }
+  if (football) view.dataset.sport = id;
   if (!football) {
     soon.innerHTML = `<div class="mcs-icon" aria-hidden="true">${sport.icon}</div>
       <h3>${sport.label} market data is coming soon</h3>
@@ -7698,7 +7714,7 @@ function _applyMarketSport() {
 
 function initMarketView() {
   _applyMarketSport();
-  if (activeSport() !== 'football') return;   // nothing to load: "coming soon" is shown
+  if (!_isMarketSport(activeSport())) return;   // nothing to load: "coming soon" is shown
   const strip = document.getElementById('market-periods');
   if (strip && !strip.dataset.built) {
     strip.innerHTML = MARKET_VIEW_PERIODS

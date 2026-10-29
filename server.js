@@ -5340,7 +5340,7 @@ function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
 
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                         junk = false, labels = false, hasImage = false, useAlias = false, deny = [],
-                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, slabsOnly = false, parallels = false }) {
+                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, slabsOnly = false, parallels = false, sport = 'football' }) {
   // Cards the checklists name as NOT base (_marketDenied), taken out before
   // each player's busiest ten are chosen, so the next card takes the slot.
   const denySql = deny.length
@@ -5358,7 +5358,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // each parallel is its own card (the key carries it), measured only against
   // itself, so a Silver is never read as the base card's price.
   const colTests = `price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}${_footballSql()}`;
+          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}${_sportRowsSql(sport)}`;
   // `graded` lets slabs in whose grade was parsed into the columns: the card
   // key carries grader and grade, so each grade is its own card, measured only
   // against itself. Slabs the parser could not grade stay out, as for raw.
@@ -5469,7 +5469,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
      )`;
 }
 
-async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false, daily = false, deny = []) {
+async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false, daily = false, deny = [], sport = 'football') {
   const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days, daily);
   // Reach back beyond the window so a sale early in it still has a prior.
@@ -5497,7 +5497,7 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _mkCardKey(PLAYER);
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny, ..._mkSeriesOpts() })},
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny, sport, ..._mkSeriesOpts() })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -5603,7 +5603,7 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
 // `follow` (a player's own list): the cards their chart follows — parallels
 // recorded in the column and graded copies, each its own card — rather than
 // the market's raw base cards. See _playerTrendQuery.
-async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false, deny = [], follow = false) {
+async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false, deny = [], follow = false, sport = 'football') {
   const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
@@ -5625,7 +5625,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const imgLabel = hasImage ? 'MAX(b.dated_image)' : 'NULL';
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
-                          junk: true, labels: true, hasImage, useAlias, deny,
+                          junk: true, labels: true, hasImage, useAlias, deny, sport,
                           // A player's list reads what their chart reads: slabs only (owner,
                           // Oct 2026), so no raw sale shows under a slabs-only number.
                           ...(follow ? { perPlayer: PLAYER_TREND_CARDS, slabsOnly: PLAYER_SLABS_ONLY, graded: !PLAYER_SLABS_ONLY, parallels: true } : _mkSeriesOpts()) })},
@@ -9050,16 +9050,20 @@ app.get('/api/debug/player-quality', async (req, res) => {
 // of the index payload: both queries scan and normalise the same sales, and
 // running them in one request took the build to 2.2s against a 2s budget. The
 // page shows the number as soon as it has it and fills the card list in after.
+// The market's sport: football unless the page asks for basketball or
+// baseball (owner, Oct 2026), the sports whose sales are tagged.
+const _marketSport = (req) => { const s = String((req.query && req.query.sport) || '').toLowerCase(); return SPORT_TAGS[s] ? s : 'football'; };
 app.get('/api/market-basket', async (req, res) => {
   const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
     ? parseInt(req.query.days, 10)
     : 30;
   const player = String(req.query.player || '').trim();
+  const sport = _marketSport(req);
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
   _marketCacheHeaders(res);
-  res.json(await _marketCached(_marketBasketKey(days, player),
-    () => _computeMarketBasket(db, days, player)));
+  res.json(await _marketCached(_marketBasketKey(days, player, sport),
+    () => _computeMarketBasket(db, days, player, sport)));
 });
 
 // ---- Sports in the sales table ----
@@ -9115,16 +9119,18 @@ const _sportRowsSql = (sport, col = 'sport') => sport === 'football' ? _football
 // v5: checklist deny list and robust per-card moves (#658/#659), not in the sig.
 // v6: a player's list follows parallels and graded copies, as their chart does.
 // v8: a player's list is slabs only, as their chart is.
-const _marketBasketKey = (days, player) =>
-  `marketbasket:v8:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+// Basketball and baseball (owner, Oct 2026) carry the sport after the key;
+// football keeps the keys it always had.
+const _marketBasketKey = (days, player, sport) =>
+  `marketbasket:v8:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}${_ssSport(sport)}`;
 
-async function _computeMarketBasket(db, days, player) {
+async function _computeMarketBasket(db, days, player, sport = 'football') {
   try {
     const newest = player
       ? await db.prepare(
           'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
         ).bind(player, NFLDB_MIN_CONFIDENCE).first()
-      : await db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${(await _nflHasSportColumn(db), _footballSql())}`).first();
+      : await db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${(await _nflHasSportColumn(db), _sportRowsSql(sport))}`).first();
     if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
@@ -9140,9 +9146,10 @@ async function _computeMarketBasket(db, days, player) {
     // Nix's chart moved on 58 cards and the list under it named 7.
     const rows = player
       ? await (await _rsiBasketQuery(db, throughIso, days, show * 2,
-          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, false, [], true)).all()
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, false, [], true, sport)).all()
       : await (await _rsiBasketQuery(db, throughIso, days, show * 2, '', [], hasImage, useAlias,
-          await _marketDenied(db, throughIso, days, useAlias))).all();
+          // The deny list is read from football's checklists, so it is football's alone.
+          sport === 'football' ? await _marketDenied(db, throughIso, days, useAlias) : [], false, sport)).all();
     const base = await _basketBaseOnly((rows && rows.results) || []);
 
     return {
@@ -9403,6 +9410,8 @@ async function warmMarket() {
 }
 
 const MARKET_CRON_REBUILD_S = 6 * 3600;
+// The sports with a market besides football (owner, Oct 2026).
+const MARKET_OTHER_SPORTS = ['basketball', 'baseball'];
 async function _warmMarket() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
@@ -9411,6 +9420,15 @@ async function _warmMarket() {
   for (const days of MARKET_PERIODS) {
     jobs.push([`index:${days}d`, _marketIndexKey(days), () => _computeMarketIndex(db, days)]);
     jobs.push([`basket:${days}d`, _marketBasketKey(days, ''), () => _computeMarketBasket(db, days, '')]);
+  }
+  // Basketball's and baseball's markets (owner, Oct 2026), after football's,
+  // so a tick that runs out of room has already kept football current.
+  // Only where sales carry a sport: without the column there is nothing to tell them apart by.
+  for (const sport of (await _nflHasSportColumn(db)) ? MARKET_OTHER_SPORTS : []) {
+    for (const days of MARKET_PERIODS) {
+      jobs.push([`${sport}:index:${days}d`, _marketIndexKey(days, sport), () => _computeMarketIndex(db, days, sport)]);
+      jobs.push([`${sport}:basket:${days}d`, _marketBasketKey(days, '', sport), () => _computeMarketBasket(db, days, '', sport)]);
+    }
   }
   // Also rebuilt here: an entry over MARKET_CRON_REBUILD_S old (Oct 2026). The
   // visitor-side refresh runs after the response under the Worker's time
@@ -9428,6 +9446,11 @@ async function _warmMarket() {
     if (await _marketBreakerOpen()) { done.push(`${label}:paused`); continue; }
     const v = await compute();
     _marketTrip(v);
+    // A settled "no" (a period longer than the sport's history, say) is kept
+    // until the next rebuild is due, so a tick does not ask again every 15
+    // minutes; football's periods all have the history, so this is mostly
+    // basketball's and baseball's 90 days and year while they fill.
+    if (v && !v.available && !v.transient && !hit) { const { error, ...no } = v; cachePut(key, no, MARKET_CRON_REBUILD_S); done.push(`${label}:none`); continue; }
     // A failed build never replaces a good entry; a good entry simply ages on.
     if (!v || !v.available) { done.push(`${label}:skipped`); continue; }
     _marketStore(key, v);
@@ -10195,8 +10218,9 @@ app.get('/api/market-index', async (req, res) => {
     : 30;
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
+  const sport = _marketSport(req);
   _marketCacheHeaders(res);
-  res.json(await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days)));
+  res.json(await _marketCached(_marketIndexKey(days, sport), () => _computeMarketIndex(db, days, sport)));
 });
 
 // v3: grouping moved into SQL. v2 keys are left behind deliberately — they
@@ -10204,7 +10228,7 @@ app.get('/api/market-index', async (req, res) => {
 // v5: unmeasured steps carry `estimated: true` in the series, for the chart.
 // v6: the checklist deny list (_marketDenied) is not in MARKET_CALC_SIG.
 // v7: carries playerMoves, which Players on the move is read from.
-const _marketIndexKey = (days) => `marketindex:v7:${MARKET_CALC_SIG}:${days}`;
+const _marketIndexKey = (days, sport) => `marketindex:v7:${MARKET_CALC_SIG}:${days}${_ssSport(sport)}`;
 
 // Each of the market's own players, moved over the period exactly as the
 // market is: the same rows the index is built from (one per player per step:
@@ -10275,7 +10299,7 @@ function _marketPlayerMoves(rows, days, daily) {
 
 // The whole-market index, computed. Returns the payload rather than writing a
 // response so the cron can build it too — see warmMarket.
-async function _computeMarketIndex(db, days) {
+async function _computeMarketIndex(db, days, sport = 'football') {
   try {
     // Anchor to the newest day we hold, not to today: if the collector paused,
     // counting back from today walks off the end of the data and reads as a
@@ -10288,8 +10312,8 @@ async function _computeMarketIndex(db, days) {
     // trips before the real query could start.
     await _nflHasSportColumn(db);
     const [newest, oldest] = await Promise.all([
-      db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_footballSql()}`).first(),
-      db.prepare(`SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_footballSql()}`).first(),
+      db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_sportRowsSql(sport)}`).first(),
+      db.prepare(`SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_sportRowsSql(sport)}`).first(),
     ]);
     if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
@@ -10318,14 +10342,14 @@ async function _computeMarketIndex(db, days) {
     // so a quiet stretch costs the chart its detail rather than the whole index.
     // The history gate above stays on the weekly geometry for the same reason.
     const daily = _rsiGeometry(days, true).bucketDays !== bucketDays;
-    const deny = await _marketDenied(db, throughIso, days, useAlias);
-    const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, daily, deny)).all();
+    const deny = sport === 'football' ? await _marketDenied(db, throughIso, days, useAlias) : [];
+    const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, daily, deny, sport)).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return { available: false, days, reason: 'no data in range' };
 
     const out = _buildRepeatSalesPayload(list, throughIso, days, {}, RSI_TIERS, daily);
     if (out.available || !daily) return { ...out, playerMoves: _marketPlayerMoves(list, days, daily) };
-    const weekly = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, false, deny)).all();
+    const weekly = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, false, deny, sport)).all();
     const wl = (weekly && weekly.results) || [];
     return { ..._buildRepeatSalesPayload(wl, throughIso, days), playerMoves: _marketPlayerMoves(wl, days, false) };
   } catch (err) {
@@ -10467,17 +10491,17 @@ app.get('/api/player-index', async (req, res) => {
   // change to the maths would keep showing the old answer. v5: daily points;
   // v6: a price-level trend instead of the chained index; v7: estimated
   // points. None of them changes MARKET_CALC_SIG, so each needs its own bump.
-  res.json(await _playerIndexCached(db, days, player));
+  res.json(await _playerIndexCached(db, days, player, _marketSport(req)));
 });
 
 // The player index through the same cache the Market tab reads, so a card page
 // adjusting a stale price by it sees the very number the tab shows.
-async function _playerIndexCached(db, days, player) {
+async function _playerIndexCached(db, days, player, sport = 'football') {
   // v8: base cards by checklist, outlier card-days set aside.
   // v11: a pooled, market-blended reading for players too thin for the measured one.
   // v12: slabs only, two sales a card and a window.
-  return await _marketCached(`playerindex:v12:${PLAYER_SLABS_ONLY ? 'slabs' : 'graded'}:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
-    () => _computePlayerIndex(db, days, player));
+  return await _marketCached(`playerindex:v12:${PLAYER_SLABS_ONLY ? 'slabs' : 'graded'}:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}${_ssSport(sport)}`,
+    () => _computePlayerIndex(db, days, player, sport));
 }
 
 // ---- A stale card's price, moved by its player's market ----
@@ -10581,7 +10605,7 @@ function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (
 // Parallels are followed too (each parallel of each card its own series), so
 // the card budget counts parallels: 80 series.
 const PLAYER_TREND_CARDS = 80;
-async function _playerTrendQuery(db, throughIso, days, player) {
+async function _playerTrendQuery(db, throughIso, days, player, sport = 'football') {
   const noOffer = await _noBestOfferSql(db);
   // Only this span is read: nothing here pairs a sale with an earlier one.
   // Passing the span start as the look-back empties the pre-period pass.
@@ -10592,7 +10616,7 @@ async function _playerTrendQuery(db, throughIso, days, player) {
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER: P, CARD, P, JOIN: '', ALIAS_FILTER: '', noOffer,
                           extraWhere: ' AND player = ? AND confidence >= ?',
-                          perPlayer: PLAYER_TREND_CARDS, slabsOnly: PLAYER_SLABS_ONLY, graded: !PLAYER_SLABS_ONLY, parallels: true })}
+                          perPlayer: PLAYER_TREND_CARDS, slabsOnly: PLAYER_SLABS_ONLY, graded: !PLAYER_SLABS_ONLY, parallels: true, sport })}
      SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
@@ -10902,7 +10926,7 @@ app.get('/api/debug/player-index-accuracy', async (req, res) => {
   }
 });
 
-async function _computePlayerIndex(db, days, player) {
+async function _computePlayerIndex(db, days, player, sport = 'football') {
   try {
     // Anchored to this player's newest sale rather than the market's, so a
     // player who stopped selling three weeks ago says so instead of being
@@ -10918,7 +10942,7 @@ async function _computePlayerIndex(db, days, player) {
     // The same cards as the market's basket for this player (base, raw, no
     // best offers, their busiest ten), measured as a price level rather than
     // a chain of moves — see _playerTrendPayload for why.
-    const rows = await (await _playerTrendQuery(db, throughIso, days, player)).all();
+    const rows = await (await _playerTrendQuery(db, throughIso, days, player, sport)).all();
     // Only the player's base cards, by the checklist (see _basketBaseOnly):
     // Jaxson Dart's Optic #11 is his Uptown case hit, and its $300-500 sales
     // on thin days read as his whole market quadrupling overnight.
@@ -10929,7 +10953,8 @@ async function _computePlayerIndex(db, days, player) {
     // Too few sales for the measured reading: parallels pooled and the market
     // leaned on (_pooledPlayerTrend). Players who clear the gate keep exactly
     // the reading they had.
-    if (!PLAYER_POOLED_ENABLED || measured.available || measured.reason !== 'not enough sales for a reliable reading') return measured;
+    // The pooled reading leans on football's market, so it is football's alone.
+    if (!PLAYER_POOLED_ENABLED || sport !== 'football' || measured.available || measured.reason !== 'not enough sales for a reliable reading') return measured;
     const pooled = await _pooledPlayerTrend(db, list, throughIso, days, player, historyFrom);
     return pooled && pooled.available ? pooled : measured;
   } catch (err) {
@@ -21144,7 +21169,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

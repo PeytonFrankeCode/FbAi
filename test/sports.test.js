@@ -61,9 +61,9 @@ check('a testing sport says so when its listings come back, and the football mar
 check('  ...Checklists, Rainbow and Market share one sport pick, and Rainbow lists that sport',
   (html.match(/class="sport-switch page-sport-switch hidden"/g) || []).length === 3 && /document\.querySelectorAll\('\.page-sport-switch'\)/.test(js)
   && /const data = await fetchSportChecklists\(sport\);\s*if \(_rainbowListSport !== sport\) return;/.test(js));
-check('  ...and Market says "coming soon" for a sport without the sales for an index',
+check('  ...and Market says "coming soon" for a sport without the sales for an index (football, basketball and baseball have one)',
   /id="market-coming-soon"/.test(html) && /market data is coming soon<\/h3>/.test(js)
-  && /if \(activeSport\(\) !== 'football'\) return;   \/\/ nothing to load/.test(js)
+  && /if \(!_isMarketSport\(activeSport\(\)\)\) return;   \/\/ nothing to load/.test(js)
   && /\.market-other-sport #market-periods/.test(css));
 check('both searches read their results through the sports turned on',
   (js.match(/const sportView = _sportFilterResults\(Array\.isArray\(data\.results\) \? data\.results : \[\]\);/g) || []).length === 2);
