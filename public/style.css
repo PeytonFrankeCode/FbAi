@@ -9607,6 +9607,7 @@ body.tour-open { overflow: hidden; }
 /* Market for a sport without enough sales yet: the index gives way to "coming soon". */
 .market-other-sport #market-periods, .market-other-sport .market-search,
 .market-other-sport #market-scope, .market-other-sport #market-body { display: none !important; }
+.market-no-search .market-search { display: none !important; }
 .market-coming-soon {
   max-width: 560px; margin: 1.5rem auto; padding: 2rem 1.5rem; text-align: center; border-radius: 16px;
   background: var(--bg-secondary); border: 1px dashed var(--accent-border);

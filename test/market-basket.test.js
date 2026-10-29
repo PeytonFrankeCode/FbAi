@@ -100,7 +100,7 @@ const check = (label, ok, detail) => {
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   check('the index itself leaves coded numbers out', /card_number NOT GLOB '\*\[A-Za-z\]\*'/.test(src));
   check('  ...and passes the checklist deny list into the index and basket queries',
-    /_rsiQuery\(db, throughIso, days, '', \[\], 'player', useAlias, daily, deny\)/.test(src)
+    /_rsiQuery\(db, throughIso, days, '', \[\], 'player', useAlias, daily, deny, sport\)/.test(src)
     && /FROM pick_keys k JOIN pick_players t ON t\.player_n = k\.player_n\$\{denySql\}/.test(src));
 
   console.log(failures ? `\n${failures} check(s) failed` : '\nall market-basket checks passed');
