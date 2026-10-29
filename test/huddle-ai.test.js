@@ -138,6 +138,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('the menu opens Huddle AI, and the plan is sold as Huddle+',
       /openHuddleAI\(\)/.test(html) && /Huddle\+/.test(html) && /function openHuddleAI/.test(app) && /\/api\/ai\/ask/.test(app) && /Get Huddle\+/.test(app));
     check('  ...answers are escaped before their light formatting', /function _haiFormat[\s\S]{0,200}escHtml\(t\)/.test(app));
+    check('  ...questions can be spoken, with the browser\'s own speech recognition, and the mic shows only where it exists', /window\.SpeechRecognition \|\| window\.webkitSpeechRecognition/.test(app) && /if \(!SR \|\| !mic\) return;/.test(app) && /id="hai-mic"/.test(app));
     check('  ...and the pictures are drawn under the answer, listings through affiliate links', /function _haiVisuals/.test(app) && /epnUrl\(it\.url\)/.test(app));
   } catch (e) { console.error(e); failures++; }
   server.close();
