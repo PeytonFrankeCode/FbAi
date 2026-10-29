@@ -1666,7 +1666,9 @@ const SOLD_SOFT_WORDS = new Set([
   'angels', 'dodgers', 'marlins', 'brewers', 'twins', 'mets', 'yankees', 'athletics', 'phillies',
   'pirates', 'padres', 'mariners', 'rays', 'rangers', 'nationals',
 ]);
-const NFLDB_SEARCH_TTL = 3600;         // 1h — see the cache note in the body
+// 6h (was 1h, Oct 2026): sales only change when the collector imports, about
+// once a day, and each uncached search reads the whole sales table (~2M rows).
+const NFLDB_SEARCH_TTL = 6 * 3600;     // see the cache note in the body
 // A floor on how far back a search may walk. Deliberately generous: three years
 // covers essentially every comp anyone looks up, and the purpose here is to cap
 // the worst case rather than to trim results. Tighten it once
@@ -4527,6 +4529,10 @@ const ALIAS_MIN_COVERAGE = 0.25;
 const ALIAS_MIN_ROWS = 25;          // guards the degenerate 0-of-0 case
 const ALIAS_WINDOW_DAYS = 400;      // how far back to look for names to resolve
 const ALIAS_READY_TTL = 300;        // 5 min — the readiness check is cached
+// Once ready it stays ready (the table only grows), so that answer is kept for
+// 12 hours: re-asking every 5 minutes counted 2.3M sales rows a time, about
+// 70M rows a day (Oct 2026).
+const ALIAS_READY_TTL_READY = 12 * 3600;
 
 let _aliasTableReady = null;        // null = unknown, false = cannot write
 async function _aliasEnsure(db) {
@@ -4763,7 +4769,7 @@ async function _aliasReady(db) {
   } catch (_) {
     ready = false;   // table not created yet — old path, no error to the reader
   }
-  cachePut(readyKey, { ready, rows, covered, total }, ALIAS_READY_TTL);
+  cachePut(readyKey, { ready, rows, covered, total }, ready ? ALIAS_READY_TTL_READY : ALIAS_READY_TTL);
   return ready;
 }
 
@@ -9409,7 +9415,9 @@ async function warmMarket() {
   return _asD1Source('market-warm', () => _warmMarket());
 }
 
-const MARKET_CRON_REBUILD_S = 6 * 3600;
+// 12h (was 6h, Oct 2026): the sales behind it change about once a day, and
+// each rebuild of the three sports read ~30M rows.
+const MARKET_CRON_REBUILD_S = 12 * 3600;
 // The sports with a market besides football (owner, Oct 2026).
 const MARKET_OTHER_SPORTS = ['basketball', 'baseball'];
 async function _warmMarket() {
@@ -11967,7 +11975,7 @@ app.get('/api/debug/observed-checklist', async (req, res) => {
 const PAR_LADDER_KEY = 'parladder:v5';   // v2: per-kind ladders and pooled curves; v3: example comps per rung; v4: stricter base; v5: Prizm outside Prizm, junk out
 const PAR_LADDER_PREV_KEY = 'parladder:v4';  // served until v5 is built, so estimates never blink out
 const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v5';
-const PAR_LADDER_TTL = 3 * 86400;          // outlives a missed daily run
+const PAR_LADDER_TTL = 5 * 86400;          // outlives a missed run (built every third day)
 // A year: the first live build over 180 days tied most rungs in with a handful
 // of cards (2017 Prizm: 3 to 12), and parallels' relative prices move far more
 // slowly than prices do.
