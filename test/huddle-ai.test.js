@@ -46,6 +46,21 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     const uf = await call('/api/ai/usage', { token: free });
     check('  ...its usage says so', uf.body.signedIn === true && uf.body.plus === false && uf.body.limit === S.HUDDLE_AI_PER_DAY);
 
+    const mf = await call('/api/auth/me', { token: free });
+    check('  ...and the account endpoint agrees, so the page offers the plan instead of "You\'re on Huddle+"',
+      mf.body.huddlePlus === false && mf.body.owner === false, JSON.stringify(mf.body));
+    const mp = await call('/api/auth/me', { token: plus });
+    check('  ...while a paying account reads as on', mp.body.huddlePlus === true && mp.body.owner === false);
+    const own = await reg('hai_o' + run);
+    await call('/api/auth/email', { method: 'PUT', token: own, body: { email: 'CardHuddleOffical@gmail.com' } });
+    const mo = await call('/api/auth/me', { token: own });
+    const uow = await call('/api/ai/usage', { token: own });
+    check('the owner\'s address unlocks Huddle AI on any account name, as the page already assumes',
+      mo.body.owner === true && mo.body.huddlePlus === true && uow.body.plus === true && uow.body.unlimited === true, JSON.stringify(mo.body));
+    const src = app0();
+    check('the page drops a device\'s owner mark when the server says this account has no plan',
+      /typeof d\.huddlePlus === 'boolean'/.test(src) && /else if \(st\) showPlans\(\)/.test(src));
+
     delete process.env.ANTHROPIC_API_KEY;
     check('with no AI key on the Worker it says it is not on yet', (await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'x' } })).status === 503);
     process.env.ANTHROPIC_API_KEY = 'test';
@@ -83,7 +98,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
 
     const owner = await reg('cardhuddlecollectors') || (await call('/api/auth/login', { method: 'POST', body: { username: 'cardhuddlecollectors', password: 'secret123' } })).body.token;
     const uo = await call('/api/ai/usage', { token: owner });
-    check('the owner\'s account (cardhuddlecollectors) has Huddle AI, unlimited, with no plan', uo.body.plus === true && uo.body.unlimited === true, JSON.stringify(uo.body));
+    check('the owner\'s account (cardhuddlecollectors) has Huddle AI, unlimited, with no plan', uow.body.plus === true && uow.body.unlimited === true, JSON.stringify(uo.body));
     // The pictures: built from what the AI looked up.
     const vis = S._huddleAiVisuals([
       { name: 'search_sold_sales', out: { query: 'old search', matched: 1, sales: [] } },

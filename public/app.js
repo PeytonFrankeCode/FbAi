@@ -5569,13 +5569,14 @@ async function _refreshAdFreePlan() {
     // A home-screen app on iPhone starts with storage of its own, without the
     // local copy of the account _adFree() reads the email from, so the owner
     // is also recognised by the address the server has.
-    if (d && AD_FREE_EMAILS.includes(String(d.email || '').toLowerCase())) {
+    if (d && (d.owner || AD_FREE_EMAILS.includes(String(d.email || '').toLowerCase()))) {
       _markOwnerAdFree();
       _adFreeState = { on: true, billing: !!(d.subscription && d.subscription.stripeCustomerId) };
       return _adFreeState;
     }
     const sub = d && d.subscription;
-    const on = !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
+    const on = typeof d.huddlePlus === 'boolean' ? d.huddlePlus
+      : !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
     _adFreeState = { on, billing: !!(sub && sub.stripeCustomerId) };
     if (on) {
       try {
@@ -5584,6 +5585,10 @@ async function _refreshAdFreePlan() {
       _removeAds();
     } else {
       _dropPlanAdFree();
+      // The owner's mark is kept on the device, so an account signed in after
+      // the owner's looked like it had Huddle+ when it did not. The server
+      // has just said this account does not.
+      try { localStorage.removeItem(AD_FREE_KEY); localStorage.removeItem(AD_FREE_SRC_KEY); } catch (_) {}
     }
     return _adFreeState;
   } catch (_) { return _adFreeState; }
@@ -5645,14 +5650,16 @@ async function openAdFree() {
     m.querySelector('#adfree-fine').classList.remove('hidden');
     m.querySelector('#adfree-done').classList.add('hidden');
   };
-  if (_adFree()) showDone(_adFreeState && _adFreeState.billing); else showPlans();
+  // Signed out, a mark left on the device says nothing about a plan, so the
+  // plans show (buying asks to log in); signed in, the server settles it below.
+  if (getSessionToken() && _adFree()) showDone(_adFreeState && _adFreeState.billing); else showPlans();
   m.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   const first = m.querySelector('.adfree-plan:not(.hidden), #adfree-manage, .adfree-close');
   if (first) setTimeout(() => first.focus(), 30);
   if (getSessionToken()) {
     const st = await _refreshAdFreePlan();
-    if (st && st.on) showDone(st.billing);
+    if (st && st.on) showDone(st.billing); else if (st) showPlans();
   }
 }
 function closeAdFree() {
