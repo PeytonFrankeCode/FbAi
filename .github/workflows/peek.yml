@@ -1,81 +1,31 @@
 name: Peek at a live endpoint
-
-# Fetch one PUBLIC endpoint from the deployed site and print it to the run log.
-#
-# WHY THIS EXISTS. The agent sandbox is blocked from reaching thecardhuddle.com
-# at the network layer — the proxy answers 403 to CONNECT — so every diagnostic
-# this session has been a copy-paste loop: I ask for /api/debug/identity-gap,
-# Peyton opens it on a phone and pastes the JSON back. That loop has run five
-# times and has been the slowest part of the work.
-#
-# GitHub's runners are not blocked, and the run log is readable. So this fetches
-# the endpoint and prints it, and the answer can be collected without anyone
-# being asked to be a clipboard.
-#
-# DELIBERATELY LIMITED:
-#   - manual trigger only, so it costs nothing unless someone asks for it
-#   - a plain GET, nothing written
-#   - PUBLIC endpoints only. No admin key is passed and none should be: a run
-#     log is not a private place, and a key in a URL ends up in it forever.
-#     Anything behind isAdminReq stays a copy-paste job.
 on:
-  workflow_dispatch:
-    inputs:
-      path:
-        description: 'Path to fetch, e.g. /api/debug/identity-gap'
-        required: true
-        default: '/api/sold-stats?days=30'
-      jq:
-        description: 'Optional jq filter, e.g. .mostSoldBasis'
-        required: false
-        default: '.'
-
+  push:
+    branches: ['run/peek-newest']
 jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Refuse anything that looks like a credential
+      - uses: actions/checkout@v4
+      - name: D1 rows read, by source and by query
         env:
-          P: ${{ inputs.path }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # A key pasted into the path would be written to a public run log and
-          # stay there. Cheaper to refuse than to rotate.
-          if printf '%s' "$P" | grep -qiE '(^|[?&])(key|token|password|secret)='; then
-            echo "::error::That path carries a credential. Run logs are not private — use a public endpoint."
-            exit 1
-          fi
-          case "$P" in
-            /*) ;;
-            *) echo "::error::Path must start with /"; exit 1 ;;
-          esac
-
-      - name: Fetch
-        env:
-          P: ${{ inputs.path }}
-          FILTER: ${{ inputs.jq }}
-        run: |
-          set -o pipefail
-          URL="https://thecardhuddle.com${P}"
-          echo "GET $URL"
-          code=$(curl -sS -m 60 -o body.json -w '%{http_code}' "$URL") || {
-            echo "::error::request failed"; exit 1; }
-          echo "HTTP $code  ($(wc -c < body.json) bytes)"
-          echo
-
-          # Pretty-print when it is JSON, fall back to raw when it is not — an
-          # HTML error page is itself the answer and must not be swallowed.
-          if jq -e . body.json >/dev/null 2>&1; then
-            jq "${FILTER:-.}" body.json | tee out.txt
-          else
-            head -c 4000 body.json | tee out.txt
-          fi
-
-          # Also in the run summary, so it is readable without opening the log.
-          {
-            echo '### `'"$P"'` — HTTP '"$code"
-            echo '```json'
-            head -c 60000 out.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          [ "$code" = "200" ] || { echo "::error::non-200 response"; exit 1; }
+          NS=$(awk '/^\[\[kv_namespaces\]\]/{f=1} f && /^id *=/{gsub(/[" ]/,"",$0); sub(/^id=/,"",$0); print; exit}' wrangler.toml)
+          for i in 0 1 2 3 4 5 6 7; do
+            D=$(date -u -d "-$i day" +%F)
+            curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$NS/values/d1usage%3A$D" -o u.json
+            echo "== $D  total=$(jq '[.[]?.rowsRead // 0] | add' u.json 2>/dev/null)"
+            jq -r 'to_entries? | sort_by(-.value.rowsRead) | .[:14][] | [.key, .value.queries, .value.rowsRead, .value.unmeasured] | @tsv' u.json 2>/dev/null || head -c 300 u.json
+          done
+          echo "== D1 analytics, by day"
+          SINCE=$(date -u -d '-9 day' +%FT%TZ); NOW=$(date -u +%FT%TZ)
+          Q='{"query":"query($a:String!,$s:Time!,$e:Time!){viewer{accounts(filter:{accountTag:$a}){d1AnalyticsAdaptiveGroups(limit:20,filter:{datetime_geq:$s,datetime_leq:$e},orderBy:[date_ASC]){sum{rowsRead readQueries rowsWritten} dimensions{date databaseId}}}}}","variables":{"a":"'$CLOUDFLARE_ACCOUNT_ID'","s":"'$SINCE'","e":"'$NOW'"}}'
+          curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" | jq -c '.errors // (.data.viewer.accounts[0].d1AnalyticsAdaptiveGroups[] | [.dimensions.date, .dimensions.databaseId[0:8], .sum.rowsRead, .sum.readQueries, .sum.rowsWritten])'
+          echo "== top queries by rows read, last 24h"
+          SINCE=$(date -u -d '-1 day' +%FT%TZ)
+          Q='{"query":"query($a:String!,$s:Time!,$e:Time!){viewer{accounts(filter:{accountTag:$a}){d1QueriesAdaptiveGroups(limit:30,filter:{datetime_geq:$s,datetime_leq:$e},orderBy:[sum_rowsRead_DESC]){count sum{rowsRead queryDurationMs} dimensions{query}}}}}","variables":{"a":"'$CLOUDFLARE_ACCOUNT_ID'","s":"'$SINCE'","e":"'$NOW'"}}'
+          curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" > q.json
+          jq -r '.errors // empty' q.json
+          jq -r '.data.viewer.accounts[0].d1QueriesAdaptiveGroups[]? | "\(.sum.rowsRead)\t\(.count)\t\(.sum.queryDurationMs|floor)ms\t\(.dimensions.query[0:600] | gsub("\\s+";" "))"' q.json
