@@ -16,8 +16,8 @@ jobs:
           for i in 0 1 2 3 4 5 6 7; do
             D=$(date -u -d "-$i day" +%F)
             curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$NS/values/d1usage%3A$D" -o u.json
-            echo "== $D  total=$(jq '[.[]?.rowsRead // 0] | add' u.json 2>/dev/null)"
-            jq -r 'to_entries? | sort_by(-.value.rowsRead) | .[:14][] | [.key, .value.queries, .value.rowsRead, .value.unmeasured] | @tsv' u.json 2>/dev/null || head -c 300 u.json
+            echo "== $D  total=$(jq '[.[] | objects | .rowsRead] | add' u.json)"
+            jq -r 'to_entries | map(select(.value|type=="object")) | sort_by(-.value.rowsRead) | .[:30][] | [.key, .value.queries, .value.rowsRead, .value.unmeasured] | @tsv' u.json
           done
           echo "== D1 analytics, by day"
           SINCE=$(date -u -d '-9 day' +%FT%TZ); NOW=$(date -u +%FT%TZ)
@@ -29,3 +29,7 @@ jobs:
           curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" > q.json
           jq -r '.errors // empty' q.json
           jq -r '.data.viewer.accounts[0].d1QueriesAdaptiveGroups[]? | "\(.sum.rowsRead)\t\(.count)\t\(.sum.queryDurationMs|floor)ms\t\(.dimensions.query[0:600] | gsub("\\s+";" "))"' q.json
+          echo "== the 8-term title search, by hour"
+          SINCE=$(date -u -d '-1 day' +%FT%TZ)
+          Q='{"query":"query($a:String!,$s:Time!,$e:Time!){viewer{accounts(filter:{accountTag:$a}){d1QueriesAdaptiveGroups(limit:60,filter:{datetime_geq:$s,datetime_leq:$e,query_like:\\"SELECT item_id, sold_date, title%\\"},orderBy:[datetimeHour_ASC]){count sum{rowsRead} dimensions{datetimeHour}}}}}","variables":{"a":"'$CLOUDFLARE_ACCOUNT_ID'","s":"'$SINCE'","e":"'$NOW'"}}'
+          curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" | jq -c '.errors // (.data.viewer.accounts[0].d1QueriesAdaptiveGroups[] | [.dimensions.datetimeHour[11:13], .count, .sum.rowsRead])'
