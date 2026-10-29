@@ -20353,6 +20353,7 @@ app.post('/api/diag/stalls', async (req, res) => {
     at: new Date().toISOString(), t: Number(x.t) || 0, gap: Math.min(600000, Number(x.gap) || 0),
     view: String(x.view || '').slice(0, 20), what: String(x.what || '').slice(0, 60), since: Number(x.since) || null,
     loading: !!x.loading, modal: !!x.modal, ai: !!x.ai, err: x.err ? String(x.err).slice(0, 200) : undefined,
+    trail: x.trail ? String(x.trail).slice(0, 300) : undefined,
   }));
   const prev = (await cacheGet(DIAG_STALLS_KEY)) || { ua: '', rows: [] };
   const rows = prev.rows.concat(clean).slice(-400);
