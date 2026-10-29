@@ -16713,7 +16713,10 @@ app.get('/api/auth/me', (req, res) => {
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
   const users = loadServerUsers();
   const user = users[username] || {};
-  res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username) });
+  // huddlePlus is the server's answer, so the page never shows the plan as
+  // on (or off) when the AI would say otherwise.
+  res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username),
+    huddlePlus: !!_huddleAiAllowed(req, username), owner: _huddleAiOwner(username) });
 });
 
 
@@ -20304,7 +20307,18 @@ const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.co
 // The owner's accounts: unlimited and never charged. cardhuddlecollectors is
 // the one the owner signs in with (app.js NO_AFFILIATE_ACCOUNTS).
 const HUDDLE_AI_OWNERS = new Set([...PRO_GRANT_USERS, 'cardhuddlecollectors']);
-const _huddleAiOwner = (user) => !!user && HUDDLE_AI_OWNERS.has(String(user).toLowerCase());
+// The owner's own address counts too, whatever account name it is on: the page
+// already treats it as the owner (AD_FREE_EMAILS in app.js), and the two must
+// agree or the page says "You're on Huddle+" while the AI stays locked.
+const HUDDLE_AI_OWNER_EMAILS = new Set(['cardhuddleoffical@gmail.com']);
+const _huddleAiOwner = (user) => {
+  if (!user) return false;
+  if (HUDDLE_AI_OWNERS.has(String(user).toLowerCase())) return true;
+  try {
+    const rec = loadServerUsers()[user];
+    return !!(rec && HUDDLE_AI_OWNER_EMAILS.has(String(rec.email || '').toLowerCase()));
+  } catch (_) { return false; }
+};
 const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || _huddleAiOwner(user)));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
 const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };

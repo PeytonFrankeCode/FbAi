@@ -333,7 +333,7 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
 {
   const f = app.slice(app.indexOf('async function _refreshAdFreePlan('), app.indexOf('async function _refreshAdFreePlan(') + 1400);
   check("the owner's email from the server makes a fresh app ad-free",
-    /if \(d && AD_FREE_EMAILS\.includes\(String\(d\.email \|\| ''\)\.toLowerCase\(\)\)\) \{\n      _markOwnerAdFree\(\);/.test(f)
+    /if \(d && \(d\.owner \|\| AD_FREE_EMAILS\.includes\(String\(d\.email \|\| ''\)\.toLowerCase\(\)\)\)\) \{\n      _markOwnerAdFree\(\);/.test(f)
     && /function _markOwnerAdFree\(\) \{\n  try \{ localStorage\.setItem\(AD_FREE_KEY, '1'\); localStorage\.removeItem\('chAdFreeSrc'\); \} catch \(_\) \{\}\n  _removeAds\(\);/.test(app));
   check('  ...checked on load while signed in, not only at sign-in',
     /updateAuthButton\(\);\n[^\n]*\n[^\n]*\nif \(getSessionToken\(\) && getCurrentUser\(\)\) _refreshAdFreePlan\(\);/.test(app));
