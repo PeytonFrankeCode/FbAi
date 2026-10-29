@@ -10422,3 +10422,8 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 @keyframes hai-mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.45); } 100% { box-shadow: 0 0 0 12px rgba(229, 72, 77, 0); } }
 @media (prefers-reduced-motion: reduce) { .hai-mic.on { animation: none; } }
 .hai-mic svg, .hai-send svg { display: block; }
+
+/* Inventory notes (owner, Oct 2026): written by hand or by Huddle AI. */
+#inv-item-notes { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font: inherit; font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; resize: vertical; }
+.inv-item-note { margin-top: 0.25rem; font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.inv-detail-notes { margin: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }

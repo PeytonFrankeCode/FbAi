@@ -5868,7 +5868,7 @@ function _haiVisuals(list) {
     return '';
   }).join('')}</div>`;
 }
-const HAI_EXAMPLES = ['What is a 2024 Prizm Jayden Daniels Silver worth?', 'Should I grade a raw Bo Nix Prizm rookie?', "How are Brock Purdy's cards doing this month?"];
+const HAI_EXAMPLES = ['What is a 2024 Prizm Jayden Daniels Silver worth?', 'Should I grade a raw Bo Nix Prizm rookie?', "How are Brock Purdy's cards doing this month?", 'What is my inventory worth, and which cards have notes?'];
 function _haiPaint() {
   const log = document.getElementById('hai-log');
   if (!log) return;
@@ -5939,6 +5939,9 @@ async function _haiAsk() {
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
       _hai.msgs.push({ role: 'assistant', text: d.answer, visuals: Array.isArray(d.visuals) ? d.visuals : [] });
+      // The AI changed the collector's cards on the account: pull them in, so
+      // the Inventory and Collection show it without a reload.
+      if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
       if (_hai.usage && !d.unlimited) { _hai.usage.used = d.used; _haiUsageLine(_hai.usage); }
     } else {
       _hai.msgs.push({ role: 'assistant', text: d.error || 'Huddle AI did not answer. Try again.', error: true });
@@ -17232,7 +17235,7 @@ function renderInventory() {
     if (_invFilter.type === 'mem' && !i.mem) return false;
     if (_invFilter.type === 'numbered' && !String(i.printRun || '').trim()) return false;
     if (_invFilter.type === 'pc' && !i.pc) return false;
-    if (q && !`${i.name} ${i.printRun || ''} ${i.location}`.toLowerCase().includes(q)) return false;
+    if (q && !`${i.name} ${i.printRun || ''} ${i.location} ${i.notes || ''}`.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
@@ -17266,6 +17269,7 @@ function renderInventory() {
           ${i.pc ? '<span class="inv-badge inv-badge-pc">PC</span>' : ''}
           <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
         </div>
+        ${i.notes ? `<div class="inv-item-note" title="${escHtml(i.notes)}">${escHtml(i.notes)}</div>` : ''}
       </div>
       ${pl}
       <div class="inv-item-qty">
@@ -17332,6 +17336,7 @@ function openInvItemModal(id) {
   document.getElementById('inv-item-printrun').value = item ? (item.printRun || '') : '';
   document.getElementById('inv-item-paid').value = (item && item.paid) ? item.paid : '';
   document.getElementById('inv-item-value').value = (item && item.value) ? item.value : '';
+  document.getElementById('inv-item-notes').value = (item && item.notes) || '';
   document.getElementById('inv-item-auto').checked = !!(item && item.auto);
   document.getElementById('inv-item-mem').checked = !!(item && item.mem);
   document.getElementById('inv-item-pc').checked = !!(item && item.pc);
@@ -17368,18 +17373,19 @@ function handleInvItemSubmit(e) {
   const mem = document.getElementById('inv-item-mem').checked;
   const pc = document.getElementById('inv-item-pc').checked;
   const location = document.getElementById('inv-item-location').value || inv.locations[0];
+  const notes = document.getElementById('inv-item-notes').value.trim().slice(0, 500);
   if (!name) return false;
 
   const now = Date.now();
   const existing = id ? inv.items.find(i => i.id === id) : null;
   let itemId, item;
   if (existing) {
-    Object.assign(existing, { name, printRun, paid, value, auto, mem, pc, location, updatedAt: now });
+    Object.assign(existing, { name, printRun, paid, value, auto, mem, pc, location, notes, updatedAt: now });
     itemId = existing.id; item = existing;
   } else {
     itemId = _invId();
     // New cards default to a single copy; the +/- steppers adjust from there.
-    item = { id: itemId, name, printRun, paid, value, auto, mem, pc, qty: 1, location, valueHistory: [], addedAt: now, updatedAt: now };
+    item = { id: itemId, name, printRun, paid, value, auto, mem, pc, qty: 1, location, notes, valueHistory: [], addedAt: now, updatedAt: now };
     inv.items.push(item);
   }
   // Log a dated value point whenever a market value is present/changed.
@@ -18221,6 +18227,7 @@ function openInvDetail(id) {
           <div><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></div>
           <div><span class="inv-pl-lbl">Net</span><span class="${net >= 0 ? 'inv-net-pos' : 'inv-net-neg'}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></div>
         </div>
+        ${item.notes ? `<p class="inv-detail-notes">${escHtml(item.notes).replace(/\n/g, '<br>')}</p>` : ''}
         <button class="inv-act-btn" onclick="openInvItemModal('${escHtml(item.id)}'); closeInvDetail();">Edit card</button>
       </div>
     </div>
