@@ -118,6 +118,7 @@ async function fetchSportChecklists(sport) {
 
 // Mimics GET /api/checklists/:productId — fetches the per-product file.
 async function fetchChecklistProduct(productId) {
+  _diagMark('checklist:' + productId);
   if (_checklistProductCache[productId]) return _checklistProductCache[productId];
   const product = await _fetchJson(`${_checklistDirFor(productId)}/${encodeURIComponent(productId)}.json`, `checklist product "${productId}"`);
   _checklistProductCache[productId] = product;
@@ -3044,6 +3045,7 @@ async function _searchLiveStrip(query, seq) {
   try {
     const res = await fetch(`/api/direct-search?${new URLSearchParams({ q: query, mode: 'forsale' })}`);
     data = res.ok ? await res.json() : null;
+    _diagMark('live-strip');
   } catch (_) { data = null; }
   if (_searchStale(seq) || !data || !Array.isArray(data.results)) return;
   // Only listings the search itself matched: a broadened search's "similar"
@@ -3880,6 +3882,7 @@ function renderGradeGroups(grid, results) {
 }
 
 function _renderGradeGroupsInto(grid, results) {
+  _diagMark('grade-groups');
   _gradeGroups = groupByGrade(results);
   _gradeShown = {};
   _gradeContainers = {};
@@ -5111,6 +5114,7 @@ function renderGradeChips() {
 // Resolves the checklist for this query, classifies every result against it,
 // then draws the chips. Async: a newer search invalidates an in-flight build.
 async function buildParallelFilter(query) {
+  _diagMark('parallels');
   currentParallelFilter = 'all';
   // A previous search's grouping must never outlive it.
   _versionCtx = null;
@@ -5124,7 +5128,7 @@ async function buildParallelFilter(query) {
 
   const token = ++_parallelBuildToken;
   let vocab = null;
-  try { vocab = await _resolveParallelVocab(query, currentResults); } catch (err) {
+  try { vocab = await _resolveParallelVocab(query, currentResults); _diagMark('parallels-sort'); } catch (err) {
     console.warn('[parallel-filter]', err && err.message);
   }
   if (token !== _parallelBuildToken) return;
@@ -10985,6 +10989,7 @@ function _syncSerial(fn) {
 }
 
 async function _syncPushOnce() {
+  if (typeof _diagMark === 'function') _diagMark('sync-push');
   const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
   if (!token) return;
   // A push built on an old revision is refused with the account's current
@@ -19537,7 +19542,13 @@ document.addEventListener('keydown', (e) => {
 // and sends them to /api/diag/stalls. Visitors never run it.
 // A function declaration on window, so a mark made while the page is still
 // starting up (before this code runs) is safe.
-function _diagMark(what) { window.__diag = { what, at: performance.now() }; }
+function _diagMark(what) {
+  const at = performance.now();
+  window.__diag = { what, at };
+  // The last few, so a stall shows the steps that led into it.
+  (window.__diagTrail = window.__diagTrail || []).push([what, at]);
+  if (window.__diagTrail.length > 8) window.__diagTrail.shift();
+}
 (function stallWatch() {
   let owner = false;
   try { owner = _noAffiliate() && !!getSessionToken(); } catch (_) { owner = false; }
@@ -19551,12 +19562,22 @@ function _diagMark(what) { window.__diag = { what, at: performance.now() }; }
     if (gap >= 250 && !document.hidden && batch.length < 200) {
       const tab = document.querySelector('.nav-tab.active');
       batch.push({ t: Math.round(now), gap: Math.round(gap), view: (tab && tab.dataset.view) || '', what: (window.__diag || {}).what || 'load',
-        since: Math.round(now - ((window.__diag || {}).at || 0)), loading: shown('#loading'), modal: shown('#card-modal'), ai: shown('#hai') });
+        since: Math.round(now - ((window.__diag || {}).at || 0)), loading: shown('#loading'), modal: shown('#card-modal'), ai: shown('#hai'),
+        trail: (window.__diagTrail || []).map(([w, at]) => `${w}@${Math.round(at - (now - gap))}`).join(' ') });
     }
     if (now < until) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
   document.addEventListener('visibilitychange', () => { last = performance.now(); });
+  // Writes to the phone's storage block the page while they run; note the slow ones.
+  try {
+    const set = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) {
+      const t = performance.now(); const r = set.call(this, k, v); const d = performance.now() - t;
+      if (d >= 30 && batch.length < 200) batch.push({ t: Math.round(t), gap: Math.round(d), what: 'storage', err: `${k} ${String(v).length} chars` });
+      return r;
+    };
+  } catch (_) { /* storage not wrappable: skipped */ }
   window.addEventListener('error', (e) => { if (batch.length < 200) batch.push({ t: Math.round(performance.now()), gap: 0, what: 'error', err: String((e && e.message) || e) }); });
   const send = () => {
     if (!batch.length) return;
