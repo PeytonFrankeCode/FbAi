@@ -19770,7 +19770,9 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // One answer from Claude, with Card Huddle's lookups as tools. It may take a
 // few rounds of lookups; the last round has no tools, so it must answer.
 // null when the model declined. Shared by Business Ask and Huddle AI.
-async function _aiToolLoop(system, messages, tools, onTool, effort = 'low') {
+// runTool, when given, answers the tools it knows (a collector's own cards)
+// and returns undefined for the rest, which go to the shared lookups.
+async function _aiToolLoop(system, messages, tools, onTool, effort = 'low', runTool = null) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
   if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
   for (let round = 0; ; round++) {
@@ -19791,7 +19793,10 @@ async function _aiToolLoop(system, messages, tools, onTool, effort = 'low') {
     messages.push({ role: 'assistant', content: r.content });
     const results = await Promise.all(calls.map(async (c) => {
       let out;
-      try { out = await _bizRunTool(c.name, c.input || {}); } catch (err) { out = { error: String((err && err.message) || err) }; }
+      try {
+        const own = runTool ? runTool(c.name, c.input || {}) : undefined;
+        out = own !== undefined ? await own : await _bizRunTool(c.name, c.input || {});
+      } catch (err) { out = { error: String((err && err.message) || err) }; }
       if (onTool && out && !out.error) { try { onTool(c.name, c.input || {}, out); } catch (_) { /* pictures are extra */ } }
       return { type: 'tool_result', tool_use_id: c.id, content: _bizToolText(out), ...(out && out.error ? { is_error: true } : {}) };
     }));
@@ -20378,6 +20383,179 @@ app.get('/api/admin/diag/stalls', async (req, res) => {
   if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
   res.json((await cacheGet(DIAG_STALLS_KEY)) || { rows: [] });
 });
+// ---- Huddle AI and the collector's own cards (owner, Oct 2026) ----
+// The signed-in collector's Inventory (and the notes on their Collection
+// cards) as tools: read them, and add, edit, move, note or remove a card when
+// the collector asks. They work on the same synced copy every device pulls
+// (/api/user/data), so a change shows up on the next sync. Writes run one at
+// a time and save against the revision they read, retrying when a device
+// saved in between, so nothing a device just saved is overwritten.
+const HUDDLE_INV_TOOLS = [
+  { name: 'my_inventory', description: "The collector's own cards: their Inventory (each card's id, name, print run, copies, price paid, market value, location, Auto/Mem/PC flags and notes), the locations, and their Collection cards with notes. Filter by words in the name or notes, or by location. Use it before editing, to find the card's id.",
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Words to match in the card name or notes; empty for everything.' }, location: { type: 'string' } } } },
+  { name: 'add_inventory_card', description: "Add a card to the collector's Inventory. Only when they ask you to add it.",
+    input_schema: { type: 'object', properties: { name: { type: 'string', description: 'e.g. "2024 Prizm Bo Nix Silver"' }, printRun: { type: 'string', description: 'e.g. "25" or "1/1"' }, qty: { type: 'integer' }, paid: { type: 'number' }, value: { type: 'number', description: 'Market value in dollars.' }, location: { type: 'string' }, notes: { type: 'string' }, auto: { type: 'boolean' }, mem: { type: 'boolean' }, pc: { type: 'boolean' } }, required: ['name'] } },
+  { name: 'edit_inventory_card', description: "Change a card the collector owns, by its id from my_inventory: rename it, set copies, price paid, market value, location (moving it), flags, or notes. add_note appends a line to its notes; notes replaces them. Collection cards (ids starting with c) take notes, add_note, paid, value and condition. Only when they ask for the change.",
+    input_schema: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, printRun: { type: 'string' }, qty: { type: 'integer' }, paid: { type: 'number' }, value: { type: 'number' }, location: { type: 'string' }, notes: { type: 'string' }, add_note: { type: 'string' }, condition: { type: 'string' }, auto: { type: 'boolean' }, mem: { type: 'boolean' }, pc: { type: 'boolean' } }, required: ['id'] } },
+  { name: 'remove_inventory_card', description: "Delete a card from the collector's Inventory, by id. Only when they clearly asked to remove or delete that card.",
+    input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
+];
+const HUDDLE_INV_SYSTEM = ' The collector is signed in, and you can see and change their own cards with my_inventory, add_inventory_card, edit_inventory_card and remove_inventory_card. '
+  + 'Read their cards and notes whenever a question is about what they own. Change, add or remove cards only when their latest message asks you to, never on your own idea; '
+  + 'when a request matches more than one card, or it is unclear which, ask instead of guessing. Remove a card only when they clearly said to. '
+  + 'After a change, say exactly what you changed. Their cards are theirs alone: never mention another collector\'s.';
+const HUDDLE_INV_WRITES = new Set(['add_inventory_card', 'edit_inventory_card', 'remove_inventory_card']);
+const _hiStr = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+const _hiMoney = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.round(Number(v) * 100) / 100) : undefined);
+function _hiInv(data) {
+  let inv = data.cardHuddleInventory;
+  if (typeof inv === 'string') { try { inv = JSON.parse(inv); } catch (_) { inv = null; } }
+  if (!inv || typeof inv !== 'object' || Array.isArray(inv)) inv = {};
+  if (!Array.isArray(inv.items)) inv.items = [];
+  if (!Array.isArray(inv.locations) || !inv.locations.length) inv.locations = ['Home', 'Storage', 'Card Show'];
+  if (!Array.isArray(inv.moves)) inv.moves = [];
+  return inv;
+}
+function _hiColl(data) {
+  let c = data.cardHuddleCollection;
+  if (typeof c === 'string') { try { c = JSON.parse(c); } catch (_) { c = null; } }
+  return Array.isArray(c) ? c : [];
+}
+const _hiCollName = (c) => c.name || [c.year, c.brand, c.setName, c.player, c.parallel].filter(Boolean).join(' ');
+const _hiItemOut = (i) => ({ id: i.id, name: i.name, printRun: i.printRun || undefined, qty: Number(i.qty) || 0, paid: Number(i.paid) || 0, value: Number(i.value) || 0,
+  location: i.location, auto: !!i.auto || undefined, mem: !!i.mem || undefined, pc: !!i.pc || undefined, notes: i.notes || undefined });
+function _hiPushValue(item, value, now) {
+  if (!Array.isArray(item.valueHistory)) item.valueHistory = [];
+  const last = item.valueHistory[item.valueHistory.length - 1];
+  if (!last || Number(last.value) !== value) item.valueHistory.push({ at: now, value });
+  if (item.valueHistory.length > 365) item.valueHistory.splice(0, item.valueHistory.length - 365);
+}
+function _hiLocation(inv, want) {
+  const w = _hiStr(want, 40);
+  if (!w) return null;
+  const hit = inv.locations.find(l => String(l).toLowerCase() === w.toLowerCase());
+  if (hit) return hit;
+  inv.locations.push(w); // a place the collector named that is not on the list yet
+  return w;
+}
+const _hiNote = (cur, add) => (cur ? cur + '\n' : '') + add;
+// One change to the account's synced data: read, apply, save at that
+// revision; another device saving in between means read again and reapply.
+async function _hiMutate(user, apply) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { rev, data } = await _userSyncLoad(user);
+    const d = { ...(data || {}) };
+    delete d._syncRev;
+    const out = apply(d);
+    if (!out || out.error) return out;
+    const saved = await _userSyncSave(user, d, rev);
+    if (saved.ok) return out;
+  }
+  return { error: 'Their cards were being saved from another device. Ask them to try again.' };
+}
+async function _huddleInvTool(user, name, input) {
+  const now = Date.now();
+  if (name === 'my_inventory') {
+    const { data } = await _userSyncLoad(user);
+    const inv = _hiInv(data || {}), coll = _hiColl(data || {});
+    const words = _hiStr(input.query, 80).toLowerCase().split(/\s+/).filter(Boolean);
+    const loc = _hiStr(input.location, 40).toLowerCase();
+    const match = (text) => words.every(w => text.toLowerCase().includes(w));
+    const items = inv.items.filter(i => i && match(`${i.name} ${i.printRun || ''} ${i.notes || ''}`) && (!loc || String(i.location).toLowerCase() === loc));
+    const cards = coll.map((c, k) => ({ c, k })).filter(({ c }) => c && !loc && match(`${_hiCollName(c)} ${c.notes || ''}`));
+    const sum = (f) => Math.round(inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i[f]) || 0), 0) * 100) / 100;
+    return {
+      inventory: { cards: inv.items.length, copies: inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0), paid: sum('paid'), value: sum('value'), wallet: Number(inv.wallet) || 0, locations: inv.locations },
+      matched: items.length, items: items.slice(0, 60).map(_hiItemOut),
+      collection: { cards: coll.length, matched: cards.length, list: cards.slice(0, 40).map(({ c, k }) => ({ id: 'c' + k, name: _hiCollName(c), condition: c.condition || undefined, paid: Number(c.purchasePrice) || 0, value: Number(c.estValue) || 0, notes: c.notes || undefined })) },
+    };
+  }
+  if (name === 'add_inventory_card') {
+    const cardName = _hiStr(input.name, 160);
+    if (!cardName) return { error: 'Give the card a name.' };
+    return _hiMutate(user, (d) => {
+      const inv = _hiInv(d);
+      const id = 'inv_' + now.toString(36) + Math.random().toString(36).slice(2, 7);
+      const value = _hiMoney(input.value) || 0;
+      const item = { id, name: cardName, printRun: _hiStr(input.printRun, 20), paid: _hiMoney(input.paid) || 0, value,
+        auto: !!input.auto, mem: !!input.mem, pc: !!input.pc, qty: Math.max(1, Math.min(9999, parseInt(input.qty, 10) || 1)),
+        location: _hiLocation(inv, input.location) || inv.locations[0], valueHistory: [], addedAt: now, updatedAt: now };
+      const notes = _hiStr(input.notes, 500);
+      if (notes) item.notes = notes;
+      if (value > 0) _hiPushValue(item, value, now);
+      inv.items.push(item);
+      d.cardHuddleInventory = inv;
+      return { added: _hiItemOut(item) };
+    });
+  }
+  if (name === 'edit_inventory_card') {
+    const id = _hiStr(input.id, 64);
+    return _hiMutate(user, (d) => {
+      if (/^c\d+$/.test(id)) {
+        const coll = _hiColl(d);
+        const c = coll[Number(id.slice(1))];
+        if (!c) return { error: 'No Collection card with that id. Look it up with my_inventory.' };
+        if (input.notes != null) c.notes = _hiStr(input.notes, 500);
+        if (input.add_note) c.notes = _hiNote(c.notes, _hiStr(input.add_note, 300)).slice(-500);
+        if (input.paid != null) c.purchasePrice = _hiMoney(input.paid) || 0;
+        if (input.value != null) { c.estValue = _hiMoney(input.value) || 0; c.manualValue = true; c.locked = true; }
+        if (input.condition != null) c.condition = _hiStr(input.condition, 40);
+        d.cardHuddleCollection = coll;
+        return { changed: { id, name: _hiCollName(c), condition: c.condition || undefined, paid: Number(c.purchasePrice) || 0, value: Number(c.estValue) || 0, notes: c.notes || undefined } };
+      }
+      const inv = _hiInv(d);
+      const item = inv.items.find(i => i && i.id === id);
+      if (!item) return { error: 'No Inventory card with that id. Look it up with my_inventory.' };
+      if (input.name != null && _hiStr(input.name, 160)) item.name = _hiStr(input.name, 160);
+      if (input.printRun != null) item.printRun = _hiStr(input.printRun, 20);
+      if (input.qty != null) item.qty = Math.max(0, Math.min(9999, parseInt(input.qty, 10) || 0));
+      if (input.paid != null) item.paid = _hiMoney(input.paid) || 0;
+      if (input.value != null) { item.value = _hiMoney(input.value) || 0; if (item.value > 0) _hiPushValue(item, item.value, now); }
+      for (const f of ['auto', 'mem', 'pc']) if (typeof input[f] === 'boolean') item[f] = input[f];
+      if (input.notes != null) item.notes = _hiStr(input.notes, 500);
+      if (input.add_note) item.notes = _hiNote(item.notes, _hiStr(input.add_note, 300)).slice(-500);
+      if (input.location != null) {
+        const to = _hiLocation(inv, input.location);
+        if (to && to !== item.location) {
+          inv.moves.unshift({ at: now, name: item.name, qty: Number(item.qty) || 0, from: item.location, to, note: 'Moved by Huddle AI' });
+          if (inv.moves.length > 200) inv.moves.length = 200;
+          item.location = to;
+        }
+      }
+      item.updatedAt = now;
+      d.cardHuddleInventory = inv;
+      return { changed: _hiItemOut(item) };
+    });
+  }
+  if (name === 'remove_inventory_card') {
+    const id = _hiStr(input.id, 64);
+    const out = await _hiMutate(user, (d) => {
+      const inv = _hiInv(d);
+      const item = inv.items.find(i => i && i.id === id);
+      if (!item) return { error: 'No Inventory card with that id. Look it up with my_inventory.' };
+      inv.items = inv.items.filter(i => i !== item);
+      d.cardHuddleInventory = inv;
+      return { removed: { id, name: item.name } };
+    });
+    if (out && out.removed) { try { await deleteUserPhoto(user, id); } catch (_) { /* the card is gone either way */ } }
+    return out;
+  }
+  return undefined;
+}
+// The runner the AI loop uses for one signed-in collector: their card tools,
+// one at a time, and everything else from the shared lookups.
+function _huddleInvRunner(user) {
+  let chain = Promise.resolve();
+  const runner = (name, input) => {
+    if (!HUDDLE_INV_TOOLS.some(t => t.name === name)) return undefined;
+    const p = chain.then(() => _huddleInvTool(user, name, input || {}));
+    chain = p.catch(() => {});
+    if (HUDDLE_INV_WRITES.has(name)) p.then(o => { if (o && !o.error) runner.changed = true; }, () => {});
+    return p;
+  };
+  runner.changed = false;
+  return runner;
+}
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
@@ -20413,10 +20591,15 @@ app.post('/api/ai/ask', async (req, res) => {
   messages.push({ role: 'user', content: q });
   try {
     const looked = [];
-    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM, messages, BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium');
+    // A signed-in collector's own cards come along as tools; the admin key
+    // alone has no collector behind it.
+    const mine = user ? _huddleInvRunner(user) : null;
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM : ''), messages,
+      mine ? [...BIZ_AI_TOOLS, ...HUDDLE_INV_TOOLS] : BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium', mine);
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
     if (!unlimited) { used += 1; cachePut(ck, { n: used }, 2 * 86400); }
-    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), used, limit: HUDDLE_AI_PER_DAY, unlimited });
+    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), used, limit: HUDDLE_AI_PER_DAY, unlimited,
+      cardsChanged: !!(mine && mine.changed) });
   } catch (err) {
     console.error('[ai/ask]', err && err.status, err && err.message);
     res.status(502).json({ error: 'Huddle AI did not answer. Try again in a minute.' });

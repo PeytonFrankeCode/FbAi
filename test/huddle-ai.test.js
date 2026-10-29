@@ -29,7 +29,7 @@ const call = async (p, { method = 'GET', token, body } = {}) => {
 const app0 = () => fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 const calls = [];
 let reply = { stop_reason: 'end_turn', content: [{ type: 'text', text: 'A Bo Nix Silver sells for about **$60**.' }] };
-S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return reply; } } });
+S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return typeof reply === 'function' ? reply(b) : reply; } } });
 
 (async () => {
   try {
@@ -147,6 +147,49 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('  ...readable with the admin key only', (await call('/api/admin/diag/stalls')).status === 401);
     check('  ...and the page records only on the owner\'s account', /function stallWatch\(\) \{\s*let owner = false;\s*try \{ owner = _noAffiliate\(\) && !!getSessionToken\(\)/.test(app0()));
     check('questions have their own rate limit', S.RL_TIERS.some(t => t.name === 'ai' && t.match('/api/ai/ask')));
+
+    // The collector's own cards: read, edited, noted, added and removed by the
+    // AI on the account's synced copy, only for the signed-in collector.
+    const inv0 = { locations: ['Home', 'Storage', 'Card Show'], moves: [], wallet: 0,
+      items: [{ id: 'inv_a1', name: '2024 Prizm Bo Nix Silver', printRun: '', qty: 1, paid: 40, value: 60, location: 'Home', addedAt: 1, updatedAt: 1 },
+              { id: 'inv_b2', name: '2023 Optic Purdy Holo', printRun: '', qty: 2, paid: 10, value: 12, location: 'Storage', notes: 'from the Dallas show', addedAt: 1, updatedAt: 1 }] };
+    const put = await call('/api/user/data', { method: 'PUT', token: plus, body: { data: { cardHuddleInventory: inv0, cardHuddleCollection: [{ name: 'Mahomes Prizm', purchasePrice: 5, estValue: 9, notes: '' }] } } });
+    const toolUse = (id, name, input) => ({ type: 'tool_use', id, name, input });
+    let step = 0;
+    const script = [
+      { stop_reason: 'tool_use', content: [toolUse('t1', 'my_inventory', { query: 'purdy' })] },
+      { stop_reason: 'tool_use', content: [toolUse('t2', 'edit_inventory_card', { id: 'inv_a1', add_note: 'PSA submission Nov 2', location: 'Card Show', value: 75 }),
+        toolUse('t3', 'add_inventory_card', { name: '2024 Select Daniels Tie-Dye', printRun: '25', paid: 120, location: 'Safe', notes: 'gift' }),
+        toolUse('t4', 'remove_inventory_card', { id: 'inv_b2' }),
+        toolUse('t5', 'edit_inventory_card', { id: 'c0', notes: 'centering 60/40' })] },
+      { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Done: noted, moved, added and removed.' }] },
+    ];
+    reply = () => script[Math.min(step++, script.length - 1)];
+    calls.length = 0;
+    const ia = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'Move my Bo Nix to Card Show at $75, note the PSA sub, add my Daniels to Safe, remove the Purdy, note the Mahomes centering' } });
+    const r1 = calls[1] && calls[1].messages[calls[1].messages.length - 1].content[0];
+    const invSeen = r1 && JSON.parse(r1.content);
+    check('a signed-in collector\'s AI has their card tools and the rule to change them only when asked',
+      put.status === 200 && calls[0].tools.some(t => t.name === 'my_inventory') && calls[0].tools.some(t => t.name === 'remove_inventory_card') && /only when their latest message asks you to/.test(calls[0].system), JSON.stringify(put.body));
+    check('  ...it reads their inventory, notes included', invSeen && invSeen.matched === 1 && invSeen.items[0].id === 'inv_b2' && invSeen.items[0].notes === 'from the Dallas show' && invSeen.inventory.cards === 2, r1 && r1.content);
+    const invAfter = (await call('/api/user/data', { token: plus })).body;
+    const invItems = invAfter.data.cardHuddleInventory.items;
+    const nix = invItems.find(i => i.id === 'inv_a1'), dan = invItems.find(i => /Daniels/.test(i.name));
+    check('  ...and the answer says the cards changed, so the page pulls them', ia.status === 200 && ia.body.cardsChanged === true, JSON.stringify(ia.body));
+    check('  ...a note is added, the card moved (logged) and revalued, stamped for sync',
+      nix && nix.notes === 'PSA submission Nov 2' && nix.location === 'Card Show' && nix.value === 75 && nix.updatedAt > 1
+      && invAfter.data.cardHuddleInventory.moves[0].to === 'Card Show' && nix.valueHistory.slice(-1)[0].value === 75, JSON.stringify(nix));
+    check('  ...a card is added with its note, in a new location it named',
+      dan && dan.printRun === '25' && dan.paid === 120 && dan.location === 'Safe' && dan.notes === 'gift' && /^inv_/.test(dan.id) && invAfter.data.cardHuddleInventory.locations.includes('Safe'), JSON.stringify(dan));
+    check('  ...a card is removed, and a Collection card takes a note', !invItems.some(i => i.id === 'inv_b2') && invAfter.data.cardHuddleCollection[0].notes === 'centering 60/40');
+    check('  ...the writes all landed, one after another, without losing each other', invItems.length === 2 && invAfter.rev >= put.body.rev + 4, `rev ${put.body.rev} -> ${invAfter.rev}`);
+    calls.length = 0; step = 0;
+    reply = { stop_reason: 'end_turn', content: [{ type: 'text', text: 'ok' }] };
+    const qa = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'Is a Bo Nix Silver worth grading?' } });
+    check('  ...a question that changes nothing says nothing changed', qa.body.cardsChanged === false);
+    check('the page has a notes field on inventory cards, searches them, and pulls after the AI changes cards',
+      /id="inv-item-notes"/.test(fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8'))
+      && /\$\{i\.notes \|\| ''\}`\.toLowerCase\(\)\.includes\(q\)/.test(app0()) && /if \(d\.cardsChanged && typeof pullUserData === 'function'\) pullUserData\(\)/.test(app0()));
 
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
