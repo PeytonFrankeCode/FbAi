@@ -10367,7 +10367,7 @@ html.install-open { overflow: hidden; }
 .hai-form.hidden, .hai-gate.hidden { display: none; }
 .hai-form textarea { flex: 1; resize: none; font: inherit; font-size: 16px; line-height: 1.4; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.75rem; max-height: 120px; }
 .hai-form textarea:focus { outline: none; border-color: var(--accent); }
-.hai-send { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-on); display: grid; place-items: center; cursor: pointer; }
+.hai-send { padding: 0; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-on); display: grid; place-items: center; cursor: pointer; }
 .hai-gate { padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; }
 .hai-gate p { margin: 0 0 0.7rem; }
 .hai-gate b { color: var(--text-primary); }
@@ -10415,9 +10415,10 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-aff { font-size: 0.64rem; color: var(--text-muted); }
 
 /* Huddle AI's mic (owner, Oct 2026): red and pulsing while it listens. */
-.hai-mic { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-secondary); display: grid; place-items: center; cursor: pointer; }
+.hai-mic { padding: 0; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-secondary); display: grid; place-items: center; cursor: pointer; }
 .hai-mic.hidden { display: none; }
 .hai-mic:hover { color: var(--accent); border-color: var(--accent-border); }
 .hai-mic.on { background: #e5484d; border-color: #e5484d; color: #fff; animation: hai-mic-pulse 1.4s ease-out infinite; }
 @keyframes hai-mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.45); } 100% { box-shadow: 0 0 0 12px rgba(229, 72, 77, 0); } }
 @media (prefers-reduced-motion: reduce) { .hai-mic.on { animation: none; } }
+.hai-mic svg, .hai-send svg { display: block; }

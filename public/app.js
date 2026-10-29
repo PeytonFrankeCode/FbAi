@@ -5736,17 +5736,27 @@ function _haiVoiceSetup(el) {
   const mic = el.querySelector('#hai-mic');
   if (!SR || !mic) return;
   mic.classList.remove('hidden');
-  let rec = null, heard = '';
-  const stop = () => { if (rec) { try { rec.stop(); } catch (_) { /* already stopped */ } } };
+  const q = el.querySelector('#hai-q');
+  const IDLE = 'Ask about a card or player…';
+  let rec = null, heard = '', started = false, watchdog = 0, micAsked = false;
   const setOn = (on) => { mic.classList.toggle('on', on); mic.setAttribute('aria-pressed', String(on)); mic.setAttribute('aria-label', on ? 'Stop listening' : 'Speak your question'); };
-  mic.addEventListener('click', () => {
-    if (rec) { stop(); return; }
-    const q = el.querySelector('#hai-q');
+  const say = (text) => { _hai.msgs.push({ role: 'assistant', text, error: true }); _haiPaint(); };
+  // Back to idle whatever state the recogniser was left in. iPhone asks for
+  // the microphone and then for speech recognition, and Safari sometimes
+  // drops the second prompt: the recogniser then never starts or ends, and
+  // the mic stayed stuck until the app was reopened.
+  const reset = (abort) => {
+    clearTimeout(watchdog);
+    if (abort && rec) { try { rec.abort(); } catch (_) { /* gone */ } }
+    rec = null; started = false; setOn(false); q.placeholder = IDLE;
+  };
+  const listen = () => {
     rec = new SR();
     rec.lang = navigator.language || 'en-US';
     rec.interimResults = true;
     rec.continuous = false;
-    heard = '';
+    heard = ''; started = false;
+    rec.onstart = rec.onaudiostart = () => { started = true; clearTimeout(watchdog); };
     rec.onresult = (e) => {
       let text = '';
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
@@ -5754,20 +5764,41 @@ function _haiVoiceSetup(el) {
       q.value = heard; q.dispatchEvent(new Event('input'));
     };
     rec.onerror = (e) => {
-      if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
-        _hai.msgs.push({ role: 'assistant', text: 'Microphone access is off for this site. Turn it on in your browser settings to ask by voice.', error: true });
-        _haiPaint();
+      const err = e && e.error;
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        say(started || micAsked ? 'Tap the mic again to speak. If it keeps stopping, allow Microphone and Speech Recognition for this site in Settings, then Safari.'
+          : 'Microphone access is off for this site. Turn it on in your browser settings to ask by voice.');
       }
+      // "no-speech" and "aborted" are a quiet stop, not a problem to report.
     };
     rec.onend = () => {
-      rec = null; setOn(false); q.placeholder = 'Ask about a card or player…';
+      const said = heard;
+      reset(false);
       // Sent once the speaker stops, as a typed question would be.
-      if (heard) _haiAsk();
+      if (said) _haiAsk();
     };
     try { rec.start(); setOn(true); q.placeholder = 'Listening…'; }
-    catch (_) { rec = null; setOn(false); }
+    catch (_) { reset(false); say('Tap the mic again to speak.'); return; }
+    // Never started (a permission prompt that vanished): let the next tap work.
+    watchdog = setTimeout(() => { if (rec && !started) reset(true); }, 12000);
+  };
+  mic.addEventListener('click', async () => {
+    if (rec) {
+      if (started) { try { rec.stop(); } catch (_) { reset(true); } }   // stop: what was heard is sent
+      else reset(true);                                                // stuck: start over
+      return;
+    }
+    // The microphone first, on its own, the first time on this page: then
+    // the speech-recognition prompt comes alone and is not lost.
+    if (!micAsked && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      micAsked = true;
+      try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(t => t.stop()); }
+      catch (_) { say('Microphone access is off for this site. Turn it on in your browser settings to ask by voice.'); return; }
+    }
+    listen();
   });
-  el.addEventListener('click', (e) => { if (e.target.closest('.hai-x, .hai-overlay')) stop(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && rec) reset(true); });
+  el.addEventListener('click', (e) => { if (e.target.closest('.hai-x, .hai-overlay') && rec) reset(true); });
 }
 // The answer's light markdown: paragraphs, "- " bullets and **bold**, on
 // escaped text, so nothing the model writes runs as HTML.
