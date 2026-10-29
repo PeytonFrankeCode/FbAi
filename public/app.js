@@ -5716,6 +5716,7 @@ function _haiEl() {
       <div class="hai-log" id="hai-log" aria-live="polite"></div>
       <div class="hai-gate hidden" id="hai-gate"></div>
       <form class="hai-form" id="hai-form"><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
+        <button type="button" class="hai-mic hidden" id="hai-mic" aria-label="Speak your question" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
         <button type="submit" class="hai-send" id="hai-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
     </div>`;
   document.body.appendChild(el);
@@ -5723,7 +5724,50 @@ function _haiEl() {
   const q = el.querySelector('#hai-q');
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _haiAsk(); } });
   q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(120, q.scrollHeight) + 'px'; });
+  _haiVoiceSetup(el);
   return el;
+}
+// Voice questions (owner, Oct 2026): the browser's own speech recognition
+// (Safari's is Apple dictation, Chrome's Google's), so it costs nothing per
+// question. The words appear in the box as they are heard and the question is
+// sent when the speaker stops. The mic shows only where the browser has it.
+function _haiVoiceSetup(el) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const mic = el.querySelector('#hai-mic');
+  if (!SR || !mic) return;
+  mic.classList.remove('hidden');
+  let rec = null, heard = '';
+  const stop = () => { if (rec) { try { rec.stop(); } catch (_) { /* already stopped */ } } };
+  const setOn = (on) => { mic.classList.toggle('on', on); mic.setAttribute('aria-pressed', String(on)); mic.setAttribute('aria-label', on ? 'Stop listening' : 'Speak your question'); };
+  mic.addEventListener('click', () => {
+    if (rec) { stop(); return; }
+    const q = el.querySelector('#hai-q');
+    rec = new SR();
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    heard = '';
+    rec.onresult = (e) => {
+      let text = '';
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      heard = text.trim();
+      q.value = heard; q.dispatchEvent(new Event('input'));
+    };
+    rec.onerror = (e) => {
+      if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
+        _hai.msgs.push({ role: 'assistant', text: 'Microphone access is off for this site. Turn it on in your browser settings to ask by voice.', error: true });
+        _haiPaint();
+      }
+    };
+    rec.onend = () => {
+      rec = null; setOn(false); q.placeholder = 'Ask about a card or player…';
+      // Sent once the speaker stops, as a typed question would be.
+      if (heard) _haiAsk();
+    };
+    try { rec.start(); setOn(true); q.placeholder = 'Listening…'; }
+    catch (_) { rec = null; setOn(false); }
+  });
+  el.addEventListener('click', (e) => { if (e.target.closest('.hai-x, .hai-overlay')) stop(); });
 }
 // The answer's light markdown: paragraphs, "- " bullets and **bold**, on
 // escaped text, so nothing the model writes runs as HTML.
