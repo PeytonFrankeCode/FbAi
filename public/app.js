@@ -5637,7 +5637,7 @@ function _adFreeModal() {
   m.innerHTML = `
     <div class="adfree-overlay" onclick="closeAdFree()"></div>
     <div class="adfree-box plan-box">
-      <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close">&times;</button>
+      <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <h3 id="adfree-title" class="adfree-title">Choose your plan</h3>
       <p class="adfree-sub">Every search, price and tool on The Card Huddle stays free. A plan removes the ads, and Huddle+ adds <b>Huddle AI</b>: what any card is worth, whether to grade it, and how a player's market is moving, from real sales.</p>
       <div class="plan-grid" id="plan-grid"></div>
