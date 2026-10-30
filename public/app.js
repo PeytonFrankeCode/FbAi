@@ -5954,7 +5954,7 @@ function _haiVisuals(list) {
         <span class="hai-card-k">Sold prices</span><b class="hai-card-v">${_haiMoney(v.median)}</b>
         <span class="hai-card-sub">typical of ${v.n} sale${v.n === 1 ? '' : 's'}${v.low != null && v.high != null && v.low !== v.high ? ` · ${_haiMoney(v.low)}–${_haiMoney(v.high)}` : ''}</span>
         ${_haiSpark(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
-        <a class="hai-more" href="/?prefill=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>`;
+        <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>`;
     }
     if (v.kind === 'trend') {
       const up = v.changePct > 0, flat = !v.changePct;
@@ -19329,14 +19329,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ?q=<search> opens that sold search: the links in the Market Movers email
 // (and any shared link) land on the card they name, not the front page.
+// ?prefill=<card> is what every card on the player, set and price-list pages
+// links to (owner, Oct 2026): it opens the card in For Sale, searched.
+function _setMode(mode) {
+  if (mode !== 'sold' && mode !== 'forsale') return;
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  cachedVariants = null;
+  updatePriceFilterVisibility();
+}
 document.addEventListener('DOMContentLoaded', () => {
-  let q = '';
-  try { q = (new URLSearchParams(location.search).get('q') || '').trim().slice(0, 120); } catch (_) { return; }
-  if (!q || location.pathname !== '/') return;
+  let q = '', prefill = '';
+  try {
+    const p = new URLSearchParams(location.search);
+    q = (p.get('q') || '').trim().slice(0, 120);
+    prefill = (p.get('prefill') || '').trim().slice(0, 120);
+  } catch (_) { return; }
+  if ((!q && !prefill) || location.pathname !== '/') return;
   setTimeout(() => {
-    input.value = q;
-    addRecentSearch(q);
-    fetchDirectSearch(q);
+    if (prefill) _setMode('forsale');
+    const term = prefill || q;
+    input.value = term;
+    addRecentSearch(term);
+    fetchDirectSearch(term);
   }, 0);
 });
 
