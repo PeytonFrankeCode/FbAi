@@ -11208,11 +11208,12 @@ async function _computeSoldStats(db, days, sport = 'football') {
       // Coarse on purpose — no parallel, no kind in the inner grouping — so a
       // card whose autographs are numerous still reaches the JS pass even if
       // each of its parallels alone would not.
-      db.prepare(`SELECT s.title, s.price_cents, s.player, s.year, s.set_name,
-                         s.parallel, s.card_number, s.item_id, s.sold_date,
-                         s.grader, s.grade${img ? ', s.image_url' : ''}
-                    FROM sales s
-                    JOIN (SELECT player, year, set_name, card_number
+      // Two passes, not a join (Oct 2026): the join was run by D1 once per
+      // card group, re-reading the window for each, ~30M rows a build. Now the
+      // groups are found in one pass and their sales fetched in a second,
+      // matched against the list (json_each) rather than joined.
+      (async () => {
+        const groups = await db.prepare(`SELECT player, COALESCE(year, '') AS y, COALESCE(set_name, '') AS st, card_number
                             FROM sales
                            WHERE price_cents IS NOT NULL${noOffer} AND sold_date >= ?
                              AND confidence >= ? AND player IS NOT NULL AND player != ''
@@ -11220,14 +11221,19 @@ async function _computeSoldStats(db, days, sport = 'football') {
                            GROUP BY player, year, set_name, card_number
                           HAVING COUNT(*) >= ?
                            ORDER BY COUNT(*) DESC
-                           LIMIT ?) g
-                      ON s.player = g.player AND s.year IS g.year
-                     AND s.set_name IS g.set_name AND s.card_number IS g.card_number
+                           LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, minGroup, MOST_SOLD_MAX_GROUPS).all();
+        const keys = ((groups && groups.results) || []).map(g => [g.player, g.y, g.st, g.card_number]);
+        if (!keys.length) return { results: [] };
+        return db.prepare(`SELECT s.title, s.price_cents, s.player, s.year, s.set_name,
+                         s.parallel, s.card_number, s.item_id, s.sold_date,
+                         s.grader, s.grade${img ? ', s.image_url' : ''}
+                    FROM sales s
                    WHERE s.price_cents IS NOT NULL AND s.sold_date >= ?
                      AND s.confidence >= ?${_sportRowsSql(sport, 's.sport')}
-                   LIMIT ?`)
-        .bind(since, NFLDB_MIN_CONFIDENCE, minGroup, MOST_SOLD_MAX_GROUPS,
-              since, NFLDB_MIN_CONFIDENCE, MOST_SOLD_MAX_ROWS).all(),
+                     AND (s.player, COALESCE(s.year, ''), COALESCE(s.set_name, ''), s.card_number) IN
+                         (SELECT value ->> 0, value ->> 1, value ->> 2, value ->> 3 FROM json_each(?))
+                   LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, JSON.stringify(keys), MOST_SOLD_MAX_ROWS).all();
+      })(),
 
       // Highest demand by set: how many cards of it actually changed hands.
       // Deliberately a count, not a price — "demand" is how much of it the
