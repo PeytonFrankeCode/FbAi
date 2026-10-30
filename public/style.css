@@ -10458,3 +10458,18 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-deep { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text-primary); }
 .hai-deep-note { color: var(--text-muted); }
 .hai-deep-tag { display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 0.02rem 0.4rem; margin-bottom: 0.3rem; }
+
+/* ---- Huddle AI upgrades (owner, Oct 2026): photos, live status, thumbs, follow-ups ---- */
+.hai-cam { flex-shrink: 0; }
+.hai-attach { display: flex; align-items: center; gap: 0.6rem; margin: 0.5rem 1rem 0; padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: 10px; font-size: 0.8rem; color: var(--text-secondary); background: var(--bg-tertiary); }
+.hai-attach.hidden { display: none; }
+.hai-attach img { width: 40px; height: 52px; object-fit: cover; border-radius: 6px; }
+.hai-attach span { flex: 1; }
+.hai-attach-x { background: none; border: none; color: var(--text-secondary); font-size: 1.3rem; cursor: pointer; line-height: 1; }
+.hai-msg-photo { display: block; max-width: 160px; max-height: 200px; border-radius: 8px; margin-bottom: 0.35rem; object-fit: cover; }
+.hai-typing em { font-style: normal; font-size: 0.78rem; color: var(--text-muted); margin-left: 0.4rem; align-self: center; }
+.hai-fb { display: flex; align-items: center; gap: 0.3rem; margin: -0.35rem 0 0 0.2rem; }
+.hai-fb-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 0.1rem 0.35rem; font-size: 0.85rem; cursor: pointer; opacity: 0.55; filter: grayscale(0.4); }
+.hai-fb-btn:hover { opacity: 1; filter: none; border-color: var(--border); }
+.hai-fb-thanks { font-size: 0.72rem; color: var(--text-muted); }
+.hai-follow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }

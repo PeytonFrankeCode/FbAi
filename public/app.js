@@ -5733,7 +5733,7 @@ async function _openAdFreeBilling() {
 // Part of Huddle+ (the plan that was Ad-free): AI answers about any card's
 // value, grading and the market, from Card Huddle's own sales (/api/ai/ask).
 // A panel from the menu; without the plan it explains Huddle+ instead.
-const _hai = { msgs: [], busy: false, usage: null, deep: false };
+const _hai = { msgs: [], busy: false, usage: null, deep: false, photo: null, live: null };
 function _haiEl() {
   let el = document.getElementById('hai');
   if (el) return el;
@@ -5749,7 +5749,8 @@ function _haiEl() {
       <div class="hai-log" id="hai-log" aria-live="polite"></div>
       <div class="hai-gate hidden" id="hai-gate"></div>
       <div class="hai-deep-row hidden" id="hai-deep-row"><label class="hai-deep"><input type="checkbox" id="hai-deep"> <b>Deep answer</b></label><span class="hai-deep-note" id="hai-deep-note">thinks harder, uses about 20× the credits</span></div>
-      <form class="hai-form" id="hai-form"><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
+      <div class="hai-attach hidden" id="hai-attach"><img id="hai-attach-img" alt="Card photo to ask about"><span>Photo attached</span><button type="button" class="hai-attach-x" id="hai-attach-x" aria-label="Remove photo">&times;</button></div>
+      <form class="hai-form" id="hai-form"><button type="button" class="hai-mic hai-cam" id="hai-cam" aria-label="Ask about a card photo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><input type="file" id="hai-file" accept="image/*" hidden><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
         <button type="button" class="hai-mic hidden" id="hai-mic" aria-label="Speak your question" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
         <button type="submit" class="hai-send" id="hai-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
     </div>`;
@@ -5759,6 +5760,15 @@ function _haiEl() {
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _haiAsk(); } });
   q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(120, q.scrollHeight) + 'px'; });
   el.querySelector('#hai-deep').addEventListener('change', (e) => { _hai.deep = e.target.checked; });
+  el.querySelector('#hai-cam').addEventListener('click', () => el.querySelector('#hai-file').click());
+  el.querySelector('#hai-file').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try { _haiSetPhoto(await _haiShrink(f)); } catch (_) { _hai.msgs.push({ role: 'assistant', text: 'That photo could not be opened. Try another.', error: true }); _haiPaint(); }
+  });
+  el.querySelector('#hai-attach-x').addEventListener('click', () => _haiSetPhoto(null));
+  el.querySelector('#hai-log').addEventListener('click', _haiLogClick);
   _haiVoiceSetup(el);
   return el;
 }
@@ -5837,6 +5847,49 @@ function _haiVoiceSetup(el) {
 }
 // The answer's light markdown: paragraphs, "- " bullets and **bold**, on
 // escaped text, so nothing the model writes runs as HTML.
+// A card photo, shrunk in the browser (longest side 1280px, JPEG) so it
+// uploads fast and costs fewer credits to read.
+function _haiShrink(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+    img.src = url;
+  });
+}
+function _haiSetPhoto(dataUrl) {
+  _hai.photo = dataUrl || null;
+  const box = document.getElementById('hai-attach');
+  if (!box) return;
+  box.classList.toggle('hidden', !dataUrl);
+  if (dataUrl) document.getElementById('hai-attach-img').src = dataUrl;
+  const q = document.getElementById('hai-q');
+  if (q) q.placeholder = dataUrl ? 'Ask about this card, or just send' : 'Ask about a card or player…';
+}
+// Thumbs and follow-up chips under an answer.
+function _haiLogClick(e) {
+  const v = e.target.closest('[data-vote]');
+  if (v) {
+    const m = _hai.msgs[Number(v.dataset.i)];
+    if (!m || m.vote) return;
+    m.vote = v.dataset.vote;
+    const asked = _hai.msgs.slice(0, Number(v.dataset.i)).reverse().find(x => x.role === 'user');
+    authFetch('/api/ai/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: m.id, vote: m.vote, q: asked ? asked.text : '', a: m.text, deep: !!m.deep, photo: !!(asked && asked.photo) }) }).catch(() => {});
+    _haiPaint();
+    return;
+  }
+  const f = e.target.closest('[data-follow]');
+  if (f && !_hai.busy) { document.getElementById('hai-q').value = f.dataset.follow; _haiAsk(); }
+}
 function _haiFormat(text) {
   const inline = (t) => escHtml(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
   return String(text || '').split(/\n{2,}/).map(block => {
@@ -5898,8 +5951,14 @@ function _haiPaint() {
   if (!log) return;
   const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
     <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
-  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.deep ? '<span class="hai-deep-tag">Deep answer</span>' : ''}${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`).join('')
-    + (_hai.busy ? '<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span></div>' : '');
+  const lastBot = _hai.msgs.map((m, i) => (m.role === 'assistant' && !m.error ? i : -1)).filter(i => i >= 0).pop();
+  log.innerHTML = intro + _hai.msgs.map((m, i) => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.photo ? `<img class="hai-msg-photo" src="${escHtml(m.photo)}" alt="Card photo">` : ''}${m.deep ? '<span class="hai-deep-tag">Deep answer</span>' : ''}${m.role === 'user' ? (m.text ? `<p>${escHtml(m.text)}</p>` : '') : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`
+    + (m.role === 'assistant' && !m.error && m.id ? `<div class="hai-fb">${m.vote ? `<span class="hai-fb-thanks">${m.vote === 'up' ? 'Thanks!' : 'Thanks, we will use this to improve.'}</span>`
+      : `<button type="button" class="hai-fb-btn" data-vote="up" data-i="${i}" aria-label="Good answer">&#128077;</button><button type="button" class="hai-fb-btn" data-vote="down" data-i="${i}" aria-label="Bad answer">&#128078;</button>`}</div>` : '')
+    + (i === lastBot && !_hai.busy && m.followUps && m.followUps.length ? `<div class="hai-follow">${m.followUps.map(t => `<button type="button" class="hai-chip" data-follow="${escHtml(t)}">${escHtml(t)}</button>`).join('')}</div>` : '')).join('')
+    + (_hai.busy ? (_hai.live && _hai.live.text
+      ? `<div class="hai-msg hai-bot" id="hai-live">${_haiFormat(_hai.live.text)}</div>`
+      : `<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span><em id="hai-status">${escHtml((_hai.live && _hai.live.status) || '')}</em></div>`) : '');
   log.querySelectorAll('.hai-chip').forEach(b => b.addEventListener('click', () => {
     if (!_hai.usage || !_hai.usage.plus) return;
     document.getElementById('hai-q').value = b.textContent; _haiAsk();
@@ -5966,29 +6025,62 @@ document.addEventListener('keydown', (e) => {
 async function _haiAsk() {
   const qEl = document.getElementById('hai-q');
   const q = (qEl.value || '').trim();
-  if (!q || _hai.busy) return;
-  const history = _hai.msgs.filter(m => !m.error).slice(-6).map(m => ({ role: m.role, text: m.text }));
-  _hai.msgs.push({ role: 'user', text: q });
+  const image = _hai.photo;
+  if ((!q && !image) || _hai.busy) return;
+  const history = _hai.msgs.filter(m => !m.error && m.text).slice(-6).map(m => ({ role: m.role, text: m.text }));
+  _hai.msgs.push({ role: 'user', text: q, photo: image || undefined });
   qEl.value = ''; qEl.style.height = 'auto';
-  _hai.busy = true; _haiPaint();
+  _haiSetPhoto(null);
+  _hai.busy = true; _hai.live = { text: '', status: image ? 'Looking at your card' : '' }; _haiPaint();
+  const deep = !!_hai.deep;
+  const done = (d) => {
+    _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, id: d.id, followUps: d.followUps || [], visuals: Array.isArray(d.visuals) ? d.visuals : [] });
+    if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
+    if (_hai.usage && !d.unlimited) { _hai.usage.spent = d.spent; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+  };
+  const failed = (status, d) => {
+    _hai.msgs.push({ role: 'assistant', text: (d && d.error) || 'Huddle AI did not answer. Try again.', error: true });
+    if (status === 401 || status === 402) _haiLoadUsage();
+  };
   try {
-    const deep = !!_hai.deep;
-    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history, deep }) });
-    const d = await r.json().catch(() => ({}));
-    if (r.ok) {
-      _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, visuals: Array.isArray(d.visuals) ? d.visuals : [] });
-      // The AI changed the collector's cards on the account: pull them in, so
-      // the Inventory and Collection show it without a reload.
-      if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
-      if (_hai.usage && !d.unlimited) { _hai.usage.spent = d.spent; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history, deep, image, stream: true }) });
+    const type = r.headers.get('content-type') || '';
+    if (!/event-stream/.test(type) || !r.body) {
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) done(d); else failed(r.status, d);
     } else {
-      _hai.msgs.push({ role: 'assistant', text: d.error || 'Huddle AI did not answer. Try again.', error: true });
-      if (r.status === 401 || r.status === 402) _haiLoadUsage();
+      // The streamed answer: status lines, the text as it is written, then the finished answer.
+      const reader = r.body.getReader(), dec = new TextDecoder();
+      let buf = '', finished = false;
+      const handle = (event, data) => {
+        if (event === 'status') { _hai.live.status = data.text; const st = document.getElementById('hai-status'); if (st) st.textContent = data.text; else if (!_hai.live.text) _haiPaint(); }
+        else if (event === 'delta') {
+          const first = !_hai.live.text;
+          _hai.live.text += data.text;
+          const el = document.getElementById('hai-live');
+          if (first || !el) _haiPaint(); else el.innerHTML = _haiFormat(_hai.live.text);
+          const log = document.getElementById('hai-log'); if (log) log.scrollTop = log.scrollHeight;
+        } else if (event === 'reset') { _hai.live.text = ''; _haiPaint(); }
+        else if (event === 'done') { finished = true; done(data); }
+        else if (event === 'error') { finished = true; failed(data.status, data); }
+      };
+      for (;;) {
+        const { value, done: end } = await reader.read();
+        if (end) break;
+        buf += dec.decode(value, { stream: true });
+        let cut;
+        while ((cut = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, cut); buf = buf.slice(cut + 2);
+          const ev = (/^event: (.*)$/m.exec(block) || [])[1], da = (/^data: (.*)$/m.exec(block) || [])[1];
+          if (ev && da) { try { handle(ev, JSON.parse(da)); } catch (_) { /* a broken line is skipped */ } }
+        }
+      }
+      if (!finished) failed(0, { error: _hai.live.text ? 'The answer was cut off. Try again.' : 'Huddle AI did not answer. Try again.' });
     }
   } catch (_) {
     _hai.msgs.push({ role: 'assistant', text: 'Could not reach Huddle AI. Check your connection and try again.', error: true });
   }
-  _hai.busy = false; _haiPaint();
+  _hai.busy = false; _hai.live = null; _haiPaint();
 }
 
 // Back from Stripe: say thanks, and wait for the payment to land on the
