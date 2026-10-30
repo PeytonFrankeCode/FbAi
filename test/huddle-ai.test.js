@@ -68,7 +68,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     const a = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'What is a 2024 Prizm Bo Nix Silver worth?' } });
     const c = calls[0];
     check('a Huddle+ account gets an answer, metered against its credits',
-      a.status === 200 && /\$60/.test(a.body.answer) && a.body.credits === 3 && a.body.spent > 0.002 && a.body.spent < 0.004, JSON.stringify(a.body));
+      a.status === 200 && /\$60/.test(a.body.answer) && a.body.tokens === 3e6 && a.body.tokensUsed > 2000 && a.body.tokensUsed < 4000 && !('credits' in a.body) && !('spent' in a.body), JSON.stringify(a.body));
     check('  ...with the instructions and tools cached', c && c.cache_control && c.cache_control.type === 'ephemeral');
     check('  ...from Haiku with Card Huddle\'s lookups as tools and the collector\'s instructions',
       c && c.model === 'claude-haiku-5-5' && c.tools.some(t => t.name === 'search_sold_sales') && /Huddle AI/.test(c.system) && /Never promise/.test(c.system) && c.output_config.effort === 'medium' && /comparable players/.test(c.system));
@@ -92,7 +92,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     calls.length = 0;
     const dp = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'Deep one', deep: true } });
     check('a Deep answer runs on Sonnet and costs its rate', dp.status === 200 && dp.body.deep === true && calls[0].model === 'claude-sonnet-5-5'
-      && dp.body.spent - a.body.spent > 0.05, JSON.stringify(dp.body));
+      && dp.body.tokensUsed - a.body.tokensUsed > 50000, JSON.stringify(dp.body));
     store.set(sk, { usd: 3 });
     calls.length = 0;
     const over = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'one more' } });
@@ -110,6 +110,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       P.adfree.monthly === 199 && P.adfree.credits === 0 && P.rookie.monthly === 499 && P.rookie.credits === 3
       && P.veteran.monthly === 999 && P.veteran.credits === 7 && P.hof.monthly === 1999 && P.hof.credits === 13);
     const plans = up.body.plans;
+    check('  ...collectors see tokens, never the dollars behind them', plans.every(p => !('credits' in p)) && plans[1].tokens === 3e6 && plans[3].tokens === 13e6 && !('spent' in up.body) && !('credits' in up.body), JSON.stringify(up.body).slice(0, 200));
     check('  ...and each bigger plan truly buys more answers', plans[1].answers < plans[2].answers && plans[2].answers < plans[3].answers && plans[1].deep < plans[3].deep, JSON.stringify(plans));
     const subs2 = S.loadSubscriptions();
     subs2[('hai_p' + run).toLowerCase()].tier = 'adfree';
@@ -119,10 +120,10 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('an Ad-free plan has no ads and no AI', ad.status === 402 && adMe.body.adFree === true && adMe.body.huddlePlus === false && adMe.body.tier === 'adfree', JSON.stringify(adMe.body));
     subs2[('hai_p' + run).toLowerCase()].tier = 'veteran';
     S.saveSubscriptions(subs2);
-    check('  ...a Veteran has $7 of credits', (await call('/api/ai/usage', { token: plus })).body.credits === 7);
+    check('  ...a Veteran has 7 million tokens', (await call('/api/ai/usage', { token: plus })).body.tokens === 7e6);
     delete subs2[('hai_p' + run).toLowerCase()].tier;
     S.saveSubscriptions(subs2);
-    check('  ...a subscriber from before the plans keeps the AI, with Rookie\'s credits', (await call('/api/ai/usage', { token: plus })).body.credits === 3);
+    check('  ...a subscriber from before the plans keeps the AI, with Rookie\'s credits', (await call('/api/ai/usage', { token: plus })).body.tokens === 3e6);
 
     const owner = await reg('cardhuddlecollectors') || (await call('/api/auth/login', { method: 'POST', body: { username: 'cardhuddlecollectors', password: 'secret123' } })).body.token;
     const uo = await call('/api/ai/usage', { token: owner });
