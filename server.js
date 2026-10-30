@@ -19854,6 +19854,9 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // and returns undefined for the rest, which go to the shared lookups.
 // opts.model picks the model (Huddle AI's Deep answers use Sonnet); opts.onUsage
 // is handed each response's model and token usage, for metering credits.
+// opts.onText streams the answer as it is written (with opts.onReset when a
+// round turns out to be a lookup rather than the answer), and opts.onTool
+// names each lookup as it starts, for the "Checking sold prices" line.
 async function _aiToolLoop(system, messages, tools, onTool, effort = 'low', runTool = null, opts = {}) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
   if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
@@ -19874,15 +19877,24 @@ async function _aiToolLoop(system, messages, tools, onTool, effort = 'low', runT
     // Sonnet can decline in a safety category; the server-side fallback answers
     // on another model instead of failing the question. Haiku has none.
     const fb = model === HUDDLE_DEEP_MODEL && _bizClient.beta && _bizClient.beta.messages;
-    const r = fb
-      ? await _bizClient.beta.messages.create({ ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' })
-      : await _bizClient.messages.create(body);
+    const api = fb ? _bizClient.beta.messages : _bizClient.messages;
+    const params = fb ? { ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' } : body;
+    let r, streamed = false;
+    if (opts.onText && typeof api.stream === 'function') {
+      const st = api.stream(params);
+      st.on('text', (d) => { streamed = true; try { opts.onText(d); } catch (_) { /* a closed page is not an error */ } });
+      r = await st.finalMessage();
+    } else {
+      r = await api.create(params);
+    }
     if (opts.onUsage && r && r.usage) { try { opts.onUsage(r.model || model, r.usage); } catch (_) { /* metering never fails an answer */ } }
     if (r.stop_reason === 'refusal') return null;
     const calls = (r.content || []).filter(b => b.type === 'tool_use');
     if (last || r.stop_reason !== 'tool_use' || !calls.length) {
       return (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     }
+    if (streamed && opts.onReset) { try { opts.onReset(); } catch (_) { /* page gone */ } }
+    if (opts.onTool) for (const c of calls) { try { opts.onTool(c.name); } catch (_) { /* page gone */ } }
     messages.push({ role: 'assistant', content: r.content });
     const results = await Promise.all(calls.map(async (c) => {
       let out;
@@ -20704,6 +20716,60 @@ function _huddleInvRunner(user) {
   runner.changed = false;
   return runner;
 }
+// What the page says while a lookup runs.
+const HUDDLE_TOOL_STATUS = {
+  search_sold_sales: 'Checking sold prices', current_listings: 'Looking at listings for sale', comparable_players: 'Finding comparable players',
+  grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist',
+  market_top_sales: 'Reading the market', price_estimate: 'Estimating a price', market_index: 'Reading the market', player_trend: 'Charting the player',
+  player_cards: 'Gathering the player\'s cards', my_inventory: 'Reading your inventory', add_inventory_card: 'Updating your inventory',
+  edit_inventory_card: 'Updating your inventory', remove_inventory_card: 'Updating your inventory',
+};
+// Two or three next questions from what the AI just looked up, free (no
+// model call): the obvious follow-ups a collector asks next.
+function _huddleFollowUps(looked, deep) {
+  const out = [];
+  const last = (n) => [...looked].reverse().find(x => x.name === n && x.out);
+  const sold = last('search_sold_sales');
+  const q = sold && String(sold.input && sold.input.query || '').trim();
+  if (q) {
+    const graded = /\b(psa|bgs|sgc|cgc)\s*\d/i.test(q);
+    if (!graded) out.push(`What does ${q} sell for in PSA 10?`, `Is ${q} worth grading?`);
+    else out.push(`What does ${q.replace(/\b(psa|bgs|sgc|cgc)\s*[\d.]+/i, '').replace(/\s+/g, ' ').trim()} sell for raw?`);
+    out.push(`What is ${q} listed for right now?`);
+  }
+  const trend = last('player_trend');
+  const player = (trend && (trend.out.player || (trend.input && trend.input.player))) || (sold && sold.out && sold.out.player);
+  if (player && out.length < 3) out.push(`Which players' cards sell like ${player}'s?`);
+  if (!out.length && looked.some(x => x.name === 'my_inventory')) out.push('Which of my cards gained the most value?', 'Which of my cards should I grade?');
+  return [...new Set(out)].slice(0, 3);
+}
+const HUDDLE_FEEDBACK_KEY = 'ai:feedback:v1';
+app.post('/api/ai/feedback', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user && !isAdminReq(req)) return res.status(401).json({ error: 'Log in first.' });
+  const b = req.body || {};
+  const vote = b.vote === 'up' ? 'up' : b.vote === 'down' ? 'down' : null;
+  if (!vote) return res.status(400).json({ error: 'vote must be up or down' });
+  const list = (await cacheGet(HUDDLE_FEEDBACK_KEY)) || { rows: [] };
+  const id = String(b.id || '').slice(0, 40);
+  list.rows = (list.rows || []).filter(r => !(id && r.id === id && r.user === user));
+  list.rows.unshift({ id, at: new Date().toISOString(), user, vote, deep: !!b.deep, photo: !!b.photo,
+    q: String(b.q || '').slice(0, 500), a: String(b.a || '').slice(0, 1500), note: String(b.note || '').slice(0, 300) || undefined });
+  list.rows = list.rows.slice(0, 500);
+  cachePut(HUDDLE_FEEDBACK_KEY, list, 90 * 86400);
+  res.json({ ok: true });
+});
+app.get('/api/admin/ai/feedback', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const list = (await cacheGet(HUDDLE_FEEDBACK_KEY)) || { rows: [] };
+  const rows = list.rows || [];
+  res.set('Cache-Control', 'no-store').json({ up: rows.filter(r => r.vote === 'up').length, down: rows.filter(r => r.vote === 'down').length, rows });
+});
+// A photo question: the card's picture rides along with the words, and what
+// eBay's image search finds for it is offered as hints to the identification.
+const HUDDLE_PHOTO_NOTE = ' When the collector sends a photo, first identify the card from it (year, set, player, card number, parallel, '
+  + 'serial numbering, autograph or relic, and the grade from a slab label), say what you see and how sure you are, then look it up like any other card. '
+  + 'Never guess a serial number or grade you cannot read.';
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
@@ -20722,7 +20788,10 @@ app.post('/api/ai/ask', async (req, res) => {
   const admin = isAdminReq(req);
   if (!user && !admin) return res.status(401).json({ error: 'Log in to use Huddle AI.', needs: 'login' });
   if (!_huddleAiAllowed(req, user)) return res.status(402).json({ error: 'Huddle AI comes with Huddle+.', needs: 'plus' });
-  const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
+  const photo = req.body && req.body.image && /^data:image\/(?:jpeg|png|webp|gif);base64,/.test(String(req.body.image)) ? _cleanImageBase64(req.body.image) : null;
+  if (req.body && req.body.image && !photo) return res.status(400).json({ error: 'That photo could not be read. Try another.' });
+  if (photo && photo.length > 4_000_000) return res.status(413).json({ error: 'That photo is too large. Try a smaller one.' });
+  const q = String((req.body && req.body.q) || '').trim().slice(0, 500) || (photo ? 'What card is this, and what is it worth?' : '');
   if (!q) return res.status(400).json({ error: 'Ask a question.' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Huddle AI is not switched on yet.' });
   const unlimited = admin || _huddleAiOwner(user);
@@ -20746,16 +20815,38 @@ app.post('/api/ai/ask', async (req, res) => {
   const messages = [];
   for (const m of hist) { if (messages.length && messages[messages.length - 1].role === m.role) messages[messages.length - 1].content += '\n\n' + m.content; else messages.push(m); }
   if (messages.length && messages[messages.length - 1].role === 'user') messages.pop();
-  messages.push({ role: 'user', content: q });
+  if (photo) {
+    const hints = await ebayImageSearch(photo, 6).then(r => (r || []).map(x => x.title).filter(Boolean).slice(0, 6)).catch(() => []);
+    messages.push({ role: 'user', content: [
+      { type: 'image', source: { type: 'base64', media_type: _imgMedia(req.body.image), data: photo } },
+      { type: 'text', text: q + (hints.length ? `\n\n(Listings that eBay's image search matched to this photo, as hints only: ${hints.join(' | ')})` : '') },
+    ] });
+  } else {
+    messages.push({ role: 'user', content: q });
+  }
+  // Streamed: the answer appears as it is written, with a line saying what is
+  // being looked up; the finished answer comes last, as the same JSON.
+  const streaming = !!(req.body && req.body.stream);
+  const send = (event, data) => { try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch (_) { /* page closed */ } };
+  if (streaming) {
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Accel-Buffering', 'no');
+    send('status', { text: photo ? 'Looking at your card' : 'Thinking' });
+  }
+  const fail = (status, body) => (streaming ? (send('error', { status, ...body }), res.end()) : res.status(status).json(body));
   try {
     const looked = [];
     // A signed-in collector's own cards come along as tools; the admin key
     // alone has no collector behind it.
     const mine = user ? _huddleInvRunner(user) : null;
     let cost = 0;
-    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM : ''), messages,
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM : '') + (photo ? HUDDLE_PHOTO_NOTE : ''), messages,
       mine ? [...BIZ_AI_TOOLS, ...HUDDLE_INV_TOOLS] : BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium', mine,
-      { model: deep ? HUDDLE_DEEP_MODEL : BIZ_AI_MODEL, onUsage: (model, u) => { cost += _aiCostUsd(model, u); } });
+      { model: deep ? HUDDLE_DEEP_MODEL : BIZ_AI_MODEL, onUsage: (model, u) => { cost += _aiCostUsd(model, u); },
+        ...(streaming ? { onText: (d) => send('delta', { text: d }), onReset: () => send('reset', {}),
+          onTool: (name) => send('status', { text: HUDDLE_TOOL_STATUS[name] || 'Looking it up' }) } : {}) });
     // What the answer cost is charged even when it was declined: the tokens were spent.
     if (!unlimited) {
       used += 1; cachePut(ck, { n: used }, 2 * 86400);
@@ -20768,13 +20859,15 @@ app.post('/api/ai/ask', async (req, res) => {
       avg[k] = { n: cur.n + 1, usd: cur.usd + cost };
       cachePut(HUDDLE_AVG_KEY, avg, 60 * 86400);
     }
-    if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
-    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), unlimited, deep,
+    if (text == null) return fail(422, { error: 'That question could not be answered.' });
+    const payload = { answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), unlimited, deep,
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), followUps: _huddleFollowUps(looked, deep), photo: !!photo,
       credits: unlimited ? null : credits, spent: Math.round(spent * 10000) / 10000, pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
-      cardsChanged: !!(mine && mine.changed) });
+      cardsChanged: !!(mine && mine.changed) };
+    if (streaming) { send('done', payload); res.end(); } else res.json(payload);
   } catch (err) {
     console.error('[ai/ask]', err && err.status, err && err.message);
-    res.status(502).json({ error: 'Huddle AI did not answer. Try again in a minute.' });
+    fail(502, { error: 'Huddle AI did not answer. Try again in a minute.' });
   }
 });
 
@@ -21539,7 +21632,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

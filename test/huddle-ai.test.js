@@ -219,6 +219,47 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       /id="inv-item-notes"/.test(fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8'))
       && /\$\{i\.notes \|\| ''\}`\.toLowerCase\(\)\.includes\(q\)/.test(app0()) && /if \(d\.cardsChanged && typeof pullUserData === 'function'\) pullUserData\(\)/.test(app0()));
 
+    // Streaming, follow-ups, feedback and photos (owner, Oct 2026).
+    store.set(`ai:spend:${('hai_p' + run).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`, { usd: 0 });
+    reply = { stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 }, content: [{ type: 'text', text: 'About $60.' }] };
+    const textEvents = [];
+    S._bizSetClient({ messages: {
+      create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return reply; },
+      stream: (b) => { calls.push(JSON.parse(JSON.stringify(b))); const hs = [];
+        return { on(ev, cb) { if (ev === 'text') hs.push(cb); return this; }, async finalMessage() { ['About ', '$60.'].forEach(t => hs.forEach(h => h(t))); return reply; } }; },
+    } });
+    calls.length = 0;
+    const raw = await fetch(base + '/api/ai/ask', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${plus}` },
+      body: JSON.stringify({ q: 'What is a 2024 Prizm Bo Nix Silver worth?', stream: true }) });
+    const sse = await raw.text();
+    const evs = [...sse.matchAll(/event: (\w+)\ndata: (.*)\n\n/g)].map(m => [m[1], JSON.parse(m[2])]);
+    const doneEv = (evs.find(e => e[0] === 'done') || [])[1];
+    check('a streamed answer arrives as status, text as it is written, then the finished answer',
+      /event-stream/.test(raw.headers.get('content-type')) && evs[0][0] === 'status' && evs.filter(e => e[0] === 'delta').map(e => e[1].text).join('') === 'About $60.'
+      && doneEv && doneEv.answer === 'About $60.' && doneEv.id, sse.slice(0, 300));
+    const rawErr = await fetch(base + '/api/ai/ask', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${free}` }, body: JSON.stringify({ q: 'x', stream: true }) });
+    check('  ...while a refusal before it starts is still a plain JSON answer', rawErr.status === 402 && /json/.test(rawErr.headers.get('content-type')));
+    S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return typeof reply === 'function' ? reply(b) : reply; } } });
+
+    const fu = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver' }, out: { matched: 3, player: 'Bo Nix' } }]);
+    check('follow-up questions come from what was looked up, free', fu.length === 3 && /PSA 10/.test(fu[0]) && /worth grading/.test(fu[1]), JSON.stringify(fu));
+    const fu2 = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver PSA 10' }, out: { matched: 3 } }]);
+    check('  ...a graded card is offered its raw price instead', /sell for raw\?$/.test(fu2[0]) && !/PSA 10 sell for raw/.test(fu2[0]), JSON.stringify(fu2));
+
+    const fb = await call('/api/ai/feedback', { method: 'POST', token: plus, body: { id: doneEv && doneEv.id, vote: 'down', q: 'Bo Nix?', a: 'About $60.' } });
+    const fbList = store.get('ai:feedback:v1');
+    check('a thumbs-down is kept with the question and answer, for the owner to read', fb.status === 200 && fbList.rows[0].vote === 'down' && fbList.rows[0].q === 'Bo Nix?');
+    check('  ...a stranger cannot vote, and the list needs the admin key', (await call('/api/ai/feedback', { method: 'POST', body: { vote: 'up' } })).status === 401 && (await call('/api/admin/ai/feedback')).status === 401);
+
+    calls.length = 0;
+    const png = 'data:image/png;base64,iVBORw0KGgo' + 'A'.repeat(300);
+    const ph = await call('/api/ai/ask', { method: 'POST', token: plus, body: { image: png } });
+    const pm = calls[0] && calls[0].messages[calls[0].messages.length - 1];
+    check('a photo question sends the picture to the AI, with a default question and the identification rules',
+      ph.status === 200 && ph.body.photo === true && Array.isArray(pm.content) && pm.content[0].type === 'image' && pm.content[0].source.media_type === 'image/png'
+      && /What card is this/.test(pm.content[1].text) && /identify the card from it/.test(calls[0].system), JSON.stringify(ph.body).slice(0, 200));
+    check('  ...and a broken photo is refused', (await call('/api/ai/ask', { method: 'POST', token: plus, body: { image: 'not a picture' } })).status === 400);
+
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
     check('the menu opens Huddle AI, and the plan is sold as Huddle+',

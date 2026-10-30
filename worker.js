@@ -243,6 +243,17 @@ function expressToFetch(app, request, bodyBuffer) {
     let statusCode = 200;
     const resHeaders = {};
     let finished = false;
+    // A route answering text/event-stream (Huddle AI's streamed answers) is
+    // sent as it is written: the Response goes out on the first write and
+    // later writes flow through, instead of being held until end().
+    let streamWriter = null;
+    const startStream = (self) => {
+      const ts = new TransformStream();
+      streamWriter = ts.writable.getWriter();
+      const objStatus = (self && Number.isInteger(self.statusCode)) ? self.statusCode : statusCode;
+      resolve(new Response(ts.readable, { status: objStatus, headers: resHeaders }));
+    };
+    const isEventStream = () => /^text\/event-stream/i.test(resHeaders['content-type'] || '');
 
     const res = {
       statusCode: 200,
@@ -265,13 +276,21 @@ function expressToFetch(app, request, bodyBuffer) {
       },
       write(chunk, encoding) {
         if (typeof chunk === 'string') chunk = Buffer.from(chunk, encoding || 'utf8');
+        if (!streamWriter && !finished && isEventStream()) startStream(this);
+        if (streamWriter) { streamWriter.write(new Uint8Array(chunk)).catch(() => {}); return true; }
         resChunks.push(chunk);
         return true;
       },
+      flushHeaders() { if (!streamWriter && !finished && isEventStream()) startStream(this); },
       end(chunk, encoding) {
         if (finished) return;
         finished = true;
         this.finished = true;
+        if (streamWriter) {
+          if (chunk) streamWriter.write(new Uint8Array(typeof chunk === 'string' ? Buffer.from(chunk, encoding || 'utf8') : chunk)).catch(() => {});
+          streamWriter.close().catch(() => {});
+          return;
+        }
         if (chunk) {
           if (typeof chunk === 'string') chunk = Buffer.from(chunk, encoding || 'utf8');
           resChunks.push(chunk);
@@ -301,6 +320,12 @@ function expressToFetch(app, request, bodyBuffer) {
     const fallback = (err, where) => {
       if (finished) return;
       finished = true;
+      if (streamWriter) {
+        if (err) console.error(`Express ${where} error mid-stream:`, err && err.stack || err);
+        streamWriter.write(new TextEncoder().encode(`event: error\ndata: ${JSON.stringify({ error: 'Server error' })}\n\n`)).catch(() => {});
+        streamWriter.close().catch(() => {});
+        return;
+      }
       this && true; // no-op to keep finished closure happy under bundlers
       if (err) {
         console.error(`Express ${where} error:`, err && err.stack || err);
