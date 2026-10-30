@@ -18027,7 +18027,7 @@ async function _tierProductId(tier) {
   } catch (_) { /* create below */ }
   if (!id) {
     const p = HUDDLE_PLANS[tier];
-    const made = await stripe.products.create({ name: p.name, description: `No ads on thecardhuddle.com, plus $${p.credits} of Huddle AI credits every month.`, metadata: { plan: 'adfree', tier } });
+    const made = await stripe.products.create({ name: p.name, description: `No ads on thecardhuddle.com, plus ${_toTokens(p.credits) / 1e6} million Huddle AI tokens each month.`, metadata: { plan: 'adfree', tier } });
     id = made.id;
   }
   cachePut(key, { id }, 365 * 86400);
@@ -20417,6 +20417,10 @@ const HUDDLE_PLANS = {
   hof: { name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13 },
 };
 const HUDDLE_LEGACY_TIER = 'rookie';
+// Collectors see AI tokens, never dollars (owner, Oct 2026): a plan's credits
+// are shown as tokens at this rate, so the page never states our margin.
+const HUDDLE_TOKENS_PER_USD = 1e6;
+const _toTokens = (usd) => Math.round((Number(usd) || 0) * HUDDLE_TOKENS_PER_USD);
 // What a typical answer costs, for showing what each plan buys. Replaced by
 // the measured average once enough answers have been metered.
 const HUDDLE_EST_COST = { normal: 0.0033, deep: 0.06 };
@@ -20484,7 +20488,7 @@ async function _huddleCostPerAnswer() {
 // The plans as the page shows them: price, credits and what they buy.
 async function _huddlePlansPublic() {
   const per = await _huddleCostPerAnswer();
-  return Object.entries(HUDDLE_PLANS).map(([id, p]) => ({ id, name: p.name, monthly: p.monthly, yearly: p.yearly || null, credits: p.credits,
+  return Object.entries(HUDDLE_PLANS).map(([id, p]) => ({ id, name: p.name, monthly: p.monthly, yearly: p.yearly || null, tokens: _toTokens(p.credits),
     answers: p.credits ? Math.floor(p.credits / per.normal / 50) * 50 : 0, deep: p.credits ? Math.floor(p.credits / per.deep / 5) * 5 : 0 }));
 }
 // The pictures under an answer (owner, Oct 2026), from what the AI looked
@@ -20779,7 +20783,8 @@ app.get('/api/ai/usage', async (req, res) => {
   const spent = user ? (((await cacheGet(_huddleSpendKey(user))) || {}).usd || 0) : 0;
   const per = await _huddleCostPerAnswer();
   res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier, tierName: tier ? HUDDLE_PLANS[tier].name : null,
-    credits, spent: Math.round(spent * 10000) / 10000, pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
+    tokens: credits == null ? null : _toTokens(credits), tokensUsed: Math.min(_toTokens(spent), credits == null ? Infinity : _toTokens(credits)),
+    pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
     resetsAt: _nextMonthUtc(), deepTimes: Math.round(per.deep / per.normal), plans: await _huddlePlansPublic(),
     available: !!process.env.ANTHROPIC_API_KEY });
 });
@@ -20804,7 +20809,7 @@ app.post('/api/ai/ask', async (req, res) => {
     used = ((await cacheGet(ck)) || {}).n || 0;
     if (used >= HUDDLE_AI_PER_DAY) return res.status(429).json({ error: `That's a lot of questions for one day. More at midnight UTC.`, used, limit: HUDDLE_AI_PER_DAY });
     spent = ((await cacheGet(sk)) || {}).usd || 0;
-    if (spent >= credits) return res.status(402).json({ error: `You've used this month's AI credits. They refill on the 1st, or a bigger plan gives you more.`, needs: 'credits', spent, credits });
+    if (spent >= credits) return res.status(402).json({ error: `You've used this month's AI tokens. New ones arrive on the 1st, or a bigger plan gives you more.`, needs: 'credits' });
   }
   // The conversation so far, so a follow-up ("and in PSA 10?") makes sense:
   // the last few turns as plain text, roles alternating, ending on the user.
@@ -20862,7 +20867,7 @@ app.post('/api/ai/ask', async (req, res) => {
     if (text == null) return fail(422, { error: 'That question could not be answered.' });
     const payload = { answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), unlimited, deep,
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), followUps: _huddleFollowUps(looked, deep), photo: !!photo,
-      credits: unlimited ? null : credits, spent: Math.round(spent * 10000) / 10000, pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
+      tokens: unlimited ? null : _toTokens(credits), tokensUsed: unlimited ? null : Math.min(_toTokens(spent), _toTokens(credits)), pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
       cardsChanged: !!(mine && mine.changed) };
     if (streaming) { send('done', payload); res.end(); } else res.json(payload);
   } catch (err) {

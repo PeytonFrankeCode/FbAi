@@ -13,7 +13,9 @@ sizes: Rookie $4.99, Veteran $9.99, Hall of Fame $19.99 a month, with $3, $7
 and $13 of AI credits a month. Credits are metered from the real token cost of
 each answer (Haiku for normal answers, Sonnet for Deep answers), so no
 subscriber can cost more than their credits, and the plan picker shows what
-each plan truly buys. Subscribers from before the plans keep their price with
+each plan truly buys. Collectors only ever see AI tokens (3, 7 and 13
+million "each month", 1 million per $1 of cost), never the dollar credits:
+showing them would show the margin (owner, Oct 2026). Subscribers from before the plans keep their price with
 Rookie's credits. Huddle AI is the only collector feature that needs a plan,
 and there are no free AI questions. Nothing else moves behind it: searches,
 prices, charts, checklists, alerts and every other collector tool stay free,

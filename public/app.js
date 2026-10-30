@@ -5596,23 +5596,24 @@ async function _refreshAdFreePlan() {
 }
 
 // ---- Plans (owner, Oct 2026): Ad-free, or Huddle+ in three sizes ----
-// Each Huddle+ plan is a monthly allowance of AI credits; the cards say
+// Each Huddle+ plan is a monthly allowance of AI tokens; the cards say
 // plainly what each one buys, from the server's own numbers (/api/ai/usage),
 // so the difference between the plans is the real one.
 const PLAN_FALLBACK = [
-  { id: 'adfree', name: 'Ad-free', monthly: 199, yearly: 1699, credits: 0, answers: 0, deep: 0 },
-  { id: 'rookie', name: 'Huddle+ Rookie', monthly: 499, credits: 3, answers: 900, deep: 50 },
-  { id: 'veteran', name: 'Huddle+ Veteran', monthly: 999, credits: 7, answers: 2100, deep: 115 },
-  { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13, answers: 3900, deep: 215 },
+  { id: 'adfree', name: 'Ad-free', monthly: 199, yearly: 1699, tokens: 0, answers: 0, deep: 0 },
+  { id: 'rookie', name: 'Huddle+ Rookie', monthly: 499, tokens: 3000000, answers: 900, deep: 50 },
+  { id: 'veteran', name: 'Huddle+ Veteran', monthly: 999, tokens: 7000000, answers: 2100, deep: 115 },
+  { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, tokens: 13000000, answers: 3900, deep: 215 },
 ];
 let _plans = null;
 const _usd = (c) => '$' + (c / 100).toFixed(2);
 const _num = (n) => Number(n).toLocaleString('en-US');
+const _tok = (n) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)} million` : _num(n));
 function _planCard(p, current) {
   const mine = current === p.id;
   const best = p.id === 'veteran';
-  const lines = p.credits
-    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `$${p.credits} of AI credits, refilled monthly`]
+  const lines = p.tokens
+    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokens)} AI tokens each month`]
     : [`No ads anywhere`, `No Huddle AI`, `Supports the free site`];
   return `<div class="plan-card${best ? ' plan-best' : ''}${mine ? ' plan-mine' : ''}" data-tier="${p.id}">
     ${best ? '<span class="plan-badge">Most popular</span>' : ''}${mine ? '<span class="plan-badge plan-badge-mine">Your plan</span>' : ''}
@@ -5640,7 +5641,7 @@ function _adFreeModal() {
       <h3 id="adfree-title" class="adfree-title">Choose your plan</h3>
       <p class="adfree-sub">Every search, price and tool on The Card Huddle stays free. A plan removes the ads, and Huddle+ adds <b>Huddle AI</b>: what any card is worth, whether to grade it, and how a player's market is moving, from real sales.</p>
       <div class="plan-grid" id="plan-grid"></div>
-      <p class="adfree-fine" id="adfree-fine">A normal answer uses a fraction of a cent of credits; a Deep answer thinks harder on a stronger model and uses about 20 times as much. Credits refill on the 1st and do not roll over. Change or cancel anytime. Secure checkout by Stripe.</p>
+      <p class="adfree-fine" id="adfree-fine">A Deep answer thinks harder on a stronger model and uses about 20 times the tokens of a normal answer. New tokens arrive on the 1st of each month; unused ones do not roll over. Change or cancel anytime. Secure checkout by Stripe.</p>
       <div class="adfree-done hidden" id="adfree-done"><button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button></div>
       <p class="adfree-msg" id="adfree-msg" role="status" aria-live="polite"></p>
     </div>`;
@@ -5745,10 +5746,10 @@ function _haiEl() {
       <div class="hai-head"><span class="hai-av" aria-hidden="true">&#10024;</span>
         <div class="hai-titles"><b id="hai-title">Huddle AI</b><span id="hai-usage">Answers from real Card Huddle sales</span></div>
         <button type="button" class="hai-x" onclick="closeHuddleAI()" aria-label="Close">&times;</button></div>
-      <div class="hai-meter hidden" id="hai-meter" role="progressbar" aria-label="AI credits used this month" aria-valuemin="0" aria-valuemax="100"><span id="hai-meter-fill"></span></div>
+      <div class="hai-meter hidden" id="hai-meter" role="progressbar" aria-label="AI tokens used this month" aria-valuemin="0" aria-valuemax="100"><span id="hai-meter-fill"></span></div>
       <div class="hai-log" id="hai-log" aria-live="polite"></div>
       <div class="hai-gate hidden" id="hai-gate"></div>
-      <div class="hai-deep-row hidden" id="hai-deep-row"><label class="hai-deep"><input type="checkbox" id="hai-deep"> <b>Deep answer</b></label><span class="hai-deep-note" id="hai-deep-note">thinks harder, uses about 20× the credits</span></div>
+      <div class="hai-deep-row hidden" id="hai-deep-row"><label class="hai-deep"><input type="checkbox" id="hai-deep"> <b>Deep answer</b></label><span class="hai-deep-note" id="hai-deep-note">thinks harder, uses about 20× the tokens</span></div>
       <div class="hai-attach hidden" id="hai-attach"><img id="hai-attach-img" alt="Card photo to ask about"><span>Photo attached</span><button type="button" class="hai-attach-x" id="hai-attach-x" aria-label="Remove photo">&times;</button></div>
       <form class="hai-form" id="hai-form"><button type="button" class="hai-mic hai-cam" id="hai-cam" aria-label="Ask about a card photo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><input type="file" id="hai-file" accept="image/*" hidden><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
         <button type="button" class="hai-mic hidden" id="hai-mic" aria-label="Speak your question" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -5848,7 +5849,7 @@ function _haiVoiceSetup(el) {
 // The answer's light markdown: paragraphs, "- " bullets and **bold**, on
 // escaped text, so nothing the model writes runs as HTML.
 // A card photo, shrunk in the browser (longest side 1280px, JPEG) so it
-// uploads fast and costs fewer credits to read.
+// uploads fast and costs fewer tokens to read.
 function _haiShrink(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -5969,29 +5970,29 @@ function _haiUsageLine(u) {
   const el = document.getElementById('hai-usage');
   const meter = document.getElementById('hai-meter'), row = document.getElementById('hai-deep-row');
   if (!el || !u) return;
-  const metered = u.plus && !u.unlimited && u.credits;
+  const metered = u.plus && !u.unlimited && u.tokens;
   if (meter) meter.classList.toggle('hidden', !metered);
   if (row) row.classList.toggle('hidden', !u.plus);
-  if (u.deepTimes) { const n = document.getElementById('hai-deep-note'); if (n) n.textContent = `thinks harder, uses about ${u.deepTimes}× the credits`; }
+  if (u.deepTimes) { const n = document.getElementById('hai-deep-note'); if (n) n.textContent = `thinks harder, uses about ${u.deepTimes}× the tokens`; }
   if (!u.plus) { el.textContent = 'Part of Huddle+'; return; }
   if (!metered) { el.textContent = 'Answers from real Card Huddle sales'; return; }
   const pct = Math.min(100, Number(u.pct) || 0);
   const day = new Date(u.resetsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  el.textContent = `${u.tierName || 'Huddle+'} · ${pct < 1 && pct > 0 ? '<1' : Math.round(pct)}% of this month's credits used · refills ${day}`;
+  el.textContent = `${u.tierName || 'Huddle+'} · ${pct < 1 && pct > 0 ? '<1' : Math.round(pct)}% of this month's tokens used · new tokens ${day}`;
   const fill = document.getElementById('hai-meter-fill');
   if (fill) { fill.style.width = pct + '%'; fill.className = pct >= 90 ? 'hai-meter-low' : ''; }
   if (meter) meter.setAttribute('aria-valuenow', String(Math.round(pct)));
 }
 function _haiGate(u) {
   const gate = document.getElementById('hai-gate'), form = document.getElementById('hai-form');
-  const out = !!(u && u.plus && !u.unlimited && u.credits && u.pct >= 100);
+  const out = !!(u && u.plus && !u.unlimited && u.tokens && u.pct >= 100);
   const locked = !u || !u.plus || out;
   gate.classList.toggle('hidden', !locked); form.classList.toggle('hidden', locked);
   document.getElementById('hai').classList.toggle('hai-locked', locked);
   if (!locked) return;
   const rookie = ((u && u.plans) || PLAN_FALLBACK).find(p => p.id === 'rookie') || PLAN_FALLBACK[1];
   gate.innerHTML = out
-    ? `<p><b>You've used this month's AI credits.</b> They refill on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
+    ? `<p><b>You've used this month's AI tokens.</b> New ones arrive on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
     : !u || !u.signedIn
     ? `<p><b>Huddle AI comes with Huddle+</b>: no ads, plus about ${_num(rookie.answers)} AI answers a month from real sales, from ${_usd(rookie.monthly)} a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>`
     : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus about ${_num(rookie.answers)} AI answers a month, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans · from ${_usd(rookie.monthly)}/month</button><p class="hai-fine">Change or cancel anytime.</p>`;
@@ -6036,7 +6037,7 @@ async function _haiAsk() {
   const done = (d) => {
     _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, id: d.id, followUps: d.followUps || [], visuals: Array.isArray(d.visuals) ? d.visuals : [] });
     if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
-    if (_hai.usage && !d.unlimited) { _hai.usage.spent = d.spent; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+    if (_hai.usage && !d.unlimited) { _hai.usage.tokensUsed = d.tokensUsed; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
   };
   const failed = (status, d) => {
     _hai.msgs.push({ role: 'assistant', text: (d && d.error) || 'Huddle AI did not answer. Try again.', error: true });
