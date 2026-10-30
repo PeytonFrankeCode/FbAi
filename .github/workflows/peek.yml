@@ -29,7 +29,4 @@ jobs:
           curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" > q.json
           jq -r '.errors // empty' q.json
           jq -r '.data.viewer.accounts[0].d1QueriesAdaptiveGroups[]? | "\(.sum.rowsRead)\t\(.count)\t\(.sum.queryDurationMs|floor)ms\t\(.dimensions.query[0:600] | gsub("\\s+";" "))"' q.json
-          echo "== the 8-term title search, by hour"
-          SINCE=$(date -u -d '-1 day' +%FT%TZ)
-          Q='{"query":"query($a:String!,$s:Time!,$e:Time!){viewer{accounts(filter:{accountTag:$a}){d1QueriesAdaptiveGroups(limit:60,filter:{datetime_geq:$s,datetime_leq:$e,query_like:\\"SELECT item_id, sold_date, title%\\"},orderBy:[datetimeHour_ASC]){count sum{rowsRead} dimensions{datetimeHour}}}}}","variables":{"a":"'$CLOUDFLARE_ACCOUNT_ID'","s":"'$SINCE'","e":"'$NOW'"}}'
-          curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" | jq -c '.errors // (.data.viewer.accounts[0].d1QueriesAdaptiveGroups[] | [.dimensions.datetimeHour[11:13], .count, .sum.rowsRead])'
+          echo "rerun $(date -u +%FT%TZ)"
