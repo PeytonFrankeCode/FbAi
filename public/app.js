@@ -2164,6 +2164,29 @@ document.querySelectorAll('.chip').forEach(chip => {
 backBtn.addEventListener('click', goBackToVariants);
 
 // ---- Fetch Variants (Stage 1) ----
+// Spelling (owner, Oct 2026): the server searched a corrected spelling;
+// the page carries on with it, puts it in the box, and offers the words as
+// typed ("Search instead for …"), which searches with exact=1.
+let _spellExactOnce = false;
+function _spellApply(data, query, rerun) {
+  const old = document.getElementById('spell-note');
+  if (old) old.remove();
+  if (!data || !data.spelling || !data.spelling.corrected) return query;
+  const { original, corrected } = data.spelling;
+  const box = document.getElementById('search-input');
+  if (box) box.value = corrected;
+  const note = document.createElement('div');
+  note.id = 'spell-note';
+  note.className = 'spell-note';
+  note.innerHTML = `Showing results for <b>${escHtml(corrected)}</b>. <button type="button" class="spell-instead">Search instead for ${escHtml(original)}</button>`;
+  note.querySelector('.spell-instead').addEventListener('click', () => {
+    _spellExactOnce = true;
+    if (box) box.value = original;
+    rerun(original);
+  });
+  grid.parentNode.insertBefore(note, grid);
+  return corrected;
+}
 async function fetchVariants(query) {
   currentSearchMode = 'variants';
   currentVariantQuery = query;
@@ -2189,6 +2212,7 @@ async function fetchVariants(query) {
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
+    if (_spellExactOnce) { params.set('exact', '1'); _spellExactOnce = false; }
     if (currentMode === 'forsale') {
       const f = getPriceFilter();
       if (f.min != null) params.set('minPrice', String(f.min));
@@ -2200,6 +2224,7 @@ async function fetchVariants(query) {
     }, seq);
     const data = await safeJson(response);
     if (_searchStale(seq)) return;
+    query = _spellApply(data, query, fetchVariants);
 
     if (response.status === 401) {
       if (data && (data.noKey || data.badKey)) {
@@ -3095,6 +3120,7 @@ async function fetchDirectSearch(query) {
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
+    if (_spellExactOnce) { params.set('exact', '1'); _spellExactOnce = false; }
     if (currentMode === 'forsale') {
       const f = getPriceFilter();
       if (f.min != null) params.set('minPrice', String(f.min));
@@ -3106,6 +3132,7 @@ async function fetchDirectSearch(query) {
     }, seq);
     const data = await safeJson(response);
     if (_searchStale(seq)) return;
+    query = _spellApply(data, query, fetchDirectSearch);
 
     if (response.status === 401) {
       if (data && (data.noKey || data.badKey)) {

@@ -10475,3 +10475,8 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-fb-btn:hover { opacity: 1; filter: none; border-color: var(--border); }
 .hai-fb-thanks { font-size: 0.72rem; color: var(--text-muted); }
 .hai-follow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+
+/* Spelling (owner, Oct 2026): "Showing results for … Search instead for …" */
+.spell-note { margin: 0.4rem 0 0.8rem; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; }
+.spell-note b { color: var(--text-primary); }
+.spell-instead { font: inherit; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline; }
