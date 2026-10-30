@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos, getAI } = require('./db');
+const { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos, getAI } = require('./db');
 const digest = require('./market-digest');
 const mreport = require('./market-report');
 const betaSurvey = require('./beta-survey');
@@ -829,6 +829,28 @@ async function verifyRecaptcha(token, ip) {
     return { ok: true, degraded: true };
   }
 }
+
+// Several Worker copies serve the site, each with its own preloaded view of
+// accounts, sessions and plans. Before any route reads them: refresh a view
+// older than 15 seconds, and look up a session this copy has never seen under
+// its own key, so a collector who just logged in elsewhere is not told to log
+// in again (owner bug, Oct 2026: the Huddle+ buy button looped on login).
+const SHARED_FRESH_MS = 15000;
+app.use(async (req, res, next) => {
+  try {
+    await refreshKeys(['sessions', 'users', 'subscriptions'], SHARED_FRESH_MS);
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : (req.query && req.query._token);
+    if (token && typeof token === 'string' && token.length < 200) {
+      const sessions = loadSessions();
+      if (!sessions[token]) {
+        const rec = await getSessionRecord(token);
+        if (rec && rec.username && Date.now() < Number(rec.expiresAt)) { sessions[token] = rec; cacheOnly('sessions', sessions); }
+      }
+    }
+  } catch (err) { console.error('[shared-state]', err && err.message); }
+  next();
+});
 
 app.use((req, res, next) => {
   _noteRequest(req);
@@ -16354,7 +16376,7 @@ function getSessionUser(req) {
   const sessions = loadSessions();
   const s = sessions[token];
   if (!s) return null;
-  if (Date.now() > s.expiresAt) { delete sessions[token]; saveSessions(sessions); return null; }
+  if (Date.now() > s.expiresAt) { delete sessions[token]; saveSessions(sessions); deleteSessionRecord(token); return null; }
   return s.username.toLowerCase();
 }
 
@@ -16433,10 +16455,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (users[key]) return res.status(409).json({ error: 'Username already taken' });
     users[key] = { username, email: email || '', passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
     saveServerUsers(users);
-    const token = generateToken();
-    const sessions = loadSessions();
-    sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
-    saveSessions(sessions);
+    const token = issueSession(key);
     res.json({ token, username: key });
   } catch (err) {
     console.error('[auth/register]', err && err.stack || err);
@@ -16455,10 +16474,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Invalid username or password' });
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
-    const token = generateToken();
-    const sessions = loadSessions();
-    sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
-    saveSessions(sessions);
+    const token = issueSession(key);
     res.json({ token, username: key, email: user.email || '' });
   } catch (err) {
     console.error('[auth/login]', err && err.stack || err);
@@ -16470,7 +16486,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (token) { const s = loadSessions(); delete s[token]; saveSessions(s); }
+  if (token) { const s = loadSessions(); delete s[token]; saveSessions(s); deleteSessionRecord(token); }
   res.json({ ok: true });
 });
 
@@ -16578,11 +16594,15 @@ function loginOrCreateOAuthUser(provider, identity) {
   return key;
 }
 
+// Every sign-in path issues its session here: in the shared list, and under
+// its own KV key so another Worker copy can find it (see refreshKeys in db.js).
 function issueSession(username) {
   const token = generateToken();
   const sessions = loadSessions();
-  sessions[token] = { username, expiresAt: Date.now() + SESSION_TTL };
+  const rec = { username, expiresAt: Date.now() + SESSION_TTL };
+  sessions[token] = rec;
   saveSessions(sessions);
+  putSessionRecord(token, rec);
   return token;
 }
 
@@ -17017,6 +17037,7 @@ app.post('/api/account/delete', async (req, res) => {
       if (String(sess && sess.username || '').toLowerCase() === key) delete sessions[tok];
     }
     saveSessions(sessions);
+    try { await deleteSessionRecordsFor(key); } catch (_) { /* the shared list is already cleared */ }
 
     // 8. The account itself. Last, so a failure above leaves it recoverable.
     delete users[key];
