@@ -27,9 +27,8 @@ const call = (p, { method = 'GET', token, body, raw, headers = {} } = {}) => fet
 });
 
 (async () => {
-  check('the prices are $2.99 a month and $24.99 a year',
-    S.ADFREE_PRICES.monthly.unit_amount === 299 && S.ADFREE_PRICES.monthly.recurring.interval === 'month'
-    && S.ADFREE_PRICES.yearly.unit_amount === 2499 && S.ADFREE_PRICES.yearly.recurring.interval === 'year');
+  check('Ad-free alone is $1.99 a month or $16.99 a year (owner, Oct 2026)',
+    S.HUDDLE_PLANS.adfree.monthly === 199 && S.HUDDLE_PLANS.adfree.yearly === 1699 && S.HUDDLE_PLANS.adfree.credits === 0);
 
   // ---- an unsigned webhook would grant a paid plan: refused ----
   const fake = { type: 'checkout.session.completed', data: { object: { metadata: { username: 'freeloader', plan: 'adfree' }, subscription: 'sub_x', customer: 'cus_x' } } };
