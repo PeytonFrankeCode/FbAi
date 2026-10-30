@@ -10427,3 +10427,34 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 #inv-item-notes { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font: inherit; font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; resize: vertical; }
 .inv-item-note { margin-top: 0.25rem; font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .inv-detail-notes { margin: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+
+/* ---- Plans (owner, Oct 2026): Ad-free and three Huddle+ sizes ---- */
+.adfree-box.plan-box { max-width: 940px; width: 100%; max-height: calc(100vh - 2rem); overflow-y: auto; }
+.plan-box .adfree-sub { max-width: 560px; }
+.plan-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; text-align: left; }
+.plan-card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 1rem 0.9rem 0.9rem; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-tertiary); }
+.plan-card.plan-best { border-color: var(--accent); box-shadow: 0 10px 28px -16px rgba(94, 206, 153, 0.7); }
+.plan-card.plan-mine { border-color: var(--accent); background: var(--accent-bg); }
+.plan-badge { position: absolute; top: -0.6rem; left: 0.8rem; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-on); background: var(--accent); border-radius: 999px; padding: 0.12rem 0.5rem; }
+.plan-badge-mine { left: auto; right: 0.8rem; }
+.plan-name { font-weight: 800; font-size: 0.95rem; color: var(--text-primary); }
+.plan-price { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+.plan-price span { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-left: 0.15rem; }
+.plan-lines { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; line-height: 1.45; color: var(--text-secondary); flex: 1; }
+.plan-lines li { padding-left: 1.05rem; position: relative; margin: 0.18rem 0; }
+.plan-lines li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 800; }
+.plan-lines b { color: var(--text-primary); }
+.plan-btn { width: 100%; font: inherit; font-weight: 700; font-size: 0.85rem; padding: 0.55rem 0.8rem; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-on); cursor: pointer; }
+.plan-card:not(.plan-best) .plan-btn:not([disabled]) { background: transparent; color: var(--accent); }
+.plan-btn[disabled] { opacity: 0.6; cursor: default; }
+.plan-yearly { font: inherit; font-size: 0.72rem; color: var(--text-muted); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+@media (max-width: 860px) { .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .plan-grid { grid-template-columns: 1fr; } }
+.hai-meter { height: 4px; background: var(--bg-tertiary); }
+.hai-meter.hidden, .hai-deep-row.hidden { display: none; }
+.hai-meter span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.4s ease; }
+.hai-meter span.hai-meter-low { background: #f59e0b; }
+.hai-deep-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 1rem 0; font-size: 0.78rem; color: var(--text-secondary); }
+.hai-deep { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text-primary); }
+.hai-deep-note { color: var(--text-muted); }
+.hai-deep-tag { display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 0.02rem 0.4rem; margin-bottom: 0.3rem; }

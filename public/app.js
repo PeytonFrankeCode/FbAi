@@ -5571,13 +5571,14 @@ async function _refreshAdFreePlan() {
     // is also recognised by the address the server has.
     if (d && (d.owner || AD_FREE_EMAILS.includes(String(d.email || '').toLowerCase()))) {
       _markOwnerAdFree();
-      _adFreeState = { on: true, billing: !!(d.subscription && d.subscription.stripeCustomerId) };
+      _adFreeState = { on: true, plus: true, owner: true, tier: d.tier || null, billing: !!(d.subscription && d.subscription.stripeCustomerId) };
       return _adFreeState;
     }
     const sub = d && d.subscription;
-    const on = typeof d.huddlePlus === 'boolean' ? d.huddlePlus
+    // Ads go with any plan (Ad-free or Huddle+); the AI with Huddle+ only.
+    const on = typeof d.adFree === 'boolean' ? d.adFree
       : !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
-    _adFreeState = { on, billing: !!(sub && sub.stripeCustomerId) };
+    _adFreeState = { on, plus: !!d.huddlePlus, tier: d.tier || null, billing: !!(sub && sub.stripeCustomerId) };
     if (on) {
       try {
         if (localStorage.getItem(AD_FREE_KEY) !== '1') { localStorage.setItem(AD_FREE_KEY, '1'); localStorage.setItem(AD_FREE_SRC_KEY, 'sub'); }
@@ -5586,7 +5587,7 @@ async function _refreshAdFreePlan() {
     } else {
       _dropPlanAdFree();
       // The owner's mark is kept on the device, so an account signed in after
-      // the owner's looked like it had Huddle+ when it did not. The server
+      // the owner's looked like it had a plan when it did not. The server
       // has just said this account does not.
       try { localStorage.removeItem(AD_FREE_KEY); localStorage.removeItem(AD_FREE_SRC_KEY); } catch (_) {}
     }
@@ -5594,6 +5595,35 @@ async function _refreshAdFreePlan() {
   } catch (_) { return _adFreeState; }
 }
 
+// ---- Plans (owner, Oct 2026): Ad-free, or Huddle+ in three sizes ----
+// Each Huddle+ plan is a monthly allowance of AI credits; the cards say
+// plainly what each one buys, from the server's own numbers (/api/ai/usage),
+// so the difference between the plans is the real one.
+const PLAN_FALLBACK = [
+  { id: 'adfree', name: 'Ad-free', monthly: 199, yearly: 1699, credits: 0, answers: 0, deep: 0 },
+  { id: 'rookie', name: 'Huddle+ Rookie', monthly: 499, credits: 3, answers: 900, deep: 50 },
+  { id: 'veteran', name: 'Huddle+ Veteran', monthly: 999, credits: 7, answers: 2100, deep: 115 },
+  { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13, answers: 3900, deep: 215 },
+];
+let _plans = null;
+const _usd = (c) => '$' + (c / 100).toFixed(2);
+const _num = (n) => Number(n).toLocaleString('en-US');
+function _planCard(p, current) {
+  const mine = current === p.id;
+  const best = p.id === 'veteran';
+  const lines = p.credits
+    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `$${p.credits} of AI credits, refilled monthly`]
+    : [`No ads anywhere`, `No Huddle AI`, `Supports the free site`];
+  return `<div class="plan-card${best ? ' plan-best' : ''}${mine ? ' plan-mine' : ''}" data-tier="${p.id}">
+    ${best ? '<span class="plan-badge">Most popular</span>' : ''}${mine ? '<span class="plan-badge plan-badge-mine">Your plan</span>' : ''}
+    <div class="plan-name">${escHtml(p.name)}</div>
+    <div class="plan-price">${_usd(p.monthly)}<span>/month</span></div>
+    <ul class="plan-lines">${lines.map(l => `<li>${l}</li>`).join('')}</ul>
+    ${mine ? '<button type="button" class="plan-btn" disabled>Current plan</button>'
+      : `<button type="button" class="plan-btn" data-tier="${p.id}" data-period="monthly">${current ? 'Switch to this' : 'Choose'}</button>`}
+    ${p.yearly && !mine ? `<button type="button" class="plan-yearly" data-tier="${p.id}" data-period="yearly">or ${_usd(p.yearly)} a year</button>` : ''}
+  </div>`;
+}
 function _adFreeModal() {
   let m = document.getElementById('adfree-modal');
   if (m) return m;
@@ -5605,62 +5635,46 @@ function _adFreeModal() {
   m.setAttribute('aria-labelledby', 'adfree-title');
   m.innerHTML = `
     <div class="adfree-overlay" onclick="closeAdFree()"></div>
-    <div class="adfree-box">
+    <div class="adfree-box plan-box">
       <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close">&times;</button>
-      <div class="adfree-icon" aria-hidden="true">&#10024;</div>
-      <h3 id="adfree-title" class="adfree-title">Get Huddle+</h3>
-      <p class="adfree-sub">No ads anywhere on The Card Huddle, plus <b>Huddle AI</b>: ask what any card is worth, whether to grade it, and where a player&#39;s market is heading, answered from real sales. Your plan also helps keep the site free for every collector.</p>
-      <div class="adfree-plans" id="adfree-plans">
-        <button type="button" class="adfree-plan" data-period="monthly">
-          <span class="adfree-price">$2.99</span><span class="adfree-per">per month</span>
-        </button>
-        <button type="button" class="adfree-plan adfree-plan-best" data-period="yearly">
-          <span class="adfree-badge">Save 30%</span>
-          <span class="adfree-price">$24.99</span><span class="adfree-per">per year</span>
-        </button>
-      </div>
-      <div class="adfree-done hidden" id="adfree-done">
-        <p class="adfree-done-text">&#127881; Thanks for supporting The Card Huddle! No ads on your account, and Huddle AI is on: tap Ask AI in the menu.</p>
-        <button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button>
-      </div>
-      <p class="adfree-fine" id="adfree-fine">Cancel anytime. Secure checkout by Stripe.</p>
+      <h3 id="adfree-title" class="adfree-title">Choose your plan</h3>
+      <p class="adfree-sub">Every search, price and tool on The Card Huddle stays free. A plan removes the ads, and Huddle+ adds <b>Huddle AI</b>: what any card is worth, whether to grade it, and how a player's market is moving, from real sales.</p>
+      <div class="plan-grid" id="plan-grid"></div>
+      <p class="adfree-fine" id="adfree-fine">A normal answer uses a fraction of a cent of credits; a Deep answer thinks harder on a stronger model and uses about 20 times as much. Credits refill on the 1st and do not roll over. Change or cancel anytime. Secure checkout by Stripe.</p>
+      <div class="adfree-done hidden" id="adfree-done"><button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button></div>
       <p class="adfree-msg" id="adfree-msg" role="status" aria-live="polite"></p>
     </div>`;
   document.body.appendChild(m);
-  m.querySelectorAll('.adfree-plan').forEach(b => b.addEventListener('click', () => _startAdFreeCheckout(b.dataset.period, b)));
+  m.querySelector('#plan-grid').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tier]');
+    if (b && !b.disabled) _startAdFreeCheckout(b.dataset.tier, b.dataset.period, b);
+  });
   m.querySelector('#adfree-manage').addEventListener('click', _openAdFreeBilling);
   return m;
+}
+function _paintPlans(m) {
+  const st = _adFreeState || {};
+  const current = getSessionToken() && st.on ? (st.tier || (st.owner ? null : 'rookie')) : null;
+  m.querySelector('#plan-grid').innerHTML = (_plans || PLAN_FALLBACK).map(p => _planCard(p, current)).join('');
+  m.querySelector('#adfree-title').textContent = st.owner ? 'Plans (you have everything as the owner)' : current ? 'Your plan' : 'Choose your plan';
+  m.querySelector('#adfree-done').classList.toggle('hidden', !(current && st.billing));
 }
 async function openAdFree() {
   const m = _adFreeModal();
   const msg = m.querySelector('#adfree-msg');
   msg.textContent = '';
-  const showDone = (billing) => {
-    m.querySelector('#adfree-title').textContent = "You're on Huddle+";
-    m.querySelector('.adfree-sub').classList.add('hidden');
-    m.querySelector('#adfree-plans').classList.add('hidden');
-    m.querySelector('#adfree-fine').classList.add('hidden');
-    m.querySelector('#adfree-done').classList.remove('hidden');
-    m.querySelector('#adfree-manage').classList.toggle('hidden', !billing);
-  };
-  const showPlans = () => {
-    m.querySelector('#adfree-title').textContent = 'Get Huddle+';
-    m.querySelector('.adfree-sub').classList.remove('hidden');
-    m.querySelector('#adfree-plans').classList.remove('hidden');
-    m.querySelector('#adfree-fine').classList.remove('hidden');
-    m.querySelector('#adfree-done').classList.add('hidden');
-  };
-  // Signed out, a mark left on the device says nothing about a plan, so the
-  // plans show (buying asks to log in); signed in, the server settles it below.
-  if (getSessionToken() && _adFree()) showDone(_adFreeState && _adFreeState.billing); else showPlans();
+  _paintPlans(m);
   m.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
-  const first = m.querySelector('.adfree-plan:not(.hidden), #adfree-manage, .adfree-close');
+  const first = m.querySelector('.plan-btn:not([disabled]), .adfree-close');
   if (first) setTimeout(() => first.focus(), 30);
-  if (getSessionToken()) {
-    const st = await _refreshAdFreePlan();
-    if (st && st.on) showDone(st.billing); else if (st) showPlans();
-  }
+  try {
+    const u = await (await authFetch('/api/ai/usage')).json();
+    if (u && Array.isArray(u.plans) && u.plans.length) _plans = u.plans;
+    if (u && u.deepTimes) { const f = m.querySelector('#adfree-fine'); f.textContent = f.textContent.replace(/about \d+ times/, `about ${u.deepTimes} times`); }
+  } catch (_) { /* the fallback numbers stand */ }
+  if (getSessionToken()) await _refreshAdFreePlan();
+  _paintPlans(m);
 }
 function closeAdFree() {
   const m = document.getElementById('adfree-modal');
@@ -5671,32 +5685,39 @@ document.addEventListener('keydown', (e) => {
   const m = document.getElementById('adfree-modal');
   if (e.key === 'Escape' && m && !m.classList.contains('hidden')) closeAdFree();
 });
-async function _startAdFreeCheckout(period, btn) {
+async function _startAdFreeCheckout(tier, period, btn) {
   const msg = document.getElementById('adfree-msg');
   if (!getSessionToken()) {
     // An account to put the plan on first; the box comes back after logging in.
-    try { localStorage.setItem('chAdFreeAfterLogin', period || 'monthly'); } catch (_) {}
+    try { localStorage.setItem('chAdFreeAfterLogin', tier || 'rookie'); } catch (_) {}
     closeAdFree();
     showLogin();
     return;
   }
-  document.querySelectorAll('.adfree-plan').forEach(b => { b.disabled = true; });
+  const btns = document.querySelectorAll('#plan-grid button[data-tier]');
+  btns.forEach(b => { b.disabled = true; });
   if (btn) btn.classList.add('is-loading');
-  msg.textContent = 'Opening secure checkout…';
+  msg.textContent = (_adFreeState && _adFreeState.on) ? 'Switching your plan…' : 'Opening secure checkout…';
   try {
     const r = await authFetch('/api/stripe/create-checkout-adfree', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ period }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tier, period }),
     });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.url) { location.href = d.url; return; }
+    if (r.ok && d.changed) {
+      await _refreshAdFreePlan();
+      if (_hai) _hai.usage = null;
+      _paintPlans(document.getElementById('adfree-modal'));
+      msg.textContent = 'Done: your plan is switched. Stripe adjusts the price for the rest of this month.';
+      return;
+    }
     if (r.status === 401) { closeAdFree(); showLogin(); return; }
-    if (r.status === 409) { await _refreshAdFreePlan(); openAdFree(); return; }
     msg.textContent = d.error || 'Checkout is not available right now. Please try again soon.';
   } catch (_) {
     msg.textContent = 'Could not reach checkout. Check your connection and try again.';
   }
-  document.querySelectorAll('.adfree-plan').forEach(b => { b.disabled = false; });
-  if (btn) btn.classList.remove('is-loading');
+  btns.forEach(b => { b.disabled = false; });
+  _paintPlans(document.getElementById('adfree-modal'));
 }
 async function _openAdFreeBilling() {
   const msg = document.getElementById('adfree-msg');
@@ -5712,7 +5733,7 @@ async function _openAdFreeBilling() {
 // Part of Huddle+ (the plan that was Ad-free): AI answers about any card's
 // value, grading and the market, from Card Huddle's own sales (/api/ai/ask).
 // A panel from the menu; without the plan it explains Huddle+ instead.
-const _hai = { msgs: [], busy: false, usage: null };
+const _hai = { msgs: [], busy: false, usage: null, deep: false };
 function _haiEl() {
   let el = document.getElementById('hai');
   if (el) return el;
@@ -5724,8 +5745,10 @@ function _haiEl() {
       <div class="hai-head"><span class="hai-av" aria-hidden="true">&#10024;</span>
         <div class="hai-titles"><b id="hai-title">Huddle AI</b><span id="hai-usage">Answers from real Card Huddle sales</span></div>
         <button type="button" class="hai-x" onclick="closeHuddleAI()" aria-label="Close">&times;</button></div>
+      <div class="hai-meter hidden" id="hai-meter" role="progressbar" aria-label="AI credits used this month" aria-valuemin="0" aria-valuemax="100"><span id="hai-meter-fill"></span></div>
       <div class="hai-log" id="hai-log" aria-live="polite"></div>
       <div class="hai-gate hidden" id="hai-gate"></div>
+      <div class="hai-deep-row hidden" id="hai-deep-row"><label class="hai-deep"><input type="checkbox" id="hai-deep"> <b>Deep answer</b></label><span class="hai-deep-note" id="hai-deep-note">thinks harder, uses about 20× the credits</span></div>
       <form class="hai-form" id="hai-form"><textarea id="hai-q" rows="1" maxlength="500" placeholder="Ask about a card or player…" aria-label="Your question"></textarea>
         <button type="button" class="hai-mic hidden" id="hai-mic" aria-label="Speak your question" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
         <button type="submit" class="hai-send" id="hai-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
@@ -5735,6 +5758,7 @@ function _haiEl() {
   const q = el.querySelector('#hai-q');
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _haiAsk(); } });
   q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(120, q.scrollHeight) + 'px'; });
+  el.querySelector('#hai-deep').addEventListener('change', (e) => { _hai.deep = e.target.checked; });
   _haiVoiceSetup(el);
   return el;
 }
@@ -5874,7 +5898,7 @@ function _haiPaint() {
   if (!log) return;
   const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
     <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
-  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`).join('')
+  log.innerHTML = intro + _hai.msgs.map(m => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.deep ? '<span class="hai-deep-tag">Deep answer</span>' : ''}${m.role === 'user' ? `<p>${escHtml(m.text)}</p>` : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`).join('')
     + (_hai.busy ? '<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span></div>' : '');
   log.querySelectorAll('.hai-chip').forEach(b => b.addEventListener('click', () => {
     if (!_hai.usage || !_hai.usage.plus) return;
@@ -5884,21 +5908,34 @@ function _haiPaint() {
 }
 function _haiUsageLine(u) {
   const el = document.getElementById('hai-usage');
+  const meter = document.getElementById('hai-meter'), row = document.getElementById('hai-deep-row');
   if (!el || !u) return;
+  const metered = u.plus && !u.unlimited && u.credits;
+  if (meter) meter.classList.toggle('hidden', !metered);
+  if (row) row.classList.toggle('hidden', !u.plus);
+  if (u.deepTimes) { const n = document.getElementById('hai-deep-note'); if (n) n.textContent = `thinks harder, uses about ${u.deepTimes}× the credits`; }
   if (!u.plus) { el.textContent = 'Part of Huddle+'; return; }
-  if (u.unlimited) { el.textContent = 'Answers from real Card Huddle sales'; return; }
-  const h = Math.max(1, Math.ceil((Date.parse(u.resetsAt) - Date.now()) / 36e5));
-  el.textContent = `${u.used} of ${u.limit} questions today · resets in ${h} hour${h === 1 ? '' : 's'}`;
+  if (!metered) { el.textContent = 'Answers from real Card Huddle sales'; return; }
+  const pct = Math.min(100, Number(u.pct) || 0);
+  const day = new Date(u.resetsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  el.textContent = `${u.tierName || 'Huddle+'} · ${pct < 1 && pct > 0 ? '<1' : Math.round(pct)}% of this month's credits used · refills ${day}`;
+  const fill = document.getElementById('hai-meter-fill');
+  if (fill) { fill.style.width = pct + '%'; fill.className = pct >= 90 ? 'hai-meter-low' : ''; }
+  if (meter) meter.setAttribute('aria-valuenow', String(Math.round(pct)));
 }
 function _haiGate(u) {
   const gate = document.getElementById('hai-gate'), form = document.getElementById('hai-form');
-  const locked = !u || !u.plus;
+  const out = !!(u && u.plus && !u.unlimited && u.credits && u.pct >= 100);
+  const locked = !u || !u.plus || out;
   gate.classList.toggle('hidden', !locked); form.classList.toggle('hidden', locked);
   document.getElementById('hai').classList.toggle('hai-locked', locked);
   if (!locked) return;
-  gate.innerHTML = !u || !u.signedIn
-    ? '<p><b>Huddle AI comes with Huddle+</b>: no ads, plus AI answers from real sales, for $2.99 a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>'
-    : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus up to ${u.limit} AI questions a day, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">Get Huddle+ · $2.99/month</button><p class="hai-fine">Or $24.99 a year. Cancel anytime.</p>`;
+  const rookie = ((u && u.plans) || PLAN_FALLBACK).find(p => p.id === 'rookie') || PLAN_FALLBACK[1];
+  gate.innerHTML = out
+    ? `<p><b>You've used this month's AI credits.</b> They refill on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
+    : !u || !u.signedIn
+    ? `<p><b>Huddle AI comes with Huddle+</b>: no ads, plus about ${_num(rookie.answers)} AI answers a month from real sales, from ${_usd(rookie.monthly)} a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>`
+    : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus about ${_num(rookie.answers)} AI answers a month, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans · from ${_usd(rookie.monthly)}/month</button><p class="hai-fine">Change or cancel anytime.</p>`;
 }
 async function _haiLoadUsage() {
   try {
@@ -5935,14 +5972,15 @@ async function _haiAsk() {
   qEl.value = ''; qEl.style.height = 'auto';
   _hai.busy = true; _haiPaint();
   try {
-    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history }) });
+    const deep = !!_hai.deep;
+    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history, deep }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
-      _hai.msgs.push({ role: 'assistant', text: d.answer, visuals: Array.isArray(d.visuals) ? d.visuals : [] });
+      _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, visuals: Array.isArray(d.visuals) ? d.visuals : [] });
       // The AI changed the collector's cards on the account: pull them in, so
       // the Inventory and Collection show it without a reload.
       if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
-      if (_hai.usage && !d.unlimited) { _hai.usage.used = d.used; _haiUsageLine(_hai.usage); }
+      if (_hai.usage && !d.unlimited) { _hai.usage.spent = d.spent; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
     } else {
       _hai.msgs.push({ role: 'assistant', text: d.error || 'Huddle AI did not answer. Try again.', error: true });
       if (r.status === 401 || r.status === 402) _haiLoadUsage();

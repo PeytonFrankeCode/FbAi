@@ -487,6 +487,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         // Pro or Pro+ subscription started
         if (!subs[username]) subs[username] = {};
         subs[username].plan = session.metadata?.plan || 'pro';
+        if (session.metadata?.tier) subs[username].tier = session.metadata.tier;
         subs[username].period = session.metadata?.period || 'monthly';
         subs[username].stripeCustomerId = session.customer;
         subs[username].stripeSubscriptionId = session.subscription;
@@ -515,6 +516,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       for (const [user, data] of Object.entries(subs)) {
         if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = sub.status === 'active' ? 'active' : sub.status;
+          if (sub.metadata && sub.metadata.tier) data.tier = sub.metadata.tier;
           break;
         }
       }
@@ -16744,7 +16746,8 @@ app.get('/api/auth/me', (req, res) => {
   // huddlePlus is the server's answer, so the page never shows the plan as
   // on (or off) when the AI would say otherwise.
   res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username),
-    huddlePlus: !!_huddleAiAllowed(req, username), owner: _huddleAiOwner(username) });
+    huddlePlus: !!_huddleAiAllowed(req, username), owner: _huddleAiOwner(username),
+    adFree: isAdFreeUser(username) || _huddleAiOwner(username), tier: _huddleTier(username) });
 });
 
 
@@ -17976,13 +17979,12 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
   }
 });
 
-// ---- Ad-free plan, now Huddle+ (owner, Oct 2026) ----
-// $2.99 a month or $24.99 a year; Google ads are switched off for the account,
-// and Huddle AI is on (/api/ai/ask). The plan id stays 'adfree'.
-// The Stripe product is found or made on first use (by its metadata) and its
-// id cached, so there is nothing to set up in the dashboard; STRIPE_PRODUCT_ADFREE
-// overrides it.
-const ADFREE_PRICES = { monthly: { unit_amount: 299, recurring: { interval: 'month' } }, yearly: { unit_amount: 2499, recurring: { interval: 'year' } } };
+// ---- Plans: Ad-free and Huddle+ (owner, Oct 2026) ----
+// Every plan keeps the id 'adfree' (Google ads off for the account); its tier
+// says which (HUDDLE_PLANS: Ad-free, or Huddle+ Rookie / Veteran / Hall of
+// Fame with AI credits). Each Stripe product is found or made on first use (by
+// its metadata) and its id cached, so there is nothing to set up in the
+// dashboard; STRIPE_PRODUCT_ADFREE overrides the Ad-free one.
 const ADFREE_PRODUCT_KEY = 'stripe:adfree-product:v1';
 let _adFreeProduct = process.env.STRIPE_PRODUCT_ADFREE || null;
 async function _adFreeProductId() {
@@ -18005,25 +18007,74 @@ function isAdFreeUser(username) {
   const sub = username ? getEffectiveSubscription(username) : null;
   return !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
 }
+// The Stripe price for a plan tier and period (yearly is offered for Ad-free only).
+function _tierPrice(tier, period) {
+  const p = HUDDLE_PLANS[tier];
+  const yearly = period === 'yearly' && p.yearly;
+  return { unit_amount: yearly ? p.yearly : p.monthly, recurring: { interval: yearly ? 'year' : 'month' } };
+}
+const _tierProducts = {};
+async function _tierProductId(tier) {
+  if (tier === 'adfree' || !HUDDLE_PLANS[tier]) return _adFreeProductId();
+  if (_tierProducts[tier]) return _tierProducts[tier];
+  const key = `stripe:tier-product:${tier}:v1`;
+  const cached = await cacheGet(key);
+  if (cached && cached.id) return (_tierProducts[tier] = cached.id);
+  let id = null;
+  try {
+    const found = await stripe.products.search({ query: `metadata['tier']:'${tier}' AND active:'true'`, limit: 1 });
+    id = found && found.data && found.data[0] && found.data[0].id;
+  } catch (_) { /* create below */ }
+  if (!id) {
+    const p = HUDDLE_PLANS[tier];
+    const made = await stripe.products.create({ name: p.name, description: `No ads on thecardhuddle.com, plus $${p.credits} of Huddle AI credits every month.`, metadata: { plan: 'adfree', tier } });
+    id = made.id;
+  }
+  cachePut(key, { id }, 365 * 86400);
+  return (_tierProducts[tier] = id);
+}
 app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
   if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Payments are not set up yet.' });
   // The plan goes on the signed-in account, never on a name the page sends.
   const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Log in to go ad-free.' });
-  if (isAdFreeUser(username)) return res.status(409).json({ error: 'This account is already ad-free.' });
-  const period = (req.body || {}).period === 'yearly' ? 'yearly' : 'monthly';
+  if (!username) return res.status(401).json({ error: 'Log in to choose a plan.' });
+  const tier = HUDDLE_PLANS[(req.body || {}).tier] ? req.body.tier : 'rookie';
+  const period = (req.body || {}).period === 'yearly' && HUDDLE_PLANS[tier].yearly ? 'yearly' : 'monthly';
+  const current = _huddleTier(username);
+  const rec = loadSubscriptions()[username] || {};
+  // Already subscribed: the plan is switched in place (Stripe prorates), not bought twice.
+  if (current) {
+    if (current === tier) return res.status(409).json({ error: 'You are already on this plan.' });
+    if (!rec.stripeSubscriptionId) return res.status(409).json({ error: 'This account has a plan that cannot be changed here.' });
+    try {
+      const sub = await stripe.subscriptions.retrieve(rec.stripeSubscriptionId);
+      const item = sub && sub.items && sub.items.data && sub.items.data[0];
+      await stripe.subscriptions.update(rec.stripeSubscriptionId, {
+        items: [{ id: item.id, price_data: { currency: 'usd', product: await _tierProductId(tier), ..._tierPrice(tier, period) } }],
+        proration_behavior: 'create_prorations',
+        metadata: { username, plan: 'adfree', tier },
+      });
+      const subs = loadSubscriptions();
+      subs[username] = { ...(subs[username] || {}), plan: 'adfree', tier, period, status: 'active' };
+      saveSubscriptions(subs);
+      return res.json({ changed: true, tier });
+    } catch (err) {
+      console.error('Stripe plan change error:', err && err.message);
+      return res.status(500).json({ error: 'Could not change the plan. Please try again.' });
+    }
+  }
   try {
-    const product = await _adFreeProductId();
-    const existing = (loadSubscriptions()[username] || {}).stripeCustomerId;
+    const product = await _tierProductId(tier);
+    const existing = rec.stripeCustomerId;
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      line_items: [{ price_data: { currency: 'usd', product, ...ADFREE_PRICES[period] }, quantity: 1 }],
+      line_items: [{ price_data: { currency: 'usd', product, ..._tierPrice(tier, period) }, quantity: 1 }],
       allow_promotion_codes: true,
       ...(existing ? { customer: existing } : {}),
       client_reference_id: username,
-      metadata: { username, period, plan: 'adfree' },
-      subscription_data: { metadata: { username, plan: 'adfree' } },
+      metadata: { username, period, plan: 'adfree', tier },
+      subscription_data: { metadata: { username, plan: 'adfree', tier } },
       success_url: `${siteOrigin(req)}/?payment=success&plan=adfree`,
       cancel_url: `${siteOrigin(req)}/?payment=cancelled`,
     });
@@ -19801,19 +19852,32 @@ async function _bizLLM(inv, instruction, provider = _bizProvider(), opts = {}) {
 // null when the model declined. Shared by Business Ask and Huddle AI.
 // runTool, when given, answers the tools it knows (a collector's own cards)
 // and returns undefined for the rest, which go to the shared lookups.
-async function _aiToolLoop(system, messages, tools, onTool, effort = 'low', runTool = null) {
+// opts.model picks the model (Huddle AI's Deep answers use Sonnet); opts.onUsage
+// is handed each response's model and token usage, for metering credits.
+async function _aiToolLoop(system, messages, tools, onTool, effort = 'low', runTool = null, opts = {}) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
   if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
   for (let round = 0; ; round++) {
     const last = !tools || round >= BIZ_AI_TOOL_ROUNDS;
-    const r = await _bizClient.messages.create({
-      model: BIZ_AI_MODEL,
+    const model = opts.model || BIZ_AI_MODEL;
+    const body = {
+      model,
       max_tokens: 16000,
       output_config: { effort },
+      // Caches the tools, instructions and conversation so far: each round of
+      // the loop re-sends them, and a cached read costs a tenth of a fresh one.
+      cache_control: { type: 'ephemeral' },
       system,
       ...(tools ? { tools, tool_choice: { type: last ? 'none' : 'auto' } } : {}),
       messages,
-    });
+    };
+    // Sonnet can decline in a safety category; the server-side fallback answers
+    // on another model instead of failing the question. Haiku has none.
+    const fb = model === HUDDLE_DEEP_MODEL && _bizClient.beta && _bizClient.beta.messages;
+    const r = fb
+      ? await _bizClient.beta.messages.create({ ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' })
+      : await _bizClient.messages.create(body);
+    if (opts.onUsage && r && r.usage) { try { opts.onUsage(r.model || model, r.usage); } catch (_) { /* metering never fails an answer */ } }
     if (r.stop_reason === 'refusal') return null;
     const calls = (r.content || []).filter(b => b.type === 'tool_use');
     if (last || r.stop_reason !== 'tool_use' || !calls.length) {
@@ -20326,7 +20390,40 @@ app.post('/api/biz/ask', async (req, res) => {
 // with the Ad-free plan, renamed Huddle+ ($2.99 a month, $24.99 a year); no
 // free questions. A daily limit keeps one account's questions inside what
 // its plan pays: Haiku 5.5 runs about a quarter of a cent a question.
-const HUDDLE_AI_PER_DAY = 30;
+// Plans (owner, Oct 2026): Ad-free alone, or Huddle+ in three sizes, each a
+// monthly allowance of AI credits in dollars of real model cost. Every answer
+// is metered from the tokens Anthropic reports, so no subscriber can cost
+// more than their plan's credits, and the bigger plans truly give more.
+// Normal answers run on Haiku; a Deep answer runs on Sonnet and uses about
+// twenty times the credits. A loose daily cap stops a runaway script from
+// spending a month in an hour. Subscribers from before the plans (Huddle+ at
+// $2.99) keep their price and get Rookie's credits.
+const HUDDLE_PLANS = {
+  adfree: { name: 'Ad-free', monthly: 199, yearly: 1699, credits: 0 },
+  rookie: { name: 'Huddle+ Rookie', monthly: 499, credits: 3 },
+  veteran: { name: 'Huddle+ Veteran', monthly: 999, credits: 7 },
+  hof: { name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13 },
+};
+const HUDDLE_LEGACY_TIER = 'rookie';
+// What a typical answer costs, for showing what each plan buys. Replaced by
+// the measured average once enough answers have been metered.
+const HUDDLE_EST_COST = { normal: 0.0033, deep: 0.06 };
+const HUDDLE_DEEP_MODEL = 'claude-sonnet-5-5';
+// $ per million tokens. Haiku's rates step up past 100K prompt tokens.
+const AI_PRICES = {
+  'claude-haiku-5-5': { in: 0.10, out: 0.50, cacheRead: 0.01, cacheWrite: 0.125, longIn: 0.50, longOut: 2.50 },
+  'claude-sonnet-5-5': { in: 2.00, out: 10.00, cacheRead: 0.20, cacheWrite: 2.50 },
+  'claude-opus-5-5': { in: 4.00, out: 20.00, cacheRead: 0.20, cacheWrite: 5.00 },
+};
+function _aiCostUsd(model, u) {
+  const p = AI_PRICES[model] || AI_PRICES[HUDDLE_DEEP_MODEL];
+  const fresh = Number(u.input_tokens) || 0, read = Number(u.cache_read_input_tokens) || 0, wrote = Number(u.cache_creation_input_tokens) || 0;
+  const out = Number(u.output_tokens) || 0;
+  const long = p.longIn && fresh + read + wrote > 100000;
+  const k = long ? p.longIn / p.in : 1;
+  return ((fresh * (long ? p.longIn : p.in)) + read * p.cacheRead * k + wrote * p.cacheWrite * k + out * (long ? p.longOut : p.out)) / 1e6;
+}
+const HUDDLE_AI_PER_DAY = 100;
 const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.com), a sports card price site built on real completed eBay sales. '
   + 'You help collectors: what a card is worth, whether it is worth grading, how a player\'s cards are moving, which parallel or grade sells for what. '
   + 'Look the numbers up with your tools rather than recalling them, and say they come from Card Huddle sales and over which days. '
@@ -20353,9 +20450,31 @@ const _huddleAiOwner = (user) => {
     return !!(rec && HUDDLE_AI_OWNER_EMAILS.has(String(rec.email || '').toLowerCase()));
   } catch (_) { return false; }
 };
-const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (isAdFreeUser(user) || _huddleAiOwner(user)));
+// The account's plan tier: 'adfree', 'rookie', 'veteran', 'hof', or null.
+function _huddleTier(user) {
+  if (!user || !isAdFreeUser(user)) return null;
+  const t = (getEffectiveSubscription(user) || {}).tier;
+  return HUDDLE_PLANS[t] ? t : HUDDLE_LEGACY_TIER;
+}
+const _huddleCredits = (user) => { const t = _huddleTier(user); return t ? HUDDLE_PLANS[t].credits : 0; };
+const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (_huddleAiOwner(user) || _huddleCredits(user) > 0));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
+const _huddleSpendKey = (user) => `ai:spend:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`;
 const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };
+const _nextMonthUtc = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString(); };
+const HUDDLE_AVG_KEY = 'ai:avgcost:v1';
+// What a typical answer costs: measured once there are enough answers.
+async function _huddleCostPerAnswer() {
+  const a = (await cacheGet(HUDDLE_AVG_KEY)) || {};
+  const pick = (k) => (a[k] && a[k].n >= 50 ? a[k].usd / a[k].n : HUDDLE_EST_COST[k]);
+  return { normal: pick('normal'), deep: pick('deep') };
+}
+// The plans as the page shows them: price, credits and what they buy.
+async function _huddlePlansPublic() {
+  const per = await _huddleCostPerAnswer();
+  return Object.entries(HUDDLE_PLANS).map(([id, p]) => ({ id, name: p.name, monthly: p.monthly, yearly: p.yearly || null, credits: p.credits,
+    answers: p.credits ? Math.floor(p.credits / per.normal / 50) * 50 : 0, deep: p.credits ? Math.floor(p.credits / per.deep / 5) * 5 : 0 }));
+}
 // The pictures under an answer (owner, Oct 2026), from what the AI looked
 // up: a card's photo and its sold prices by day, a player's trend line, and
 // copies for sale now. At most one of each kind, the last lookup winning,
@@ -20589,8 +20708,13 @@ app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
   const unlimited = isAdminReq(req) || _huddleAiOwner(user);
-  const used = user ? (((await cacheGet(_huddleAiKey(user))) || {}).n || 0) : 0;
-  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, used, limit: HUDDLE_AI_PER_DAY, resetsAt: _nextUtcMidnight(),
+  const tier = _huddleTier(user);
+  const credits = unlimited ? null : _huddleCredits(user);
+  const spent = user ? (((await cacheGet(_huddleSpendKey(user))) || {}).usd || 0) : 0;
+  const per = await _huddleCostPerAnswer();
+  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier, tierName: tier ? HUDDLE_PLANS[tier].name : null,
+    credits, spent: Math.round(spent * 10000) / 10000, pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
+    resetsAt: _nextMonthUtc(), deepTimes: Math.round(per.deep / per.normal), plans: await _huddlePlansPublic(),
     available: !!process.env.ANTHROPIC_API_KEY });
 });
 app.post('/api/ai/ask', async (req, res) => {
@@ -20602,11 +20726,16 @@ app.post('/api/ai/ask', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'Ask a question.' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Huddle AI is not switched on yet.' });
   const unlimited = admin || _huddleAiOwner(user);
+  const deep = !!(req.body && req.body.deep);
   const ck = user && _huddleAiKey(user);
-  let used = 0;
+  const sk = user && _huddleSpendKey(user);
+  const credits = _huddleCredits(user);
+  let used = 0, spent = 0;
   if (!unlimited) {
     used = ((await cacheGet(ck)) || {}).n || 0;
-    if (used >= HUDDLE_AI_PER_DAY) return res.status(429).json({ error: `That's today's ${HUDDLE_AI_PER_DAY} questions. More at midnight UTC.`, used, limit: HUDDLE_AI_PER_DAY });
+    if (used >= HUDDLE_AI_PER_DAY) return res.status(429).json({ error: `That's a lot of questions for one day. More at midnight UTC.`, used, limit: HUDDLE_AI_PER_DAY });
+    spent = ((await cacheGet(sk)) || {}).usd || 0;
+    if (spent >= credits) return res.status(402).json({ error: `You've used this month's AI credits. They refill on the 1st, or a bigger plan gives you more.`, needs: 'credits', spent, credits });
   }
   // The conversation so far, so a follow-up ("and in PSA 10?") makes sense:
   // the last few turns as plain text, roles alternating, ending on the user.
@@ -20623,11 +20752,25 @@ app.post('/api/ai/ask', async (req, res) => {
     // A signed-in collector's own cards come along as tools; the admin key
     // alone has no collector behind it.
     const mine = user ? _huddleInvRunner(user) : null;
+    let cost = 0;
     const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM : ''), messages,
-      mine ? [...BIZ_AI_TOOLS, ...HUDDLE_INV_TOOLS] : BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium', mine);
+      mine ? [...BIZ_AI_TOOLS, ...HUDDLE_INV_TOOLS] : BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium', mine,
+      { model: deep ? HUDDLE_DEEP_MODEL : BIZ_AI_MODEL, onUsage: (model, u) => { cost += _aiCostUsd(model, u); } });
+    // What the answer cost is charged even when it was declined: the tokens were spent.
+    if (!unlimited) {
+      used += 1; cachePut(ck, { n: used }, 2 * 86400);
+      spent += cost; cachePut(sk, { usd: spent }, 40 * 86400);
+    }
+    if (cost > 0) {
+      const avg = (await cacheGet(HUDDLE_AVG_KEY)) || {};
+      const k = deep ? 'deep' : 'normal';
+      const cur = avg[k] && avg[k].n < 5000 ? avg[k] : { n: 0, usd: 0 };
+      avg[k] = { n: cur.n + 1, usd: cur.usd + cost };
+      cachePut(HUDDLE_AVG_KEY, avg, 60 * 86400);
+    }
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
-    if (!unlimited) { used += 1; cachePut(ck, { n: used }, 2 * 86400); }
-    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), used, limit: HUDDLE_AI_PER_DAY, unlimited,
+    res.json({ answer: text || 'No answer came back. Try asking another way.', visuals: _huddleAiVisuals(looked), unlimited, deep,
+      credits: unlimited ? null : credits, spent: Math.round(spent * 10000) / 10000, pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
       cardsChanged: !!(mine && mine.changed) });
   } catch (err) {
     console.error('[ai/ask]', err && err.status, err && err.message);
@@ -21396,7 +21539,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
