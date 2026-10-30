@@ -21,6 +21,8 @@ try { fs = require('fs'); } catch (_) { /* Workers environment */ }
 const KNOWN_KEYS = ['users', 'sessions', 'subscriptions', 'alerts', 'priceHistory', 'apiCallLog', 'feedback', 'community', 'floorIndex', 'dms', 'news'];
 
 const cache = {};
+// When each preloaded key was last read from KV or written here (ms).
+const loadedAt = {};
 let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
 let nflDb = null;      // NflCardDB Cloudflare D1 binding (set by connectDB)
 let assets = null;     // Cloudflare ASSETS binding (set by connectDB)
@@ -64,6 +66,7 @@ async function connectDB(env) {
         );
         for (const [key, value] of results) {
           if (value !== null && value !== undefined) cache[key] = value;
+          loadedAt[key] = Date.now();
         }
         kvReady = true;
         console.log(`[DB] Loaded ${results.filter(r => r[1] !== null).length}/${KNOWN_KEYS.length} keys from Cloudflare KV`);
@@ -105,6 +108,7 @@ function loadData(name, filePath, defaultValue) {
 
 function saveData(name, filePath, data) {
   cache[name] = JSON.parse(JSON.stringify(data));
+  loadedAt[name] = Date.now();
 
   if (fs && filePath) {
     try {
@@ -360,4 +364,62 @@ async function recordList(prefix) {
   return out;
 }
 
-module.exports = { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos, getAI };
+// ---- Keeping several Worker isolates in step (owner bug, Oct 2026) ----
+// Cloudflare runs more than one copy of the Worker, and each preloads the
+// shared keys once. A login, a sign-up or a Stripe plan written by one copy
+// was unknown to the others until they restarted, so a collector who logged
+// in was told to log in again by the next request that landed elsewhere (the
+// Huddle+ buy button looped on the login box). Two fixes:
+//  - refreshKeys re-reads named keys from KV when this copy's view is older
+//    than maxAgeMs (not right after this copy wrote them, so its own write is
+//    never replaced by an older KV read);
+//  - each session also lives under its own key (sess:<token>), so any copy can
+//    find a session it has never seen, whatever happened to the shared list.
+async function refreshKeys(keys, maxAgeMs) {
+  if (!kv) return;
+  const now = Date.now();
+  const stale = keys.filter(k => !(now - (loadedAt[k] || 0) < maxAgeMs));
+  if (!stale.length) return;
+  for (const k of stale) loadedAt[k] = now; // one refresh at a time per key
+  await Promise.all(stale.map(async (k) => {
+    try {
+      const v = await kv.get(k, 'json');
+      if (v !== null && v !== undefined) cache[k] = v;
+    } catch (err) { console.error(`[DB] KV refresh ${k} failed:`, err && err.message); }
+  }));
+}
+// Into this copy's view only, with no KV write: what a lookup found elsewhere.
+function cacheOnly(name, data) { cache[name] = data; }
+const SESSION_KEY = (token) => `sess:${token}`;
+function putSessionRecord(token, rec) {
+  if (!kv || !token || !rec) return;
+  const ttl = Math.max(60, Math.ceil(((Number(rec.expiresAt) || 0) - Date.now()) / 1000));
+  const p = kv.put(SESSION_KEY(token), JSON.stringify(rec), { expirationTtl: ttl, metadata: { u: rec.username } })
+    .catch(err => console.error('[DB] session put failed:', err && err.message));
+  if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+}
+async function getSessionRecord(token) {
+  if (!kv || !token) return null;
+  try { return await kv.get(SESSION_KEY(token), 'json'); } catch (_) { return null; }
+}
+function deleteSessionRecord(token) {
+  if (!kv || !token) return;
+  const p = kv.delete(SESSION_KEY(token)).catch(() => {});
+  if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+}
+// Every stored session of one account, for signing it out everywhere.
+async function deleteSessionRecordsFor(username) {
+  if (!kv || !username) return 0;
+  const u = String(username).toLowerCase();
+  let cursor, n = 0;
+  do {
+    const page = await kv.list({ prefix: 'sess:', cursor });
+    for (const k of page.keys) {
+      if (k.metadata && String(k.metadata.u || '').toLowerCase() === u) { await kv.delete(k.name).catch(() => {}); n++; }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return n;
+}
+
+module.exports = { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos, getAI };

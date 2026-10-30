@@ -47,7 +47,8 @@ const check = (label, ok, detail) => {
     /const valid = await verifyPassword\(password, user\.passwordHash\);\s*\n\s*if \(!valid\) return res\.status\(401\)/.test(login),
     'login must verify the password and 401 on failure');
   check('  ...and a token is only issued after both checks pass',
-    login.indexOf('generateToken()') > login.indexOf('if (!valid)'),
+    Math.max(login.indexOf('generateToken()'), login.indexOf('issueSession(')) > login.indexOf('if (!valid)')
+    && !(login.indexOf('issueSession(') >= 0 && login.indexOf('issueSession(') < login.indexOf('if (!valid)')),
     'the session token must come after verification');
 
   const verify = server.slice(server.indexOf('async function verifyPassword'),
