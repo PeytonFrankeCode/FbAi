@@ -18027,7 +18027,7 @@ async function _tierProductId(tier) {
   } catch (_) { /* create below */ }
   if (!id) {
     const p = HUDDLE_PLANS[tier];
-    const made = await stripe.products.create({ name: p.name, description: `No ads on thecardhuddle.com, plus ${_toTokens(p.credits) / 1e6} million Huddle AI tokens each month.`, metadata: { plan: 'adfree', tier } });
+    const made = await stripe.products.create({ name: p.name, description: `No ads on thecardhuddle.com, plus ${p.shown / 1e6} million+ Huddle AI tokens each month.`, metadata: { plan: 'adfree', tier } });
     id = made.id;
   }
   cachePut(key, { id }, 365 * 86400);
@@ -20412,11 +20412,13 @@ app.post('/api/biz/ask', async (req, res) => {
 // $2.99) keep their price and get Rookie's credits.
 const HUDDLE_PLANS = {
   adfree: { name: 'Ad-free', monthly: 199, yearly: 1699, credits: 0 },
-  rookie: { name: 'Huddle+ Rookie', monthly: 499, credits: 3 },
-  veteran: { name: 'Huddle+ Veteran', monthly: 999, credits: 7 },
-  hof: { name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13 },
+  rookie: { name: 'Huddle+ Rookie', monthly: 499, credits: 3, shown: 2.5e6 },
+  veteran: { name: 'Huddle+ Veteran', monthly: 999, credits: 7, shown: 6.5e6 },
+  hof: { name: 'Huddle+ Hall of Fame', monthly: 1999, credits: 13, shown: 12.5e6 },
 };
 const HUDDLE_LEGACY_TIER = 'rookie';
+// `shown` is what the plan card promises, as "2.5M+ tokens" (owner, Oct
+// 2026): a little under the real allowance, so the "+" always holds.
 // Collectors see AI tokens, never dollars (owner, Oct 2026): a plan's credits
 // are shown as tokens at this rate, so the page never states our margin.
 const HUDDLE_TOKENS_PER_USD = 1e6;
@@ -20488,7 +20490,7 @@ async function _huddleCostPerAnswer() {
 // The plans as the page shows them: price, credits and what they buy.
 async function _huddlePlansPublic() {
   const per = await _huddleCostPerAnswer();
-  return Object.entries(HUDDLE_PLANS).map(([id, p]) => ({ id, name: p.name, monthly: p.monthly, yearly: p.yearly || null, tokens: _toTokens(p.credits),
+  return Object.entries(HUDDLE_PLANS).map(([id, p]) => ({ id, name: p.name, monthly: p.monthly, yearly: p.yearly || null, tokens: _toTokens(p.credits), tokensShown: p.shown || 0,
     answers: p.credits ? Math.floor(p.credits / per.normal / 50) * 50 : 0, deep: p.credits ? Math.floor(p.credits / per.deep / 5) * 5 : 0 }));
 }
 // The pictures under an answer (owner, Oct 2026), from what the AI looked

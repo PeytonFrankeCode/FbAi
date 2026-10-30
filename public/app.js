@@ -5601,9 +5601,9 @@ async function _refreshAdFreePlan() {
 // so the difference between the plans is the real one.
 const PLAN_FALLBACK = [
   { id: 'adfree', name: 'Ad-free', monthly: 199, yearly: 1699, tokens: 0, answers: 0, deep: 0 },
-  { id: 'rookie', name: 'Huddle+ Rookie', monthly: 499, tokens: 3000000, answers: 900, deep: 50 },
-  { id: 'veteran', name: 'Huddle+ Veteran', monthly: 999, tokens: 7000000, answers: 2100, deep: 115 },
-  { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, tokens: 13000000, answers: 3900, deep: 215 },
+  { id: 'rookie', name: 'Huddle+ Rookie', monthly: 499, tokens: 3000000, tokensShown: 2500000, answers: 900, deep: 50 },
+  { id: 'veteran', name: 'Huddle+ Veteran', monthly: 999, tokens: 7000000, tokensShown: 6500000, answers: 2100, deep: 115 },
+  { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, tokens: 13000000, tokensShown: 12500000, answers: 3900, deep: 215 },
 ];
 let _plans = null;
 const _usd = (c) => '$' + (c / 100).toFixed(2);
@@ -5613,7 +5613,7 @@ function _planCard(p, current) {
   const mine = current === p.id;
   const best = p.id === 'veteran';
   const lines = p.tokens
-    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokens)} AI tokens each month`]
+    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokensShown || p.tokens)}+ AI tokens each month`]
     : [`No ads anywhere`, `No Huddle AI`, `Supports the free site`];
   return `<div class="plan-card${best ? ' plan-best' : ''}${mine ? ' plan-mine' : ''}" data-tier="${p.id}">
     ${best ? '<span class="plan-badge">Most popular</span>' : ''}${mine ? '<span class="plan-badge plan-badge-mine">Your plan</span>' : ''}

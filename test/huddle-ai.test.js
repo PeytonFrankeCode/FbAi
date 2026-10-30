@@ -110,7 +110,7 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       P.adfree.monthly === 199 && P.adfree.credits === 0 && P.rookie.monthly === 499 && P.rookie.credits === 3
       && P.veteran.monthly === 999 && P.veteran.credits === 7 && P.hof.monthly === 1999 && P.hof.credits === 13);
     const plans = up.body.plans;
-    check('  ...collectors see tokens, never the dollars behind them', plans.every(p => !('credits' in p)) && plans[1].tokens === 3e6 && plans[3].tokens === 13e6 && !('spent' in up.body) && !('credits' in up.body), JSON.stringify(up.body).slice(0, 200));
+    check('  ...collectors see tokens, never the dollars behind them', plans.every(p => !('credits' in p)) && plans[1].tokens === 3e6 && plans[3].tokens === 13e6 && plans[1].tokensShown === 2.5e6 && plans[2].tokensShown === 6.5e6 && plans[3].tokensShown === 12.5e6 && !('spent' in up.body) && !('credits' in up.body), JSON.stringify(up.body).slice(0, 200));
     check('  ...and each bigger plan truly buys more answers', plans[1].answers < plans[2].answers && plans[2].answers < plans[3].answers && plans[1].deep < plans[3].deep, JSON.stringify(plans));
     const subs2 = S.loadSubscriptions();
     subs2[('hai_p' + run).toLowerCase()].tier = 'adfree';
