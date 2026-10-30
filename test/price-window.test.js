@@ -72,6 +72,11 @@ const core = require(path.join(__dirname, '..', 'price-block-core.js'));
   const html = core.render(jd, { noun: 'Jayden Daniels', from: blocks.from, to: blocks.to });
   check('each card in the price table opens its sold prices in the live search',
     /<td><a href="\/\?prefill=Jayden%20Daniels%202024%20/.test(html) && core.cardSearchHref('this set', 'Bo Nix #9') === '/?prefill=Bo%20Nix%20%239', html.slice(html.indexOf('<tbody>'), html.indexOf('<tbody>') + 220));
+  {
+    const appSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'app.js'), 'utf8');
+    check('a card link from a player, set or price list opens that card in For Sale, searched (owner, Oct 2026)',
+      /prefill = \(p\.get\('prefill'\) \|\| ''\)/.test(appSrc) && /if \(prefill\) _setMode\('forsale'\);/.test(appSrc) && /fetchDirectSearch\(term\)/.test(appSrc));
+  }
   const wk = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('  ...and the Worker hands each page its own dates', /from: summary\.from \|\| this\.blocks\.from, to: summary\.to \|\| this\.blocks\.to/.test(wk));
   console.log(failures ? `\n${failures} check(s) failed` : '\nall price-window checks passed');
