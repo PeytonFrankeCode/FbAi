@@ -21,5 +21,20 @@ const all = (nix.slice(nix.indexOf('<section class="lp-related">')).match(/href=
 check('  ...each linked player appears once across the lists', all.length === new Set(all).size, String(all.length));
 const ward = page('cam-ward');
 check('a 2025 rookie links to his own class', ward && /<h2>2025 rookie class<\/h2>/.test(ward));
+// Each page's own facts (owner, Oct 2026: Google search slipping on thin,
+// look-alike pages), and the team names cleaned of print runs and stray codes.
+const facts = (html) => { const m = /<p class="lp-facts">([\s\S]*?)<\/p>/.exec(html || ''); return m ? m[1].replace(/&#39;/g, "'") : ''; };
+const nf = facts(nix);
+check('a player page carries facts of its own: rookie year, autographs, parallels, products, teams',
+  /rookie cards are from 2024/.test(nf) && /\d+ autographs/.test(nf) && /serial-numbered/.test(nf) && /Denver Broncos/.test(nf), nf);
+check('  ...the teams read as teams ("Denver Broncos /300" is the Broncos, stray codes are dropped)',
+  !/\/\d/.test(nix.slice(nix.indexOf('<p class="lp-lede">'), nix.indexOf('</p>', nix.indexOf('<p class="lp-lede">')))) && !/Broncos 1|SS-/.test(nf));
+const mahomes = page('patrick-mahomes-ii');
+check('  ...and a team on a few mislabelled rows is not claimed (Mahomes never played for Washington)', mahomes && !/Commanders/.test(facts(mahomes)) && /Kansas City Chiefs/.test(facts(mahomes)));
+const ld = (() => { const m = /"@type":"CollectionPage"[\s\S]*?"itemListElement":(\[[\s\S]*?\])\}\}/.exec(nix); return m ? JSON.parse(m[1]).map(x => x.name) : []; })();
+check('  ...and its card list for search engines names each card once', ld.length > 10 && ld.length === new Set(ld).size, `${ld.length} items`);
+const prizm = (() => { const f = path.join(__dirname, '..', 'public', 'sets', '2024-panini-prizm-football', 'index.html'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : ''; })();
+check('a set page says what is in it: base, inserts, autographs, numbered runs, its most-carded players',
+  /base cards/.test(facts(prizm)) && /serial-numbered/.test(facts(prizm)) && /most cards in it are/.test(facts(prizm)), facts(prizm).slice(0, 160));
 console.log(failures ? `\n${failures} check(s) failed` : '\nall player-links checks passed');
 process.exit(failures ? 1 : 0);

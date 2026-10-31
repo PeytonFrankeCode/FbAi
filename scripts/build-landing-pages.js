@@ -496,6 +496,79 @@ function loadChecklists() {
   return list;
 }
 
+// A team as the checklist wrote it, without the print run some rows carry
+// ("Denver Broncos /300" is the Broncos).
+function cleanTeam(t) { return String(t || '').replace(/\s*\/\s*\d.*$/, '').replace(/\s+/g, ' ').trim(); }
+const fmtN = (n) => Number(n).toLocaleString('en-US');
+// Teams by how many of the player's cards name them, with a short form
+// dropped when the full name is also there ("Oregon" beside "Oregon Ducks").
+function topTeams(p, n) {
+  // Only names that read as a team (letters, spaces, . ' &), seen on a few
+  // cards: some rows carry card codes stuck to the team ("OregonSS-").
+  // And at least 2% of the player's team-labelled cards: a handful of rows
+  // label Mahomes or Brady "Washington Commanders", which neither played for.
+  const total = [...(p.teamCounts || new Map()).values()].reduce((a, b) => a + b, 0);
+  const all = [...(p.teamCounts || new Map()).entries()]
+    .filter(([t, c]) => c >= 3 && c >= total * 0.02 && /^[A-Za-z][A-Za-z.'& ]*[A-Za-z.]$/.test(t))
+    .sort((a, b) => b[1] - a[1]);
+  const kept = [];
+  for (const [t] of all) {
+    const lt = t.toLowerCase();
+    if (kept.some(k => { const lk = k.toLowerCase(); return lk.startsWith(lt + ' ') || lt.startsWith(lk + ' '); })) continue;
+    kept.push(t);
+  }
+  return kept.slice(0, n);
+}
+const plural = (n, one, many) => `${fmtN(n)} ${n === 1 ? one : (many || one + 's')}`;
+// The facts that make each page its own (Oct 2026): what a collector would
+// want to know about this player's cards, from the checklists, in plain words.
+function playerFacts(p, rookieYear) {
+  const cards = p.cards;
+  const count = (f) => cards.filter(f).length;
+  const autos = count(c => c.category === 'autograph'), mem = count(c => c.category === 'memorabilia');
+  const inserts = count(c => c.category === 'insert');
+  const parallels = cards.reduce((n, c) => n + (c.parallels || 0), 0);
+  const numbered = cards.reduce((n, c) => n + (c.numbered || 0), 0) + count(c => c.printRun);
+  const oneOfOne = cards.reduce((n, c) => n + (c.oneOfOne || 0), 0) + count(c => c.printRun === 1);
+  const rookieCards = rookieYear ? count(c => c.year === rookieYear) : 0;
+  const brands = new Map();
+  for (const c of cards) if (c.brand) brands.set(c.brand, (brands.get(c.brand) || 0) + 1);
+  const topBrands = [...brands.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([b]) => b);
+  const teams = topTeams(p, 3);
+  const list = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+  const out = [];
+  if (rookieYear && rookieCards) out.push(`${p.name}'s rookie cards are from ${S.yearLabel(rookieYear)}, with ${plural(rookieCards, 'card')} that year.`);
+  const kinds = [autos && plural(autos, 'autograph'), mem && plural(mem, 'memorabilia card'), inserts && plural(inserts, 'insert')].filter(Boolean);
+  if (kinds.length) out.push(`The checklists hold ${list(kinds)} for him${parallels ? `, and ${fmtN(parallels)} parallel versions in all` : ''}${numbered ? `, ${fmtN(numbered)} of them serial-numbered` : ''}${oneOfOne ? ` (${plural(oneOfOne, 'one-of-one')})` : ''}.`);
+  if (topBrands.length) out.push(`Most of his cards come from ${list(topBrands)}${teams.length ? `, and he appears for the ${list(teams)}` : ''}.`);
+  return out.join(' ');
+}
+function setFacts(cl) {
+  const byCat = { base: 0, insert: 0, autograph: 0, memorabilia: 0 };
+  const players = new Map();
+  let rookies = 0, numbered = 0, oneOfOne = 0, lowest = null;
+  for (const s of cl.sets) {
+    const n = (s.cards || []).length;
+    if (byCat[s.category] != null) byCat[s.category] += n;
+    const runs = (Array.isArray(s.parallels) ? s.parallels : []).map(x => Number(x && x.printRun)).filter(r => r > 0);
+    numbered += runs.length * n; oneOfOne += runs.filter(r => r === 1).length * n;
+    for (const r of runs) if (r > 1 && (lowest == null || r < lowest)) lowest = r;
+    for (const c of (s.cards || [])) {
+      if (c.rookie) rookies++;
+      if (c.player) players.set(c.player, (players.get(c.player) || 0) + 1);
+    }
+  }
+  const top = [...players.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
+  const parts = [byCat.base && plural(byCat.base, 'base card'), byCat.insert && plural(byCat.insert, 'insert'),
+    byCat.autograph && plural(byCat.autograph, 'autograph'), byCat.memorabilia && plural(byCat.memorabilia, 'memorabilia card')].filter(Boolean);
+  const list = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+  const out = [];
+  if (parts.length) out.push(`It breaks down into ${list(parts)}${rookies ? `, with ${plural(rookies, 'rookie card')}` : ''}.`);
+  if (numbered) out.push(`${fmtN(numbered)} of its parallel cards are serial-numbered${oneOfOne ? `, including ${plural(oneOfOne, 'one-of-one')}` : ''}${lowest ? `; the scarcest numbered run short of a 1/1 is /${lowest}` : ''}.`);
+  if (top.length) out.push(`The players with the most cards in it are ${list(top)}.`);
+  return out.join(' ');
+}
+
 // Build per-player index from all checklists.
 function buildPlayerIndex(checklists) {
   const players = new Map(); // name -> { name, cards:[], setIds:Set, years:Set, teams:Set }
@@ -506,14 +579,17 @@ function buildPlayerIndex(checklists) {
         const name = (c.player || '').trim();
         if (!name) continue;
         let p = players.get(name);
-        if (!p) { p = { name, cards: [], setIds: new Set(), years: new Set(), teams: new Set() }; players.set(name, p); }
+        if (!p) { p = { name, cards: [], setIds: new Set(), years: new Set(), teams: new Set(), teamCounts: new Map() }; players.set(name, p); }
+        const runs = (Array.isArray(s.parallels) ? s.parallels : []).map(x => Number(x && x.printRun)).filter(n => n > 0);
         p.cards.push({
           setId: cl.id, setName: cl.name, year: cl.year, brand: cl.brand,
           subset: s.name || 'Set', number: c.number, team: c.team || '', parallels: parallelCount,
+          category: s.category || '', printRun: Number(c.printRun) || null, numbered: runs.length, oneOfOne: runs.filter(n => n === 1).length,
         });
         p.setIds.add(cl.id);
         if (cl.year) p.years.add(cl.year);
-        if (c.team) p.teams.add(c.team);
+        const team = cleanTeam(c.team);
+        if (team) { p.teams.add(team); p.teamCounts.set(team, (p.teamCounts.get(team) || 0) + 1); }
       }
     }
   }
@@ -635,6 +711,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
     ${breadcrumb(crumbs)}
     <h1>${esc(cl.name)} Checklist &amp; Prices</h1>
     <p class="lp-lede">The complete <strong>${esc(cl.name)}</strong> checklist — ${cl.cardCount.toLocaleString()} cards across ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} with ${cl.parallelCount} parallels. Tap any card to see what it's actually selling for on eBay right now, broken down by grade (Raw, PSA 10, PSA 9 and more).</p>
+${(() => { const f = setFacts(cl); return f ? `    <p class="lp-facts">${esc(f)}</p>` : ''; })()}
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(((cl.year ? cl.year + ' ' : '') + cl.brand).trim() || cl.name)}">&#128270; Check live prices for this set</a>
     </p>
@@ -895,8 +972,9 @@ function buildPlayerPage(p, related, teamSlug, more = {}) {
   const canonical = `${SITE}${S.base}/players/${p.slug}/`;
   const years = [...p.years].sort((a, b) => a - b);
   const yearRange = years.length ? (years[0] === years[years.length - 1] ? `${years[0]}` : `${years[0]}–${years[years.length - 1]}`) : '';
-  const teams = [...p.teams].slice(0, 2);
+  const teams = topTeams(p, 2);
   const teamClause = teams.length ? `, including ${teams.join(' and ')} cards` : '';
+  const facts = playerFacts(p, rookieYearOf(p));
   const description =
     `${p.name} ${S.word} card price guide — see real eBay sold prices by grade ` +
     `(Raw, PSA 10, PSA 9) for all ${p.cards.length} of his cards across ${p.setIds.size} sets` +
@@ -914,10 +992,10 @@ function buildPlayerPage(p, related, teamSlug, more = {}) {
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: p.cards.length,
-      itemListElement: p.cards.slice(0, JSONLD_ITEM_CAP).map((c, i) => ({
-        '@type': 'ListItem', position: i + 1,
-        name: jsonText(`${p.name} ${c.setName}${c.number != null ? ' #' + c.number : ''}`),
-      })),
+      // One entry per distinct card: parallels of a card share its name and
+      // number, and listing each read as the same line five times over.
+      itemListElement: [...new Set(p.cards.map(c => jsonText(`${p.name} ${c.setName} ${c.subset}${c.number != null ? ' #' + c.number : ''}`)))]
+        .slice(0, JSONLD_ITEM_CAP).map((name, i) => ({ '@type': 'ListItem', position: i + 1, name })),
     },
   });
 
@@ -943,8 +1021,8 @@ function buildPlayerPage(p, related, teamSlug, more = {}) {
   <main class="lp-main">
     ${breadcrumb(crumbs)}
     <h1>${esc(p.name)} ${S.Word} Card Values</h1>
-    <p class="lp-lede"><strong>${esc(p.name)}</strong> appears on ${p.cards.length} cards across ${p.setIds.size} sets${yearRange ? ` (${yearRange})` : ''}${esc(teamClause)}. Tap any card to see real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more.</p>
-    <p class="lp-cta-row">
+    <p class="lp-lede"><strong>${esc(p.name)}</strong> appears on ${fmtN(p.cards.length)} cards across ${fmtN(p.setIds.size)} sets${yearRange ? ` (${yearRange})` : ''}${esc(teamClause)}. Tap any card to see real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more.</p>
+${facts ? `    <p class="lp-facts">${esc(facts)}</p>\n` : ''}    <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(p.name)}">&#128270; See all ${esc(p.name)} prices now</a>
     </p>
 ${priceSlot('player', p.slug)}
@@ -1239,6 +1317,7 @@ h1{font-size:2rem;line-height:1.2;font-weight:800;margin:.25rem 0 .75rem}
 h2{font-size:1.25rem;font-weight:700;margin:1.75rem 0 .6rem;display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
 h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
 .lp-lede{color:#c8cedb;font-size:1.05rem;margin:0 0 1.25rem}
+.lp-facts{color:#aab3c5;font-size:.98rem;line-height:1.6;margin:-.5rem 0 1.25rem}
 .lp-count{font-size:.8rem;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:.1rem .5rem;border-radius:999px}
 .lp-cta-row{margin:0 0 1.5rem}
 .lp-btn{display:inline-block;background:var(--accent);color:#06231a;font-weight:700;padding:.7rem 1.15rem;border-radius:10px;font-size:.98rem}
