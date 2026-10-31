@@ -242,6 +242,9 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('  ...while a refusal before it starts is still a plain JSON answer', rawErr.status === 402 && /json/.test(rawErr.headers.get('content-type')));
     S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.stringify(b))); return typeof reply === 'function' ? reply(b) : reply; } } });
 
+    check('each lookup is named as a step the page keeps, with what was looked up',
+      S._huddleStep('search_sold_sales', { query: '2024 Prizm Bo Nix Silver' }) === 'Checking sold prices: 2024 Prizm Bo Nix Silver'
+      && S._huddleStep('my_inventory', {}) === 'Reading your inventory' && Array.isArray(doneEv.steps));
     const fu = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver' }, out: { matched: 3, player: 'Bo Nix' } }]);
     check('follow-up questions come from what was looked up, free', fu.length === 3 && /PSA 10/.test(fu[0]) && /worth grading/.test(fu[1]), JSON.stringify(fu));
     const fu2 = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver PSA 10' }, out: { matched: 3 } }]);

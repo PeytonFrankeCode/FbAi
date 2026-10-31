@@ -5980,10 +5980,13 @@ function _haiPaint() {
   const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
     <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
   const lastBot = _hai.msgs.map((m, i) => (m.role === 'assistant' && !m.error ? i : -1)).filter(i => i >= 0).pop();
-  log.innerHTML = intro + _hai.msgs.map((m, i) => `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.photo ? `<img class="hai-msg-photo" src="${escHtml(m.photo)}" alt="Card photo">` : ''}${m.deep ? '<span class="hai-deep-tag">Deep answer</span>' : ''}${m.role === 'user' ? (m.text ? `<p>${escHtml(m.text)}</p>` : '') : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`
+  const stepsHtml = (steps, live) => (steps && steps.length
+    ? `<details class="hai-steps"${live ? ' open' : ''}><summary>${live ? 'Working on it' : `How I found this · ${steps.length} step${steps.length === 1 ? '' : 's'}`}</summary><ol>${steps.map((t, k) => `<li class="${live && k === steps.length - 1 && !(_hai.live && _hai.live.text) ? 'hai-step-now' : 'hai-step-done'}">${escHtml(t)}</li>`).join('')}</ol></details>` : '');
+  log.innerHTML = intro + _hai.msgs.map((m, i) => (m.role === 'assistant' && !m.error ? stepsHtml(m.steps, false) : '') + `<div class="hai-msg hai-${m.role === 'user' ? 'me' : 'bot'}${m.error ? ' hai-err' : ''}">${m.photo ? `<img class="hai-msg-photo" src="${escHtml(m.photo)}" alt="Card photo">` : ''}${m.deep ? '<span class="hai-deep-tag">Deep answer</span>' : ''}${m.role === 'user' ? (m.text ? `<p>${escHtml(m.text)}</p>` : '') : _haiFormat(m.text)}</div>${m.visuals && m.visuals.length ? _haiVisuals(m.visuals) : ''}`
     + (m.role === 'assistant' && !m.error && m.id ? `<div class="hai-fb">${m.vote ? `<span class="hai-fb-thanks">${m.vote === 'up' ? 'Thanks!' : 'Thanks, we will use this to improve.'}</span>`
       : `<button type="button" class="hai-fb-btn" data-vote="up" data-i="${i}" aria-label="Good answer">&#128077;</button><button type="button" class="hai-fb-btn" data-vote="down" data-i="${i}" aria-label="Bad answer">&#128078;</button>`}</div>` : '')
     + (i === lastBot && !_hai.busy && m.followUps && m.followUps.length ? `<div class="hai-follow">${m.followUps.map(t => `<button type="button" class="hai-chip" data-follow="${escHtml(t)}">${escHtml(t)}</button>`).join('')}</div>` : '')).join('')
+    + (_hai.busy && _hai.live ? stepsHtml(_hai.live.steps, true) : '')
     + (_hai.busy ? (_hai.live && _hai.live.text
       ? `<div class="hai-msg hai-bot" id="hai-live">${_haiFormat(_hai.live.text)}</div>`
       : `<div class="hai-msg hai-bot hai-typing" aria-label="Thinking"><span></span><span></span><span></span><em id="hai-status">${escHtml((_hai.live && _hai.live.status) || '')}</em></div>`) : '');
@@ -6059,10 +6062,10 @@ async function _haiAsk() {
   _hai.msgs.push({ role: 'user', text: q, photo: image || undefined });
   qEl.value = ''; qEl.style.height = 'auto';
   _haiSetPhoto(null);
-  _hai.busy = true; _hai.live = { text: '', status: image ? 'Looking at your card' : '' }; _haiPaint();
+  _hai.busy = true; _hai.live = { text: '', status: image ? 'Looking at your card' : '', steps: [] }; _haiPaint();
   const deep = !!_hai.deep;
   const done = (d) => {
-    _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, id: d.id, followUps: d.followUps || [], visuals: Array.isArray(d.visuals) ? d.visuals : [] });
+    _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, id: d.id, followUps: d.followUps || [], steps: Array.isArray(d.steps) ? d.steps : [], visuals: Array.isArray(d.visuals) ? d.visuals : [] });
     if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
     if (_hai.usage && !d.unlimited) { _hai.usage.tokensUsed = d.tokensUsed; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
   };
@@ -6081,7 +6084,11 @@ async function _haiAsk() {
       const reader = r.body.getReader(), dec = new TextDecoder();
       let buf = '', finished = false;
       const handle = (event, data) => {
-        if (event === 'status') { _hai.live.status = data.text; const st = document.getElementById('hai-status'); if (st) st.textContent = data.text; else if (!_hai.live.text) _haiPaint(); }
+        if (event === 'status') {
+          _hai.live.status = data.text;
+          if (data.step) { _hai.live.steps.push(data.text); _haiPaint(); }
+          else { const st = document.getElementById('hai-status'); if (st) st.textContent = data.text; else if (!_hai.live.text) _haiPaint(); }
+        }
         else if (event === 'delta') {
           const first = !_hai.live.text;
           _hai.live.text += data.text;
