@@ -29,4 +29,4 @@ jobs:
           curl -sS https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' -d "$Q" > q.json
           jq -r '.errors // empty' q.json
           jq -r '.data.viewer.accounts[0].d1QueriesAdaptiveGroups[]? | "\(.sum.rowsRead)\t\(.count)\t\(.sum.queryDurationMs|floor)ms\t\(.dimensions.query[0:600] | gsub("\\s+";" "))"' q.json
-          echo "rerun $(date -u +%FT%TZ)"
+          echo "rerun $(date -u +%FT%TZ) 2"
