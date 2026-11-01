@@ -59,15 +59,15 @@ check('no sale lands in two grades', new Set(all).size === all.length);
 
 // ---- The grading fee: PSA's cheapest open tier, in one place, and the page quotes it ----
 // PSA shut its cheaper tiers to work down its backlog; the advisor still
-// subtracted $25 and told people grading paid when it did not. $59.99 since
-// PSA opened its Standard level in Sept 2026.
+// subtracted $25 and told people grading paid when it did not. $59.99 from
+// Sept 2026, $39.99 since PSA's new fee (owner, Nov 2026).
 {
   const fs = require('fs');
   const root = require('path').join(__dirname, '..');
   const srv = fs.readFileSync(root + '/server.js', 'utf8');
   const app = fs.readFileSync(root + '/public/app.js', 'utf8');
   const html = fs.readFileSync(root + '/public/index.html', 'utf8');
-  check('the fee is PSA\'s $59.99, defined once', /const PSA_GRADING_FEE = 59\.99;/.test(srv) && !/GRADING_COST/.test(srv));
+  check('the fee is PSA\'s $39.99, defined once', /const PSA_GRADING_FEE = 39\.99;/.test(srv) && !/GRADING_COST/.test(srv));
   // The page's fee box shows its own copy of the defaults. They went out of
   // step once already (SGC $15 after SGC moved to $50), so hold them equal.
   {

@@ -252,6 +252,14 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('a sales answer shows the sales themselves, newest first, with safe photos and only eBay links',
       sv.recent.length === 3 && sv.recent[0].price === 75 && sv.recent[0].grade === 'PSA 10' && sv.recent[0].url === 'https://www.ebay.com/itm/1'
       && sv.recent[1].image === null && sv.recent[1].url === null && /function _haiSalesList/.test(app0()) && /Show all \$\{rows\.length\} sales/.test(app0()), JSON.stringify(sv.recent[1]));
+    const gv = S._huddleAiVisuals([{ name: 'grading_advice', out: { query: 'Bo Nix Silver', grader: 'PSA', gradingCost: { fee: 39.99 },
+      grades: { raw: { median: 60, sales: 9 }, psa9: { median: 90, sales: 4 }, psa10: { median: 210, sales: 6 } },
+      premiums: { psa9: { net: -9.99 }, psa10: { net: 110.01 } },
+      comps: { raw: [{ title: 'Bo Nix Silver', price: 58, soldDate: '2026-10-20T00:00:00Z', itemUrl: 'https://www.ebay.com/itm/2' }],
+               psa10: [{ title: 'Bo Nix Silver PSA 10', price: 215, soldDate: '2026-10-28', imageUrl: 'https://i.ebayimg.com/b.jpg', itemUrl: 'https://www.ebay.com/itm/3' }] } } }])[0];
+    check('a grading answer shows each grade, what it nets after the fee, and the sales behind it',
+      gv && gv.kind === 'grading' && gv.fee === 39.99 && gv.rows.length === 3 && gv.rows[2].net === 110.01 && gv.rows[0].net === null
+      && gv.recent[0].grade === 'PSA 10' && gv.recent[1].grade === 'Raw' && /v\.kind === 'grading'/.test(app0()), JSON.stringify(gv && gv.rows));
     const fu = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver' }, out: { matched: 3, player: 'Bo Nix' } }]);
     check('follow-up questions come from what was looked up, free', fu.length === 3 && /PSA 10/.test(fu[0]) && /worth grading/.test(fu[1]), JSON.stringify(fu));
     const fu2 = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver PSA 10' }, out: { matched: 3 } }]);

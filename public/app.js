@@ -5969,6 +5969,12 @@ function _haiVisuals(list) {
         ${_haiSpark(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
         <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>${_haiSalesList(v.recent)}`;
     }
+    if (v.kind === 'grading') {
+      return `<div class="hai-card"><div class="hai-card-body">
+        <span class="hai-card-k">Grading check · ${escHtml(v.grader)}${v.fee != null ? ` · ${_haiMoney(v.fee)} fee` : ''}</span>
+        <table class="hai-grades"><thead><tr><th>Grade</th><th>Typical</th><th>Sales</th><th>After fee</th></tr></thead><tbody>${v.rows.map(r => `<tr><td>${escHtml(r.label)}</td><td>${_haiMoney(r.median)}</td><td>${r.sales}</td><td class="${r.net == null ? '' : r.net > 0 ? 'hai-up' : 'hai-down'}">${r.net == null ? '–' : (r.net > 0 ? '+' : '−') + _haiMoney(Math.abs(r.net))}</td></tr>`).join('')}</tbody></table>
+        <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>${_haiSalesList(v.recent)}`;
+    }
     if (v.kind === 'trend') {
       const up = v.changePct > 0, flat = !v.changePct;
       return `<div class="hai-card"><div class="hai-card-body">
@@ -9997,7 +10003,7 @@ function exportBulkCSV() {
 // Grader and fee are the collector's (Oct 2026), remembered on this device.
 // The fee box shows the grader's standard tier until they type their own.
 // Must equal server.js GRADER_FEES (test/grading-advisor.test.js).
-const GRADING_DEFAULT_FEES = { PSA: 59.99, SGC: 50, CGC: 17 };
+const GRADING_DEFAULT_FEES = { PSA: 39.99, SGC: 50, CGC: 17 };
 function gradingGraderChanged() {
   const g = document.getElementById('grading-grader'), f = document.getElementById('grading-fee');
   if (g && f) f.placeholder = String(GRADING_DEFAULT_FEES[g.value] || '');

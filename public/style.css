@@ -10510,3 +10510,6 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-sales-open .hai-sale-more { display: list-item; }
 .hai-sales-all { margin-top: 0.4rem; font: inherit; font-size: 0.78rem; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer; }
 .hai-sales .hai-aff { display: block; margin-top: 0.35rem; }
+.hai-grades { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 0.35rem 0 0.2rem; }
+.hai-grades th { text-align: left; font-weight: 600; color: var(--text-muted); font-size: 0.7rem; padding: 0.2rem 0.3rem 0.2rem 0; }
+.hai-grades td { padding: 0.25rem 0.3rem 0.25rem 0; border-top: 1px solid var(--border); color: var(--text-primary); }
