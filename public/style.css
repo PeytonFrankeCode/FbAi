@@ -10493,3 +10493,20 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-steps li.hai-step-now::before { content: ''; position: absolute; left: 0.1rem; top: 0.35em; width: 0.55em; height: 0.55em; border-radius: 50%; border: 2px solid var(--accent); border-top-color: transparent; animation: hai-spin 0.8s linear infinite; }
 @keyframes hai-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .hai-steps li.hai-step-now::before { animation: none; } }
+
+/* Huddle AI: the sales behind an answer (owner, Oct 2026) */
+.hai-sales { align-self: stretch; border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.7rem; background: var(--bg-tertiary); }
+.hai-sales ol { list-style: none; margin: 0.35rem 0 0; padding: 0; }
+.hai-sale a, .hai-sale > span { display: flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0; color: inherit; text-decoration: none; border-top: 1px solid var(--border); }
+.hai-sale:first-child a, .hai-sale:first-child > span { border-top: none; }
+.hai-sale img, .hai-sale-noimg { width: 36px; height: 48px; object-fit: cover; border-radius: 5px; flex-shrink: 0; background: var(--bg-secondary); }
+.hai-sale-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.hai-sale-t { font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hai-sale-m { font-size: 0.7rem; color: var(--text-muted); }
+.hai-sale-m em { font-style: normal; color: var(--accent); font-weight: 600; }
+.hai-sale b { font-size: 0.88rem; color: var(--text-primary); }
+.hai-sale .ebay-tag { font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; margin-left: 0.2rem; }
+.hai-sale-more { display: none; }
+.hai-sales-open .hai-sale-more { display: list-item; }
+.hai-sales-all { margin-top: 0.4rem; font: inherit; font-size: 0.78rem; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer; }
+.hai-sales .hai-aff { display: block; margin-top: 0.35rem; }

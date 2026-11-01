@@ -20550,7 +20550,11 @@ function _huddleAiVisuals(looked) {
     const points = [...byDay].sort((a, b) => a[0].localeCompare(b[0])).map(([date, ps]) => ({ date, price: Math.round(_median(ps.sort((a, b) => a - b)) * 100) / 100 }));
     const pic = sales.find(r => _aiPhoto(r.imageUrl));
     out.push({ kind: 'sales', query: sold.out.query, median: sold.out.median, low: sold.out.low, high: sold.out.high, n: sold.out.matched, points,
-      photo: pic ? { src: _aiPhoto(pic.imageUrl), url: _aiLink(pic.itemUrl), price: pic.price, date: pic.date, grade: pic.grade } : null });
+      photo: pic ? { src: _aiPhoto(pic.imageUrl), url: _aiLink(pic.itemUrl), price: pic.price, date: pic.date, grade: pic.grade } : null,
+      // The sales themselves (owner, Oct 2026), newest first, so a collector
+      // sees what the answer is built on rather than only its median.
+      recent: sales.filter(r => r.price > 0).slice(0, 12).map(r => ({ date: r.date, price: r.price, grade: r.grade || 'Raw',
+        title: String(r.title || '').slice(0, 100), image: _aiPhoto(r.imageUrl), url: _aiLink(r.itemUrl) })) });
   }
   const trend = last('player_trend');
   if (trend && trend.out.available && Array.isArray(trend.out.series) && trend.out.series.length >= 2) {

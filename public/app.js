@@ -5915,6 +5915,8 @@ function _haiLogClick(e) {
     _haiPaint();
     return;
   }
+  const more = e.target.closest('[data-sales-more]');
+  if (more) { const box = more.closest('.hai-sales'); box.classList.toggle('hai-sales-open'); more.textContent = box.classList.contains('hai-sales-open') ? 'Show fewer' : `Show all ${box.querySelectorAll('.hai-sale').length} sales`; return; }
   const f = e.target.closest('[data-follow]');
   if (f && !_hai.busy) { document.getElementById('hai-q').value = f.dataset.follow; _haiAsk(); }
 }
@@ -5943,6 +5945,17 @@ function _haiSpark(points, key) {
 }
 function _haiMoney(v) { return v == null ? '-' : '$' + Number(v).toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 0 : 2 }); }
 function _haiDay(d) { const t = new Date(`${d}T12:00:00`); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+// The sales an answer is built on (owner, Oct 2026): newest first, five
+// shown and the rest a tap away, each to its eBay listing.
+function _haiSalesList(rows) {
+  if (!Array.isArray(rows) || !rows.length) return '';
+  const row = (r, k) => `<li class="hai-sale${k >= 5 ? ' hai-sale-more' : ''}">${r.url ? `<a href="${escHtml(epnUrl(r.url))}" target="_blank" rel="noopener sponsored">` : '<span>'}
+    ${r.image ? `<img src="${escHtml(r.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="hai-sale-noimg"></span>'}
+    <span class="hai-sale-body"><span class="hai-sale-t">${escHtml(r.title)}</span><span class="hai-sale-m"><em>${escHtml(r.grade || 'Raw')}</em> · ${_haiDay(r.date)}</span></span>
+    <b>${_haiMoney(r.price)}</b>${r.url ? `${EBAY_TAG}</a>` : '</span>'}</li>`;
+  return `<div class="hai-sales"><span class="hai-card-k">Recent sales</span><ol>${rows.map(row).join('')}</ol>${rows.length > 5
+    ? `<button type="button" class="hai-sales-all" data-sales-more>Show all ${rows.length} sales</button>` : ''}<span class="hai-aff">Sold prices from eBay · affiliate links</span></div>`;
+}
 function _haiVisuals(list) {
   return `<div class="hai-vis">${list.map(v => {
     if (v.kind === 'sales') {
@@ -5954,7 +5967,7 @@ function _haiVisuals(list) {
         <span class="hai-card-k">Sold prices</span><b class="hai-card-v">${_haiMoney(v.median)}</b>
         <span class="hai-card-sub">typical of ${v.n} sale${v.n === 1 ? '' : 's'}${v.low != null && v.high != null && v.low !== v.high ? ` · ${_haiMoney(v.low)}–${_haiMoney(v.high)}` : ''}</span>
         ${_haiSpark(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
-        <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>`;
+        <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>${_haiSalesList(v.recent)}`;
     }
     if (v.kind === 'trend') {
       const up = v.changePct > 0, flat = !v.changePct;
