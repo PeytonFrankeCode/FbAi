@@ -20630,6 +20630,22 @@ const HUDDLE_INV_SYSTEM = ' The collector is signed in, and you can see and chan
   + 'when a request matches more than one card, or it is unclear which, ask instead of guessing. Remove a card only when they clearly said to. '
   + 'After a change, say exactly what you changed. Their cards are theirs alone: never mention another collector\'s.';
 const HUDDLE_INV_WRITES = new Set(['add_inventory_card', 'edit_inventory_card', 'remove_inventory_card']);
+// Memory (owner, Nov 2026): a short notebook about the collector the AI keeps
+// across chats, which the collector can read, edit and clear. Read at the
+// start of every question; written only from what the collector says.
+const HUDDLE_MEMORY_MAX = 30;
+const HUDDLE_MEMORY_KEY = (user) => `ai:memory:${String(user).toLowerCase()}`;
+HUDDLE_INV_TOOLS.push(
+  { name: 'remember', description: "Save one short note about this collector for future chats: what they collect, their players and teams, how they grade, buy or sell, their budget or goals. Only things they told you about themselves and that will help later answers. Never addresses, contact or payment details.",
+    input_schema: { type: 'object', properties: { note: { type: 'string', description: 'One short sentence, e.g. "Collects Broncos; PCs Bo Nix and John Elway."' } }, required: ['note'] } },
+  { name: 'forget', description: "Delete a saved note about the collector, by its id from the notes you were given, when they ask you to forget it or it is no longer true.",
+    input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
+);
+async function _huddleMemory(user) { const m = await cacheGet(HUDDLE_MEMORY_KEY(user)); return (m && Array.isArray(m.notes)) ? m.notes : []; }
+function _huddleMemoryPrompt(notes) {
+  return ' You keep a short notebook about this collector across chats: use remember to save what they tell you about themselves that will help later (what they collect, players, teams, how they grade or sell, budget), and forget to delete a note they want gone or that is no longer true. Say briefly when you save or delete one. '
+    + (notes.length ? `What you already know about them (id: note): ${notes.map(n => `${n.id}: ${n.text}`).join(' | ')}. Use it to fit your answers; do not repeat it back unless asked.` : 'You know nothing about them yet.');
+}
 const _hiStr = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 const _hiMoney = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.round(Number(v) * 100) / 100) : undefined);
 function _hiInv(data) {
@@ -20752,6 +20768,25 @@ async function _huddleInvTool(user, name, input) {
       return { changed: _hiItemOut(item) };
     });
   }
+  if (name === 'remember') {
+    const text = _hiStr(input.note, 200);
+    if (text.length < 3) return { error: 'Give the note to save.' };
+    if (/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b|@[a-z0-9-]+\.[a-z]|\b\d{12,19}\b/i.test(text)) return { error: 'Contact and payment details are not saved.' };
+    const notes = await _huddleMemory(user);
+    if (notes.some(n => n.text.toLowerCase() === text.toLowerCase())) return { saved: false, already: true };
+    const note = { id: 'm' + now.toString(36).slice(-6) + Math.random().toString(36).slice(2, 4), text, at: new Date(now).toISOString() };
+    const next = [...notes, note].slice(-HUDDLE_MEMORY_MAX);
+    await cachePut(HUDDLE_MEMORY_KEY(user), { notes: next }, 365 * 86400);
+    return { saved: true, note };
+  }
+  if (name === 'forget') {
+    const id = _hiStr(input.id, 20);
+    const notes = await _huddleMemory(user);
+    const next = notes.filter(n => n.id !== id);
+    if (next.length === notes.length) return { error: 'No note with that id.' };
+    await cachePut(HUDDLE_MEMORY_KEY(user), { notes: next }, 365 * 86400);
+    return { forgotten: id };
+  }
   if (name === 'remove_inventory_card') {
     const id = _hiStr(input.id, 64);
     const out = await _hiMutate(user, (d) => {
@@ -20786,7 +20821,7 @@ const HUDDLE_TOOL_STATUS = {
   search_sold_sales: 'Checking sold prices', current_listings: 'Looking at listings for sale', comparable_players: 'Finding comparable players',
   grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist',
   market_top_sales: 'Reading the market', price_estimate: 'Estimating a price', market_index: 'Reading the market', player_trend: 'Charting the player',
-  player_cards: 'Gathering the player\'s cards', my_inventory: 'Reading your inventory', add_inventory_card: 'Updating your inventory',
+  player_cards: 'Gathering the player\'s cards', my_inventory: 'Reading your inventory', remember: 'Saving a note about you', forget: 'Forgetting a note', add_inventory_card: 'Updating your inventory',
   edit_inventory_card: 'Updating your inventory', remove_inventory_card: 'Updating your inventory',
 };
 // One line per lookup the AI made, for the step list the page keeps under
@@ -20843,6 +20878,63 @@ app.get('/api/admin/ai/feedback', async (req, res) => {
 const HUDDLE_PHOTO_NOTE = ' When the collector sends a photo, first identify the card from it (year, set, player, card number, parallel, '
   + 'serial numbering, autograph or relic, and the grade from a slab label), say what you see and how sure you are, then look it up like any other card. '
   + 'Never guess a serial number or grade you cannot read.';
+// Saved chats (owner, Nov 2026): each collector's conversations kept on the
+// account, so they survive a reload and follow them between devices.
+const HUDDLE_CHATS_MAX = 30, HUDDLE_CHAT_MSGS = 40;
+const _chatIndexKey = (user) => `ai:chats:${String(user).toLowerCase()}`;
+const _chatKey = (user, id) => `ai:chat:${String(user).toLowerCase()}:${id}`;
+async function _huddleChatAppend(user, id, ...msgs) {
+  const now = new Date().toISOString();
+  const chat = (await cacheGet(_chatKey(user, id))) || { id, msgs: [] };
+  chat.msgs = [...(chat.msgs || []), ...msgs].slice(-HUDDLE_CHAT_MSGS);
+  await cachePut(_chatKey(user, id), chat, 180 * 86400);
+  const idx = (await cacheGet(_chatIndexKey(user))) || { chats: [] };
+  const first = chat.msgs.find(m => m.role === 'user' && m.text);
+  const entry = { id, title: (first ? first.text : 'Card photo').slice(0, 70), updatedAt: now };
+  const rest = (idx.chats || []).filter(c => c.id !== id);
+  const dropped = rest.slice(HUDDLE_CHATS_MAX - 1);
+  idx.chats = [entry, ...rest].slice(0, HUDDLE_CHATS_MAX);
+  await cachePut(_chatIndexKey(user), idx, 180 * 86400);
+  for (const c of dropped) { try { await cachePut(_chatKey(user, c.id), null, 60); } catch (_) { /* expires anyway */ } }
+}
+app.get('/api/ai/chats', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Log in first.' });
+  res.set('Cache-Control', 'no-store').json({ chats: ((await cacheGet(_chatIndexKey(user))) || { chats: [] }).chats || [] });
+});
+app.get('/api/ai/chats/:id', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Log in first.' });
+  const id = String(req.params.id || '');
+  if (!/^[a-z0-9]{6,24}$/.test(id)) return res.status(400).json({ error: 'Bad chat id' });
+  const chat = await cacheGet(_chatKey(user, id));
+  if (!chat || !Array.isArray(chat.msgs)) return res.status(404).json({ error: 'Chat not found' });
+  res.set('Cache-Control', 'no-store').json({ id, msgs: chat.msgs });
+});
+app.delete('/api/ai/chats/:id', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Log in first.' });
+  const id = String(req.params.id || '');
+  const idx = (await cacheGet(_chatIndexKey(user))) || { chats: [] };
+  idx.chats = (idx.chats || []).filter(c => c.id !== id);
+  await cachePut(_chatIndexKey(user), idx, 180 * 86400);
+  await cachePut(_chatKey(user, id), null, 60);
+  res.json({ ok: true });
+});
+// The collector's memory notes: read, delete one, or clear all.
+app.get('/api/ai/memory', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Log in first.' });
+  res.set('Cache-Control', 'no-store').json({ notes: await _huddleMemory(user) });
+});
+app.delete('/api/ai/memory/:id', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Log in first.' });
+  const id = String(req.params.id || '');
+  const notes = (await _huddleMemory(user)).filter(n => id !== 'all' && n.id !== id);
+  await cachePut(HUDDLE_MEMORY_KEY(user), { notes }, 365 * 86400);
+  res.json({ ok: true, notes });
+});
 app.get('/api/ai/usage', async (req, res) => {
   const user = getSessionUser(req);
   const plus = !!_huddleAiAllowed(req, user);
@@ -20917,7 +21009,8 @@ app.post('/api/ai/ask', async (req, res) => {
     const mine = user ? _huddleInvRunner(user) : null;
     let cost = 0;
     const steps = [];
-    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM : '') + (photo ? HUDDLE_PHOTO_NOTE : ''), messages,
+    const memNotes = user ? await _huddleMemory(user) : [];
+    const text = await _aiToolLoop(HUDDLE_AI_SYSTEM + (mine ? HUDDLE_INV_SYSTEM + _huddleMemoryPrompt(memNotes) : '') + (photo ? HUDDLE_PHOTO_NOTE : ''), messages,
       mine ? [...BIZ_AI_TOOLS, ...HUDDLE_INV_TOOLS] : BIZ_AI_TOOLS, (name, input, out) => looked.push({ name, input, out }), 'medium', mine,
       { model: deep ? HUDDLE_DEEP_MODEL : BIZ_AI_MODEL, onUsage: (model, u) => { cost += _aiCostUsd(model, u); },
         ...(streaming ? { onText: (d) => send('delta', { text: d }), onReset: () => send('reset', {}),
@@ -20940,6 +21033,15 @@ app.post('/api/ai/ask', async (req, res) => {
       steps: steps.length ? steps : looked.map(l => _huddleStep(l.name, l.input)),
       tokens: unlimited ? null : _toTokens(credits), tokensUsed: unlimited ? null : Math.min(_toTokens(spent), _toTokens(credits)), pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
       cardsChanged: !!(mine && mine.changed) };
+    payload.memoryChanged = looked.some(l => l.name === 'remember' || l.name === 'forget');
+    if (user) {
+      const chatId = String((req.body && req.body.chatId) || '');
+      if (/^[a-z0-9]{6,24}$/.test(chatId)) {
+        try { await _huddleChatAppend(user, chatId, { role: 'user', text: req.body.q ? q : '', photo: !!photo },
+          { role: 'assistant', text: payload.answer, id: payload.id, deep, steps: payload.steps, followUps: payload.followUps, visuals: payload.visuals }); }
+        catch (err) { console.error('[ai/chat save]', err && err.message); }
+      }
+    }
     if (streaming) { send('done', payload); res.end(); } else res.json(payload);
   } catch (err) {
     console.error('[ai/ask]', err && err.status, err && err.message);

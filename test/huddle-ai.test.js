@@ -279,6 +279,46 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       && /What card is this/.test(pm.content[1].text) && /identify the card from it/.test(calls[0].system), JSON.stringify(ph.body).slice(0, 200));
     check('  ...and a broken photo is refused', (await call('/api/ai/ask', { method: 'POST', token: plus, body: { image: 'not a picture' } })).status === 400);
 
+    // Memory and saved chats (owner, Nov 2026).
+    store.set(`ai:spend:${('hai_p' + run).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`, { usd: 0 });
+    const tu = (id, name, input) => ({ type: 'tool_use', id, name, input });
+    let mstep = 0;
+    const mscript = [
+      { stop_reason: 'tool_use', content: [tu('r1', 'remember', { note: 'Collects Broncos; PCs Bo Nix.' }), tu('r2', 'remember', { note: 'Call me at 555-123-4567' })] },
+      { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Noted: you collect the Broncos.' }] },
+    ];
+    reply = () => mscript[Math.min(mstep++, mscript.length - 1)];
+    calls.length = 0;
+    const chatId = 'chat' + run;
+    const m1 = await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'I collect Broncos and PC Bo Nix', chatId } });
+    const mem = await call('/api/ai/memory', { token: plus });
+    check('Huddle AI saves a note about the collector when told, and says so in the answer', m1.status === 200 && m1.body.memoryChanged === true
+      && mem.body.notes.length === 1 && /Broncos/.test(mem.body.notes[0].text), JSON.stringify(mem.body));
+    check('  ...but never contact or payment details', !mem.body.notes.some(n => /555/.test(n.text)));
+    reply = { stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 }, content: [{ type: 'text', text: 'ok' }] };
+    calls.length = 0;
+    await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'Any tips?', chatId } });
+    check('  ...and reads its notes at the start of the next question', calls[0] && /Collects Broncos; PCs Bo Nix\./.test(calls[0].system) && calls[0].tools.some(t => t.name === 'forget'));
+    const noteId = mem.body.notes[0].id;
+    let fstep = 0;
+    const fscript = [{ stop_reason: 'tool_use', content: [tu('f1', 'forget', { id: noteId })] }, { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Forgotten.' }] }];
+    reply = () => fscript[Math.min(fstep++, fscript.length - 1)];
+    await call('/api/ai/ask', { method: 'POST', token: plus, body: { q: 'Forget that I collect Broncos', chatId } });
+    check('  ...and forgets one when asked', (await call('/api/ai/memory', { token: plus })).body.notes.length === 0);
+    await call('/api/ai/memory/x', { method: 'DELETE', token: plus });
+    check('  ...the notes need the collector\'s own login', (await call('/api/ai/memory')).status === 401);
+
+    const chats = await call('/api/ai/chats', { token: plus });
+    const chat = await call(`/api/ai/chats/${chatId}`, { token: plus });
+    check('each chat is saved on the account: listed with its first question, and reopened with every turn',
+      chats.body.chats[0].id === chatId && /I collect Broncos/.test(chats.body.chats[0].title)
+      && chat.body.msgs.length === 6 && chat.body.msgs[0].role === 'user' && chat.body.msgs[1].text === 'Noted: you collect the Broncos.', JSON.stringify(chats.body).slice(0, 200));
+    check('  ...not readable by another account', (await call(`/api/ai/chats/${chatId}`, { token: free })).status === 404);
+    await call(`/api/ai/chats/${chatId}`, { method: 'DELETE', token: plus });
+    check('  ...and deleted when the collector deletes it', !(await call('/api/ai/chats', { token: plus })).body.chats.some(c => c.id === chatId));
+    check('the panel offers saved chats, a new chat and the memory notes, and reopens the chat after a reload',
+      /id="hai-chats-btn"/.test(app0()) && /id="hai-mem-btn"/.test(app0()) && /data-new-chat/.test(app0()) && /What Huddle AI remembers/.test(app0()) && /_haiLoadChat\(saved\)/.test(app0()));
+
     const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
     check('the menu opens Huddle AI, and the plan is sold as Huddle+',
