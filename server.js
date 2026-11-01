@@ -3924,11 +3924,17 @@ app.get('/api/grading-advisor', async (req, res) => {
     // Autos and relics come off after it, on their own: filterByVariant hands
     // back its whole input when nothing passes, so a grade whose only sale was
     // an auto showed that auto as the card's PSA 10.
-    const filterFor = (items) => filterPriceOutliers(_dropAutoMemUnlessAsked(filterByVariant(_dropOversizeUnlessAsked(items, baseQ), baseQ), baseQ));
-    const rawItems   = filterFor(rawData.results);
-    const psa8Items  = filterFor(psa8Data.results);
-    const psa9Items  = filterFor(psa9Data.results);
-    const psa10Items = filterFor(psa10Data.results);
+    // And only this card (owner, Nov 2026): without the identity check every
+    // grade's pool took the set's other parallels, so a base card's Raw row
+    // averaged in its Laser and Red White & Blue sales, on this page and in
+    // Huddle AI's grading answers. tagSameCard is the sold search's own test.
+    const filterFor = async (items) => {
+      const kept = _dropAutoMemUnlessAsked(filterByVariant(_dropOversizeUnlessAsked(items, baseQ), baseQ), baseQ);
+      if (kept.length) { try { await tagSameCard(kept, baseQ, { pricing: true }); } catch (_) { /* untagged: keep the match */ } }
+      return filterPriceOutliers(kept.filter(r => r.sameCard !== false));
+    };
+    const [rawItems, psa8Items, psa9Items, psa10Items] = await Promise.all(
+      [rawData, psa8Data, psa9Data, psa10Data].map(d => filterFor(d.results || [])));
 
     const summarize = (items, label) => {
       const v = computeApproxValue(items, label);
@@ -13524,7 +13530,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
 // v42: a poster of a card is not the card.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v46';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v47';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -13541,7 +13547,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // something else held out of every raw price, at any number of sales.
 // v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
 // grade number follows them, never inside a card code.
-const CARD_IDENTITY_FINGERPRINT = 'a8dbdc00aa5c';
+const CARD_IDENTITY_FINGERPRINT = '63606edc7c4e';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
