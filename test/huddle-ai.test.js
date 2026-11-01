@@ -245,6 +245,13 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     check('each lookup is named as a step the page keeps, with what was looked up',
       S._huddleStep('search_sold_sales', { query: '2024 Prizm Bo Nix Silver' }) === 'Checking sold prices: 2024 Prizm Bo Nix Silver'
       && S._huddleStep('my_inventory', {}) === 'Reading your inventory' && Array.isArray(doneEv.steps));
+    const sv = S._huddleAiVisuals([{ name: 'search_sold_sales', out: { query: 'Bo Nix Silver', matched: 3, median: 60, low: 50, high: 75, sales: [
+      { date: '2026-10-20', price: 75, title: 'Bo Nix Prizm Silver PSA 10', grade: 'PSA 10', imageUrl: 'https://i.ebayimg.com/a.jpg', itemUrl: 'https://www.ebay.com/itm/1' },
+      { date: '2026-10-18', price: 55, title: 'Bo Nix Prizm Silver', grade: 'Raw', imageUrl: 'javascript:alert(1)', itemUrl: 'https://evil.example/x' },
+      { date: '2026-10-11', price: 50, title: 'Bo Nix Silver RC' }] } }])[0];
+    check('a sales answer shows the sales themselves, newest first, with safe photos and only eBay links',
+      sv.recent.length === 3 && sv.recent[0].price === 75 && sv.recent[0].grade === 'PSA 10' && sv.recent[0].url === 'https://www.ebay.com/itm/1'
+      && sv.recent[1].image === null && sv.recent[1].url === null && /function _haiSalesList/.test(app0()) && /Show all \$\{rows\.length\} sales/.test(app0()), JSON.stringify(sv.recent[1]));
     const fu = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver' }, out: { matched: 3, player: 'Bo Nix' } }]);
     check('follow-up questions come from what was looked up, free', fu.length === 3 && /PSA 10/.test(fu[0]) && /worth grading/.test(fu[1]), JSON.stringify(fu));
     const fu2 = S._huddleFollowUps([{ name: 'search_sold_sales', input: { query: '2024 Prizm Bo Nix Silver PSA 10' }, out: { matched: 3 } }]);
