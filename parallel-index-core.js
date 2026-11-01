@@ -34,6 +34,12 @@ function norm(s) {
     // card. Both spellings are indexed, so either can be the canonical one.
     .replace(/&/g, ' and ')
     .toLowerCase()
+    // One spelling for what sellers and checklists write two ways (owner, Nov
+    // 2026): Panini's "Lazer" is typed "Laser" as often as not, and Red White &
+    // Blue is shortened to "RWB" or "R/W/B". Unread, a Laser sale was taken for
+    // the base card and a "Laser" search was read as the base card itself.
+    .replace(/\blaser(s?)\b/g, 'lazer$1')
+    .replace(/\b(?:rwb|r w b)\b/g, 'red white and blue')
     .replace(/\s+/g, ' ')
     .trim();
 }
