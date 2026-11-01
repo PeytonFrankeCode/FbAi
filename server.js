@@ -3875,12 +3875,12 @@ function computeApproxValue(results, label) {
 }
 
 // What grading one card at PSA costs, in dollars: the cheapest tier PSA is
-// taking. $59.99 is the Standard level PSA opened in Sept 2026 (90-100
-// business days, $1,000 max value); the Value tiers are Collectors Club only.
+// taking: $39.99 (owner, Nov 2026: PSA's new fee). It was $59.99, the
+// Standard level PSA opened in Sept 2026, while the Value tiers were closed.
 // One figure, used by the advisor's math, sent to the page with every answer,
 // and quoted in the emails — so a price change is an edit here and nowhere
 // else (and in GRADING_DEFAULT_FEES in app.js, which a test holds equal).
-const PSA_GRADING_FEE = 59.99;
+const PSA_GRADING_FEE = 39.99;
 const PSA_GRADING_TIER = 'PSA\u2019s cheapest open tier';
 // The advisor grades at PSA, SGC or CGC, at the collector's own fee if they
 // give one (Oct 2026: one hardcoded PSA tier fit nobody on a different plan).
@@ -20486,7 +20486,7 @@ const HUDDLE_AI_SYSTEM = 'You are Huddle AI on The Card Huddle (thecardhuddle.co
   + 'You help collectors: what a card is worth, whether it is worth grading, how a player\'s cards are moving, which parallel or grade sells for what. '
   + 'Look the numbers up with your tools rather than recalling them, and say they come from Card Huddle sales and over which days. '
   + 'When the sales are thin or the card is unclear, say so and ask for the year, set, parallel, card number or grade. '
-  + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (about $25 to $75 a card at PSA, more for high values), and say it depends on the card\'s condition. '
+  + 'Grading: weigh the raw price, the graded prices and a typical grading fee plus shipping (PSA\'s cheapest tier is $39.99 a card plus shipping, more for high values), and say it depends on the card\'s condition. '
   + 'When someone asks what is for sale or where to buy, look up current listings, and keep asking prices apart from sold prices. '
   + 'When a card has no sales of its own, do not stop there: find comparable players (inside the same set when you can), look up their same card, '
   + 'and estimate from the ratio, saying it is an estimate and which players it leans on. Use several lookups when a question needs them. '
@@ -20555,6 +20555,21 @@ function _huddleAiVisuals(looked) {
       // sees what the answer is built on rather than only its median.
       recent: sales.filter(r => r.price > 0).slice(0, 12).map(r => ({ date: r.date, price: r.price, grade: r.grade || 'Raw',
         title: String(r.title || '').slice(0, 100), image: _aiPhoto(r.imageUrl), url: _aiLink(r.itemUrl) })) });
+  }
+  // A grading answer shows each grade's typical price and what grading nets
+  // after the fee, with the sales behind them (owner, Nov 2026).
+  const grade = last('grading_advice');
+  if (grade && grade.out.grades) {
+    const o = grade.out, g = o.grader || 'PSA';
+    const rows = [['raw', 'Raw'], ['psa8', `${g} 8`], ['psa9', `${g} 9`], ['psa10', `${g} 10`]]
+      .map(([k, label]) => o.grades[k] ? { label, median: o.grades[k].median, sales: o.grades[k].sales,
+        net: k === 'raw' || !o.premiums || !o.premiums[k] ? null : Math.round(o.premiums[k].net * 100) / 100 } : null).filter(Boolean);
+    const comps = o.comps || {};
+    const recent = [['raw', 'Raw'], ['psa8', `${g} 8`], ['psa9', `${g} 9`], ['psa10', `${g} 10`]]
+      .flatMap(([k, label]) => (comps[k] || []).slice(0, 4).map(c => ({ date: String(c.soldDate || '').slice(0, 10), price: Number(c.price), grade: label,
+        title: String(c.title || '').slice(0, 100), image: _aiPhoto(c.imageUrl), url: _aiLink(c.itemUrl) })))
+      .filter(r => r.price > 0).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12);
+    if (rows.length) out.push({ kind: 'grading', query: o.query, grader: g, fee: o.gradingCost && o.gradingCost.fee, rows, recent });
   }
   const trend = last('player_trend');
   if (trend && trend.out.available && Array.isArray(trend.out.series) && trend.out.series.length >= 2) {
