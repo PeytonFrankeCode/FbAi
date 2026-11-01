@@ -359,6 +359,16 @@
       "totalCards": 1062
     },
     {
+      "id": "2025-26-topps-stadium-club-basketball",
+      "name": "2025-26 Topps Stadium Club Basketball",
+      "year": 2025,
+      "brand": "Topps Stadium Club",
+      "sport": "Basketball",
+      "setCount": 36,
+      "totalCards": 1355,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-26-topps-three-basketball",
       "name": "2025-26 Topps Three Basketball",
       "year": 2025,
