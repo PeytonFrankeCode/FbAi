@@ -5761,7 +5761,8 @@ async function _openAdFreeBilling() {
 // Part of Huddle+ (the plan that was Ad-free): AI answers about any card's
 // value, grading and the market, from Card Huddle's own sales (/api/ai/ask).
 // A panel from the menu; without the plan it explains Huddle+ instead.
-const _hai = { msgs: [], busy: false, usage: null, deep: false, photo: null, live: null };
+const _hai = { msgs: [], busy: false, usage: null, deep: false, photo: null, live: null, chatId: null };
+const HAI_CHAT_KEY = 'chHaiChat';
 function _haiEl() {
   let el = document.getElementById('hai');
   if (el) return el;
@@ -5772,7 +5773,10 @@ function _haiEl() {
     <div class="hai-box">
       <div class="hai-head"><span class="hai-av" aria-hidden="true">&#10024;</span>
         <div class="hai-titles"><b id="hai-title">Huddle AI</b><span id="hai-usage">Answers from real Card Huddle sales</span></div>
+        <button type="button" class="hai-hbtn" id="hai-chats-btn" aria-label="Your chats" title="Your chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></button>
+        <button type="button" class="hai-hbtn" id="hai-mem-btn" aria-label="What Huddle AI remembers" title="What Huddle AI remembers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 1 5 3 3 0 0 0 4 3V3zM15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-1 5 3 3 0 0 1-4 3V3z"/></svg></button>
         <button type="button" class="hai-x" onclick="closeHuddleAI()" aria-label="Close">&times;</button></div>
+      <div class="hai-side hidden" id="hai-side"></div>
       <div class="hai-meter hidden" id="hai-meter" role="progressbar" aria-label="AI tokens used this month" aria-valuemin="0" aria-valuemax="100"><span id="hai-meter-fill"></span></div>
       <div class="hai-log" id="hai-log" aria-live="polite"></div>
       <div class="hai-gate hidden" id="hai-gate"></div>
@@ -5796,6 +5800,9 @@ function _haiEl() {
     try { _haiSetPhoto(await _haiShrink(f)); } catch (_) { _hai.msgs.push({ role: 'assistant', text: 'That photo could not be opened. Try another.', error: true }); _haiPaint(); }
   });
   el.querySelector('#hai-attach-x').addEventListener('click', () => _haiSetPhoto(null));
+  el.querySelector('#hai-chats-btn').addEventListener('click', () => _haiSide('chats'));
+  el.querySelector('#hai-mem-btn').addEventListener('click', () => _haiSide('memory'));
+  el.querySelector('#hai-side').addEventListener('click', _haiSideClick);
   el.querySelector('#hai-log').addEventListener('click', _haiLogClick);
   _haiVoiceSetup(el);
   return el;
@@ -5875,6 +5882,78 @@ function _haiVoiceSetup(el) {
 }
 // The answer's light markdown: paragraphs, "- " bullets and **bold**, on
 // escaped text, so nothing the model writes runs as HTML.
+// Saved chats and memory (owner, Nov 2026): past conversations on the
+// account, and the notes Huddle AI keeps about the collector, both shown in
+// a panel over the chat, where they can be opened, deleted or cleared.
+let _haiSideView = null;
+function _haiSideClose() {
+  _haiSideView = null;
+  const el = document.getElementById('hai');
+  if (el) el.classList.remove('hai-side-open');
+  const side = document.getElementById('hai-side');
+  if (side) side.classList.add('hidden');
+}
+async function _haiSide(view) {
+  const el = document.getElementById('hai'), side = document.getElementById('hai-side');
+  if (_haiSideView === view) { _haiSideClose(); return; }
+  _haiSideView = view;
+  el.classList.add('hai-side-open'); side.classList.remove('hidden');
+  side.innerHTML = '<p class="hai-side-empty">Loading…</p>';
+  if (!getSessionToken()) { side.innerHTML = '<p class="hai-side-empty">Log in to keep your chats and what Huddle AI remembers.</p>'; return; }
+  try {
+    if (view === 'chats') {
+      const d = await (await authFetch('/api/ai/chats')).json();
+      const list = (d && d.chats) || [];
+      side.innerHTML = `<div class="hai-side-head"><b>Your chats</b><button type="button" class="hai-side-new" data-new-chat>+ New chat</button></div>`
+        + (list.length ? `<ul class="hai-side-list">${list.map(c => `<li><button type="button" class="hai-side-item${c.id === _hai.chatId ? ' is-on' : ''}" data-chat="${escHtml(c.id)}"><span>${escHtml(c.title || 'Chat')}</span><em>${new Date(c.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</em></button><button type="button" class="hai-side-del" data-del-chat="${escHtml(c.id)}" aria-label="Delete this chat">&times;</button></li>`).join('')}</ul>`
+          : '<p class="hai-side-empty">No saved chats yet. Ask a question and it is kept here.</p>');
+    } else {
+      const d = await (await authFetch('/api/ai/memory')).json();
+      const notes = (d && d.notes) || [];
+      side.innerHTML = `<div class="hai-side-head"><b>What Huddle AI remembers</b>${notes.length ? '<button type="button" class="hai-side-new" data-forget-all>Forget all</button>' : ''}</div>
+        <p class="hai-side-note">It notes what you tell it about your collecting (players, teams, how you grade or sell) so answers fit you. Say "remember…" to add something, or remove notes here.</p>`
+        + (notes.length ? `<ul class="hai-side-list">${notes.map(n => `<li><span class="hai-side-mem">${escHtml(n.text)}</span><button type="button" class="hai-side-del" data-del-mem="${escHtml(n.id)}" aria-label="Forget this">&times;</button></li>`).join('')}</ul>`
+          : '<p class="hai-side-empty">Nothing yet.</p>');
+    }
+  } catch (_) { side.innerHTML = '<p class="hai-side-empty">Could not load. Try again.</p>'; }
+}
+function _haiNewChat() {
+  _hai.msgs = []; _hai.chatId = null;
+  try { localStorage.removeItem(HAI_CHAT_KEY); } catch (_) {}
+  _haiSideClose(); _haiPaint();
+}
+async function _haiLoadChat(id) {
+  try {
+    const r = await authFetch(`/api/ai/chats/${encodeURIComponent(id)}`);
+    if (!r.ok) throw new Error('gone');
+    const d = await r.json();
+    _hai.chatId = id;
+    try { localStorage.setItem(HAI_CHAT_KEY, id); } catch (_) {}
+    _hai.msgs = (d.msgs || []).map(m => m.role === 'user'
+      ? { role: 'user', text: m.text || (m.photo ? '📷 Card photo' : ''), photoSaved: !!m.photo }
+      : { role: 'assistant', text: m.text, id: m.id, deep: !!m.deep, steps: m.steps || [], followUps: m.followUps || [], visuals: m.visuals || [] });
+    return true;
+  } catch (_) {
+    if (_hai.chatId === id) { _hai.chatId = null; try { localStorage.removeItem(HAI_CHAT_KEY); } catch (_) {} }
+    return false;
+  }
+}
+async function _haiSideClick(e) {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.hasAttribute('data-new-chat')) return _haiNewChat();
+  if (t.dataset.chat) { if (await _haiLoadChat(t.dataset.chat)) { _haiSideClose(); _haiPaint(); } return; }
+  if (t.dataset.delChat) {
+    await authFetch(`/api/ai/chats/${encodeURIComponent(t.dataset.delChat)}`, { method: 'DELETE' }).catch(() => {});
+    if (t.dataset.delChat === _hai.chatId) { _hai.msgs = []; _hai.chatId = null; try { localStorage.removeItem(HAI_CHAT_KEY); } catch (_) {} _haiPaint(); }
+    _haiSideView = null; return _haiSide('chats');
+  }
+  if (t.dataset.delMem || t.hasAttribute('data-forget-all')) {
+    if (t.hasAttribute('data-forget-all') && !confirm('Forget everything Huddle AI remembers about you?')) return;
+    await authFetch(`/api/ai/memory/${encodeURIComponent(t.dataset.delMem || 'all')}`, { method: 'DELETE' }).catch(() => {});
+    _haiSideView = null; return _haiSide('memory');
+  }
+}
 // A card photo, shrunk in the browser (longest side 1280px, JPEG) so it
 // uploads fast and costs fewer tokens to read.
 function _haiShrink(file) {
@@ -6059,6 +6138,12 @@ async function openHuddleAI() {
   document.body.style.overflow = 'hidden';
   _haiPaint();
   if (_hai.usage) { _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+  // The chat this device was in, from the account, after a reload or on a new visit.
+  if (!_hai.msgs.length && getSessionToken()) {
+    let saved = null;
+    try { saved = localStorage.getItem(HAI_CHAT_KEY); } catch (_) {}
+    if (saved && await _haiLoadChat(saved)) _haiPaint();
+  }
   await _haiLoadUsage();
   const q = document.getElementById('hai-q');
   if (q && !document.getElementById('hai-form').classList.contains('hidden')) setTimeout(() => q.focus(), 30);
@@ -6093,7 +6178,11 @@ async function _haiAsk() {
     if (status === 401 || status === 402) _haiLoadUsage();
   };
   try {
-    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history, deep, image, stream: true }) });
+    if (!_hai.chatId) {
+      _hai.chatId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      try { localStorage.setItem(HAI_CHAT_KEY, _hai.chatId); } catch (_) {}
+    }
+    const r = await authFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, history, deep, image, stream: true, chatId: _hai.chatId }) });
     const type = r.headers.get('content-type') || '';
     if (!/event-stream/.test(type) || !r.body) {
       const d = await r.json().catch(() => ({}));
