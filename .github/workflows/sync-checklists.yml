@@ -75,6 +75,9 @@ jobs:
             esac
           done < changed.txt
           npm run build:card-index
+          # Basketball and baseball player names, which the spelling and checklist
+          # search read: a test holds them equal to the checklists.
+          node scripts/build-sport-players.js
 
       - name: Push the changes to a branch
         if: steps.changed.outputs.any == 'true'
