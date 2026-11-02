@@ -19363,6 +19363,69 @@ app.get('/api/admin/growth', async (req, res) => {
   }
 });
 
+// ---- Shared price links with a picture (owner, Nov 2026) ------------------
+//
+// "Share this price" used to hand over a bare site address, which shows as a
+// plain line when pasted into a group chat or Discord. Now the page uploads
+// the price image it already draws, and the link (/s/<id>) carries it as the
+// preview picture (og:image) with the card and its price in the title. People
+// who open the link land on that card's sold prices, counted as ref=share.
+// Images go in R2 under share/, named by content; the record in KV.
+const SHARE_IMG_MAX = 700 * 1024;
+const SHARE_ID = /^[a-f0-9]{16}$/;
+const SHARE_KEY = (id) => `share:${id}`;
+const _shareImgMem = new Map();
+app.post('/api/share', async (req, res) => {
+  const b = req.body || {};
+  const m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(String(b.dataUrl || ''));
+  const q = String(b.q || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  if (!m || !q) return res.status(400).json({ error: 'Expected { q, dataUrl: "data:image/png;base64,..." }' });
+  const bytes = new Uint8Array(Buffer.from(m[1], 'base64'));
+  if (bytes.length < 200 || bytes.length > SHARE_IMG_MAX) return res.status(413).json({ error: 'Image too large' });
+  // A real PNG, not anything else wearing the name.
+  if (!(bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47)) return res.status(400).json({ error: 'Not a PNG' });
+  const id = Buffer.from(await webCrypto.subtle.digest('SHA-256', bytes)).toString('hex').slice(0, 16);
+  const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v) * 100) / 100 : null);
+  const rec = { q, avg: num(b.avg), n: Math.max(0, Math.min(99999, parseInt(b.n, 10) || 0)), sold: b.sold !== false, at: new Date().toISOString() };
+  try {
+    const bucket = getPhotos();
+    if (bucket) await bucket.put('share/' + id + '.png', bytes, { httpMetadata: { contentType: 'image/png', cacheControl: 'public, max-age=31536000, immutable' } });
+    else _shareImgMem.set(id, bytes);
+    await recordPut(SHARE_KEY(id), rec);
+  } catch (err) {
+    console.error('[share] store failed:', err && err.message);
+    return res.status(500).json({ error: 'Could not save the share image' });
+  }
+  res.json({ ok: true, id, url: `${DRIP_ORIGIN}/s/${id}` });
+});
+app.get('/s/:file', async (req, res) => {
+  const file = String(req.params.file || '');
+  if (file.endsWith('.png')) {   // off Workers (local, tests); worker.js serves R2 directly
+    const hit = _shareImgMem.get(file.slice(0, -4));
+    if (!hit) return res.status(404).send('Not found');
+    res.set('Content-Type', 'image/png').set('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(Buffer.from(hit));
+  }
+  const id = file;
+  const rec = SHARE_ID.test(id) ? await recordGet(SHARE_KEY(id)) : null;
+  if (!rec) return res.redirect(302, '/?ref=share');
+  const dest = `/?q=${encodeURIComponent(rec.q)}&ref=share`;
+  const price = rec.avg ? `$${rec.avg.toFixed(2).replace(/\.00$/, '')}` : '';
+  const title = price ? `${rec.q}: ${price} ${rec.sold ? 'average sold price' : 'average price'}` : `${rec.q} prices`;
+  const desc = rec.n ? `From ${rec.n} ${rec.sold ? 'recent eBay sales' : 'listings'}. Check any card's value free on The Card Huddle.` : 'Check any card\'s value free on The Card Huddle.';
+  const img = `${DRIP_ORIGIN}/s/${id}.png`;
+  const e = _esc;
+  res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', 'public, max-age=3600');
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${e(title)} · The Card Huddle</title><meta name="description" content="${e(desc)}"><meta name="robots" content="noindex, follow">
+<link rel="canonical" href="${e(DRIP_ORIGIN + dest)}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="The Card Huddle"><meta property="og:title" content="${e(title)}">
+<meta property="og:description" content="${e(desc)}"><meta property="og:image" content="${e(img)}"><meta property="og:image:width" content="1080"><meta property="og:image:height" content="1080">
+<meta property="og:url" content="${e(DRIP_ORIGIN + '/s/' + id)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${e(title)}"><meta name="twitter:image" content="${e(img)}">
+<meta http-equiv="refresh" content="0;url=${e(dest)}"><style>body{background:#0c0e14;color:#edf0f7;font-family:system-ui,sans-serif;text-align:center;padding:15vh 20px}a{color:#5ece99}img{max-width:min(420px,90vw);border-radius:12px;display:block;margin:0 auto 1rem}</style>
+</head><body><img src="${e(img)}" alt="${e(title)}"><p><a href="${e(dest)}">See ${e(rec.q)} prices &rarr;</a></p><script>location.replace(${JSON.stringify(dest)})</script></body></html>`);
+});
+
 // Article photos (the editor uploads them, already shrunk to WebP in the
 // browser). Kept in the R2 bucket under news/, named by their content, so the
 // same photo uploaded twice is one file and a URL never changes what it shows.
@@ -21795,6 +21858,22 @@ async function _digestContentNow() {
   const [d7, d30] = await Promise.all([idx(7), idx(30)]);
   return (d7 || d30) ? { ...content, market: { d7, d30 } } : content;
 }
+
+// Weekly social images (owner, Nov 2026): the admin page draws shareable
+// pictures from the same boards the Monday email uses. Read from cache only.
+app.get('/api/admin/social', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const c = await _digestContentNow().catch(() => null);
+  res.set('Cache-Control', 'no-store');
+  if (!c) return res.json({ available: false });
+  const pick = (rows, f) => (rows || []).map(f);
+  res.json({ available: true, week: digest.weekId(new Date()), sales: c.sales, value: c.value,
+    risers: pick(c.more.risers.slice(0, 6), r => ({ name: r.name || r.player, sub: `${r.sales} sales`, value: (r.changePct > 0 ? '+' : '') + Math.round(r.changePct) + '%', query: r.query })),
+    players: pick(c.more.players.slice(0, 6), r => ({ name: r.player, sub: `${r.resales || 0} repeat sales`, value: '+' + Math.round(r.changePct) + '%', query: r.query })),
+    mostSold: pick(c.more.mostSold.slice(0, 6), r => ({ name: r.name, sub: `avg $${Math.round(r.avgPrice || 0).toLocaleString('en-US')}`, value: `${r.sales} sold`, query: r.query })),
+    priciest: pick(c.more.priciest.slice(0, 6), r => ({ name: r.title, sub: r.grade && r.grade !== 'Raw' ? r.grade : 'Raw', value: '$' + Math.round(r.price || 0).toLocaleString('en-US') })),
+  });
+});
 
 function _digestMessage(content, week, sub) {
   const unsubUrl = _digestUnsubUrl(sub.id, sub.token);

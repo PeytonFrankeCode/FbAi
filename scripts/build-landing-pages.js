@@ -647,8 +647,25 @@ ${extraJsonLd || ''}
   </header>`;
 }
 
+// The Monday Market Movers email, offered on every landing page (owner, Nov
+// 2026): an email list is the one audience search engines cannot take away.
+// Hidden until the server says it can send email; a form that can only fail
+// is worse than none. Same endpoint and confirm-by-email flow as the app's.
+const DIGEST_BOX = `
+  <form class="lp-digest" id="lp-digest" hidden novalidate>
+    <div class="lp-digest-copy"><strong>&#128236; Market Movers, every Monday</strong><span>The week's biggest risers, hottest players and top sales, free by email.</span></div>
+    <div class="lp-digest-row"><input type="email" id="lp-digest-email" autocomplete="email" placeholder="you@email.com" aria-label="Email address" required /><button type="submit">Sign me up</button></div>
+    <p class="lp-digest-msg" id="lp-digest-msg" role="status"></p>
+  </form>
+  <script>(function(){var f=document.getElementById('lp-digest');if(!f||!window.fetch)return;var e=document.getElementById('lp-digest-email'),m=document.getElementById('lp-digest-msg');
+  fetch('/api/digest/status').then(function(r){return r.json()}).then(function(d){if(d&&d.enabled)f.hidden=false}).catch(function(){});
+  f.addEventListener('submit',function(ev){ev.preventDefault();var v=e.value.trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v)){m.textContent='Enter a valid email address.';return}
+  m.textContent='Signing you up\u2026';fetch('/api/digest/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:v,source:'landing'})})
+  .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){m.textContent=x.ok&&x.d&&x.d.ok?(x.d.status==='active'?"You're already signed up. See you Monday!":'Almost done: check your inbox for the confirmation link.'):((x.d&&x.d.error)||'That did not work. Try again.')})
+  .catch(function(){m.textContent='Network error. Try again.'})})})();</script>`;
+
 function footer() {
-  return `
+  return `${DIGEST_BOX}
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for ${S.word} cards, broken down by grade.</p>
     <p class="lp-muted"><a href="${S.base}/sets/">Checklists</a> &bull; <a href="${S.base}/players/">Players</a> &bull; <a href="${S.base}/teams/">Teams</a> &bull; <a href="/news">News</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
@@ -1328,6 +1345,15 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-facts{color:#aab3c5;font-size:.98rem;line-height:1.6;margin:-.5rem 0 1.25rem}
 .lp-count{font-size:.8rem;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:.1rem .5rem;border-radius:999px}
 .lp-cta-row{margin:0 0 1.5rem}
+.lp-digest{max-width:920px;margin:0 auto 1.5rem;padding:1rem 1.25rem;display:flex;flex-wrap:wrap;gap:.75rem 1.25rem;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.lp-digest[hidden]{display:none}
+.lp-digest-copy{flex:1 1 16rem;display:flex;flex-direction:column;gap:.15rem}
+.lp-digest-copy span{color:var(--muted);font-size:.9rem}
+.lp-digest-row{display:flex;gap:.5rem;flex:1 1 18rem}
+.lp-digest-row input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem .7rem;font:inherit}
+.lp-digest-row button{background:var(--accent);color:#06231a;border:0;border-radius:8px;padding:.6rem 1rem;font-weight:700;cursor:pointer;font:inherit;font-weight:700}
+.lp-digest-msg{flex-basis:100%;margin:0;font-size:.88rem;color:var(--muted);min-height:0}
+.lp-digest-msg:empty{display:none}
 .lp-btn{display:inline-block;background:var(--accent);color:#06231a;font-weight:700;padding:.7rem 1.15rem;border-radius:10px;font-size:.98rem}
 .lp-btn:hover{background:var(--accent-2);text-decoration:none}
 .lp-subset{border-top:1px solid var(--border);padding-top:.5rem;margin-top:1.5rem}

@@ -3436,7 +3436,45 @@ function renderStatsBar(results, isSold) {
   const shareRow = document.createElement('div');
   shareRow.className = 'share-row';
   shareRow.innerHTML = `<button class="share-price-btn" onclick="shareSearchResult()" title="Share this card's price">&#128228; Share this price</button>`;
+  // One-tap price alert (owner, Nov 2026): a deal price already filled in,
+  // 10% under the typical sale, so tracking a card is one tap, not a form.
+  if (isSold && prices.length >= 3) {
+    const sorted = [...prices].sort((a, b) => a - b);
+    const typical = sorted[Math.floor(sorted.length / 2)];
+    const under = _alertDealPrice(typical);
+    if (under >= 1) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'share-price-btn alert-under-btn';
+      b.dataset.under = String(under);
+      b.title = 'Get a notification and email when one is listed under this price';
+      b.innerHTML = `&#128276; Alert me under $${under.toLocaleString()}`;
+      b.onclick = () => _quickPriceAlert(b);
+      shareRow.appendChild(b);
+    }
+  }
   grid.appendChild(shareRow);
+}
+// 10% under the typical sale, rounded to a price people think in.
+function _alertDealPrice(typical) {
+  const v = Number(typical) * 0.9;
+  if (!(v >= 1)) return 0;   // a card under about a dollar: no alert worth offering
+  const step = v >= 1000 ? 50 : v >= 200 ? 10 : v >= 50 ? 5 : 1;
+  return Math.max(1, Math.floor(v / step) * step);
+}
+async function _quickPriceAlert(btn) {
+  const query = ((_searchPaging && _searchPaging.query) || (input && input.value) || '').trim();
+  const under = Number(btn.dataset.under);
+  if (!query || !under) return;
+  btn.disabled = true;
+  const ok = await createCardAlert(query, 'below', under);
+  if (ok) {
+    btn.innerHTML = `&#10003; We'll tell you under $${under.toLocaleString()}`;
+    btn.classList.add('is-on');
+    if (typeof refreshAlertsBadge === 'function') refreshAlertsBadge();
+  } else {
+    btn.disabled = false;
+  }
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
@@ -10356,12 +10394,18 @@ async function shareSearchResult() {
   };
   try {
     const blob = await _buildPriceShareImage(query, stats);
-    const origin = location.origin;
-    const text = `${query} — ${stats.isSold ? 'avg sold' : 'avg'} $${stats.avg.toFixed(2)} (${stats.count} ${stats.isSold ? 'recent sales' : 'listings'}). Check any card's value free at ${origin}`;
+    // A link that shows the picture when pasted (server.js /s/<id>), and
+    // lands on this card's prices, counted as a share (ref=share).
+    const link = (await _sharePriceLink(blob, query, stats)) || `${location.origin}/?q=${encodeURIComponent(query)}&ref=share`;
+    const text = `${query} — ${stats.isSold ? 'avg sold' : 'avg'} $${stats.avg.toFixed(2)} (${stats.count} ${stats.isSold ? 'recent sales' : 'listings'}). Check any card's value free: ${link}`;
     const file = new File([blob], 'card-price.png', { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], text, title: 'Card Price' });
       return;
+    }
+    // No file sharing (most desktops): the link alone carries the picture.
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Card Price', text, url: link }); return; } catch (err) { if (err && err.name === 'AbortError') return; }
     }
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -10372,6 +10416,16 @@ async function shareSearchResult() {
   } catch {
     alert('Could not create the share image on this device.');
   }
+}
+
+async function _sharePriceLink(blob, query, stats) {
+  try {
+    const dataUrl = await new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = bad; r.readAsDataURL(blob); });
+    const res = await fetch('/api/share', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: query, avg: stats.avg, n: stats.count, sold: !!stats.isSold, dataUrl }) });
+    const d = res.ok ? await safeJson(res) : null;
+    return d && d.url ? d.url : null;
+  } catch (_) { return null; }
 }
 
 function _buildPriceShareImage(query, stats) {

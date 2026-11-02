@@ -10553,3 +10553,6 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .inv-week-sub{font-size:.8rem;color:var(--text-secondary,#9aa3b2)}
 .inv-week-btn{background:var(--accent,#5ece99);color:#06231a;border:0;border-radius:8px;padding:.5rem .85rem;font-weight:700;cursor:pointer;font:inherit;font-size:.88rem}
 .inv-week-btn:disabled{opacity:.7;cursor:default}
+
+/* One-tap price alert next to Share (owner, Nov 2026) */
+.alert-under-btn.is-on{border-color:var(--accent);color:var(--accent)}

@@ -340,6 +340,13 @@
     .gr-out code { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 0.25rem 0.45rem; word-break: break-all; }
     .gr-out button, .gr-link button { background: var(--accent); color: #06231a; border: 0; border-radius: 6px; padding: 0.3rem 0.65rem; font-weight: 700; cursor: pointer; }
     .gr-org td:first-child { color: var(--text-secondary); }
+    .soc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .soc-card { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .soc-card img { width: 100%; border-radius: 8px; display: block; }
+    .soc-card textarea { width: 100%; min-height: 5.5rem; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.45rem; font: inherit; font-size: 0.8rem; resize: vertical; box-sizing: border-box; }
+    .soc-btns { display: flex; gap: 0.4rem; }
+    .soc-btns button { flex: 1; background: var(--accent); color: #06231a; border: 0; border-radius: 6px; padding: 0.45rem; font-weight: 700; cursor: pointer; }
+    .soc-btns button.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-primary); }
     .ap-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.9rem; }
     .ap-head select { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 8px;
       padding: 0.45rem 0.6rem; font: inherit; font-size: 0.85rem; }
@@ -390,6 +397,11 @@
   <div class="page-title">Business waitlist</div>
   <div class="page-subtitle" id="bw-sub">Sellers who asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.</div>
   <div id="bw-list" style="margin-bottom:2.5rem"></div>
+
+  <!-- Social images: this week's boards as pictures to post (/api/admin/social) -->
+  <div class="page-title">Social images</div>
+  <div class="page-subtitle">This week's market as pictures for Instagram, X, TikTok and Reddit. Download one, paste the caption, post. The link in each caption is tracked in Growth as <code>social-&lt;board&gt;</code>.</div>
+  <div class="soc-grid" id="soc-grid"><p style="color:var(--text-muted)">Loading&hellip;</p></div>
 
   <!-- Growth: where collectors come from, by source (/api/admin/growth) -->
   <div class="page-title">Growth</div>
@@ -630,6 +642,7 @@
       loadArticles();
       loadArticleStats();
       loadGrowth();
+      loadSocial();
       loadWaitlist();
       loadSurveys();
       loadGiveawayEntrants();
@@ -881,6 +894,74 @@
         : '<tr><td colspan="7" style="color:var(--text-muted)">No visits counted yet. They appear here as people arrive.</td></tr>';
     } catch (err) {
       rowsEl.innerHTML = `<tr><td colspan="7" style="color:var(--red)">Could not load growth: ${escHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  // Social images (owner, Nov 2026): each board drawn as a 1080x1350 picture
+  // (Instagram portrait, fine on X and TikTok), text only so the canvas can
+  // be saved, with a caption carrying a tracked link.
+  const SOC_BOARDS = [
+    ['risers', 'Biggest risers', 'Cards whose sold prices jumped this week'],
+    ['players', 'Players on the move', 'Repeat sales up most over 30 days'],
+    ['mostSold', 'Most sold', 'The cards collectors bought most this week'],
+    ['priciest', 'Biggest sales', 'The top eBay sales of the week'],
+  ];
+  function socDraw(title, sub, rows, week) {
+    const W = 1080, H = 1350, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#10141f'); g.addColorStop(1, '#0a0c12');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#5ece99'; x.fillRect(0, 0, W, 14);
+    x.textBaseline = 'top';
+    x.fillStyle = '#5ece99'; x.font = '800 34px Inter, system-ui, sans-serif';
+    x.fillText('THE CARD HUDDLE  ·  ' + String(week || '').replace('-W', ' WEEK '), 72, 80);
+    x.fillStyle = '#edf0f7'; x.font = '800 84px Inter, system-ui, sans-serif';
+    x.fillText(title, 72, 140);
+    x.fillStyle = '#9aa3b2'; x.font = '500 36px Inter, system-ui, sans-serif';
+    x.fillText(sub, 72, 248);
+    const fit = (t, max, font) => { x.font = font; let s = String(t || ''); while (s.length > 4 && x.measureText(s).width > max) s = s.slice(0, -2); return s === String(t || '') ? s : s.trim() + '…'; };
+    let y = 340;
+    rows.slice(0, 6).forEach((r, i) => {
+      x.fillStyle = '#161b28'; x.beginPath(); x.roundRect(60, y, W - 120, 138, 22); x.fill();
+      x.fillStyle = '#5ece99'; x.font = '800 44px Inter, system-ui, sans-serif'; x.fillText(String(i + 1), 96, y + 44);
+      x.fillStyle = '#edf0f7'; x.fillText(fit(r.name, 600, '700 38px Inter, system-ui, sans-serif'), 160, y + 30);
+      x.fillStyle = '#9aa3b2'; x.font = '500 30px Inter, system-ui, sans-serif'; x.fillText(r.sub || '', 160, y + 82);
+      x.fillStyle = /^-/.test(r.value) ? '#f87171' : '#5ece99'; x.font = '800 46px Inter, system-ui, sans-serif';
+      const vw = x.measureText(r.value).width; x.fillText(r.value, W - 96 - vw, y + 44);
+      y += 158;
+    });
+    x.fillStyle = '#edf0f7'; x.font = '700 40px Inter, system-ui, sans-serif';
+    x.fillText('Check any card free: thecardhuddle.com', 72, H - 110);
+    return c;
+  }
+  async function loadSocial() {
+    const box = artEl('soc-grid');
+    try {
+      const d = await artApi('/api/admin/social');
+      if (!d.available) { box.innerHTML = '<p style="color:var(--text-muted)">The boards are not built yet. They appear after the first market rebuild of the week.</p>'; return; }
+      if (document.fonts && document.fonts.load) await document.fonts.load('800 40px Inter').catch(() => {});
+      box.innerHTML = '';
+      for (const [key, title, sub] of SOC_BOARDS) {
+        const rows = d[key] || [];
+        if (rows.length < 3) continue;
+        const canvas = socDraw(title, sub, rows, d.week);
+        const link = `https://thecardhuddle.com/?ref=social-${key.toLowerCase()}`;
+        const caption = `${title} this week on The Card Huddle:\n` + rows.slice(0, 3).map((r, i) => `${i + 1}. ${r.name} (${r.value})`).join('\n')
+          + `\n\nCheck what your cards sell for, free: ${link}\n#footballcards #thehobby #sportscards`;
+        const el = document.createElement('div');
+        el.className = 'soc-card';
+        el.innerHTML = `<img alt="${escHtml(title)}"><textarea readonly></textarea><div class="soc-btns"><button type="button">Download</button><button type="button" class="ghost">Copy caption</button></div>`;
+        el.querySelector('img').src = canvas.toDataURL('image/png');
+        el.querySelector('textarea').value = caption;
+        const [dl, cp] = el.querySelectorAll('button');
+        dl.onclick = () => canvas.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `card-huddle-${key}-${d.week}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
+        cp.onclick = () => navigator.clipboard && navigator.clipboard.writeText(caption).then(() => { cp.textContent = 'Copied'; setTimeout(() => cp.textContent = 'Copy caption', 1500); });
+        box.appendChild(el);
+      }
+      if (!box.children.length) box.innerHTML = '<p style="color:var(--text-muted)">Not enough movement on the boards this week yet.</p>';
+    } catch (err) {
+      box.innerHTML = `<p style="color:var(--red)">Could not load the boards: ${escHtml(err.message)}</p>`;
     }
   }
 
