@@ -492,7 +492,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         subs[username].stripeCustomerId = session.customer;
         subs[username].stripeSubscriptionId = session.subscription;
         subs[username].subscribedAt = new Date().toISOString();
-        subs[username].status = 'active';
+        subs[username].status = session.metadata?.trial ? 'trialing' : 'active';
+        if (session.metadata?.trial) subs[username].trialUsed = new Date().toISOString();
       }
       saveSubscriptions(subs);
       break;
@@ -18110,6 +18111,9 @@ app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
       return res.status(500).json({ error: 'Could not change the plan. Please try again.' });
     }
   }
+  // The free trial (owner, Nov 2026): Huddle+ only, once per account, card
+  // taken at checkout; Stripe bills when the 7 days end unless cancelled.
+  const trial = tier !== 'adfree' && _huddleTrialEligible(rec);
   try {
     const product = await _tierProductId(tier);
     const existing = rec.stripeCustomerId;
@@ -18119,8 +18123,8 @@ app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
       allow_promotion_codes: true,
       ...(existing ? { customer: existing } : {}),
       client_reference_id: username,
-      metadata: { username, period, plan: 'adfree', tier },
-      subscription_data: { metadata: { username, plan: 'adfree', tier } },
+      metadata: { username, period, plan: 'adfree', tier, ...(trial ? { trial: '1' } : {}) },
+      subscription_data: { metadata: { username, plan: 'adfree', tier }, ...(trial ? { trial_period_days: HUDDLE_TRIAL_DAYS } : {}) },
       success_url: `${siteOrigin(req)}/?payment=success&plan=adfree`,
       cancel_url: `${siteOrigin(req)}/?payment=cancelled`,
     });
@@ -20520,7 +20524,16 @@ function _huddleTier(user) {
   const t = (getEffectiveSubscription(user) || {}).tier;
   return HUDDLE_PLANS[t] ? t : HUDDLE_LEGACY_TIER;
 }
-const _huddleCredits = (user) => { const t = _huddleTier(user); return t ? HUDDLE_PLANS[t].credits : 0; };
+// During the free trial the AI gets Rookie's tokens whatever the plan (owner,
+// Nov 2026), so a trial that is cancelled costs at most the cheapest plan's.
+const HUDDLE_TRIAL_DAYS = 7;
+const _huddleTrialing = (user) => (getEffectiveSubscription(user) || {}).status === 'trialing';
+const _huddleTrialEligible = (rec) => !(rec && (rec.trialUsed || rec.stripeSubscriptionId));
+const _huddleCredits = (user) => {
+  const t = _huddleTier(user);
+  if (!t) return 0;
+  return _huddleTrialing(user) ? Math.min(HUDDLE_PLANS[t].credits, HUDDLE_PLANS.rookie.credits) : HUDDLE_PLANS[t].credits;
+};
 const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (_huddleAiOwner(user) || _huddleCredits(user) > 0));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
 const _huddleSpendKey = (user) => `ai:spend:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`;
@@ -20949,7 +20962,10 @@ app.get('/api/ai/usage', async (req, res) => {
   const credits = unlimited ? null : _huddleCredits(user);
   const spent = user ? (((await cacheGet(_huddleSpendKey(user))) || {}).usd || 0) : 0;
   const per = await _huddleCostPerAnswer();
-  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier, tierName: tier ? HUDDLE_PLANS[tier].name : null,
+  const trialing = !!(user && _huddleTrialing(user));
+  const trialEligible = !!user && !tier && _huddleTrialEligible(loadSubscriptions()[user]);
+  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier, tierName: tier ? HUDDLE_PLANS[tier].name + (trialing ? ' (free trial)' : '') : null,
+    trialing, trialEligible: trialEligible || !user, trialDays: HUDDLE_TRIAL_DAYS, trialTokens: HUDDLE_PLANS.rookie.shown,
     tokens: credits == null ? null : _toTokens(credits), tokensUsed: Math.min(_toTokens(spent), credits == null ? Infinity : _toTokens(credits)),
     pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
     resetsAt: _nextMonthUtc(), deepTimes: Math.round(per.deep / per.normal), plans: await _huddlePlansPublic(),
