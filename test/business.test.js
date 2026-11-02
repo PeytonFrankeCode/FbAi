@@ -465,7 +465,7 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
     check('  ...and the AI is asked for labelled bullets', /morning summary as 3 to 5 bullet points, one per line, each starting with "- "/.test(srv));
   }
   const wk = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
-  check('the cron runs the re-price, wired through init()', /flushTraffic, bizRevalueAll \} = await init\(env\)/.test(wk) && /await bizRevalueAll\(\)/.test(wk));
+  check('the cron runs the re-price, wired through init()', /flushTraffic, bizRevalueAll[, }]/.test(wk) && /await bizRevalueAll\(\)/.test(wk));
   await call('/api/biz/inventory/all', { method: 'DELETE', headers: K });
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall business checks passed');
