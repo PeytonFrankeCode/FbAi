@@ -1010,6 +1010,16 @@ export default {
           'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable' } });
       }
+      // Shared price images (server.js /api/share), under share/ in R2,
+      // named by content: the preview picture a shared /s/<id> link shows.
+      if (url.pathname.startsWith('/s/') && url.pathname.endsWith('.png') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
+        const name = url.pathname.slice('/s/'.length);
+        if (!/^[a-f0-9]{16}\.png$/.test(name)) return new Response('Not found', { status: 404 });
+        const obj = await env.PHOTOS.get('share/' + name);
+        if (!obj) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'public, max-age=60' } });
+        return new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers: {
+          'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=31536000, immutable' } });
+      }
       // Business card photos for eBay listings (server.js _bizStorePhoto),
       // under biz/ in R2, named by content.
       if (url.pathname.startsWith('/biz/img/') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
@@ -1083,7 +1093,7 @@ export default {
       // from stored articles on each request so a crawler is served real
       // markup rather than the SPA shell, which is the entire point of having
       // them — an empty <div id="app"> ranks for nothing.
-      const SERVER_RENDERED = /^\/(news(\/|$)|sitemap-news\.xml$)/;
+      const SERVER_RENDERED = /^\/(news(\/|$)|sitemap-news\.xml$|s\/[a-f0-9]{16}$)/;
 
       // Static files and SPA fallback — served by Cloudflare ASSETS binding.
       // ANY other non-/api request goes here, including bot scans like
