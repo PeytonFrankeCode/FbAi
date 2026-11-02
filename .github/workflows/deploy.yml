@@ -6,6 +6,11 @@ on:
       - main
   # Manual trigger, so a deploy can be re-run without inventing a commit.
   workflow_dispatch:
+    inputs:
+      indexnow_dead:
+        description: 'Also tell IndexNow about every generated page that is not built (404s)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -272,6 +277,17 @@ jobs:
             > public/build.json
           cat public/build.json
 
+      # The pages the live site serves, before this deploy replaces them, so
+      # the IndexNow step can tell search engines which pages this deploy
+      # removed (they answer 404) and which it added. Best-effort.
+      - name: Save the live site's page list
+        continue-on-error: true
+        run: |
+          mkdir -p .cache
+          curl -sSf --max-time 20 https://thecardhuddle.com/data/built-pages.json -o .cache/live-built-pages.json \
+            && node -e "console.log('live pages:', JSON.parse(require('fs').readFileSync('.cache/live-built-pages.json','utf8')).length)" \
+            || { echo "::warning::Could not read the live page list; removed pages are not reported to IndexNow this run."; rm -f .cache/live-built-pages.json; }
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
@@ -466,4 +482,12 @@ jobs:
       # thousands of unchanged URLs every deploy is how a host gets ignored.
       - name: Notify search engines of changed pages (IndexNow)
         run: node scripts/indexnow-submit.js
+        continue-on-error: true
+
+      # One-off catch-up, by hand only (Actions > Deploy > Run workflow, tick
+      # the box): every generated address the plan does not build, so Bing
+      # drops the pages pruned in Oct 2026 without crawling each 404.
+      - name: Notify search engines of every unbuilt page (IndexNow, on request)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.indexnow_dead }}
+        run: node scripts/indexnow-submit.js --dead
         continue-on-error: true

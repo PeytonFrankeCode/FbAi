@@ -356,6 +356,7 @@ const OTHER_SPORT_PLAYERS = 150;
 const INDEX_FLOOR = { product: INDEX_MIN_PRODUCT_CARDS, subset: INDEX_MIN_SUBSET_CARDS, player: INDEX_MIN_PLAYER_CARDS };
 let INDEXED = new Set();   // `${sport}:${kind}:${key}`, filled by planIndex()
 let BUILT = new Set();     // URL paths, filled by planIndex()
+let PLANNED = new Set();   // every generated URL path the plan considered, built or not
 const isIndexed = (kind, key) => INDEXED.has(`${S.id}:${kind}:${key}`);
 const isBuilt = (urlPath) => BUILT.has(urlPath);
 
@@ -372,7 +373,7 @@ function loadPricedKeys() {
 
 function planIndex(sports) {
   const priced = loadPricedKeys();
-  INDEXED = new Set(); BUILT = new Set();
+  INDEXED = new Set(); BUILT = new Set(); PLANNED = new Set();
   const cands = [];
   for (const { cfg, ctx } of sports) {
     const b = cfg.base || '';
@@ -380,12 +381,18 @@ function planIndex(sports) {
       BUILT.add(`${b}/players/`);
       const top = [...ctx.eligible].sort((x, y) => y.cards.length - x.cards.length || (x.name < y.name ? -1 : 1)).slice(0, OTHER_SPORT_PLAYERS);
       for (const p of top) BUILT.add(`${b}/players/${p.slug}/`);
+      for (const p of ctx.eligible) PLANNED.add(`${b}/players/${p.slug}/`);
+      for (const cl of ctx.checklists) {
+        PLANNED.add(`${b}/sets/${cl.id}/`);
+        for (const sub of (ctx.subsetIndex.get(cl.id) || [])) PLANNED.add(`${b}/sets/${cl.id}/${sub.slug}/`);
+      }
       continue;
     }
     for (const h of ['/sets/', '/players/', '/teams/']) BUILT.add(h);
     for (const y of ctx.years) BUILT.add(`/sets/${y}/`);
     for (const t of ctx.teams) BUILT.add(`/teams/${t.slug}/`);
     const add = (kind, key, cards, urlPath, priceKey) => {
+      PLANNED.add(urlPath);
       const clicks = isEarner(urlPath) ? ((EARNER_PAGES[urlPath] || [1])[0] || 1) : 0;
       const sales = priced.get(priceKey) || 0;
       if (kind === 'subset' && !clicks) return;
@@ -1865,6 +1872,13 @@ function main() {
   // What was built, for the Worker: a generated address not on this list
   // answers 404 rather than the app shell (worker.js isBuiltPage).
   fs.writeFileSync(path.join(PUBLIC_DIR, 'data', 'built-pages.json'), JSON.stringify([...BUILT].sort()) + '\n');
+  // What was not built, for IndexNow (scripts/indexnow-submit.js --dead): these
+  // addresses answer 404 now, and Bing asks to be told rather than find out by
+  // crawling tens of thousands of them. Build output, not committed.
+  const unbuilt = [...PLANNED].filter(p => !BUILT.has(p)).sort();
+  fs.mkdirSync(path.join(__dirname, '..', '.cache'), { recursive: true });
+  fs.writeFileSync(path.join(__dirname, '..', '.cache', 'unbuilt-pages.json'), JSON.stringify(unbuilt) + '\n');
+  console.log(`unbuilt: ${unbuilt.length} generated addresses answer 404 (.cache/unbuilt-pages.json)`);
   fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
   console.log(`sitemap: ${urls.length} indexable URLs across every sport`);
