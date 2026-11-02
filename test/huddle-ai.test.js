@@ -323,6 +323,8 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
     const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
     check('the menu opens Huddle AI, and the plan is sold as Huddle+',
       /openHuddleAI\(\)/.test(html) && /Huddle\+/.test(html) && /function openHuddleAI/.test(app) && /\/api\/ai\/ask/.test(app) && /Choose your plan/.test(app) && /About \$\{_num\(p\.answers\)\} AI answers/.test(app) && /id="hai-deep"/.test(app));
+    check('  ...and the AI\'s charts are full charts: every point, tap or drag to read it, like the market page',
+      /function _haiChart\(points, key\)/.test(app) && /attachPointReadout\(chart, box\.id \+ '-r'/.test(app) && /_haiChart\(v\.points, 'value'\)/.test(app) && /_haiMountCharts\(\);\n  log\.scrollTop/.test(app));
     check('  ...answers are escaped before their light formatting', /function _haiFormat[\s\S]{0,200}escHtml\(t\)/.test(app));
     check('  ...questions can be spoken, with the browser\'s own speech recognition, and the mic shows only where it exists', /window\.SpeechRecognition \|\| window\.webkitSpeechRecognition/.test(app) && /if \(!SR \|\| !mic\) return;/.test(app) && /id="hai-mic"/.test(app));
     check('  ...the microphone is asked for on its own first, and a recogniser that never started is reset so the next tap works', /navigator\.mediaDevices\.getUserMedia\(\{ audio: true \}\)/.test(app) && /watchdog = setTimeout\(\(\) => \{ if \(rec && !started\) reset\(true\); \}/.test(app));

@@ -10534,3 +10534,10 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-side-del { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0.2rem 0.4rem; line-height: 1; }
 .hai-side-del:hover { color: #ef4444; }
 .hai-side-empty { font-size: 0.85rem; color: var(--text-muted); }
+
+/* Huddle AI charts (owner, Nov 2026): taller, every point, tap or drag to read */
+.hai-chart { position: relative; height: 170px; margin: 0.35rem 0 0.2rem; }
+.hai-chart .hai-spark { height: 100%; }
+.hai-chart-read { font-size: 0.78rem; color: var(--text-secondary); min-height: 1.2em; margin-top: 0.3rem; }
+.hai-chart-read b { color: var(--text-primary); }
+.hai-card:has(.hai-chart) { flex-direction: column; align-items: stretch; }
