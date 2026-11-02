@@ -6022,6 +6022,47 @@ function _haiSpark(points, key) {
   return `<svg class="hai-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Trend over ${pts.length} points">
     <polygon points="${area}" class="hai-spark-area"/><polyline points="${line}" class="hai-spark-line"/><circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" class="hai-spark-dot"/></svg>`;
 }
+// The AI's charts as the market page draws them (owner, Nov 2026): every
+// point a dot, tap or drag across to read a day's value, instead of a
+// squashed line. The small line shows until Chart.js is there.
+let _haiChartN = 0;
+function _haiChart(points, key) {
+  const pts = (points || []).filter(p => Number.isFinite(p[key]));
+  if (pts.length < 2) return '';
+  const id = 'haic' + (++_haiChartN);
+  const data = { key, labels: pts.map(p => p.date), values: pts.map(p => p[key]) };
+  return `<div class="hai-chart-read" id="${id}-r">Tap or drag across the chart</div><div class="hai-chart" id="${id}" data-chart="${escHtml(JSON.stringify(data))}">${_haiSpark(points, key)}</div>`;
+}
+function _haiMountCharts() {
+  const boxes = document.querySelectorAll('#hai-log .hai-chart[data-chart]:not([data-mounted])');
+  if (!boxes.length) return;
+  if (!_chartReady(_haiMountCharts)) return;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5ece99';
+  const muted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#8a93a6';
+  for (const box of boxes) {
+    let d; try { d = JSON.parse(box.dataset.chart); } catch (_) { continue; }
+    box.dataset.mounted = '1';
+    box.innerHTML = '<canvas></canvas>';
+    const price = d.key === 'price';
+    const fmt = (v) => (price ? _haiMoney(v) : Number(v).toFixed(1));
+    const first = d.values[0];
+    const chart = new Chart(box.querySelector('canvas'), {
+      type: 'line',
+      data: { labels: d.labels.map(_haiDay), datasets: [{ data: d.values, borderColor: accent, backgroundColor: accent + '22', fill: true, tension: 0.25,
+        borderWidth: 2, pointRadius: d.values.length > 40 ? 1.5 : 3, pointBackgroundColor: accent, pointHoverRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(c.parsed.y) } } },
+        scales: { x: { ticks: { color: muted, maxTicksLimit: 5, maxRotation: 0, font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: muted, maxTicksLimit: 4, font: { size: 10 }, callback: (v) => fmt(v) }, grid: { color: 'rgba(148,163,184,0.12)' } } } },
+    });
+    (_hai.charts = _hai.charts || []).push(chart);
+    attachPointReadout(chart, box.id + '-r', (i) => {
+      const v = d.values[i];
+      const vs = !price && first ? ` · ${v >= first ? '+' : '−'}${Math.abs(((v - first) / first) * 100).toFixed(1)}% vs start` : '';
+      return `<b>${escHtml(_haiDay(d.labels[i]))}</b> · ${escHtml(fmt(v))}${escHtml(vs)}`;
+    });
+  }
+}
 function _haiMoney(v) { return v == null ? '-' : '$' + Number(v).toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 0 : 2 }); }
 function _haiDay(d) { const t = new Date(`${d}T12:00:00`); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 // The sales an answer is built on (owner, Oct 2026): newest first, five
@@ -6045,7 +6086,7 @@ function _haiVisuals(list) {
       return `<div class="hai-card">${photo}<div class="hai-card-body">
         <span class="hai-card-k">Sold prices</span><b class="hai-card-v">${_haiMoney(v.median)}</b>
         <span class="hai-card-sub">typical of ${v.n} sale${v.n === 1 ? '' : 's'}${v.low != null && v.high != null && v.low !== v.high ? ` · ${_haiMoney(v.low)}–${_haiMoney(v.high)}` : ''}</span>
-        ${_haiSpark(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
+        ${_haiChart(pts, 'price')}${span ? `<span class="hai-card-sub">${span}</span>` : ''}
         <a class="hai-more" href="/?q=${encodeURIComponent(v.query || '')}" onclick="closeHuddleAI()">See every sale &rarr;</a></div></div>${_haiSalesList(v.recent)}`;
     }
     if (v.kind === 'grading') {
@@ -6059,7 +6100,7 @@ function _haiVisuals(list) {
       return `<div class="hai-card"><div class="hai-card-body">
         <span class="hai-card-k">${escHtml(v.player || 'Player')} · ${v.days} days</span>
         <b class="hai-card-v ${flat ? '' : up ? 'hai-up' : 'hai-down'}">${v.changePct > 0 ? '+' : ''}${v.changePct != null ? v.changePct + '%' : '-'}</b>
-        ${_haiSpark(v.points, 'value')}</div></div>`;
+        ${_haiChart(v.points, 'value')}</div></div>`;
     }
     if (v.kind === 'listings') {
       return `<div class="hai-live"><span class="hai-card-k">For sale on eBay now</span><div class="hai-live-row">${v.items.map(it => `
@@ -6075,6 +6116,8 @@ const HAI_EXAMPLES = ['What is a 2024 Prizm Jayden Daniels Silver worth?', 'Shou
 function _haiPaint() {
   const log = document.getElementById('hai-log');
   if (!log) return;
+  (_hai.charts || []).forEach(c => { try { c.destroy(); } catch (_) { /* gone */ } });
+  _hai.charts = [];
   const intro = `<div class="hai-msg hai-bot"><p>Ask me about any card: what it sells for, whether it's worth grading, or how a player's market is moving.</p>
     <div class="hai-chips">${HAI_EXAMPLES.map(t => `<button type="button" class="hai-chip">${escHtml(t)}</button>`).join('')}</div></div>`;
   const lastBot = _hai.msgs.map((m, i) => (m.role === 'assistant' && !m.error ? i : -1)).filter(i => i >= 0).pop();
@@ -6092,6 +6135,7 @@ function _haiPaint() {
     if (!_hai.usage || !_hai.usage.plus) return;
     document.getElementById('hai-q').value = b.textContent; _haiAsk();
   }));
+  _haiMountCharts();
   log.scrollTop = log.scrollHeight;
 }
 function _haiUsageLine(u) {
