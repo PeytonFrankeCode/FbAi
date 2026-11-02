@@ -332,6 +332,14 @@
     .art-help { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5; }
     .art-help code { color: var(--text-secondary); }
     /* ---- Article performance (/api/admin/news/stats) ---- */
+    .gr-link { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 0.9rem; }
+    .gr-link input { flex: 1 1 12rem; background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary);
+      border-radius: 8px; padding: 0.5rem 0.65rem; font: inherit; font-size: 0.9rem; }
+    .gr-out { font-size: 0.85rem; margin: -0.4rem 0 1rem; display: grid; gap: 0.35rem; }
+    .gr-out div { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .gr-out code { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 0.25rem 0.45rem; word-break: break-all; }
+    .gr-out button, .gr-link button { background: var(--accent); color: #06231a; border: 0; border-radius: 6px; padding: 0.3rem 0.65rem; font-weight: 700; cursor: pointer; }
+    .gr-org td:first-child { color: var(--text-secondary); }
     .ap-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.9rem; }
     .ap-head select { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 8px;
       padding: 0.45rem 0.6rem; font: inherit; font-size: 0.85rem; }
@@ -382,6 +390,31 @@
   <div class="page-title">Business waitlist</div>
   <div class="page-subtitle" id="bw-sub">Sellers who asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.</div>
   <div id="bw-list" style="margin-bottom:2.5rem"></div>
+
+  <!-- Growth: where collectors come from, by source (/api/admin/growth) -->
+  <div class="page-title">Growth</div>
+  <div class="ap-head">
+    <div class="page-subtitle" style="margin:0;flex:1 1 16rem">Where visitors come from and which sources turn into accounts, trials and paid plans. Give every creator or post its own link.</div>
+    <select id="gr-days" aria-label="Period" onchange="loadGrowth()">
+      <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+    </select>
+  </div>
+  <div class="gr-link">
+    <input id="gr-name" placeholder="Make a link: creator or post name, e.g. cardcollector22" maxlength="40" oninput="growthLink()" />
+  </div>
+  <div class="gr-out" id="gr-out"></div>
+  <div class="ap-tiles">
+    <div class="ap-tile"><b id="gr-visits">&ndash;</b><span>Visits</span></div>
+    <div class="ap-tile"><b id="gr-signups">&ndash;</b><span>New accounts</span></div>
+    <div class="ap-tile"><b id="gr-trials">&ndash;</b><span>Free trials started</span></div>
+    <div class="ap-tile"><b id="gr-paid">&ndash;</b><span>Paid plans (incl. trials that converted)</span></div>
+  </div>
+  <div class="ap-bars" id="gr-bars" aria-label="Visits by day"></div>
+  <div class="ap-table"><table>
+    <thead><tr><th>Source</th><th>Visits</th><th>Accounts</th><th>Visit &rarr; account</th><th>Trials</th><th>Paid</th><th>Trial &rarr; paid</th></tr></thead>
+    <tbody id="gr-rows"><tr><td colspan="7" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+  <p class="ap-note">Grey rows are visitors with no link: search engines, social sites, typed-in or bookmarked, and other sites. Named rows come from <code>?ref=</code> links. Accounts, trials and paid plans count for the first link a browser arrived from in the last 30 days. Counting started Nov 2026.</p>
 
   <!-- Article performance: reads counted on each article (/api/admin/news/stats) -->
   <div class="page-title">Article performance</div>
@@ -596,6 +629,7 @@
       loadEstimateAccuracy();
       loadArticles();
       loadArticleStats();
+      loadGrowth();
       loadWaitlist();
       loadSurveys();
       loadGiveawayEntrants();
@@ -807,6 +841,46 @@
         : '<tr><td colspan="8" style="color:var(--text-muted)">No reads counted yet. Numbers appear here as people open your articles.</td></tr>';
     } catch (err) {
       rowsEl.innerHTML = `<tr><td colspan="8" style="color:var(--red)">Could not load article stats: ${escHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  // Growth (owner, Nov 2026): visits, accounts, trials and paid plans by source.
+  const GR_ORG = { 'org-search': 'Search engines', 'org-social': 'Social sites (no link)', 'org-direct': 'Typed in or bookmarked', 'org-other': 'Other websites' };
+  function growthLink() {
+    const n = artEl('gr-name').value.toLowerCase().trim().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    const out = artEl('gr-out');
+    if (!n) { out.innerHTML = ''; return; }
+    const links = [['Huddle AI page', `https://thecardhuddle.com/ai?ref=${n}`], ['Price search', `https://thecardhuddle.com/?ref=${n}`]];
+    out.innerHTML = links.map(([label, url]) => `<div><span>${label}:</span><code>${escHtml(url)}</code><button type="button" data-copy="${escHtml(url)}">Copy</button></div>`).join('');
+    out.querySelectorAll('button[data-copy]').forEach(b => b.onclick = () => {
+      navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); });
+    });
+  }
+  async function loadGrowth() {
+    const rowsEl = artEl('gr-rows');
+    try {
+      const r = await artApi('/api/admin/growth?days=' + artEl('gr-days').value);
+      const rows = r.sources || [];
+      const t = { visits: 0, signups: 0, trials: 0, paid: 0, converted: 0 };
+      for (const x of rows) for (const k in t) t[k] += x[k] || 0;
+      artEl('gr-visits').textContent = t.visits.toLocaleString();
+      artEl('gr-signups').textContent = t.signups.toLocaleString();
+      artEl('gr-trials').textContent = t.trials.toLocaleString();
+      artEl('gr-paid').textContent = (t.paid + t.converted).toLocaleString();
+      const byDay = Object.fromEntries((r.daily || []).map(d => [d.day, d.visits]));
+      const days = Number(r.days) || 30;
+      const list = Array.from({ length: days }, (_, i) => { const d = new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().slice(0, 10); return [d, byDay[d] || 0]; });
+      const max = Math.max(1, ...list.map(d => d[1]));
+      artEl('gr-bars').innerHTML = list.map(([d, n]) => `<i style="height:${Math.max(2, Math.round(60 * n / max))}px" title="${d}: ${n} visit${n === 1 ? '' : 's'}"></i>`).join('');
+      const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '&ndash;';
+      // Named links first (the ones being paid for), then the organic rows.
+      rows.sort((a, b) => (a.organic - b.organic) || (b.visits - a.visits));
+      rowsEl.innerHTML = rows.length ? rows.map(x => `<tr class="${x.organic ? 'gr-org' : ''}"><td>${escHtml(GR_ORG[x.src] || x.src)}</td>
+        <td>${x.visits.toLocaleString()}</td><td>${x.signups}</td><td>${pct(x.signups, x.visits)}</td>
+        <td>${x.trials}</td><td>${x.paid + x.converted}</td><td>${pct(x.converted, x.trials)}</td></tr>`).join('')
+        : '<tr><td colspan="7" style="color:var(--text-muted)">No visits counted yet. They appear here as people arrive.</td></tr>';
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="7" style="color:var(--red)">Could not load growth: ${escHtml(err.message)}</td></tr>`;
     }
   }
 

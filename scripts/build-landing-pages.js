@@ -656,6 +656,7 @@ function footer() {
   </footer>
   <script>/* The site's own devices never send affiliate clicks (see epnUrl in app.js). */
   document.addEventListener('click',function(e){try{if(localStorage.getItem('chNoAffiliate')!=='1')return;var a=e.target.closest&&e.target.closest('a[href*="campid="]');if(a)a.href=a.href.replace(/([?&])(?:mkcid|mkrid|siteid|campid|toolid|mkevt|customid)=[^&#]*/g,'$1').replace(/[?&]+(?=#|$)/,'').replace(/\?&+/,'?').replace(/&{2,}/g,'&');}catch(_){}},true);</script>
+  <script src="/growth.js" defer></script>
 </body>
 </html>`;
 }
@@ -1868,6 +1869,8 @@ function main() {
     S = cfg;
     urls.push(...buildSport(ctx));
   }
+  // The Huddle AI page (public/ai.html), a hand-written page worth indexing.
+  urls.push(`  <url>\n    <loc>${SITE}/ai</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`);
   if (BUILT.size > PAGE_CAP) throw new Error(`${BUILT.size} pages planned, over the ${PAGE_CAP} cap`);
   // What was built, for the Worker: a generated address not on this list
   // answers 404 rather than the app shell (worker.js isBuiltPage).
