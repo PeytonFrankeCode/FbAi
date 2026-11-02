@@ -8,7 +8,9 @@ const PUB = path.join(__dirname, '..', 'public');
 const PUBLIC_PAGES = new Set(['index.html', 'about.html', 'contact.html',
   'methodology.html', 'privacy.html', 'terms.html',
   // Card Huddle for Business: a public landing page; the tool behind it signs in.
-  'business.html']);
+  'business.html',
+  // Huddle AI: the public page for the one paid plan (owner, Nov 2026).
+  'ai.html']);
 
 let failures = 0;
 for (const f of fs.readdirSync(PUB).filter(f => f.endsWith('.html'))) {

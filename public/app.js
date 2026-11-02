@@ -6294,6 +6294,10 @@ async function _haiAsk() {
     // Every visit: is the plan still on? Off when it lapsed or was cancelled.
     setTimeout(_refreshAdFreePlan, 1500);
   }
+  // Links from the /ai page and creators' posts: ?plans=1 opens the plan
+  // picker, ?ai=1 opens Huddle AI.
+  if (params.get('plans') === '1') setTimeout(openAdFree, 300);
+  else if (params.get('ai') === '1') setTimeout(openHuddleAI, 300);
 })();
 
 // The front page's ad unit, below the market panel. Built here rather than in
@@ -6542,6 +6546,20 @@ function getSessionToken() { return localStorage.getItem('cardHuddleToken') || n
 function setSessionToken(token) {
   if (token) localStorage.setItem('cardHuddleToken', token);
   else localStorage.removeItem('cardHuddleToken');
+  if (token) _growthClaim(token);
+}
+// Growth (owner, Nov 2026): a new account claims the creator link or post its
+// browser first arrived from (growth.js). The server only counts an account
+// made in the last ten minutes, so signing in to an old one claims nothing.
+function _growthClaim(token) {
+  try {
+    const src = typeof window.chGrowthRef === 'function' ? window.chGrowthRef() : '';
+    if (!src || localStorage.getItem('chRefClaimed') === token.slice(0, 12)) return;
+    localStorage.setItem('chRefClaimed', token.slice(0, 12));
+    fetch('/api/growth/claim', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ src }) }).catch(() => {});
+  } catch (_) { /* storage off: nothing to claim */ }
 }
 
 function getCurrentUser() {

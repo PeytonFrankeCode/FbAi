@@ -441,7 +441,7 @@ function _bizSubEvent(subs, sub, status) {
 }
 
 // Stripe webhook needs raw body — must be before express.json()
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe not configured' });
 
   let event;
@@ -494,6 +494,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         subs[username].subscribedAt = new Date().toISOString();
         subs[username].status = session.metadata?.trial ? 'trialing' : 'active';
         if (session.metadata?.trial) subs[username].trialUsed = new Date().toISOString();
+        // Growth: the source the account came from gets the trial or the sale.
+        if (session.metadata?.ref) {
+          subs[username].ref = session.metadata.ref;
+          await _growthBump(session.metadata.ref, session.metadata?.trial ? 'trials' : 'paid');
+        }
       }
       saveSubscriptions(subs);
       break;
@@ -516,8 +521,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       if (_bizSubEvent(subs, sub, sub.status === 'active' ? 'active' : sub.status)) { saveSubscriptions(subs); break; }
       for (const [user, data] of Object.entries(subs)) {
         if (data.stripeCustomerId === sub.customer && !data.permanent) {
+          const was = data.status;
           data.status = sub.status === 'active' ? 'active' : sub.status;
           if (sub.metadata && sub.metadata.tier) data.tier = sub.metadata.tier;
+          // Growth: a trial that became a paid plan, for the source it came from.
+          if (was === 'trialing' && data.status === 'active' && data.ref) await _growthBump(data.ref, 'converted');
           break;
         }
       }
@@ -9804,8 +9812,8 @@ const PRICE_COVERAGE_TTL = 3600;
 // drift silently away from what build-landing-pages.js emits. Football only:
 // the basketball and baseball pages have no sold data to be priced by.
 // Under the 4,000-page cap (owner, Oct 2026): every football page built is
-// offered to search, plus the home page and three hand-written pages.
-const INDEXABLE_URLS = 3702;
+// offered to search, plus the home page and four hand-written pages (one is /ai).
+const INDEXABLE_URLS = 3703;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -18123,7 +18131,7 @@ app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
       allow_promotion_codes: true,
       ...(existing ? { customer: existing } : {}),
       client_reference_id: username,
-      metadata: { username, period, plan: 'adfree', tier, ...(trial ? { trial: '1' } : {}) },
+      metadata: { username, period, plan: 'adfree', tier, ...(trial ? { trial: '1' } : {}), ...(_growthRefOf(username) ? { ref: _growthRefOf(username) } : {}) },
       subscription_data: { metadata: { username, plan: 'adfree', tier }, ...(trial ? { trial_period_days: HUDDLE_TRIAL_DAYS } : {}) },
       success_url: `${siteOrigin(req)}/?payment=success&plan=adfree`,
       cancel_url: `${siteOrigin(req)}/?payment=cancelled`,
@@ -19244,6 +19252,113 @@ app.get('/api/admin/news/stats', async (req, res) => {
       daily: ((daily && daily.results) || []).map(r => ({ day: r.day, views: Number(r.views) || 0 })) });
   } catch (err) {
     console.error('[news/stats]', err && err.message);
+    res.status(500).json({ error: 'Stats could not be read' });
+  }
+});
+
+// ---- Growth tracking (owner, Nov 2026) ------------------------------------
+//
+// Where collectors come from, and which sources turn into accounts, trials
+// and paying plans, so ad money goes where it works. A creator or post gets a
+// link with ?ref=<name> (or utm_source=<name>); visits without one are filed
+// under where the browser says it came from (org-search, org-social,
+// org-direct, org-other). One D1 row per source per day, nothing about the
+// person kept. The source a browser first arrived from (30 days) is claimed by
+// an account made in the next ten minutes, carried into checkout as Stripe
+// metadata, and counted again when a trial starts, a plan is paid for or a
+// trial turns into a paid plan.
+const GROWTH_TABLE = 'growth_stats';
+const GROWTH_COLS = ['visits', 'signups', 'trials', 'paid', 'converted'];
+const GROWTH_ORGANIC = ['org-search', 'org-social', 'org-direct', 'org-other'];
+const GROWTH_CLAIM_MS = 10 * 60 * 1000;
+function _growthSrc(s) {
+  const v = String(s || '').toLowerCase().trim().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  return v || '';
+}
+let _growthReady = null;
+async function _growthDb() {
+  const db = getNflDb();
+  if (!db) return null;
+  if (_growthReady === null) {
+    try {
+      await db.prepare(
+        `CREATE TABLE IF NOT EXISTS ${GROWTH_TABLE} (
+           day TEXT NOT NULL,
+           src TEXT NOT NULL,
+           ${GROWTH_COLS.map(c => c + ' INTEGER NOT NULL DEFAULT 0').join(',\n           ')},
+           PRIMARY KEY (day, src)
+         )`).run();
+      _growthReady = true;
+    } catch (err) {
+      console.error('[growth] table unavailable:', err && err.message);
+      _growthReady = false;
+    }
+  }
+  return _growthReady ? db : null;
+}
+async function _growthBump(src, col) {
+  src = _growthSrc(src);
+  if (!src || !GROWTH_COLS.includes(col)) return;
+  try {
+    const db = await _growthDb();
+    if (!db) return;
+    await db.prepare(
+      `INSERT INTO ${GROWTH_TABLE} (day, src, ${col}) VALUES (?, ?, 1)
+       ON CONFLICT(day, src) DO UPDATE SET ${col} = ${col} + 1`)
+      .bind(new Date().toISOString().slice(0, 10), src).run();
+  } catch (err) {
+    console.error('[growth] bump', err && err.message);
+  }
+}
+
+// A visit: the page sends it once per browser session.
+app.post('/api/growth/visit', async (req, res) => {
+  const ua = String(req.headers['user-agent'] || '');
+  const src = _growthSrc((req.body || {}).src);
+  if (src && ua && !_BOT_UA.test(ua)) await _growthBump(src, 'visits');
+  res.status(204).end();
+});
+
+// An account just made claims the source its browser arrived from. Only a
+// new account (made in the last ten minutes) and only once, so signing in
+// to an old account from a creator's link counts nothing.
+app.post('/api/growth/claim', async (req, res) => {
+  const username = getSessionUser(req);
+  const src = _growthSrc((req.body || {}).src);
+  if (!username || !src) return res.json({ ok: false });
+  const users = loadServerUsers();
+  const u = users[username];
+  const fresh = u && !u.ref && Date.now() - Date.parse(u.createdAt || 0) < GROWTH_CLAIM_MS;
+  if (!fresh) return res.json({ ok: false });
+  u.ref = src;
+  saveServerUsers(users);
+  await _growthBump(src, 'signups');
+  res.json({ ok: true });
+});
+function _growthRefOf(username) {
+  const u = loadServerUsers()[username];
+  return (u && u.ref) || '';
+}
+
+// The owner's table: each source's totals over the last N days.
+app.get('/api/admin/growth', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
+  const since = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10);
+  const db = await _growthDb();
+  if (!db) return res.json({ days, since, sources: [], daily: [], available: false });
+  try {
+    const sums = GROWTH_COLS.map(c => `SUM(${c}) AS ${c}`).join(', ');
+    const per = await db.prepare(
+      `SELECT src, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? GROUP BY src ORDER BY visits DESC`).bind(since).all();
+    const daily = await db.prepare(
+      `SELECT day, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? GROUP BY day ORDER BY day`).bind(since).all();
+    const num = (r) => Object.fromEntries(GROWTH_COLS.map(c => [c, Number(r[c]) || 0]));
+    res.json({ days, since, available: true,
+      sources: ((per && per.results) || []).map(r => ({ src: r.src, organic: GROWTH_ORGANIC.includes(r.src), ...num(r) })),
+      daily: ((daily && daily.results) || []).map(r => ({ day: r.day, ...num(r) })) });
+  } catch (err) {
+    console.error('[growth] stats', err && err.message);
     res.status(500).json({ error: 'Stats could not be read' });
   }
 });
@@ -21832,7 +21947,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
