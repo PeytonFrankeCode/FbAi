@@ -17524,10 +17524,65 @@ function _invFillSelect(el, options, selected) {
   ).join('');
 }
 
+// Your collection this week (owner, Nov 2026): Monday's figures from the
+// server (collectionWeekly), above the wallet. Until the first Monday, a
+// note saying it is coming and a button to get it as a notification.
+let _invWeek = null, _invWeekAt = 0;
+function _invWeekPaint(hasCards) {
+  const el = document.getElementById('inv-week');
+  if (!el) return;
+  const w = _invWeek;
+  if (!getSessionToken() || (!w && !hasCards)) { el.classList.add('hidden'); return; }
+  let html;
+  if (w) {
+    const dir = w.change == null || Math.abs(w.pct || 0) < 0.5 ? 'flat' : w.change > 0 ? 'up' : 'down';
+    const when = w.at ? new Date(w.at).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : '';
+    html = `<div class="inv-week-main ${dir}"><span class="inv-week-kicker">Your collection this week</span>
+      <strong>${escHtml(w.text || '')}</strong>
+      <span class="inv-week-sub">${w.priced} of your top ${w.cards} card${w.cards === 1 ? '' : 's'} priced from real sales${when ? ' &middot; ' + escHtml(when) : ''}</span></div>`;
+  } else {
+    html = `<div class="inv-week-main"><span class="inv-week-kicker">Coming Monday</span>
+      <strong>Every Monday we price your cards from that week's real sales and tell you how your collection moved.</strong>
+      <span class="inv-week-sub">It arrives by email and, if you turn them on, as a notification.</span></div>`;
+  }
+  const canPush = typeof _pushSupported === 'function' && _pushSupported() && typeof Notification !== 'undefined' && Notification.permission === 'default';
+  if (canPush) html += `<button type="button" class="inv-week-btn" onclick="_invWeekPushOn(this)">Get it as a notification</button>`;
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+async function _invWeekLoad(hasCards) {
+  if (getSessionToken() && Date.now() - _invWeekAt > 10 * 60 * 1000) {
+    _invWeekAt = Date.now();
+    try {
+      const r = await authFetch('/api/collection-week');
+      const d = r.ok ? await safeJson(r) : null;
+      _invWeek = d && d.available ? d : null;
+    } catch (_) { /* offline: keep what we had */ }
+  }
+  _invWeekPaint(hasCards);
+}
+async function _invWeekPushOn(btn) {
+  btn.disabled = true; btn.textContent = 'Turning on\u2026';
+  try {
+    const perm = await Notification.requestPermission();   // from the tap: iPhones insist
+    if (perm !== 'granted') { btn.remove(); return; }
+    const [reg, key] = await Promise.all([_pushReg(), _pushServerKey()]);
+    if (!reg || !key) throw new Error('unavailable');
+    const old = await reg.pushManager.getSubscription();
+    if (old && !_sameKey(old, key)) await old.unsubscribe();
+    const sub = (old && _sameKey(old, key) && old) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _keyBytes(key) });
+    if (!(await _pushSend(sub))) throw new Error('save failed');
+    btn.textContent = 'Notifications on';
+  } catch (_) {
+    btn.disabled = false; btn.textContent = 'Try again';
+  }
+}
+
 function renderInventory() {
   const listEl = document.getElementById('inventory-list');
   if (!listEl) return; // page not in the DOM (e.g. older cached HTML)
   const inv = getInventory();
+  _invWeekLoad(inv.items.length > 0);
 
   // ---- Stats ----
   const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);

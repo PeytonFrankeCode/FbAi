@@ -21947,7 +21947,182 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+// ---- Your collection this week (owner, Nov 2026) ---------------------------
+//
+// Every Monday each collector with cards in Inventory or Collection gets what
+// their cards are worth at this week's sold prices and how that moved since
+// last week: a push to their devices, and an email (one-click off). Their most
+// valuable cards (up to COLL_WEEK_CARDS) are priced with the Business pricer
+// (_bizValue: the sold search's rules, cached 12h and shared), never written
+// back over the values they typed. Spread over the Monday ticks from 15:00 UTC
+// with a cursor, and a card budget per tick, so D1 reads stay small.
+const COLL_WEEK_CARDS = 25;
+const COLL_WEEK_TICK_CARDS = 100;
+const COLL_WEEK_FROM_HOUR = 15;
+const COLL_WEEK_KEY = (u) => `coll:week:${String(u).toLowerCase()}`;
+const COLL_WEEK_RUN = (week) => `coll:run:${week}`;
+// The off link carries a random token kept on the account, made the first
+// time one is needed: no shared secret, and a guessed link does nothing.
+function _collWeekToken(user) {
+  const key = String(user).toLowerCase();
+  const users = loadServerUsers();
+  const u = users[key];
+  if (!u) return '';
+  if (!u.collWeekTok) { u.collWeekTok = crypto.randomBytes(12).toString('hex'); saveServerUsers(users); }
+  return u.collWeekTok;
+}
+function _collWeekUnsubUrl(user) {
+  return `${DRIP_ORIGIN}/api/collection-week/off?u=${encodeURIComponent(user)}&t=${_collWeekToken(user)}`;
+}
+// The cards worth pricing: Inventory rows with copies, and Collection cards,
+// dearest first by the collector's own value (then by quantity).
+function _collWeekCards(data) {
+  const inv = _hiInv(data || {}), coll = _hiColl(data || {});
+  const cards = [];
+  for (const i of inv.items) {
+    const qty = Number(i && i.qty) || 0;
+    if (!i || !qty || !_hiStr(i.name, 160)) continue;
+    cards.push({ id: String(i.id), name: _hiStr(i.name, 160), qty, own: Number(i.value) || 0 });
+  }
+  coll.forEach((c, k) => {
+    const name = c && _hiStr(_hiCollName(c), 160);
+    if (name) cards.push({ id: 'c' + k, name, qty: 1, own: Number(c.estValue) || 0 });
+  });
+  cards.sort((a, b) => (b.own * b.qty) - (a.own * a.qty) || b.qty - a.qty);
+  return { cards: cards.slice(0, COLL_WEEK_CARDS), total: cards.length };
+}
+// This week against last: the change in what the cards priced both weeks are
+// worth (a card new this week is not a gain), and the card that moved most.
+function _collWeekSummary(prev, cur) {
+  const out = { total: cur.total, priced: Object.keys(cur.items).length, cards: cur.cards, change: null, pct: null, top: null };
+  if (!prev || !prev.items) return out;
+  let was = 0, now = 0;
+  for (const [id, it] of Object.entries(cur.items)) {
+    const p = prev.items[id];
+    if (!p || !(p.price > 0) || !(it.price > 0)) continue;
+    was += p.price * it.qty; now += it.price * it.qty;
+    const d = (it.price - p.price) * it.qty;
+    if (!out.top || Math.abs(d) > Math.abs(out.top.change)) out.top = { name: it.name, change: Math.round(d * 100) / 100, price: it.price };
+  }
+  if (was > 0) { out.change = Math.round((now - was) * 100) / 100; out.pct = Math.round(((now - was) / was) * 1000) / 10; }
+  if (out.top && Math.abs(out.top.change) < 0.5) out.top = null;
+  return out;
+}
+const _cwMoney = (n) => {
+  const v = Math.abs(Number(n) || 0);
+  return '$' + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2).replace(/\.00$/, ''));
+};
+function _collWeekMessage(s) {
+  const worth = `${_cwMoney(s.total)}`;
+  if (s.change == null) {
+    return { title: 'Your collection this week', body: `Your cards are worth about ${worth} at this week's sold prices. Next Monday you'll see how that moved.` };
+  }
+  const flat = Math.abs(s.pct) < 0.5;
+  const dir = s.change >= 0 ? 'up' : 'down';
+  const head = flat ? `Your collection held steady at about ${worth}` : `Your collection is ${dir} ${Math.abs(s.pct)}% (${_cwMoney(s.change)}) this week`;
+  const lead = s.top ? ` ${s.top.name} ${s.top.change >= 0 ? 'led, +' : 'slipped, -'}${_cwMoney(s.top.change)}.` : '';
+  return { title: flat ? 'Your collection this week' : `Your collection is ${dir} ${Math.abs(s.pct)}%`, body: head + (flat ? '.' : `, now about ${worth}.`) + lead };
+}
+function _collWeekEmail(user, s, msg) {
+  const rows = (s.list || []).slice(0, 8).map(r => `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;">${_esc(r.name)}${r.qty > 1 ? ` <span style="color:#888">&times;${r.qty}</span>` : ''}</td>`
+    + `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${_cwMoney(r.price * r.qty)}</td>`
+    + `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;color:${r.change > 0 ? '#2d6a4f' : r.change < 0 ? '#b42318' : '#888'};">${r.change == null ? 'new' : (r.change >= 0 ? '+' : '-') + _cwMoney(r.change)}</td></tr>`).join('');
+  const url = `${DRIP_ORIGIN}/inventory?utm_source=collection-week&utm_medium=email`;
+  return `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1a1a1a;">
+      <p style="font-size:13px;letter-spacing:0.06em;color:#2d6a4f;font-weight:700;margin:0 0 18px;">THE CARD HUDDLE</p>
+      <h1 style="font-size:22px;margin:0 0 10px;">${_esc(msg.title)}</h1>
+      <p style="font-size:15px;line-height:1.5;margin:0 0 18px;">${_esc(msg.body)}</p>
+      ${rows ? `<table style="width:100%;border-collapse:collapse;font-size:14px;margin:0 0 18px;"><tr><th style="text-align:left;padding:6px 8px;color:#888;font-weight:600;">Card</th><th style="text-align:right;padding:6px 8px;color:#888;font-weight:600;">Worth</th><th style="text-align:right;padding:6px 8px;color:#888;font-weight:600;">This week</th></tr>${rows}</table>` : ''}
+      <p style="font-size:13px;color:#666;margin:0 0 18px;">Priced from real eBay sales of the same card and grade over the last 60 days. ${s.priced < s.cards ? `${s.cards - s.priced} of your top ${s.cards} cards had too few recent sales to price.` : ''}</p>
+      <a href="${url}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px;">See your collection</a>
+      <p style="color:#999;font-size:12px;margin-top:28px;border-top:1px solid #eee;padding-top:14px;">
+        You're getting this because your Card Huddle account (${_esc(user)}) has cards in Inventory.
+        <br><a href="${_collWeekUnsubUrl(user)}" style="color:#999;">Stop these weekly emails</a>
+      </p>
+    </div>`;
+}
+// One collector: price, compare, save, deliver.
+async function _collWeekOne(user, week, now, { push = sendPushToUser, mail = sendEmail, price = _bizValue } = {}) {
+  const { data } = await _userSyncLoad(user);
+  const { cards } = _collWeekCards(data || {});
+  if (!cards.length) return { cards: 0 };
+  const prev = await recordGet(COLL_WEEK_KEY(user));
+  if (prev && prev.week === week) return { cards: 0, done: true };
+  const items = {};
+  let total = 0;
+  for (const c of cards) {
+    let v = null;
+    try { v = await price({ title: c.name, grade: c.name }, now); } catch (_) { v = null; }
+    const p = v && Number(v.market) > 0 ? Number(v.market) : null;
+    if (p) { items[c.id] = { name: c.name, qty: c.qty, price: p }; total += p * c.qty; }
+  }
+  const cur = { week, at: new Date(now).toISOString(), items, total: Math.round(total * 100) / 100, cards: cards.length };
+  const s = _collWeekSummary(prev, cur);
+  s.list = Object.entries(items).map(([id, it]) => {
+    const p = prev && prev.items && prev.items[id];
+    return { name: it.name, qty: it.qty, price: it.price, change: p && p.price > 0 ? Math.round((it.price - p.price) * it.qty * 100) / 100 : null };
+  }).sort((a, b) => b.price * b.qty - a.price * a.qty);
+  await recordPut(COLL_WEEK_KEY(user), { ...cur, prevTotal: prev ? prev.total : null, change: s.change, pct: s.pct, top: s.top });
+  if (!s.priced) return { cards: cards.length, priced: 0 };
+  const msg = _collWeekMessage(s);
+  let pushed = 0, mailed = false;
+  try { pushed = await push(user, { title: msg.title, body: msg.body, url: '/inventory?utm_source=collection-week&utm_medium=push' }); } catch (_) { /* no device */ }
+  const u = loadServerUsers()[user];
+  if (u && u.email && digest.validEmail(u.email) && !u.collWeekOff) {
+    try { await mail({ to: u.email, subject: msg.title, html: _collWeekEmail(user, s, msg) }); mailed = true; } catch (_) { /* send failed: next week */ }
+  }
+  return { cards: cards.length, priced: s.priced, pushed, mailed };
+}
+async function collectionWeekly({ now = new Date(), force = false, push, mail, price } = {}) {
+  if (!force && !(now.getUTCDay() === 1 && now.getUTCHours() >= COLL_WEEK_FROM_HOUR)) return { ok: true, skipped: 'not send time' };
+  const week = digest.weekId(now);
+  const run = (await recordGet(COLL_WEEK_RUN(week))) || { week, cursor: '', collectors: 0, pushed: 0, mailed: 0, done: false };
+  if (run.done) return { ok: true, skipped: 'already sent', run };
+  const users = Object.keys(loadServerUsers()).sort().filter(u => u > run.cursor);
+  let budget = COLL_WEEK_TICK_CARDS;
+  for (const u of users) {
+    if (budget < COLL_WEEK_CARDS) break;
+    try {
+      const r = await _collWeekOne(u, week, now.getTime(), { ...(push ? { push } : {}), ...(mail ? { mail } : {}), ...(price ? { price } : {}) });
+      budget -= r.cards || 0;
+      if (r.priced) { run.collectors++; run.pushed += r.pushed ? 1 : 0; run.mailed += r.mailed ? 1 : 0; }
+    } catch (err) {
+      console.error('[CollWeek]', u, err && err.message);
+    }
+    run.cursor = u;
+  }
+  if (!users.length || run.cursor === users[users.length - 1]) { run.done = true; run.finishedAt = new Date().toISOString(); }
+  await recordPut(COLL_WEEK_RUN(week), run);
+  console.log(`[CollWeek] ${week}: ${run.collectors} collectors${run.done ? ', done' : ', continuing next tick'}`);
+  return { ok: true, run };
+}
+// The email's one-click off switch.
+app.get('/api/collection-week/off', (req, res) => {
+  const user = String(req.query.u || '').toLowerCase();
+  const users = loadServerUsers();
+  const tok = users[user] && users[user].collWeekTok;
+  const ok = !!(tok && typeof req.query.t === 'string' && _safeEqual(req.query.t, tok));
+  if (ok && users[user]) { users[user].collWeekOff = true; saveServerUsers(users); }
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Card Huddle</title>`
+    + `<div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:15vh auto;padding:0 20px;text-align:center">`
+    + (ok ? '<h1>Done</h1><p>You won\'t get the weekly collection email any more. Push notifications can be turned off in your browser or phone settings.</p>'
+          : '<h1>That link did not work</h1><p>It may be incomplete. Try the link in the email again.</p>')
+    + '<p><a href="/">Back to The Card Huddle</a></p></div>');
+});
+// The latest weekly figures for the Inventory tab's banner.
+app.get('/api/collection-week', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Sign in' });
+  const rec = await recordGet(COLL_WEEK_KEY(user));
+  res.set('Cache-Control', 'no-store');
+  if (!rec) return res.json({ available: false });
+  const msg = _collWeekMessage({ total: rec.total, change: rec.change, pct: rec.pct, top: rec.top });
+  res.json({ available: true, week: rec.week, at: rec.at, total: rec.total, change: rec.change, pct: rec.pct, top: rec.top, priced: Object.keys(rec.items || {}).length, cards: rec.cards, text: msg.body });
+});
+
+module.exports = { _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

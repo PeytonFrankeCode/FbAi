@@ -358,7 +358,7 @@ const check = (label, ok, detail) => {
       && /\.on\('meta\[name="description"\]', new PricedMeta\(summary, pricedHead, 'description'\)\)/.test(w));
   check('  ...with pricedHead handed over from server.js like the renderer',
     /renderPriceBlock: priceRender, pricedHead,/.test(fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8'))
-      && (w.match(/renderPriceBlock, pricedHead, bizRevalueAll \}/g) || []).length === 2);
+      && (w.match(/renderPriceBlock, pricedHead, bizRevalueAll[, }]/g) || []).length === 2);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall price-block checks passed');

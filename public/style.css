@@ -10541,3 +10541,15 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .hai-chart-read { font-size: 0.78rem; color: var(--text-secondary); min-height: 1.2em; margin-top: 0.3rem; }
 .hai-chart-read b { color: var(--text-primary); }
 .hai-card:has(.hai-chart) { flex-direction: column; align-items: stretch; }
+
+/* Your collection this week (Inventory, owner Nov 2026) */
+.inv-week{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem;margin:0 0 1rem;padding:.9rem 1rem;border-radius:12px;background:var(--bg-card,#161b28);border:1px solid var(--border-primary,#2a3142)}
+.inv-week.hidden{display:none}
+.inv-week-main{flex:1 1 16rem;display:flex;flex-direction:column;gap:.2rem;padding-left:.75rem;border-left:3px solid var(--text-secondary,#9aa3b2)}
+.inv-week-main.up{border-left-color:#22c55e}
+.inv-week-main.down{border-left-color:#ef4444}
+.inv-week-kicker{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent,#5ece99)}
+.inv-week-main strong{font-size:.98rem;line-height:1.4}
+.inv-week-sub{font-size:.8rem;color:var(--text-secondary,#9aa3b2)}
+.inv-week-btn{background:var(--accent,#5ece99);color:#06231a;border:0;border-radius:8px;padding:.5rem .85rem;font-weight:700;cursor:pointer;font:inherit;font-size:.88rem}
+.inv-week-btn:disabled{opacity:.7;cursor:default}
