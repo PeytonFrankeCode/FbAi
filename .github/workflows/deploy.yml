@@ -484,10 +484,11 @@ jobs:
         run: node scripts/indexnow-submit.js
         continue-on-error: true
 
-      # One-off catch-up, by hand only (Actions > Deploy > Run workflow, tick
-      # the box): every generated address the plan does not build, so Bing
-      # drops the pages pruned in Oct 2026 without crawling each 404.
+      # One-off catch-up, on request only: Actions > Deploy > Run workflow with
+      # the box ticked, or a commit to main whose message carries
+      # [indexnow-dead]. Every generated address the plan does not build, so
+      # Bing drops the pages pruned in Oct 2026 without crawling each 404.
       - name: Notify search engines of every unbuilt page (IndexNow, on request)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.indexnow_dead }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.indexnow_dead) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[indexnow-dead]')) }}
         run: node scripts/indexnow-submit.js --dead
         continue-on-error: true
