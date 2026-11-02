@@ -284,9 +284,17 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p .cache
-          curl -sSf --max-time 20 https://thecardhuddle.com/data/built-pages.json -o .cache/live-built-pages.json \
-            && node -e "console.log('live pages:', JSON.parse(require('fs').readFileSync('.cache/live-built-pages.json','utf8')).length)" \
-            || { echo "::warning::Could not read the live page list; removed pages are not reported to IndexNow this run."; rm -f .cache/live-built-pages.json; }
+          # thecardhuddle.com can serve a runner Cloudflare's bot challenge
+          # (see the verify step), so the Worker's workers.dev address is
+          # tried too. A challenge page is HTML and fails the JSON check.
+          for base in https://thecardhuddle.com https://the-card-huddle.thecardhuddleoffical.workers.dev; do
+            if curl -sSf --max-time 20 "$base/data/built-pages.json" -o .cache/live-built-pages.json \
+              && node -e "const l=JSON.parse(require('fs').readFileSync('.cache/live-built-pages.json','utf8'));if(!Array.isArray(l)||!l.length)process.exit(1);console.log('live pages:', l.length, 'from', process.argv[1])" "$base"; then
+              exit 0
+            fi
+          done
+          echo "::warning::Could not read the live page list; removed pages are not reported to IndexNow this run."
+          rm -f .cache/live-built-pages.json
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
