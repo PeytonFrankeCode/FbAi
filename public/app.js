@@ -5633,14 +5633,16 @@ const PLAN_FALLBACK = [
   { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, tokens: 13000000, tokensShown: 12500000, answers: 3900, deep: 215 },
 ];
 let _plans = null;
+let _planTrial = null; // { days, tokens } while this account can still start the free trial
 const _usd = (c) => '$' + (c / 100).toFixed(2);
 const _num = (n) => Number(n).toLocaleString('en-US');
 const _tok = (n) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)} million` : _num(n));
 function _planCard(p, current) {
   const mine = current === p.id;
   const best = p.id === 'veteran';
+  const trial = p.tokens && !current && _planTrial;
   const lines = p.tokens
-    ? [`No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokensShown || p.tokens)}+ AI tokens each month`]
+    ? [...(trial ? [`<b>First ${_planTrial.days} days free</b>, then ${_usd(p.monthly)}/month`] : []), `No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokensShown || p.tokens)}+ AI tokens each month`]
     : [`No ads anywhere`, `No Huddle AI`, `Supports the free site`];
   return `<div class="plan-card${best ? ' plan-best' : ''}${mine ? ' plan-mine' : ''}" data-tier="${p.id}">
     ${best ? '<span class="plan-badge">Most popular</span>' : ''}${mine ? '<span class="plan-badge plan-badge-mine">Your plan</span>' : ''}
@@ -5648,7 +5650,7 @@ function _planCard(p, current) {
     <div class="plan-price">${_usd(p.monthly)}<span>/month</span></div>
     <ul class="plan-lines">${lines.map(l => `<li>${l}</li>`).join('')}</ul>
     ${mine ? '<button type="button" class="plan-btn" disabled>Current plan</button>'
-      : `<button type="button" class="plan-btn" data-tier="${p.id}" data-period="monthly">${current ? 'Switch to this' : 'Choose'}</button>`}
+      : `<button type="button" class="plan-btn" data-tier="${p.id}" data-period="monthly">${current ? 'Switch to this' : trial ? `Start ${_planTrial.days}-day free trial` : 'Choose'}</button>`}
     ${p.yearly && !mine ? `<button type="button" class="plan-yearly" data-tier="${p.id}" data-period="yearly">or ${_usd(p.yearly)} a year</button>` : ''}
   </div>`;
 }
@@ -5699,6 +5701,8 @@ async function openAdFree() {
   try {
     const u = await (await authFetch('/api/ai/usage')).json();
     if (u && Array.isArray(u.plans) && u.plans.length) _plans = u.plans;
+    _planTrial = u && u.trialEligible ? { days: u.trialDays || 7, tokens: u.trialTokens || 2.5e6 } : null;
+    if (_planTrial) { const f = m.querySelector('#adfree-fine'); if (f && !/free trial/.test(f.textContent)) f.textContent = `Free trial: ${_planTrial.days} days on any Huddle+ plan with ${_tok(_planTrial.tokens)}+ AI tokens, then the plan's price each month. Cancel before it ends and you pay nothing. One trial per account. ` + f.textContent; }
     if (u && u.deepTimes) { const f = m.querySelector('#adfree-fine'); f.textContent = f.textContent.replace(/about \d+ times/, `about ${u.deepTimes} times`); }
   } catch (_) { /* the fallback numbers stand */ }
   if (getSessionToken()) await _refreshAdFreePlan();
@@ -6167,6 +6171,8 @@ function _haiGate(u) {
     ? `<p><b>You've used this month's AI tokens.</b> New ones arrive on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
     : !u || !u.signedIn
     ? `<p><b>Huddle AI comes with Huddle+</b>: no ads, plus about ${_num(rookie.answers)} AI answers a month from real sales, from ${_usd(rookie.monthly)} a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>`
+    : u.trialEligible
+    ? `<p><b>Try Huddle AI free for ${u.trialDays || 7} days.</b> Ask what any card is worth, whether to grade it and how a player's market is moving, answered from real Card Huddle sales. No ads either.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">Start your free trial</button><p class="hai-fine">Then from ${_usd(rookie.monthly)}/month. Cancel anytime before the trial ends and you pay nothing.</p>`
     : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus about ${_num(rookie.answers)} AI answers a month, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans · from ${_usd(rookie.monthly)}/month</button><p class="hai-fine">Change or cancel anytime.</p>`;
 }
 async function _haiLoadUsage() {

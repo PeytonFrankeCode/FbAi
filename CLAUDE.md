@@ -18,8 +18,11 @@ credits: showing them would show the margin (owner, Oct 2026). The plan
 cards promise "2.5 million+", "6.5 million+" and "12.5 million+ AI tokens each
 month"; the real allowance is 3, 7 and 13 million (1 million per $1 of cost),
 so the "+" always holds. Subscribers from before the plans keep their price with
-Rookie's credits. Huddle AI is the only collector feature that needs a plan,
-and there are no free AI questions. Nothing else moves behind it: searches,
+Rookie's credits. Huddle AI is the only collector feature that needs a plan.
+The one free way in is a 7-day free trial of Huddle+ (owner, Nov 2026): once
+per account, card taken at checkout, and Rookie's tokens whatever the plan, so
+a cancelled trial costs at most the cheapest plan's credits. Otherwise there
+are no free AI questions. Nothing else moves behind it: searches,
 prices, charts, checklists, alerts and every other collector tool stay free,
 and a new feature is free unless the owner says otherwise.
 

@@ -220,6 +220,25 @@ S._bizSetClient({ messages: { create: async (b) => { calls.push(JSON.parse(JSON.
       /id="inv-item-notes"/.test(fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8'))
       && /\$\{i\.notes \|\| ''\}`\.toLowerCase\(\)\.includes\(q\)/.test(app0()) && /if \(d\.cardsChanged && typeof pullUserData === 'function'\) pullUserData\(\)/.test(app0()));
 
+    // The 7-day free trial (owner, Nov 2026): Rookie's tokens whatever the plan, once per account.
+    check('a fresh account is offered the free trial', (await call('/api/ai/usage', { token: free })).body.trialEligible === true);
+    const subsT = S.loadSubscriptions();
+    const pk = ('hai_p' + run).toLowerCase();
+    subsT[pk] = { ...subsT[pk], tier: 'hof', status: 'trialing', stripeSubscriptionId: 'sub_t', trialUsed: '2026-11-02' };
+    S.saveSubscriptions(subsT);
+    const ut = await call('/api/ai/usage', { token: plus });
+    check('  ...a Hall of Fame trial gets Rookie\'s tokens, not Hall of Fame\'s, and says it is a trial',
+      ut.body.plus === true && ut.body.tokens === 3e6 && /free trial/.test(ut.body.tierName) && ut.body.trialing === true && ut.body.trialEligible === false, JSON.stringify(ut.body).slice(0, 220));
+    subsT[pk].status = 'active';
+    S.saveSubscriptions(subsT);
+    check('  ...and the plan\'s full tokens once the trial turns into a paid plan', (await call('/api/ai/usage', { token: plus })).body.tokens === 13e6);
+    delete subsT[pk].tier; delete subsT[pk].trialUsed; delete subsT[pk].stripeSubscriptionId;
+    S.saveSubscriptions(subsT);
+    check('  ...and checkout starts a trial only for an account that never had one or a plan',
+      /const trial = tier !== 'adfree' && _huddleTrialEligible\(rec\);/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'))
+      && /trial_period_days: HUDDLE_TRIAL_DAYS/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'))
+      && /subs\[username\]\.trialUsed = /.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')) && /Start \$\{_planTrial\.days\}-day free trial/.test(app0()));
+
     // Streaming, follow-ups, feedback and photos (owner, Oct 2026).
     store.set(`ai:spend:${('hai_p' + run).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`, { usd: 0 });
     reply = { stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 }, content: [{ type: 'text', text: 'About $60.' }] };
