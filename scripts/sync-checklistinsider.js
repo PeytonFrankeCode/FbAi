@@ -158,7 +158,13 @@ if (require.main === module) (async () => {
       // Only pages that changed since we last touched that sport's files, or
       // that we have no file for.
       const yearOf = Number((p.slug.match(/^(\d{4})/) || [])[1]) || 0;
-      const recheck = PAR_FROM && yearOf >= PAR_FROM && (!direct || lacksParallels(load(direct)));
+      // A placeholder of ours ("not released yet", no cards) is read every
+      // run, however old the page: a page published before our last commit
+      // to the sport would otherwise never be looked at again (2026 Bowman
+      // Sapphire stayed empty for weeks after release that way).
+      const isStub = (d) => !!d && (d.unreleased || !count(d.sets));
+      const recheck = (direct && isStub(load(direct)))
+        || (PAR_FROM && yearOf >= PAR_FROM && (!direct || lacksParallels(load(direct))));
       if (direct && p.mod <= (since || mtime(direct)) && !recheck) continue;
       // Catch-up runs read only recent products' pages.
       if (!direct && PAR_FROM && p.mod <= since && !(yearOf >= PAR_FROM)) continue;
@@ -192,6 +198,12 @@ if (require.main === module) (async () => {
           const sizeOk = count(d.sets) >= 0.5 * count(sets) && count(d.sets) <= 2.5 * count(sets);
           if (share >= 0.75 && sizeOk && share > best) { best = share; id = f; }
         }
+      }
+      // No players to match a placeholder by: the placeholder of that year
+      // whose distinctive name words are the page's, both ways round.
+      if (!id) {
+        const same = (a, b) => a.size && b.size && [...a].every(w => b.has(w)) && [...b].every(w => a.has(w));
+        id = [...ours.keys()].find(f => year && f.startsWith(year.slice(0, 4)) && isStub(load(f)) && same(nameWords(f), pw)) || null;
       }
       if (!id) {
         const nid = /^\d{4}/.test(p.slug) ? p.slug : `${slugify(year)}-${p.slug}`;
