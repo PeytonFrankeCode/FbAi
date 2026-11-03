@@ -4,7 +4,3235 @@
   "year": 2026,
   "brand": "Obsidian",
   "sport": "Football",
-  "unreleased": true,
-  "note": "Checklist not released yet \u2014 it will be added here as soon as the publisher releases it.",
-  "sets": []
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 99,
+      "parallels": [
+        {
+          "name": "Contour",
+          "printRun": null
+        },
+        {
+          "name": "Red",
+          "printRun": 149
+        },
+        {
+          "name": "Blue",
+          "printRun": 75
+        },
+        {
+          "name": "Green",
+          "printRun": 49
+        },
+        {
+          "name": "Deep Sea Mojo FOTL",
+          "printRun": 21
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Lava Flow FOTL",
+          "printRun": 7
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Neon FOTL",
+          "printRun": 3
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Josh Hoover",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "2",
+          "player": "Thurman Thomas",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "3",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "4",
+          "player": "Joe Horn",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "5",
+          "player": "Mario Craver",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "6",
+          "player": "Dan Marino",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "7",
+          "player": "Raycine Guillory Jr.",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "8",
+          "player": "Jared Allen",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "9",
+          "player": "Kevin Jennings",
+          "team": "SMU Mustangs"
+        },
+        {
+          "number": "10",
+          "player": "Larry Fitzgerald",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "11",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "12",
+          "player": "Roger Staubach",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "13",
+          "player": "Lamar \"Bo\" Jackson",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "14",
+          "player": "Le'Veon Bell",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "15",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "16",
+          "player": "Jamal Anderson",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "17",
+          "player": "Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "18",
+          "player": "Brandon Marshall",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "19",
+          "player": "Andrew Marsh",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "20",
+          "player": "Earl Campbell",
+          "team": "Houston Oilers"
+        },
+        {
+          "number": "21",
+          "player": "Jerome Bettis Jr.",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "22",
+          "player": "Patrick Willis",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "23",
+          "player": "Julian Sayin",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "24",
+          "player": "Terrell Davis",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "25",
+          "player": "Javin Gordon",
+          "team": "Tennessee Volunteers"
+        },
+        {
+          "number": "26",
+          "player": "Michael Crabtree",
+          "team": "Oakland Raiders"
+        },
+        {
+          "number": "27",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "28",
+          "player": "Reggie Wayne",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "29",
+          "player": "Bryant Wesco Jr.",
+          "team": "Clemson Tigers"
+        },
+        {
+          "number": "30",
+          "player": "Art Monk",
+          "team": "Washington Redskins"
+        },
+        {
+          "number": "31",
+          "player": "Mark Bowman",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "32",
+          "player": "Warren Moon",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "33",
+          "player": "TJ Moore",
+          "team": "Clemson Tigers"
+        },
+        {
+          "number": "34",
+          "player": "Luke Kuechly",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "35",
+          "player": "Micah Ford",
+          "team": "Stanford Cardinal"
+        },
+        {
+          "number": "36",
+          "player": "Kurt Warner",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "37",
+          "player": "Rocco Becht",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "38",
+          "player": "Arian Foster",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "39",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "40",
+          "player": "Chad Johnson",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "41",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "42",
+          "player": "Eddie George",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "43",
+          "player": "Javian Osborne",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "44",
+          "player": "Terrell Owens",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "45",
+          "player": "Chris Henry Jr.",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "46",
+          "player": "Rob Gronkowski",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "47",
+          "player": "Madden Williams",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "48",
+          "player": "Jim Kelly",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "50",
+          "player": "Pat Tillman",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "51",
+          "player": "Turbo Richard",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "52",
+          "player": "Emmitt Smith",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "53",
+          "player": "Jaden Greathouse",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "54",
+          "player": "Carnell \"Cadillac\" Williams",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "55",
+          "player": "Nate Frazier",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "56",
+          "player": "Barry Sanders",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "57",
+          "player": "Daniel Hill",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "58",
+          "player": "James Harrison",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "59",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "60",
+          "player": "Donovan McNabb",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "61",
+          "player": "Kenny Minchey",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "62",
+          "player": "Eli Manning",
+          "team": "New York Giants"
+        },
+        {
+          "number": "63",
+          "player": "Bear Bachmeier",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "64",
+          "player": "Drew Brees",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "65",
+          "player": "Ryan Wingo",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "66",
+          "player": "Darrelle Revis",
+          "team": "New York Jets"
+        },
+        {
+          "number": "67",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "68",
+          "player": "Eric Dickerson",
+          "team": "Los Angeles Rams"
+        },
+        {
+          "number": "69",
+          "player": "Milan Parris",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "70",
+          "player": "Jim Harbaugh",
+          "team": "San Diego Chargers"
+        },
+        {
+          "number": "71",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina Gamecocks"
+        },
+        {
+          "number": "72",
+          "player": "Randy Moss",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "73",
+          "player": "Phillip Wright III",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "74",
+          "player": "Marcus Allen",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "75",
+          "player": "Charles Becker",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "76",
+          "player": "Edgerrin James",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "77",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "78",
+          "player": "Ahman Green",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "79",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "80",
+          "player": "Calvin Johnson",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "81",
+          "player": "Cam Coleman",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "82",
+          "player": "Peyton Manning",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "83",
+          "player": "Ashton Daniels",
+          "team": "Florida State Seminoles"
+        },
+        {
+          "number": "84",
+          "player": "Michael Irvin",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "85",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "86",
+          "player": "Josh Gordon",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "87",
+          "player": "Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "88",
+          "player": "A.J. Green",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "89",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "90",
+          "player": "Devin Hester",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "91",
+          "player": "Evan Stewart",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "92",
+          "player": "Steve Smith Sr.",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "93",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "94",
+          "player": "Ray Lewis",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "95",
+          "player": "Chauncey Bowens",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "96",
+          "player": "Roddy White",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "97",
+          "player": "Gunner Stockton",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "98",
+          "player": "Jimmy Smith",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "99",
+          "player": "Ahmad Hardy",
+          "team": "Missouri Tigers"
+        },
+        {
+          "number": "100",
+          "player": "Bo Jackson",
+          "team": "Los Angeles Raiders"
+        }
+      ]
+    },
+    {
+      "id": "color-burst-signatures",
+      "name": "Color Burst Signatures",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Peyton Manning",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "2",
+          "player": "Eli Manning",
+          "team": "New York Giants"
+        },
+        {
+          "number": "3",
+          "player": "Dan Marino",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "4",
+          "player": "Stephen Davis",
+          "team": "Washington Redskins"
+        },
+        {
+          "number": "5",
+          "player": "Mike Shanahan",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "6",
+          "player": "Howie Long",
+          "team": "Los Angeles Raiders"
+        },
+        {
+          "number": "7",
+          "player": "Luke Kuechly",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "8",
+          "player": "Jimmy Graham",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "9",
+          "player": "Keith Byars",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "10",
+          "player": "Doug Flutie",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "11",
+          "player": "Steve DeBerg",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "12",
+          "player": "Bo Jackson",
+          "team": "Los Angeles Raiders /25",
+          "note": "no base"
+        },
+        {
+          "number": "13",
+          "player": "Calvin Hill",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "14",
+          "player": "Larry Centers",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "15",
+          "player": "JaMarcus Russell",
+          "team": "Oakland Raiders"
+        },
+        {
+          "number": "16",
+          "player": "A.J. Green",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "17",
+          "player": "Felix Jones",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "18",
+          "player": "Ken Norton",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "19",
+          "player": "Haven Moses",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "20",
+          "player": "Kam Chancellor",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "21",
+          "player": "Randall Cunningham",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "22",
+          "player": "Brian Dawkins",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "23",
+          "player": "Duce Staley",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "24",
+          "player": "Archie Griffin",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "25",
+          "player": "Ickey Woods",
+          "team": "Cincinnati Bengals"
+        }
+      ]
+    },
+    {
+      "id": "cosmic-storm-signatures",
+      "name": "Cosmic Storm Signatures",
+      "category": "autograph",
+      "totalCards": 23,
+      "parallels": [
+        {
+          "name": "Red /99 or",
+          "printRun": 75
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Alex Perry",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "2",
+          "player": "Ashton Daniels",
+          "team": "Florida State Seminoles"
+        },
+        {
+          "number": "3",
+          "player": "Bodpegn Miller",
+          "team": "Washington Huskies"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Inniss",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "5",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "6",
+          "player": "Daniel Hill",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "7",
+          "player": "Dia Bell",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "8",
+          "player": "Evan Stewart",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "9",
+          "player": "Isaiah Marshall",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "10",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "11",
+          "player": "Jaden Greathouse",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "12",
+          "player": "Jaron-Keawe Sagapolutele",
+          "team": "Cal Golden Bears"
+        },
+        {
+          "number": "13",
+          "player": "Javin Gordon",
+          "team": "Tennessee Volunteers"
+        },
+        {
+          "number": "14",
+          "player": "Jayden Denegal",
+          "team": "San Diego State Aztecs"
+        },
+        {
+          "number": "15",
+          "player": "Jeremiah Hasley",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "16",
+          "player": "Jett Thomalla",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "17",
+          "player": "Joshua Dye",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "19",
+          "player": "Kedren Young",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "20",
+          "player": "Kennan Pula",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "21",
+          "player": "Aneyas Williams",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "22",
+          "player": "Mason Williams",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "23",
+          "player": "Milan Parris",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "24",
+          "player": "Tavien St. Clair",
+          "team": "Ohio State Buckeyes"
+        }
+      ]
+    },
+    {
+      "id": "dual-materials-ink",
+      "name": "Dual Materials Ink",
+      "category": "autograph",
+      "totalCards": 23,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ahmad Hardy",
+          "team": "Missouri Tigers"
+        },
+        {
+          "number": "3",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers /49",
+          "note": "no base"
+        },
+        {
+          "number": "4",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "5",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "6",
+          "player": "Chris Henry Jr.",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "7",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "8",
+          "player": "Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "9",
+          "player": "Dallas Wilson",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "10",
+          "player": "Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "11",
+          "player": "Jacob Washington",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "12",
+          "player": "Javian Osborne",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "13",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "14",
+          "player": "Jerome Bettis Jr.",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "15",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "16",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "17",
+          "player": "Kenny Minchey",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "18",
+          "player": "Kendrick Raphael",
+          "team": "Cal Golden Bears"
+        },
+        {
+          "number": "19",
+          "player": "Mario Craver",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "20",
+          "player": "Raleek Brown",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "21",
+          "player": "TJ Moore",
+          "team": "Clemson Tigers"
+        },
+        {
+          "number": "22",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "23",
+          "player": "Turbo Richard",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "24",
+          "player": "Raycine Guillory Jr.",
+          "team": "LSU Tigers"
+        }
+      ]
+    },
+    {
+      "id": "eruption-material-autographs",
+      "name": "Eruption Material Autographs",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Eric Weddle",
+          "team": "San Diego Chargers"
+        },
+        {
+          "number": "2",
+          "player": "Carnell \"Cadillac\" Williams",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "3",
+          "player": "Brian Sipe",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "4",
+          "player": "Adrian Peterson",
+          "team": "Minnesota Vikings /75",
+          "note": "no base"
+        },
+        {
+          "number": "5",
+          "player": "Andre Reed",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "6",
+          "player": "Ben Coates",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "7",
+          "player": "Carl Pickens",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "8",
+          "player": "William Perry",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "9",
+          "player": "Steven Jackson",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "10",
+          "player": "Jermichael Finley",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "11",
+          "player": "Lawrence Taylor",
+          "team": "New York Giants"
+        },
+        {
+          "number": "12",
+          "player": "Bruce Smith",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "13",
+          "player": "Brett Favre",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "14",
+          "player": "Randy Moss",
+          "team": "New England Patriots /21",
+          "note": "no base"
+        },
+        {
+          "number": "15",
+          "player": "Joe Namath",
+          "team": "New York Jets"
+        },
+        {
+          "number": "16",
+          "player": "Sterling Sharpe",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "17",
+          "player": "Tony Gonzalez",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "18",
+          "player": "Jared Allen",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "19",
+          "player": "Josh Gordon",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "20",
+          "player": "Ricky Williams",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "21",
+          "player": "James Harrison",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "22",
+          "player": "Le'Veon Bell",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "23",
+          "player": "Dexter Manley",
+          "team": "Washington Redskins"
+        },
+        {
+          "number": "24",
+          "player": "Ed Reed",
+          "team": "Baltimore Ravens /7",
+          "note": "no base"
+        },
+        {
+          "number": "25",
+          "player": "Deion Sanders",
+          "team": "Dallas Cowboys"
+        }
+      ]
+    },
+    {
+      "id": "gravitational-signatures",
+      "name": "Gravitational Signatures",
+      "category": "autograph",
+      "totalCards": 23,
+      "parallels": [
+        {
+          "name": "Red /99 or",
+          "printRun": 75
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Abu Sama III",
+          "team": "Wisconsin Badgers"
+        },
+        {
+          "number": "2",
+          "player": "Alessio Milivojevic",
+          "team": "Michigan State Spartans"
+        },
+        {
+          "number": "3",
+          "player": "Andrew Rappleyea",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "4",
+          "player": "Brett Eskildsen",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "5",
+          "player": "Caleb Komolafe",
+          "team": "Northwestern Wildcats"
+        },
+        {
+          "number": "6",
+          "player": "Charles Becker",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "7",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh Panthers"
+        },
+        {
+          "number": "8",
+          "player": "Davis Warren",
+          "team": "Stanford Cardinal"
+        },
+        {
+          "number": "10",
+          "player": "Dylan Lonergan",
+          "team": "Rutgers Scarlet Knights"
+        },
+        {
+          "number": "11",
+          "player": "Dylan Raiola",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "12",
+          "player": "Elija Lofton",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "13",
+          "player": "Graceson Littleton",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "14",
+          "player": "Jaron Pula",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "16",
+          "player": "Jordan Marshall",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "17",
+          "player": "Justin Lamson",
+          "team": "Montana State Bobcats"
+        },
+        {
+          "number": "18",
+          "player": "Kaydon Finley",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "19",
+          "player": "Keisean Henderson",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "20",
+          "player": "Malachi Thomas",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "21",
+          "player": "Mark Bowman",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "22",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "23",
+          "player": "Nate Sheppard",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "24",
+          "player": "Trae Taylor",
+          "team": "Nebraska Cornhuskers"
+        },
+        {
+          "number": "25",
+          "player": "CJ Sadler",
+          "team": "North Carolina Tar Heels"
+        }
+      ]
+    },
+    {
+      "id": "lava-jersey-autographs",
+      "name": "Lava Jersey Autographs",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Drew Brees",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "2",
+          "player": "Merton Hanks",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "3",
+          "player": "Patrick Crayton",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "4",
+          "player": "Michael Crabtree",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "5",
+          "player": "Barry Sanders",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "6",
+          "player": "Michael Irvin",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "7",
+          "player": "Champ Bailey",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "8",
+          "player": "Cris Carter",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "9",
+          "player": "Don Beebe",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "10",
+          "player": "Charles Woodson",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "11",
+          "player": "Matt Schaub",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "12",
+          "player": "Earl Campbell",
+          "team": "Houston Oilers"
+        },
+        {
+          "number": "13",
+          "player": "Eric Dickerson",
+          "team": "Los Angeles Raiders"
+        },
+        {
+          "number": "14",
+          "player": "Isaac Bruce",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "15",
+          "player": "Jerome Bettis",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "16",
+          "player": "John Lynch",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "17",
+          "player": "Keyshawn Johnson",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "18",
+          "player": "Kurt Warner",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "19",
+          "player": "Larry Fitzgerald",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "20",
+          "player": "Calvin Johnson",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "21",
+          "player": "Steve Young",
+          "team": "San Francisco 49ers /3",
+          "note": "no base"
+        },
+        {
+          "number": "22",
+          "player": "Jim Harbaugh",
+          "team": "Los Angeles Chargers"
+        },
+        {
+          "number": "23",
+          "player": "David Boston",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "24",
+          "player": "Antonio Brown",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "25",
+          "player": "Patrick Willis",
+          "team": "San Francisco 49ers"
+        }
+      ]
+    },
+    {
+      "id": "orbital-jersey-autographs",
+      "name": "Orbital Jersey Autographs",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Deep Sea Mojo FOTL",
+          "printRun": 21
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Lava Flow FOTL",
+          "printRun": 7
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Neon FOTL",
+          "printRun": 3
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Andrew Marsh",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "2",
+          "player": "Avery Johnson",
+          "team": "Kansas State Wildcats"
+        },
+        {
+          "number": "3",
+          "player": "Bear Bachmeier",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "4",
+          "player": "Will Hammond",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "5",
+          "player": "Bryant Wesco Jr.",
+          "team": "Clemson Tigers"
+        },
+        {
+          "number": "6",
+          "player": "Jayden Wade",
+          "team": "High School"
+        },
+        {
+          "number": "7",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "8",
+          "player": "Dante Dowdell",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "9",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "10",
+          "player": "Gunner Stockton",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "11",
+          "player": "Jaden Craig",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "12",
+          "player": "Jayce Brown",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "13",
+          "player": "Jayden \"Duke\" Scott",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "14",
+          "player": "Jekail Middlebrook",
+          "team": "Virginia Cavaliers"
+        },
+        {
+          "number": "15",
+          "player": "Josh Hoover",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "16",
+          "player": "Joshua Moore",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "17",
+          "player": "Julian Sayin",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "18",
+          "player": "King Miller",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "19",
+          "player": "KJ Jackson",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "20",
+          "player": "Nick Marsh",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "21",
+          "player": "Austin Simmons",
+          "team": "Missouri Tigers"
+        },
+        {
+          "number": "22",
+          "player": "Rocco Becht",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "23",
+          "player": "Trent Mosley",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "24",
+          "player": "Walker Eget",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "25",
+          "player": "Jordan Faison",
+          "team": "Notre Dame Fighting Irish"
+        }
+      ]
+    },
+    {
+      "id": "seismic-signatures",
+      "name": "Seismic Signatures",
+      "category": "autograph",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Michael Dean Perry",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "2",
+          "player": "Eric Moulds",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "3",
+          "player": "Adam Thielen",
+          "team": "Minnesota Vikings /49",
+          "note": "no base"
+        },
+        {
+          "number": "4",
+          "player": "DeSean Jackson",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "5",
+          "player": "Marshall Faulk",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "6",
+          "player": "Torry Holt",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "7",
+          "player": "Ray Lewis",
+          "team": "Baltimore Ravens /10",
+          "note": "no base"
+        },
+        {
+          "number": "8",
+          "player": "Aaron Donald",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "9",
+          "player": "Dexter Jackson",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "10",
+          "player": "Brian Urlacher",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "11",
+          "player": "Terrell Davis",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "12",
+          "player": "Joe Haden",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "13",
+          "player": "Ted Hendricks",
+          "team": "Oakland Raiders /49",
+          "note": "no base"
+        },
+        {
+          "number": "14",
+          "player": "Archie Manning",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "15",
+          "player": "Jeff Blake",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "16",
+          "player": "Warren Moon",
+          "team": "Houston Oilers"
+        },
+        {
+          "number": "17",
+          "player": "Ty Law",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "18",
+          "player": "Vince Young",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "19",
+          "player": "LeRoy Butler",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "20",
+          "player": "Dante Hall",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "21",
+          "player": "Mark Bavaro",
+          "team": "New York Giants"
+        },
+        {
+          "number": "22",
+          "player": "Joseph Addai",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "23",
+          "player": "Fred Biletnikoff",
+          "team": "Oakland Raiders /75",
+          "note": "no base"
+        },
+        {
+          "number": "24",
+          "player": "Herman Moore",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "25",
+          "player": "Billy Joe DuPree",
+          "team": "Dallas Cowboys"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-materials",
+      "name": "Galaxy Materials",
+      "category": "memorabilia",
+      "totalCards": 29,
+      "parallels": [
+        {
+          "name": "Contour",
+          "printRun": null
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Turbo Richard",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "2",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "3",
+          "player": "TJ Moore",
+          "team": "Clemson Tigers"
+        },
+        {
+          "number": "4",
+          "player": "Raycine Guillory Jr.",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "5",
+          "player": "Nate Frazier",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "6",
+          "player": "Milan Parris",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "7",
+          "player": "Mario Craver",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "8",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina Gamecocks"
+        },
+        {
+          "number": "9",
+          "player": "Lamar \"Bo\" Jackson",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "10",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "11",
+          "player": "Kam Perry",
+          "team": "Colorado Buffaloes"
+        },
+        {
+          "number": "12",
+          "player": "Julian Sayin",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "13",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "14",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "15",
+          "player": "Jayce Brown",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "16",
+          "player": "Jaden Craig",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "17",
+          "player": "Evan Stewart",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "18",
+          "player": "Donte Lee Jr.",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "19",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "20",
+          "player": "Daniel Hill",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "21",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "22",
+          "player": "Chris Henry Jr.",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "23",
+          "player": "Charles Becker",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "24",
+          "player": "Cam Coleman",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "25",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "26",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "27",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "28",
+          "player": "Bear Bachmeier",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "30",
+          "player": "Ashton Daniels",
+          "team": "Florida State Seminoles"
+        }
+      ]
+    },
+    {
+      "id": "jersey-embers",
+      "name": "Jersey Embers",
+      "category": "memorabilia",
+      "totalCards": 20,
+      "parallels": [
+        {
+          "name": "Contour",
+          "printRun": null
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Keisean Henderson",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "2",
+          "player": "Ryan Wingo",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "3",
+          "player": "Rocco Becht",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "4",
+          "player": "Phillip Wright III",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "5",
+          "player": "Mark Fletcher Jr.",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "6",
+          "player": "Marcel Reed",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "7",
+          "player": "Kenny Minchey",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "8",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "9",
+          "player": "Josh Hoover",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "10",
+          "player": "Jerome Bettis Jr.",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "11",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "12",
+          "player": "Gunner Stockton",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "13",
+          "player": "Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "14",
+          "player": "Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "15",
+          "player": "Dallas Wilson",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "16",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "17",
+          "player": "Chauncey Bowens",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "18",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "19",
+          "player": "Brandon Inniss",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "20",
+          "player": "Ahmad Hardy",
+          "team": "Missouri Tigers"
+        }
+      ]
+    },
+    {
+      "id": "magmatic-memorabilia",
+      "name": "Magmatic Memorabilia",
+      "category": "memorabilia",
+      "totalCards": 24,
+      "parallels": [
+        {
+          "name": "Contour",
+          "printRun": null
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Turbo Richard",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "2",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State Cowboys"
+        },
+        {
+          "number": "4",
+          "player": "Andrew Marsh",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "5",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "6",
+          "player": "Lamar \"Bo\" Jackson",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "7",
+          "player": "Chauncey Bowens",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "8",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "9",
+          "player": "Marcel Reed",
+          "team": "Texas A&M Aggies"
+        },
+        {
+          "number": "10",
+          "player": "Rocco Becht",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "11",
+          "player": "Ryan Wingo",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "12",
+          "player": "Peyton Lewis",
+          "team": "Virginia Cavaliers"
+        },
+        {
+          "number": "13",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina Gamecocks"
+        },
+        {
+          "number": "14",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "15",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "16",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "17",
+          "player": "Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "18",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "19",
+          "player": "Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "20",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "21",
+          "player": "Cam Coleman",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "22",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "23",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "24",
+          "player": "Ashton Daniels",
+          "team": "Florida State Seminoles"
+        },
+        {
+          "number": "25",
+          "player": "Ahmad Hardy",
+          "team": "Missouri Tigers"
+        }
+      ]
+    },
+    {
+      "id": "supernova-swatches",
+      "name": "Supernova Swatches",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Contour",
+          "printRun": null
+        },
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Larry Fitzgerald",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "2",
+          "player": "Roddy White",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "3",
+          "player": "Ray Lewis",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "4",
+          "player": "Luke Kuechly",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "5",
+          "player": "Josh Gordon",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "6",
+          "player": "Tony Dorsett",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "7",
+          "player": "John Elway",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "8",
+          "player": "Calvin Johnson",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "9",
+          "player": "Charles Woodson",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "10",
+          "player": "Matt Schaub",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "11",
+          "player": "Fred Taylor",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "12",
+          "player": "Fred Biletnikoff",
+          "team": "Oakland Raiders"
+        },
+        {
+          "number": "13",
+          "player": "Jim Harbaugh",
+          "team": "San Diego Chargers"
+        },
+        {
+          "number": "14",
+          "player": "Kurt Warner",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "15",
+          "player": "Zach Thomas",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "16",
+          "player": "Jared Allen",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "17",
+          "player": "Rob Gronkowski",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "18",
+          "player": "Drew Brees",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "19",
+          "player": "Vinny Testaverde",
+          "team": "New York Jets"
+        },
+        {
+          "number": "20",
+          "player": "Brian Dawkins",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "21",
+          "player": "Antonio Brown",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "22",
+          "player": "Earl Thomas III",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "23",
+          "player": "Warren Sapp",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "24",
+          "player": "Chris Johnson",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "25",
+          "player": "Stephen Davis",
+          "team": "Washington Redskins"
+        }
+      ]
+    },
+    {
+      "id": "atomic-initials",
+      "name": "Atomic Initials",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Eddie George",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "2",
+          "player": "Mike Alstott",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "3",
+          "player": "Earl Thomas III",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "4",
+          "player": "Steve Young",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "5",
+          "player": "Ben Roethlisberger",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "6",
+          "player": "Donovan McNabb",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "7",
+          "player": "Le'Veon Bell",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "8",
+          "player": "Drew Brees",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "9",
+          "player": "Rob Gronkowski",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "10",
+          "player": "Zach Thomas",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "11",
+          "player": "Aaron Donald",
+          "team": "Los Angeles Rams"
+        },
+        {
+          "number": "12",
+          "player": "Bo Jackson",
+          "team": "Los Angeles Raiders"
+        },
+        {
+          "number": "13",
+          "player": "Jared Allen",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "14",
+          "player": "Fred Taylor",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "15",
+          "player": "Andre Johnson",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "16",
+          "player": "Calvin Johnson",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "17",
+          "player": "Peyton Manning",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "18",
+          "player": "Roger Staubach",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "19",
+          "player": "Josh Gordon",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "20",
+          "player": "Brian Urlacher",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "21",
+          "player": "Luke Kuechly",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "22",
+          "player": "Thurman Thomas",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "23",
+          "player": "Steve Smith Sr.",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "24",
+          "player": "Roddy White",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "25",
+          "player": "Pat Tillman",
+          "team": "Arizona Cardinals"
+        }
+      ]
+    },
+    {
+      "id": "black-color-blast",
+      "name": "Black Color Blast",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Julian Sayin",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "2",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "3",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "4",
+          "player": "Gunner Stockton",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "5",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "6",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "7",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "8",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "9",
+          "player": "Pat Tillman",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "10",
+          "player": "Deion Sanders",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "11",
+          "player": "Ray Lewis",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "12",
+          "player": "Luke Kuechly",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "13",
+          "player": "Emmitt Smith",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "14",
+          "player": "Calvin Johnson",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "15",
+          "player": "Aaron Donald",
+          "team": "Los Angeles Rams"
+        },
+        {
+          "number": "16",
+          "player": "Randy Moss",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "17",
+          "player": "Ricky Williams",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "18",
+          "player": "Lawrence Taylor",
+          "team": "New York Giants"
+        },
+        {
+          "number": "19",
+          "player": "Le'Veon Bell",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "20",
+          "player": "Steve Young",
+          "team": "San Francisco 49ers"
+        }
+      ]
+    },
+    {
+      "id": "black-color-blast-dual",
+      "name": "Black Color Blast Dual",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Dante Moore/Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "3",
+          "player": "Joe Montana/CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "4",
+          "player": "Trinidad Chambliss /Eli Manning",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "5",
+          "player": "Bo Jackson",
+          "team": "Kansas City Royals/Los Angeles Raiders"
+        }
+      ]
+    },
+    {
+      "id": "black-stained-glass",
+      "name": "Black Stained Glass",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "3",
+          "player": "Dakorien Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "4",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "5",
+          "player": "Lamar \"Bo\" Jackson",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "6",
+          "player": "Josh Hoover",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "7",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "8",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "9",
+          "player": "Earl Campbell",
+          "team": "Houston Oilers"
+        },
+        {
+          "number": "10",
+          "player": "Joe Montana",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "11",
+          "player": "Ben Roethlisberger",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "12",
+          "player": "Eli Manning",
+          "team": "New York Giants"
+        },
+        {
+          "number": "13",
+          "player": "Rob Gronkowski",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "14",
+          "player": "Kurt Warner",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "15",
+          "player": "Arian Foster",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "16",
+          "player": "John Elway",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "17",
+          "player": "Roger Staubach",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "18",
+          "player": "Chad Johnson",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "19",
+          "player": "Brian Urlacher",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "20",
+          "player": "Jim Kelly",
+          "team": "Buffalo Bills"
+        }
+      ]
+    },
+    {
+      "id": "black-stained-glass-dual",
+      "name": "Black Stained Glass Dual",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Julian Sayin/Chris Henry Jr.",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "2",
+          "player": "Steve Young/Bear Bachmeier",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "3",
+          "player": "Jim Kelly/Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "4",
+          "player": "Drew Brees/Peyton Manning",
+          "team": "New Orleans Saints/Denver Broncos"
+        },
+        {
+          "number": "5",
+          "player": "Calvin Johnson/Randy Moss",
+          "team": "Detroit Lions/Minnesota Vikings"
+        }
+      ]
+    },
+    {
+      "id": "fire-and-ice",
+      "name": "Fire and Ice",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Larry Fitzgerald",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "2",
+          "player": "Terrell Suggs",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "3",
+          "player": "Jake Delhomme",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Marshall",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "5",
+          "player": "A.J. Green",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "6",
+          "player": "Dez Bryant",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "7",
+          "player": "Ahman Green",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "8",
+          "player": "Arian Foster",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "9",
+          "player": "Fred Taylor",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "10",
+          "player": "Warren Moon",
+          "team": "Houston Oilers"
+        },
+        {
+          "number": "11",
+          "player": "Howie Long",
+          "team": "Oakland Raiders"
+        },
+        {
+          "number": "12",
+          "player": "Tony Gonzalez",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "13",
+          "player": "Julio Jones",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "14",
+          "player": "Aaron Donald",
+          "team": "Los Angeles Rams"
+        },
+        {
+          "number": "15",
+          "player": "Dan Marino",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "16",
+          "player": "Adrian Peterson",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "17",
+          "player": "Joe Horn",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "18",
+          "player": "Eli Manning",
+          "team": "New York Giants"
+        },
+        {
+          "number": "19",
+          "player": "Antonio Brown",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "20",
+          "player": "Roger Craig",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "21",
+          "player": "Matt Hasselbeck",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "22",
+          "player": "Sean Taylor",
+          "team": "Washington Redskins"
+        },
+        {
+          "number": "23",
+          "player": "Barry Sanders",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "24",
+          "player": "Terrell Davis",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "25",
+          "player": "Warren Sapp",
+          "team": "Tampa Bay Buccaneers"
+        }
+      ]
+    },
+    {
+      "id": "nucleus",
+      "name": "Nucleus",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Donnie Shell/Joe Greene/Jack Ham",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "2",
+          "player": "Kurt Warner/Marshall Faulk/Isaac Bruce",
+          "team": "St. Louis Rams"
+        },
+        {
+          "number": "3",
+          "player": "Terrell Suggs/Ed Reed/Ray Lewis",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "4",
+          "player": "Thurman Thomas/Bruce Smith/Jim Kelly",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "5",
+          "player": "Mike Singletary/Richard Dent/Jim McMahon",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "6",
+          "player": "Parker Livingstone/Isaiah Sategna III/John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "7",
+          "player": "Michael Irvin/Deion Sanders/Emmitt Smith",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "8",
+          "player": "Rod Smith/Terrell Davis/John Elway",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "9",
+          "player": "Ahman Green/Brett Favre/Donald Driver",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "10",
+          "player": "Reggie Wayne/Edgerrin James/Peyton Manning",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "11",
+          "player": "Jimmy Smith/Mark Brunell/Fred Taylor",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "12",
+          "player": "Joe Montana/Marcus Allen/Neil Smith",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "13",
+          "player": "Kellen Winslow/Charlie Joiner/Dan Fouts",
+          "team": "San Diego Chargers"
+        },
+        {
+          "number": "14",
+          "player": "Daunte Culpepper/Randy Moss/Cris Carter",
+          "team": "Minnesota Vikings"
+        },
+        {
+          "number": "15",
+          "player": "Ty Law/Willie McGinest/Tedy Bruschi",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "16",
+          "player": "Tiki Barber/Eli Manning/Michael Strahan",
+          "team": "New York Giants"
+        },
+        {
+          "number": "17",
+          "player": "Vinny Testaverde/Keyshawn Johnson/Wayne Chrebet",
+          "team": "New York Jets"
+        },
+        {
+          "number": "18",
+          "player": "Darian Mensah /Mark Fletcher Jr./Milan Parris",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "19",
+          "player": "Warren Sapp/John Lynch/Ronde Barber",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "20",
+          "player": "Dylan Faison/Jordan Faison /CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "21",
+          "player": "Chris Henry Jr./Julian Sayin/Lamar \"Bo\" Jackson",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "23",
+          "player": "Evan Stewart/Dakorien Moore/Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "24",
+          "player": "Gunner Stockton/Nate Frazier/Chauncey Bowens",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "25",
+          "player": "Josh Hoover/Turbo Richard/Charles Becker",
+          "team": "Indiana Hoosiers"
+        }
+      ]
+    },
+    {
+      "id": "vitreous",
+      "name": "Vitreous",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [
+        {
+          "name": "Red",
+          "printRun": 99
+        },
+        {
+          "name": "Blue",
+          "printRun": 49
+        },
+        {
+          "name": "Green",
+          "printRun": 25
+        },
+        {
+          "name": "Gold",
+          "printRun": 10
+        },
+        {
+          "name": "Mojo",
+          "printRun": 5
+        },
+        {
+          "name": "Platinum Marble",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss Rebels"
+        },
+        {
+          "number": "2",
+          "player": "Rocco Becht",
+          "team": "Penn State Nittany Lions"
+        },
+        {
+          "number": "3",
+          "player": "Josh Hoover",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "4",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina Gamecocks"
+        },
+        {
+          "number": "5",
+          "player": "Trae Taylor",
+          "team": "Nebraska Cornhuskers"
+        },
+        {
+          "number": "6",
+          "player": "Kevin Jennings",
+          "team": "SMU Mustangs"
+        },
+        {
+          "number": "7",
+          "player": "Jaron-Keawe Sagapolutele",
+          "team": "Cal Golden Bears"
+        },
+        {
+          "number": "8",
+          "player": "Julian Sayin",
+          "team": "Ohio State Buckeyes"
+        },
+        {
+          "number": "9",
+          "player": "Avery Johnson",
+          "team": "Kansas State Wildcats"
+        },
+        {
+          "number": "10",
+          "player": "Jaden Craig",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "11",
+          "player": "Gunner Stockton",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "12",
+          "player": "Ashton Daniels",
+          "team": "Florida State Seminoles"
+        },
+        {
+          "number": "13",
+          "player": "Dante Moore",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "14",
+          "player": "Keelon Russell",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "15",
+          "player": "CJ Carr",
+          "team": "Notre Dame Fighting Irish"
+        },
+        {
+          "number": "16",
+          "player": "John Mateer",
+          "team": "Oklahoma Sooners"
+        },
+        {
+          "number": "17",
+          "player": "Sam Leavitt",
+          "team": "LSU Tigers"
+        },
+        {
+          "number": "18",
+          "player": "Bear Bachmeier",
+          "team": "BYU Cougars"
+        },
+        {
+          "number": "20",
+          "player": "Darian Mensah",
+          "team": "Miami Hurricanes"
+        },
+        {
+          "number": "21",
+          "player": "Jayden Maiava",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "22",
+          "player": "Micah Alejado",
+          "team": "Hawaii Rainbow Warriors"
+        },
+        {
+          "number": "23",
+          "player": "Kenny Minchey",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "24",
+          "player": "Bryce Underwood",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "25",
+          "player": "Marcel Reed",
+          "team": "Texas A&M Aggies"
+        }
+      ]
+    }
+  ]
 }

@@ -11,7 +11,12 @@
       "name": "Base Contenders College Ticket",
       "category": "base",
       "totalCards": 35,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "1 Paige Bueckers",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "2",
@@ -185,7 +190,12 @@
       "name": "Base Legendary Contenders SP",
       "category": "base",
       "totalCards": 15,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "36 Breanna Stewart",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "37",
@@ -259,7 +269,12 @@
       "name": "Contenders Campus Legends",
       "category": "insert",
       "totalCards": 5,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "1 Breanna Stewart",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "2",
@@ -283,7 +298,12 @@
       "name": "Contenders School Colors",
       "category": "insert",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "1 Paige Bueckers",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "2",
@@ -332,7 +352,12 @@
       "name": "Prizm",
       "category": "insert",
       "totalCards": 15,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "1 Alex Karaban",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "2",
@@ -430,7 +455,12 @@
       "name": "Prizm Draft Picks Trophy Hunting",
       "category": "insert",
       "totalCards": 10,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "TH-1 Paige Bueckers",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "TH-2",
@@ -479,7 +509,12 @@
       "name": "Prizm Fearless",
       "category": "insert",
       "totalCards": 4,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "F-1 Paige Bueckers",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "F-2",
@@ -522,7 +557,12 @@
       "name": "Prizm Student Orientation",
       "category": "insert",
       "totalCards": 5,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "SO-1 Sarah Strong",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "SO-2",

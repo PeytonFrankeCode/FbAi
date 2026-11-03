@@ -455,6 +455,16 @@
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
+      "id": "2026-topps-update-japan-edition-baseball",
+      "name": "2026 Topps Update Japan Edition Baseball",
+      "year": 2026,
+      "brand": "Topps Update Japan Edition",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 475,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-topps-update-series-baseball",
       "name": "2026 Topps Update Series Baseball",
       "year": 2026,

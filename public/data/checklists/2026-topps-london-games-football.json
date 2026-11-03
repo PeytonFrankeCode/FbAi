@@ -2617,6 +2617,44 @@
           "team": "Baltimore Ravens"
         }
       ]
+    },
+    {
+      "id": "base-lenticular-london-2",
+      "name": "Base Lenticular London",
+      "category": "base",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "LL-1",
+          "player": "Matthew Stafford",
+          "team": "Los Angeles Rams",
+          "note": "Buckingham Palace"
+        },
+        {
+          "number": "LL-2",
+          "player": "Jayden Daniels",
+          "team": "Washington Commanders",
+          "note": "Big Ben"
+        },
+        {
+          "number": "LL-4",
+          "player": "Josh Allen",
+          "team": "Buffalo Bills",
+          "note": "Big Ben"
+        },
+        {
+          "number": "LL-8",
+          "player": "Bijan Robinson",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "LL-10",
+          "player": "Lamar Jackson",
+          "team": "Baltimore Ravens",
+          "note": "London Eye"
+        }
+      ]
     }
   ]
 }
