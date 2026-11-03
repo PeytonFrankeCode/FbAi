@@ -1223,7 +1223,24 @@
       "name": "Sapphire Selections Auto",
       "category": "autograph",
       "totalCards": 9,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Orange Sapphire",
+          "printRun": 25
+        },
+        {
+          "name": "Black Sapphire",
+          "printRun": 10
+        },
+        {
+          "name": "Red Sapphire",
+          "printRun": 5
+        },
+        {
+          "name": "Padparadscha Sapphire",
+          "printRun": 1
+        }
+      ],
       "cards": [
         {
           "number": "SSA-CAM",

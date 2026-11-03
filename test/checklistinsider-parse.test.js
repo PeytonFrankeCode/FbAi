@@ -58,5 +58,22 @@ check('  ...a set with no parallels takes theirs, one from another source keeps 
 const src = require('fs').readFileSync(path.join(__dirname, '..', 'scripts', 'sync-checklistinsider.js'), 'utf8');
 check('the sync fills a held set with no parallels (and a short list it built itself), and can re-read unchanged pages to do it',
   /function fillParallels\(/.test(src) && /--parallels/.test(src) && /lacksParallels\(load\(direct\)\)/.test(src));
+
+// 2026 Bowman Sapphire: no "Base Checklist" heading and no tab heading; the
+// sets are "Base Chrome NFL Sapphire Checklist" and so on, under the page's
+// "<product> Checklist" heading (after a "Checklist Rundown" one).
+const sapphire = `<h2>2026 Bowman Sapphire Football Checklist Rundown</h2><p>Mixing NFL and NIL players.</p><h3>2026 Bowman Sapphire Football Product Configuration</h3><ul><li>4 cards per pack</li></ul>
+<h2>2026 Bowman Sapphire Football Checklist</h2><p>SUBJECT TO CHANGE.</p><h3>Base Chrome NFL Sapphire Checklist</h3><p>100 cards.<br />
+Parallels:<br />
+Gold Sapphire /50 (1:21)<br />
+Padparadscha Sapphire 1/1 (1:1,010)<br />
+Broken /0 (1:9)</p><p>BCV-1 Trey McBride - Arizona Cardinals<br />
+BCV-2 Michael Wilson - Arizona Cardinals</p><h3>Base Chrome NFL Rookies Sapphire Checklist</h3><p>100 cards.</p><p>BCV-101 Fernando Mendoza - Las Vegas Raiders RC</p>`;
+const ss = parsePage(sapphire);
+check('a page with no Base or tab heading is read from its "<product> Checklist" heading',
+  ss.length === 2 && ss[0].name === 'Base Chrome NFL Sapphire' && ss[0].cards.length === 2 && ss[1].cards[0].rookie === true, JSON.stringify(ss.map(x => [x.name, x.cards.length])));
+check('  ...a "/0" on the page is read as unnumbered, not a print run of 0',
+  ss[0] && ss[0].parallels.find(p => p.name === 'Broken').printRun === null && ss[0].parallels.find(p => p.name === 'Gold Sapphire').printRun === 50);
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checklistinsider-parse checks passed');
 process.exit(failures ? 1 : 0);

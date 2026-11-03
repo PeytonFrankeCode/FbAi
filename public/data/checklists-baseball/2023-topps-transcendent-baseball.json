@@ -1781,7 +1781,12 @@
       "name": "Transcendent Auto Relic Book",
       "category": "autograph",
       "totalCards": 26,
-      "parallels": [],
+      "parallels": [
+        {
+          "name": "Platinum 1/1.",
+          "printRun": null
+        }
+      ],
       "cards": [
         {
           "number": "TARBC-AB",

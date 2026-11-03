@@ -60,7 +60,8 @@ function parseParallels(text) {
     // what follows it.
     const name = (m ? m[1] : line).replace(/[-–:\s]+$/, '').replace(/^(?:19|20)\d{2}\s+(?=\S)/, '').trim();
     if (!name || name.length > 60) continue;
-    out.push({ name, printRun: m ? Number(m[2]) : null });
+    // "/0" is a typo on the page, not a print run: kept as unnumbered.
+    out.push({ name, printRun: m && Number(m[2]) > 0 ? Number(m[2]) : null });
   }
   return out;
 }
@@ -136,7 +137,10 @@ function parsePage(html) {
   // Without the tab heading, from the Base heading itself: from its text,
   // the heading's own tag was cut off and the Base set went unread.
   const base = html.indexOf('Base Checklist');
-  const from = start >= 0 ? start : (base >= 0 ? Math.max(0, html.lastIndexOf('<h', base)) : -1);
+  // Neither (2026 Bowman Sapphire: "Base Chrome NFL Sapphire Checklist"):
+  // from the page's own "<product> Checklist" heading, not its "Rundown".
+  const head = html.search(/<h2[^>]*>[^<]*\bChecklist\s*<\/h2>/i);
+  const from = start >= 0 ? start : base >= 0 ? Math.max(0, html.lastIndexOf('<h', base)) : head;
   const end = html.indexOf('Team Checklist</h2>', from);
   const body = html.slice(from, end > from ? end : undefined);
 
@@ -162,7 +166,7 @@ function parsePage(html) {
     };
     // A whole set at one print run ("Print run: 25" / "#/25").
     const run = text.match(/(?:print run|numbered)\s*(?:to|:)?\s*#?\/?\s*(\d+)/i);
-    if (run) set.printRun = Number(run[1]);
+    if (run && Number(run[1]) > 0) set.printRun = Number(run[1]);
     sets.push(set);
   }
   return sets;

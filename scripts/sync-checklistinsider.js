@@ -141,6 +141,8 @@ if (require.main === module) (async () => {
     slug: ((b.match(/<loc>([^<]*)<\/loc>/) || [])[1] || '').replace(SITE + '/', '').replace(/\/$/, ''),
     mod: (b.match(/<lastmod>([^<]*)<\/lastmod>/) || [])[1] || '',
   })).filter(p => p.slug);
+  // A sitemap with no pages is a block or an outage, not "nothing new": say so.
+  if (!posts.length) { console.error(`sitemap had no pages (${sm.length} bytes): ${sm.slice(0, 200).replace(/\s+/g, ' ')}`); process.exit(1); }
   const summary = [];
 
   for (const [sport, [dir, sportName]] of Object.entries(SPORTS)) {
@@ -158,7 +160,13 @@ if (require.main === module) (async () => {
       // Only pages that changed since we last touched that sport's files, or
       // that we have no file for.
       const yearOf = Number((p.slug.match(/^(\d{4})/) || [])[1]) || 0;
-      const recheck = PAR_FROM && yearOf >= PAR_FROM && (!direct || lacksParallels(load(direct)));
+      // A placeholder of ours ("not released yet", no cards) is read every
+      // run, however old the page: a page published before our last commit
+      // to the sport would otherwise never be looked at again (2026 Bowman
+      // Sapphire stayed empty for weeks after release that way).
+      const isStub = (d) => !!d && (d.unreleased || !count(d.sets));
+      const recheck = (direct && isStub(load(direct)))
+        || (PAR_FROM && yearOf >= PAR_FROM && (!direct || lacksParallels(load(direct))));
       if (direct && p.mod <= (since || mtime(direct)) && !recheck) continue;
       // Catch-up runs read only recent products' pages.
       if (!direct && PAR_FROM && p.mod <= since && !(yearOf >= PAR_FROM)) continue;
@@ -169,7 +177,13 @@ if (require.main === module) (async () => {
       // cards ("2022 Flawless Collegiate - Player"), not a set.
       const yearly = (st) => st.cards.filter(c => /^(19|20)\d\d$/.test(String(c.number))).length > st.cards.length / 2;
       sets = sets.filter(st => !TEAM_LIST.test(st.name) && !yearly(st));
-      if (!sets.length) { summary.push({ sport, slug: p.slug, action: 'not published yet' }); continue; }
+      if (!sets.length) {
+        summary.push({ sport, slug: p.slug, action: 'not published yet' });
+        // DUMP_SLUG=<slug>: print what the page says, to see why no set was read.
+        if (process.env.DUMP_SLUG === p.slug) console.error(`--- ${p.slug} (${html.length} bytes) ---\n` + html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, '')
+          .replace(/<(h[1-4]|p|li|br|tr|table|div)[^>]*>/gi, '\n<$1>').replace(/<(?!\/?(h[1-4]|li|table|tr|td|th)\b)[^>]+>/g, '').replace(/\n\s*\n+/g, '\n').slice(0, 12000));
+        continue;
+      }
       const name = productName(html, p.slug);
       const year = (name.match(/^\d{4}(-\d{2})?/) || [''])[0];
       // Ours: by URL, or the file of that year holding most of its players.
@@ -192,6 +206,12 @@ if (require.main === module) (async () => {
           const sizeOk = count(d.sets) >= 0.5 * count(sets) && count(d.sets) <= 2.5 * count(sets);
           if (share >= 0.75 && sizeOk && share > best) { best = share; id = f; }
         }
+      }
+      // No players to match a placeholder by: the placeholder of that year
+      // whose distinctive name words are the page's, both ways round.
+      if (!id) {
+        const same = (a, b) => a.size && b.size && [...a].every(w => b.has(w)) && [...b].every(w => a.has(w));
+        id = [...ours.keys()].find(f => year && f.startsWith(year.slice(0, 4)) && isStub(load(f)) && same(nameWords(f), pw)) || null;
       }
       if (!id) {
         const nid = /^\d{4}/.test(p.slug) ? p.slug : `${slugify(year)}-${p.slug}`;
