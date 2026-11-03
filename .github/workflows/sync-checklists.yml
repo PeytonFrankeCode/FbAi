@@ -43,7 +43,7 @@ jobs:
           set -o pipefail
           ARGS="--write"
           if [ "${{ github.ref_name }}" = "run/checklist-parallels" ] || [ "${{ inputs.parallels }}" = "true" ]; then ARGS="$ARGS --parallels=2024"; fi
-          DUMP_SLUG=2026-bowman-sapphire-football node scripts/sync-checklistinsider.js $ARGS | tee sync-report.txt
+          node scripts/sync-checklistinsider.js $ARGS | tee sync-report.txt
           { echo '## Checklist sync'; echo '```'; tail -150 sync-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Anything new?

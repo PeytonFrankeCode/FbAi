@@ -137,7 +137,10 @@ function parsePage(html) {
   // Without the tab heading, from the Base heading itself: from its text,
   // the heading's own tag was cut off and the Base set went unread.
   const base = html.indexOf('Base Checklist');
-  const from = start >= 0 ? start : (base >= 0 ? Math.max(0, html.lastIndexOf('<h', base)) : -1);
+  // Neither (2026 Bowman Sapphire: "Base Chrome NFL Sapphire Checklist"):
+  // from the page's own "<product> Checklist" heading, not its "Rundown".
+  const head = html.search(/<h2[^>]*>[^<]*\bChecklist\s*<\/h2>/i);
+  const from = start >= 0 ? start : base >= 0 ? Math.max(0, html.lastIndexOf('<h', base)) : head;
   const end = html.indexOf('Team Checklist</h2>', from);
   const body = html.slice(from, end > from ? end : undefined);
 
