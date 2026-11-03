@@ -22,6 +22,16 @@
       "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
     },
     {
+      "id": "2026-bowman-u-signature-football",
+      "name": "2026 Bowman U Signature Football",
+      "year": 2026,
+      "brand": "Bowman U Signature",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 585,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-bowman-university-best-football",
       "name": "2026 Bowman University Best Football",
       "year": 2026,
@@ -68,10 +78,9 @@
       "year": 2026,
       "brand": "Obsidian",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 21,
+      "totalCards": 538,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-topps-chrome-football",
@@ -79,10 +88,9 @@
       "year": 2026,
       "brand": "Topps Chrome",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 48,
+      "totalCards": 1474,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-topps-football",
