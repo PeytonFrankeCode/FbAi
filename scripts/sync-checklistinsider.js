@@ -141,6 +141,8 @@ if (require.main === module) (async () => {
     slug: ((b.match(/<loc>([^<]*)<\/loc>/) || [])[1] || '').replace(SITE + '/', '').replace(/\/$/, ''),
     mod: (b.match(/<lastmod>([^<]*)<\/lastmod>/) || [])[1] || '',
   })).filter(p => p.slug);
+  // A sitemap with no pages is a block or an outage, not "nothing new": say so.
+  if (!posts.length) { console.error(`sitemap had no pages (${sm.length} bytes): ${sm.slice(0, 200).replace(/\s+/g, ' ')}`); process.exit(1); }
   const summary = [];
 
   for (const [sport, [dir, sportName]] of Object.entries(SPORTS)) {
