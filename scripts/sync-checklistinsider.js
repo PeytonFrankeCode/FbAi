@@ -175,7 +175,13 @@ if (require.main === module) (async () => {
       // cards ("2022 Flawless Collegiate - Player"), not a set.
       const yearly = (st) => st.cards.filter(c => /^(19|20)\d\d$/.test(String(c.number))).length > st.cards.length / 2;
       sets = sets.filter(st => !TEAM_LIST.test(st.name) && !yearly(st));
-      if (!sets.length) { summary.push({ sport, slug: p.slug, action: 'not published yet' }); continue; }
+      if (!sets.length) {
+        summary.push({ sport, slug: p.slug, action: 'not published yet' });
+        // DUMP_SLUG=<slug>: print what the page says, to see why no set was read.
+        if (process.env.DUMP_SLUG === p.slug) console.error(`--- ${p.slug} (${html.length} bytes) ---\n` + html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, '')
+          .replace(/<(h[1-4]|p|li|br|tr|table|div)[^>]*>/gi, '\n<$1>').replace(/<(?!\/?(h[1-4]|li|table|tr|td|th)\b)[^>]+>/g, '').replace(/\n\s*\n+/g, '\n').slice(0, 12000));
+        continue;
+      }
       const name = productName(html, p.slug);
       const year = (name.match(/^\d{4}(-\d{2})?/) || [''])[0];
       // Ours: by URL, or the file of that year holding most of its players.
