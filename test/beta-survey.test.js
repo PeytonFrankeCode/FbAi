@@ -107,7 +107,7 @@ const post = (body, addr) => fetch(base + '/api/survey', {
   check('  ...closing the footer survey is not a "no"', /if \(_surveySource !== 'footer' && _surveyState\(\) !== 'done'\) _surveyDeclined\(\);/.test(js));
 
   check('the announcement can ask too, and hides once answered', /survey: (true|false)/.test(js) && /openSurvey\('announce'\)/.test(js)
-    && /if \(BANNER\.survey && _surveyState\(\) === 'done'\) return;/.test(js));
+    && /if \(BANNER\.survey && _surveyState\(\) === 'done'\) \{ el\.classList\.add\('hidden'\); return; \}/.test(js));
   {
     const d = require(path.join(ROOT, 'market-digest.js'));
     const c = { sales: 10, value: 100, avg: 10, risers: [], players: [], fallers: [], mostSold: [], priciest: [], sets: [] };
