@@ -32,5 +32,9 @@ check('the versioned scripts are cached for good', /\/app\.js\n  Cache-Control: 
 const app = read('public/app.js');
 check('the first market photos load at once, the rest lazily, all with a size', /let eager = 3;/.test(app) && /\(eager-- > 0 \? 'fetchpriority="high"' : 'loading="lazy"'\)/.test(app) && /width="120" height="160"/.test(app));
 
+check('the default market boards are asked for from the head, and used once by app.js',
+  /window\.__mpEarly=fetch\('\/api\/sold-stats\?days=30'/.test(html) && /if \(period === 30 && sp === 'football' && window\.__mpEarly\)/.test(app) && /window\.__mpEarly = null;/.test(app));
+check('eBay\'s image host is connected to early', /<link rel="preconnect" href="https:\/\/i\.ebayimg\.com"/.test(html));
+
 console.log(failures ? `\n${failures} mobile-speed check(s) failed` : '\nall mobile-speed checks passed');
 process.exit(failures ? 1 : 0);

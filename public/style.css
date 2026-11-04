@@ -10605,5 +10605,5 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 @media(max-width:700px){.bty-how{grid-template-columns:1fr 1fr}.bty-two{grid-template-columns:1fr}.bty-card{flex-direction:column;align-items:stretch}.bty-card-side{flex-direction:row;justify-content:space-between;align-items:center;text-align:left}}
 
 /* The market boards' room, kept from the first paint (see index.html). */
-.market-pulse.mp-pending #mp-body{min-height:1120px}
-@media (max-width:640px){.market-pulse.mp-pending #mp-body{min-height:1040px}}
+.market-pulse.mp-pending #mp-body{min-height:1130px}
+@media (max-width:640px){.market-pulse.mp-pending #mp-body{min-height:1130px}}

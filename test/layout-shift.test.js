@@ -17,5 +17,12 @@ const htmlId = (html.match(/data-banner-id="([^"]+)"/) || [])[1];
 const appId = (app.match(/const BANNER = \{\s*id: '([^']+)'/) || [])[1];
 check('the banner is decided before the first paint, with the same dismissal key as app.js',
   /<script>try\{var sb=document\.getElementById\('site-banner'\)/.test(html) && htmlId && htmlId === appId, `${htmlId} vs ${appId}`);
+// Phones: the phone layout from the first paint, by app.js's own rule.
+const lp = (app.match(/const mode = saved \|\| \(window\.innerWidth <= (\d+) \? 'mobile' : 'desktop'\);/) || [])[1];
+const hp = (html.match(/lm\|\|\(window\.innerWidth<=(\d+)\?'mobile':'desktop'\)\)==='mobile'\)document\.documentElement\.classList\.add\('mobile-layout'\)/) || [])[1];
+check('the phone layout is set before the first paint, with app.js\'s breakpoint', lp && hp && lp === hp && html.indexOf("classList.add('mobile-layout')") < html.indexOf('style.css?v='), `${hp} vs ${lp}`);
+
+check('the home page\'s Search tabs are shown before the first paint', /if\(location\.pathname==='\/'\)document\.getElementById\('search-subtabs'\)\.classList\.remove\('hidden'\)/.test(html));
+
 console.log(failures ? `\n${failures} layout-shift check(s) failed` : '\nall layout-shift checks passed');
 process.exit(failures ? 1 : 0);
