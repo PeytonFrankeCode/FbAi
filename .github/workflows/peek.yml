@@ -8,16 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Robots signals on the suggested pages
+        shell: bash {0}
         run: |
           for base in https://thecardhuddle.com https://the-card-huddle.thecardhuddleoffical.workers.dev; do
             echo "=== $base"
             for p in /sets/2025-panini-select-football/ /sets/2026-donruss-football/ /sets/2026-topps-football/ /sets/2026-topps-heritage-football/ /sets/2025-topps-resurgence-football/ /sets/2024-panini-prizm-football/ /players/bo-nix/; do
               curl -sS -m 30 -D h.txt -o b.html -A 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)' "$base$p" || true
               code=$(head -1 h.txt | awk '{print $2}')
-              xr=$(grep -i '^x-robots-tag' h.txt | tr -d '\r')
-              meta=$(grep -o '<meta name="robots" content="[^"]*"' b.html | head -1)
-              priced=$(grep -c 'id="sold-prices"' b.html)
-              chal=$(grep -ci 'just a moment' b.html)
+              xr=$(grep -i '^x-robots-tag' h.txt | tr -d '\r' || true)
+              meta=$(grep -o '<meta name="robots" content="[^"]*"' b.html | head -1 || true)
+              priced=$(grep -c 'id="sold-prices"' b.html || true)
+              chal=$(grep -ci 'just a moment' b.html || true)
               echo "$code $p | $xr | $meta | priced=$priced challenge=$chal"
             done
           done
