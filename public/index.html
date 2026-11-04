@@ -285,7 +285,7 @@
        (PageSpeed LCP, Nov 2026). The default boards are asked for here, in
        parallel with app.js, and eBay's image host is connected to early. -->
   <link rel="preconnect" href="https://i.ebayimg.com" crossorigin />
-  <script>try{if(location.pathname==='/'&&!/[?&](q|prefill|bounty)=/.test(location.search))window.__mpEarly=fetch('/api/sold-stats?days=30',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}catch(e){}</script>
+  <script>try{if(location.pathname==='/'&&!/[?&](q|prefill|bounty)=/.test(location.search))window.__mpEarly=fetch('/api/sold-stats?days=30',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(d){try{((d&&d.priciest)||[]).slice(0,3).forEach(function(x){if(x&&x.imageUrl){var i=new Image();i.fetchPriority='high';i.src=String(x.imageUrl).replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i,'/s-l300.$1')}})}catch(e){}return d}).catch(function(){return null})}catch(e){}</script>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2068,7 +2068,7 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=9d1baea007"></script>
+  <script src="app.js?v=6288e1651b"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">

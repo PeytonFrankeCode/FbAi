@@ -36,5 +36,14 @@ check('the default market boards are asked for from the head, and used once by a
   /window\.__mpEarly=fetch\('\/api\/sold-stats\?days=30'/.test(html) && /if \(period === 30 && sp === 'football' && window\.__mpEarly\)/.test(app) && /window\.__mpEarly = null;/.test(app));
 check('eBay\'s image host is connected to early', /<link rel="preconnect" href="https:\/\/i\.ebayimg\.com"/.test(html));
 
+// The tile photos at eBay's 300px size, and the head preloads exactly those.
+{
+  const appRule = (app.match(/function _mpPhoto\(u\) \{ return String\(u \|\| ''\)\.replace\((\/.+?\/i), '(\/s-l\d+\.\$1)'\); \}/) || []);
+  const headRule = (html.match(/i\.src=String\(x\.imageUrl\)\.replace\((\/.+?\/i),'(\/s-l\d+\.\$1)'\)/) || []);
+  check('market tiles use eBay\'s 300px photos, and the head preloads the same addresses',
+    appRule[1] && appRule[1] === headRule[1] && appRule[2] === '/s-l300.$1' && headRule[2] === '/s-l300.$1' && /src="' \+ escHtml\(_mpPhoto\(url\)\)/.test(app),
+    `${appRule[1]} ${appRule[2]} vs ${headRule[1]} ${headRule[2]}`);
+}
+
 console.log(failures ? `\n${failures} mobile-speed check(s) failed` : '\nall mobile-speed checks passed');
 process.exit(failures ? 1 : 0);

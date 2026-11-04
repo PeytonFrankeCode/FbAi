@@ -1492,6 +1492,9 @@ async function _mpLoadDeals(thumb, head, homeN) {
     'Prices change fast; check the photos and condition before you buy. Links go to eBay; we may earn a commission.</span></p></div>';
 }
 
+// A market-tile photo at eBay's 300px size. index.html's head preloads the
+// first three with the same rule, so the browser reuses those downloads.
+function _mpPhoto(u) { return String(u || '').replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l300.$1'); }
 async function _mpFetch(period) {
   const sports = _mpSports();
   const key = period + ':' + sports.join(',');
@@ -1584,8 +1587,10 @@ async function loadMarketPulse(days, attempt = 0) {
   // (PageSpeed's LCP): fetched at once and first, not lazily. The rest wait
   // until they scroll near. width/height give the box its shape before load.
   let eager = 3;
+  // eBay's 300px copy, not the full-size photo: the tiles are ~120px wide,
+  // and full-size photos were ~380 KB of the phone's first screen.
   const thumb = (url, alt) => url
-    ? '<img class="mp-tile-img" src="' + escHtml(url) + '" alt="' + escHtml(alt) + '" width="120" height="160" '
+    ? '<img class="mp-tile-img" src="' + escHtml(_mpPhoto(url)) + '" alt="' + escHtml(alt) + '" width="120" height="160" '
       + (eager-- > 0 ? 'fetchpriority="high"' : 'loading="lazy"') + ' />'
     : '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
 
