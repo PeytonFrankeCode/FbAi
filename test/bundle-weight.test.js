@@ -189,7 +189,7 @@ for (const rel of HEAVY) {
   // script is the same latent bug, so it has to be declared above or it fails
   // here rather than going unnoticed for months.
   {
-    const known = new Set(['style.css', 'app.js', 'landing.css']);
+    const known = new Set(['style.css', 'app.js', 'bounties.js', 'landing.css']);   // bounties.js: stamped by stamp-sw.js with app.js
     const suspicious = [];
     for (const page of Object.keys(PAGES)) {
       const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');

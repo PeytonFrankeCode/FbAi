@@ -147,7 +147,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -159,7 +159,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick };
   return serverInit;
 }
 
@@ -1010,6 +1010,16 @@ export default {
           'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable' } });
       }
+      // Bounty Board card photos (server.js /api/bounties-photo), under
+      // bounty/ in R2, named by content.
+      if (url.pathname.startsWith('/bounty/img/') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
+        const name = url.pathname.slice('/bounty/img/'.length);
+        if (!/^[a-f0-9]{24}\.jpg$/.test(name)) return new Response('Not found', { status: 404 });
+        const obj = await env.PHOTOS.get('bounty/' + name);
+        if (!obj) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'public, max-age=60' } });
+        return new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers: {
+          'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
+      }
       // Shared price images (server.js /api/share), under share/ in R2,
       // named by content: the preview picture a shared /s/<id> link shows.
       if (url.pathname.startsWith('/s/') && url.pathname.endsWith('.png') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
@@ -1309,7 +1319,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll, collectionWeekly } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll, collectionWeekly, bountyTick } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1502,6 +1512,15 @@ export default {
             return null;
           });
           if (r && !r.ok) console.error('[Cron] market digest not sent:', r.reason);
+        }
+
+        // Bounty Board clock (server.js bountyTick): expiries, lapsed claims,
+        // refunds and payouts every tick; collectors holding a newly wanted
+        // card are told once an hour.
+        if (typeof bountyTick === 'function') {
+          await bountyTick({ notify: aliasTick }).catch(err => console.error('[Cron] bounty tick failed:', err && err.message || err));
+        } else {
+          console.error('[Cron] bountyTick missing from init() — not wired through');
         }
 
         // "Your collection this week" (server.js collectionWeekly). Every tick:

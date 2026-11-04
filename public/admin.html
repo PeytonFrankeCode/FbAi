@@ -398,6 +398,11 @@
   <div class="page-subtitle" id="bw-sub">Sellers who asked for a founding spot on <a href="/business" target="_blank" style="color:var(--accent)">/business</a>.</div>
   <div id="bw-list" style="margin-bottom:2.5rem"></div>
 
+  <!-- Bounty Board: disputes and deals (/api/admin/bounties) -->
+  <div class="page-title">Bounty Board</div>
+  <div class="page-subtitle" id="bb-sub">Disputes to decide, and the latest deals.</div>
+  <div id="bb-list" style="margin-bottom:2.5rem"><p style="color:var(--text-muted)">Loading&hellip;</p></div>
+
   <!-- Social images: this week's boards as pictures to post (/api/admin/social) -->
   <div class="page-title">Social images</div>
   <div class="page-subtitle">This week's market as pictures for Instagram, X, TikTok and Reddit. Download one, paste the caption, post. The link in each caption is tracked in Growth as <code>social-&lt;board&gt;</code>.</div>
@@ -642,6 +647,7 @@
       loadArticles();
       loadArticleStats();
       loadGrowth();
+      loadBounties();
       loadSocial();
       loadWaitlist();
       loadSurveys();
@@ -963,6 +969,37 @@
     } catch (err) {
       box.innerHTML = `<p style="color:var(--red)">Could not load the boards: ${escHtml(err.message)}</p>`;
     }
+  }
+
+  // Bounty Board (owner, Nov 2026): decide disputes (refund the buyer or pay
+  // the seller) and watch the deals.
+  async function loadBounties() {
+    const box = artEl('bb-list');
+    try {
+      const d = await artApi('/api/admin/bounties');
+      const c = d.counts || {};
+      artEl('bb-sub').textContent = `${d.payments ? 'Payments on.' : 'Payments OFF (set BOUNTY_PAYMENTS=on after Stripe Connect is enabled).'} Open ${c.open || 0} · claimed ${c.claimed || 0} · paid ${c.paid || 0} · shipped ${c.shipped || 0} · done ${c.complete || 0} · in dispute ${c.disputed || 0} · refunded ${c.refunded || 0}`;
+      const rows = (d.bounties || []).sort((a, b) => (b.status === 'disputed') - (a.status === 'disputed'));
+      box.innerHTML = rows.length ? rows.map(b => {
+        const cl = b.claim || {};
+        const f = b.fees || {};
+        const disp = b.status === 'disputed';
+        return `<div style="border:1px solid ${disp ? 'var(--red)' : 'var(--border-primary)'};border-radius:10px;padding:.75rem;margin-bottom:.6rem;background:var(--bg-card)">
+          <strong>${escHtml(b.card)}</strong> · ${escHtml(b.grade)} · $${b.price} · <em>${escHtml(b.status)}</em><br>
+          <span style="font-size:.82rem;color:var(--text-secondary)">Buyer ${escHtml(b.user)}${cl.seller ? ' · seller ' + escHtml(cl.seller) : ''}${f.platform ? ` · fee $${(f.platform / 100).toFixed(2)}` : ''}${cl.tracking ? ` · ${escHtml(cl.carrier)} ${escHtml(cl.tracking)}` : ''}${cl.cert ? ' · cert ' + escHtml(cl.cert) : ''}</span>
+          ${(cl.photos || []).length ? `<div style="display:flex;gap:.3rem;margin:.4rem 0">${cl.photos.map(u => `<a href="${escHtml(u)}" target="_blank"><img src="${escHtml(u)}" style="width:56px;height:76px;object-fit:cover;border-radius:4px"></a>`).join('')}</div>` : ''}
+          ${cl.dispute ? `<p style="margin:.4rem 0;color:var(--red)">Dispute (${escHtml(String(cl.dispute.at).slice(0, 10))}): ${escHtml(cl.dispute.reason)}</p>` : ''}
+          ${disp ? `<button type="button" onclick="resolveBounty('${b.id}','refund')" style="margin-right:.4rem">Refund the buyer</button><button type="button" onclick="resolveBounty('${b.id}','release')">Pay the seller</button>` : ''}
+        </div>`;
+      }).join('') : '<p style="color:var(--text-muted)">No deals yet.</p>';
+    } catch (err) {
+      box.innerHTML = `<p style="color:var(--red)">Could not load bounties: ${escHtml(err.message)}</p>`;
+    }
+  }
+  async function resolveBounty(id, action) {
+    if (!confirm(action === 'refund' ? 'Refund the buyer in full?' : 'Pay the seller now?')) return;
+    try { await artApi(`/api/admin/bounties/${id}/resolve`, { method: 'POST', body: JSON.stringify({ action }) }); loadBounties(); }
+    catch (err) { alert(err.message); }
   }
 
   async function loadArticles() {
