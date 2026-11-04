@@ -114,6 +114,19 @@ jobs:
       - name: Test
         run: node scripts/run-ci-tests.js
 
+      # Minify the app's script and stylesheets for the deploy only (owner,
+      # Nov 2026: PageSpeed mobile 69, "minify JavaScript/CSS"). After the
+      # tests, which read the readable source; the ?v= stamps were taken from
+      # that source and still change exactly when it does. Top-level names
+      # are kept (a plain script, not a module), so onclick="switchView(...)"
+      # and the other inline handlers still find their functions.
+      - name: Minify app.js, bounties.js and style.css
+        run: |
+          for f in app.js bounties.js; do npx esbuild "public/$f" --minify --target=es2020 --log-level=warning --outfile="public/$f.min" && mv "public/$f.min" "public/$f"; done
+          npx esbuild public/style.css --minify --loader:.css=css --log-level=warning --outfile=public/style.css.min && mv public/style.css.min public/style.css
+          node --check public/app.js && node --check public/bounties.js
+          ls -la public/app.js public/bounties.js public/style.css
+
 
       # Ask Cloudflare what the token can actually do, before wrangler tries.
       #
