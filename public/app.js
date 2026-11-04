@@ -1573,8 +1573,13 @@ async function loadMarketPulse(days, attempt = 0) {
 
   // Photo when we have one, the existing placeholder when we don't, so a card
   // with no image still occupies the same footprint and the grid stays even.
+  // The first strip's photos are the largest thing on a phone's first screen
+  // (PageSpeed's LCP): fetched at once and first, not lazily. The rest wait
+  // until they scroll near. width/height give the box its shape before load.
+  let eager = 3;
   const thumb = (url, alt) => url
-    ? '<img class="mp-tile-img" src="' + escHtml(url) + '" alt="' + escHtml(alt) + '" loading="lazy" />'
+    ? '<img class="mp-tile-img" src="' + escHtml(url) + '" alt="' + escHtml(alt) + '" width="120" height="160" '
+      + (eager-- > 0 ? 'fetchpriority="high"' : 'loading="lazy"') + ' />'
     : '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
 
   // The strip shows three; the payload holds fifty. Every section head carries

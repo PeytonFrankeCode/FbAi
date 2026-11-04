@@ -278,7 +278,11 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Not render-blocking (PageSpeed, Nov 2026): the page paints in the system
+       font and switches to Inter when it arrives (display=swap). -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
 
   <link rel="stylesheet" href="style.css?v=44201b9f9f" />
 
@@ -2048,7 +2052,7 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=d3a8eb4048"></script>
+  <script src="app.js?v=65ae65e050"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
