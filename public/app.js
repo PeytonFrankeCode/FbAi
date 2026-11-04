@@ -1551,10 +1551,11 @@ async function loadMarketPulse(days, attempt = 0) {
       if (!wrap.classList.contains('hidden')) body.innerHTML = '<div class="mp-loading"><span class="load-spinner sm"></span>Loading…</div>';
       return;
     }
+    wrap.classList.remove('mp-pending');
     wrap.classList.add('hidden');
     return;
   }
-  wrap.classList.remove('hidden');
+  wrap.classList.remove('hidden', 'mp-pending');
 
   const label = period === 365 ? 'the last year' : `the last ${period} days`;
   const parts = [];
@@ -2312,8 +2313,10 @@ function openBannerTarget() {
 
 function initSiteBanner() {
   const el = document.getElementById('site-banner');
-  if (!el || bannerDismissed()) return;
-  if (BANNER.survey && _surveyState() === 'done') return;
+  // index.html shows it before the first paint; this only hides it again
+  // when the announcement is a survey the visitor already answered.
+  if (!el || bannerDismissed()) { if (el) el.classList.add('hidden'); return; }
+  if (BANNER.survey && _surveyState() === 'done') { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
 }
 

@@ -280,7 +280,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=15ae61eedf" />
+  <link rel="stylesheet" href="style.css?v=44201b9f9f" />
 
 
 </head>
@@ -296,7 +296,7 @@
 
 <!-- Site-wide announcement. Keyed by id so a future announcement shows again
      for people who dismissed the last one, rather than staying hidden forever. -->
-<div id="site-banner" class="site-banner hidden" role="region" aria-label="Announcement">
+<div id="site-banner" class="site-banner hidden" role="region" aria-label="Announcement" data-banner-id="2026-10-donruss-checklist">
   <button type="button" class="site-banner-link" onclick="openBannerTarget()">
     <span class="site-banner-tag">New checklist</span>
     <span class="site-banner-text"><strong>2026 Donruss Football is here.</strong> All 1,572 cards, inserts, autos and parallels, with sold prices.</span>
@@ -304,6 +304,9 @@
   </button>
   <button type="button" class="site-banner-x" onclick="dismissSiteBanner()" aria-label="Dismiss announcement">&times;</button>
 </div>
+<!-- Shown before the first paint, not after app.js: inserted later, it pushed
+     the whole page down (layout shift). Same dismissal key as app.js. -->
+<script>try{var sb=document.getElementById('site-banner');if(sb&&localStorage.getItem('cardHuddleBannerDismissed')!==sb.getAttribute('data-banner-id'))sb.classList.remove('hidden')}catch(e){}</script>
 
 <header>
     <div class="header-inner">
@@ -574,9 +577,13 @@
       </div>
       <div id="search-meta" class="search-meta hidden"></div>
 
-      <!-- Market snapshot from our own sold-sales dataset. Hidden entirely
-           until the data is there, so it never renders as an empty shell. -->
-      <div id="market-pulse" class="market-pulse hidden" aria-label="Football card market stats">
+      <!-- Market snapshot from our own sold-sales dataset. Its room is kept
+           from the first paint (mp-pending: a loading line in a box about the
+           boards' height) and the boards fill it in place: appearing from
+           hidden, it pushed everything under it down by ~1,200px, which was
+           most of the home page's layout shift (PageSpeed CLS 0.32 desktop,
+           0.7 mobile; owner, Nov 2026). Hidden only if the data never comes. -->
+      <div id="market-pulse" class="market-pulse mp-pending" aria-label="Football card market stats">
         <div class="mp-head">
           <span class="mp-title">&#127944; Football card market</span>
           <div class="mp-periods" role="tablist" aria-label="Time period">
@@ -586,7 +593,7 @@
             <button class="mp-period" data-days="365" role="tab">1y</button>
           </div>
         </div>
-        <div id="mp-body" class="mp-body"></div>
+        <div id="mp-body" class="mp-body"><div class="mp-loading"><span class="load-spinner sm"></span>Loading…</div></div>
         <!-- The week's Market Movers report, a page of its own (/news). -->
         <a class="mm-report-link" href="/news/market-movers?utm_source=app&amp;utm_medium=home">
           <span class="mm-report-title">&#128200; This week&rsquo;s Market Movers report</span>
@@ -2041,7 +2048,7 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=ea091f846a"></script>
+  <script src="app.js?v=d3a8eb4048"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
