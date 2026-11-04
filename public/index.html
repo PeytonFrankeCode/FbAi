@@ -275,16 +275,29 @@
   <!-- Canonical URL -->
   <link rel="canonical" href="https://thecardhuddle.com" />
 
+  <!-- Phone or desktop layout, decided before the first paint with the same
+       rule as app.js (initLayoutPicker): set by app.js after load, phones
+       drew the desktop header first and then snapped to theirs, moving the
+       whole page (layout shift ~0.29 on phones, Nov 2026). -->
+  <script>try{var lm=null;try{lm=localStorage.getItem('cardHuddleLayout')}catch(e){}if((lm||(window.innerWidth<=768?'mobile':'desktop'))==='mobile')document.documentElement.classList.add('mobile-layout')}catch(e){}</script>
+  <!-- The home page's largest picture is a market-board card photo, which
+       waited on app.js downloading, running, then asking for the boards
+       (PageSpeed LCP, Nov 2026). The default boards are asked for here, in
+       parallel with app.js, and eBay's image host is connected to early. -->
+  <link rel="preconnect" href="https://i.ebayimg.com" crossorigin />
+  <script>try{if(location.pathname==='/'&&!/[?&](q|prefill|bounty)=/.test(location.search))window.__mpEarly=fetch('/api/sold-stats?days=30',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}catch(e){}</script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <!-- Not render-blocking (PageSpeed, Nov 2026): the page paints in the system
-       font and switches to Inter when it arrives (display=swap). -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+       font and only uses Inter if it is already there (display=optional): a late
+       swap reflowed the header and menu, a layout shift of ~0.29 on phones. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" /></noscript>
 
-  <link rel="stylesheet" href="style.css?v=44201b9f9f" />
+  <link rel="stylesheet" href="style.css?v=0d20d8b54c" />
 
 
 </head>
@@ -535,6 +548,9 @@
       <button class="page-subtab" data-search-sub="scanner" onclick="switchSearchSub('scanner')">&#128269; Card Identifier</button>
     </div>
   </div>
+  <!-- The home page opens on Search, so its tabs are there from the first
+       paint (app.js switchView shows them anyway, ~40px of shift later). -->
+  <script>try{if(location.pathname==='/')document.getElementById('search-subtabs').classList.remove('hidden')}catch(e){}</script>
 
   <main>
     <section class="search-section" aria-label="Search">
@@ -2052,7 +2068,7 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=65ae65e050"></script>
+  <script src="app.js?v=9d1baea007"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">

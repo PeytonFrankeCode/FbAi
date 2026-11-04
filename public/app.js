@@ -1497,6 +1497,13 @@ async function _mpFetch(period) {
   const key = period + ':' + sports.join(',');
   if (_mpLoaded[key]) return _mpLoaded[key];
   const one = async (sp) => {
+    // The default boards (football, 30 days) were asked for by index.html's
+    // head, before this script had even downloaded: used once, if they came.
+    if (period === 30 && sp === 'football' && window.__mpEarly) {
+      const early = window.__mpEarly; window.__mpEarly = null;
+      const d = await early.catch(() => null);
+      if (d && d.available) return { ...d, sport: sp };
+    }
     try {
       const res = await fetch(`/api/sold-stats?days=${period}${sp === 'football' ? '' : '&sport=' + sp}`, { cache: 'no-store' });
       const d = await safeJson(res);
