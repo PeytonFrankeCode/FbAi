@@ -40,6 +40,15 @@ and a feature:
 - Display ads (AdSense today; a premium network such as Raptive or
   Mediavine once traffic qualifies).
 - Sponsors.
+- The Bounty Board fee (owner, Nov 2026): collectors post a card they want
+  and what they'll pay; browsing, posting and claiming are free, and on a
+  finished deal the site takes 8%, 4% from the buyer and 4% from the seller.
+  Payments run through Stripe Connect: the buyer's money is held until the
+  card arrives (or 10 days after it ships), sellers are paid out by Stripe,
+  disputes are decided by the owner in admin. Raw cards are allowed (photos
+  of front and back before the buyer pays); slabs also need the cert number.
+  New sellers are capped at $100 bounties, rising with finished sales.
+  Taking payments needs `BOUNTY_PAYMENTS=on` and Connect enabled in Stripe.
 
 The plans stay optional: apart from Huddle AI, everything works the same
 without one.

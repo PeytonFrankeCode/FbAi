@@ -7729,6 +7729,7 @@ function switchView(view) {
   const marketView = document.getElementById('market-view');
   const statsView = document.getElementById('stats-view');
   const newsView = document.getElementById('news-view');
+  const bountiesView = document.getElementById('bounties-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -7742,6 +7743,7 @@ function switchView(view) {
   if (marketView) marketView.classList.add('hidden');
   if (statsView) statsView.classList.add('hidden');
   if (newsView) newsView.classList.add('hidden');
+  if (bountiesView) bountiesView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
 
   if (view === 'checklist') {
@@ -7764,6 +7766,8 @@ function switchView(view) {
     }
   } else if (view === 'news') {
     if (newsView) { newsView.classList.remove('hidden'); initNewsView(); }
+  } else if (view === 'bounties') {
+    if (bountiesView) { bountiesView.classList.remove('hidden'); if (typeof initBountyView === 'function') initBountyView(); }
   } else if (view === 'stats') {
     if (statsView) {
       statsView.classList.remove('hidden');

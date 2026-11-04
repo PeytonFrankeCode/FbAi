@@ -467,6 +467,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     case 'checkout.session.completed': {
       const session = event.data.object;
 
+      // Bounty Board payments are their own thing, not a plan.
+      if (session.metadata?.kind === 'bounty') { await _bountyPaid(session); break; }
+
       // Donations were removed. Any such event now is a historical webhook
       // replay, so acknowledge and ignore rather than treating it as a plan.
       if (session.metadata?.type === 'donation' || session.metadata?.type === 'supporter') break;
@@ -501,6 +504,19 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         }
       }
       saveSubscriptions(subs);
+      break;
+    }
+    // A bank chargeback on a Bounty Board payment: hold the deal for the
+    // owner, and flag it if the seller was already paid.
+    case 'charge.dispute.created': {
+      const pi = event.data.object && event.data.object.payment_intent;
+      const ref = pi ? await recordGet(BOUNTY_PI_KEY(pi)) : null;
+      const b = ref ? await _bountyGet(ref.id) : null;
+      if (b && b.claim) {
+        b.claim.chargeback = { at: new Date().toISOString(), reason: event.data.object.reason || '' };
+        if (['paid', 'shipped'].includes(b.status)) { b.claim.dispute = { at: new Date().toISOString(), reason: 'Bank chargeback: ' + (event.data.object.reason || ''), was: b.status }; b.status = 'disputed'; }
+        await _bountySave(b);
+      }
       break;
     }
     case 'customer.subscription.deleted': {
@@ -22201,7 +22217,474 @@ app.get('/api/collection-week', async (req, res) => {
   res.json({ available: true, week: rec.week, at: rec.at, total: rec.total, change: rec.change, pct: rec.pct, top: rec.top, priced: Object.keys(rec.items || {}).length, cards: rec.cards, text: msg.body });
 });
 
-module.exports = { _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+// ---- Bounty Board (owner, Nov 2026) ---------------------------------------
+//
+// A collector posts the card they want and what they will pay, shipping
+// included, for up to 30 days. Posting and browsing are free; the site takes
+// 8% of a finished deal, 4% from each side (bounty-core.js fees).
+//
+//   open      the bounty is up. It is also an eBay price alert for the poster
+//             (a listing at or under the offer pings them), and collectors
+//             with the card in their Inventory are told about it.
+//   claimed   a seller with a Stripe Connect account (identity and payout
+//             details checked by Stripe) says they have it and shows it:
+//             photos of the front and back, and a slab's cert number. Their
+//             finished sales cap how big a bounty they can take.
+//   paid      the buyer liked what they saw and paid (24h to do it, or the
+//             bounty reopens). The money sits with the platform; the seller
+//             sees the shipping address and has 5 days to ship, or the buyer
+//             is refunded.
+//   shipped   with tracking. Paid out to the seller when the buyer says it
+//             arrived, or 10 days after shipping, unless the buyer disputes.
+//   disputed  held until the owner decides: refund the buyer or pay the seller.
+//
+// Taking payments needs BOUNTY_PAYMENTS=on and Stripe Connect switched on in
+// the Stripe dashboard. Until then the board runs: bounties post, alert and
+// notify, and claiming says payments are coming.
+const BOUNTY = require('./bounty-core');
+const BOUNTY_KEY = (id) => `bounty:${id}`;
+const BOUNTY_PI_KEY = (pi) => `bountypi:${pi}`;
+const BOUNTY_OPEN_MAX = 20;            // open bounties per collector
+const BOUNTY_NOTIFY_MAX = 50;          // Inventory holders told about one bounty
+const _bountyImgMem = new Map();
+const bountyPaymentsOn = () => process.env.BOUNTY_PAYMENTS === 'on' && !!stripe;
+// Tests hand in a stand-in for the Stripe client; nothing else calls this.
+function _bountySetStripe(fake) { stripe = fake; }
+const _bountyMeta = (b) => ({ s: b.status, u: b.user, x: (b.claim && b.claim.seller) || '', e: b.expiresAt,
+  p: b.price, c: String(b.card).slice(0, 90), g: b.grade, t: b.createdAt });
+async function _bountySave(b) { b.updatedAt = new Date().toISOString(); await recordPut(BOUNTY_KEY(b.id), b, _bountyMeta(b)); return b; }
+async function _bountyGet(id) { return /^[a-z0-9]{8,24}$/.test(String(id || '')) ? recordGet(BOUNTY_KEY(id)) : null; }
+async function _bountyKeys() {
+  return (await recordList('bounty:')).map(k => ({ id: k.name.slice('bounty:'.length), ...(k.metadata || {}) }));
+}
+function _bountyRating(user) {
+  const u = loadServerUsers()[user];
+  const r = u && u.bountyRating;
+  return { sales: (u && u.bountySales) || 0, stars: r && r.n ? Math.round((r.sum / r.n) * 10) / 10 : null, ratings: (r && r.n) || 0 };
+}
+function _bountyView(b, who) {
+  return BOUNTY.viewFor(b, who, { buyerRating: _bountyRating(b.user), sellerRating: b.claim ? _bountyRating(b.claim.seller) : null });
+}
+async function _bountyNotify(user, title, body, id) {
+  const url = `/?bounty=${encodeURIComponent(id)}`;
+  try { await sendPushToUser(user, { title, body, url }); } catch (_) { /* no device */ }
+  const u = loadServerUsers()[user];
+  if (u && u.email && digest.validEmail(u.email)) {
+    const link = `${DRIP_ORIGIN}${url}`;
+    try {
+      await sendEmail({ to: u.email, subject: title, html: `<div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
+        <p style="font-size:13px;letter-spacing:.06em;color:#2d6a4f;font-weight:700;margin:0 0 16px">THE CARD HUDDLE · BOUNTY BOARD</p>
+        <h1 style="font-size:20px;margin:0 0 10px">${_esc(title)}</h1><p style="font-size:15px;line-height:1.5">${_esc(body)}</p>
+        <a href="${link}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px">Open the bounty</a></div>` });
+    } catch (_) { /* email off */ }
+  }
+}
+// The poster's eBay price alert for the bounty: a listing at or under the
+// offer pings them (checkAlerts), and the alert goes when the bounty does.
+async function _bountyAlertOn(b) {
+  try {
+    const mine = await _userAlerts(b.user);
+    if (mine.length >= ALERT_MAX_PER_USER) return;
+    const g = BOUNTY.readGrade(b.grade);
+    const q = (b.card + (g.graded ? ' ' + g.label : '')).slice(0, 120);
+    const alert = { id: crypto.randomUUID(), username: b.user, query: q, label: ('Bounty: ' + b.card).slice(0, 120),
+      priceThreshold: b.price, priceCondition: 'below', bountyId: b.id,
+      createdAt: new Date().toISOString(), lastChecked: null, seen: [], found: [], unread: 0 };
+    await _saveUserAlerts(b.user, [alert, ...mine]);
+    b.alertId = alert.id;
+  } catch (err) { console.error('[bounty] alert', err && err.message); }
+}
+async function _bountyAlertOff(b) {
+  if (!b.alertId) return;
+  try {
+    const mine = await _userAlerts(b.user);
+    const next = mine.filter(a => a.id !== b.alertId);
+    if (next.length !== mine.length) await _saveUserAlerts(b.user, next);
+  } catch (_) { /* gone already */ }
+  b.alertId = null;
+}
+function _bountyNewId() { return Date.now().toString(36) + crypto.randomBytes(5).toString('hex'); }
+
+// ---- Browse, post, manage ----
+app.get('/api/bounties', async (req, res) => {
+  const who = getSessionUser(req);
+  const keys = await _bountyKeys();
+  const now = Date.now();
+  const words = String(req.query.q || '').toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
+  const open = keys.filter(k => k.s === 'open' && Date.parse(k.e) > now && words.every(w => String(k.c).toLowerCase().includes(w)))
+    .sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 200)
+    .map(k => ({ id: k.id, card: k.c, grade: k.g, price: k.p, expiresAt: k.e, createdAt: k.t, mine: !!who && k.u === who,
+      youGet: BOUNTY.fees(k.p).sellerGets / 100 }));
+  let mine = [];
+  if (who) {
+    const ids = keys.filter(k => k.u === who || k.x === who).sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 60).map(k => k.id);
+    mine = (await Promise.all(ids.map(_bountyGet))).filter(Boolean).map(b => _bountyView(b, who));
+  }
+  res.set('Cache-Control', 'no-store');
+  res.json({ open, mine, payments: bountyPaymentsOn(), fees: { buyer: BOUNTY.FEE_BUYER, seller: BOUNTY.FEE_SELLER }, maxDays: BOUNTY.MAX_DAYS });
+});
+
+// What the card sells for, to price the offer (the Business pricer: real
+// sales of the same card and grade over 60 days, cached).
+app.get('/api/bounties/price', async (req, res) => {
+  const card = String(req.query.card || '').trim().slice(0, 140);
+  if (card.length < 6) return res.json({ market: null });
+  try {
+    const v = await _bizValue({ title: card, grade: BOUNTY.readGrade(req.query.grade).graded ? String(req.query.grade) : '' });
+    res.set('Cache-Control', 'public, max-age=1800');
+    res.json({ market: v && v.market || null, n: (v && v.n) || 0, low: v && v.low || null, high: v && v.high || null });
+  } catch (_) { res.json({ market: null }); }
+});
+
+app.get('/api/bounties/:id', async (req, res) => {
+  const b = await _bountyGet(req.params.id);
+  if (!b) return res.status(404).json({ error: 'That bounty is gone.' });
+  res.set('Cache-Control', 'no-store').json({ bounty: _bountyView(b, getSessionUser(req)), payments: bountyPaymentsOn() });
+});
+
+app.post('/api/bounties', async (req, res) => {
+  const who = getSessionUser(req);
+  if (!who) return res.status(401).json({ error: 'Sign in to post a bounty.' });
+  const v = BOUNTY.validatePost(req.body || {});
+  if (v.error) return res.status(400).json({ error: v.error });
+  const keys = await _bountyKeys();
+  if (keys.filter(k => k.u === who && k.s === 'open').length >= BOUNTY_OPEN_MAX) return res.status(400).json({ error: `You can have ${BOUNTY_OPEN_MAX} open bounties at a time.` });
+  const b = { id: _bountyNewId(), user: who, ...v, status: 'open', createdAt: new Date().toISOString(), notified: false, declined: [] };
+  try { const m = await _bizValue({ title: b.card, grade: BOUNTY.readGrade(b.grade).graded ? b.grade : '' }); if (m && m.market) b.market = m.market; } catch (_) {}
+  await _bountyAlertOn(b);
+  await _bountySave(b);
+  res.json({ bounty: _bountyView(b, who) });
+});
+
+const _bountyOwn = async (req, res) => {
+  const who = getSessionUser(req);
+  if (!who) { res.status(401).json({ error: 'Sign in first.' }); return {}; }
+  const b = await _bountyGet(req.params.id);
+  if (!b) { res.status(404).json({ error: 'That bounty is gone.' }); return {}; }
+  return { who, b };
+};
+app.post('/api/bounties/:id/cancel', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.user !== who) return res.status(403).json({ error: 'Only the poster can take it down.' });
+  if (!['open', 'claimed'].includes(b.status) || (b.claim && b.claim.acceptedAt)) return res.status(409).json({ error: 'A paid bounty cannot be taken down. Open a dispute if something is wrong.' });
+  if (b.claim) await _bountyNotify(b.claim.seller, 'A bounty you claimed was taken down', `${b.card}: the collector took the bounty down.`, b.id);
+  b.status = 'cancelled'; b.claim = null;
+  await _bountyAlertOff(b);
+  await _bountySave(b);
+  res.json({ bounty: _bountyView(b, who) });
+});
+app.post('/api/bounties/:id/renew', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.user !== who) return res.status(403).json({ error: 'Only the poster can post it again.' });
+  if (!['expired', 'cancelled'].includes(b.status)) return res.status(409).json({ error: 'It is still up.' });
+  const v = BOUNTY.validatePost({ ...b, ...(req.body || {}) });
+  if (v.error) return res.status(400).json({ error: v.error });
+  Object.assign(b, v, { status: 'open', claim: null, notified: false, createdAt: new Date().toISOString() });
+  await _bountyAlertOn(b);
+  await _bountySave(b);
+  res.json({ bounty: _bountyView(b, who) });
+});
+
+// ---- Selling: Stripe Connect, photos, claims ----
+app.get('/api/bounties-connect', async (req, res) => {
+  const who = getSessionUser(req);
+  if (!who) return res.status(401).json({ error: 'Sign in first.' });
+  const u = loadServerUsers()[who] || {};
+  if (!u.stripeConnectId || !bountyPaymentsOn()) return res.json({ started: !!u.stripeConnectId, ready: false, payments: bountyPaymentsOn() });
+  try {
+    const a = await stripe.accounts.retrieve(u.stripeConnectId);
+    const ready = !!(a && a.payouts_enabled && a.capabilities && a.capabilities.transfers === 'active');
+    res.json({ started: true, ready, payments: true, cap: BOUNTY.sellerCap(u.bountySales) });
+  } catch (err) { res.json({ started: true, ready: false, payments: true, error: 'Could not check your payout account.' }); }
+});
+app.post('/api/bounties-connect', async (req, res) => {
+  const who = getSessionUser(req);
+  if (!who) return res.status(401).json({ error: 'Sign in first.' });
+  if (!bountyPaymentsOn()) return res.status(503).json({ error: 'Payouts open soon.' });
+  const users = loadServerUsers();
+  const u = users[who];
+  if (!u) return res.status(401).json({ error: 'Sign in first.' });
+  try {
+    if (!u.stripeConnectId) {
+      const a = await stripe.accounts.create({ type: 'express', country: 'US', email: u.email || undefined,
+        capabilities: { transfers: { requested: true } }, business_type: 'individual', metadata: { username: who } },
+        { idempotencyKey: 'bounty-connect-' + who });
+      u.stripeConnectId = a.id; saveServerUsers(users);
+    }
+    const link = await stripe.accountLinks.create({ account: u.stripeConnectId, type: 'account_onboarding',
+      refresh_url: `${siteOrigin(req)}/?bounties=connect`, return_url: `${siteOrigin(req)}/?bounties=connected` });
+    res.json({ url: link.url });
+  } catch (err) {
+    console.error('[bounty] connect', err && err.message);
+    res.status(500).json({ error: 'Could not open payout setup. Try again in a moment.' });
+  }
+});
+app.post('/api/bounties-photo', async (req, res) => {
+  const who = getSessionUser(req);
+  if (!who) return res.status(401).json({ error: 'Sign in first.' });
+  const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String((req.body && req.body.dataUrl) || ''));
+  if (!m) return res.status(400).json({ error: 'Expected a JPEG photo.' });
+  const bytes = new Uint8Array(Buffer.from(m[1], 'base64'));
+  if (bytes.length < 500 || bytes.length > 4 * 1024 * 1024 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return res.status(400).json({ error: 'That photo could not be read.' });
+  const name = Buffer.from(await webCrypto.subtle.digest('SHA-256', bytes)).toString('hex').slice(0, 24) + '.jpg';
+  const bucket = getPhotos();
+  try {
+    if (bucket) await bucket.put('bounty/' + name, bytes, { httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' } });
+    else _bountyImgMem.set(name, bytes);
+  } catch (err) { return res.status(500).json({ error: 'Could not save the photo.' }); }
+  res.json({ url: '/bounty/img/' + name });
+});
+app.get('/bounty/img/:name', (req, res) => {
+  const hit = _bountyImgMem.get(String(req.params.name || ''));
+  if (!hit) return res.status(404).send('Not found');
+  res.set('Content-Type', 'image/jpeg').set('Cache-Control', 'public, max-age=31536000, immutable').send(Buffer.from(hit));
+});
+app.post('/api/bounties/:id/claim', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (!bountyPaymentsOn()) return res.status(503).json({ error: 'Claiming opens soon: payments are being set up.' });
+  if (b.user === who) return res.status(400).json({ error: 'That is your own bounty.' });
+  if (b.status !== 'open' || Date.parse(b.expiresAt) <= Date.now()) return res.status(409).json({ error: 'Someone else got there first, or it has ended.' });
+  if ((b.declined || []).includes(who)) return res.status(409).json({ error: 'The collector passed on your card for this one.' });
+  const u = loadServerUsers()[who] || {};
+  if (!u.stripeConnectId) return res.status(400).json({ error: 'Set up payouts first, so you can be paid.', connect: true });
+  try {
+    const a = await stripe.accounts.retrieve(u.stripeConnectId);
+    if (!(a.payouts_enabled && a.capabilities && a.capabilities.transfers === 'active')) return res.status(400).json({ error: 'Finish setting up payouts first.', connect: true });
+  } catch (_) { return res.status(502).json({ error: 'Could not check your payout account. Try again.' }); }
+  const cap = BOUNTY.sellerCap(u.bountySales);
+  if (b.price > cap) return res.status(400).json({ error: `New sellers start with bounties up to $${cap}. Each finished sale raises the limit.` });
+  const c = BOUNTY.validateClaim(b, req.body || {});
+  if (c.error) return res.status(400).json({ error: c.error });
+  b.status = 'claimed';
+  b.claim = { seller: who, at: new Date().toISOString(), ...c };
+  await _bountySave(b);
+  await _bountyNotify(b.user, 'Someone has the card you want', `${b.card}: a collector claimed your $${b.price} bounty. Look at their photos and pay within ${BOUNTY.LOCK_HOURS} hours to lock it in.`, b.id);
+  res.json({ bounty: _bountyView(b, who) });
+});
+// The buyer passes on a claim (the photos are not the card, or not good
+// enough): the bounty reopens and that seller cannot claim it again.
+app.post('/api/bounties/:id/decline', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.user !== who || b.status !== 'claimed') return res.status(409).json({ error: 'Nothing to pass on.' });
+  if (b.claim.paidAt) return res.status(409).json({ error: 'Already paid.' });
+  const seller = b.claim.seller;
+  b.declined = [...new Set([...(b.declined || []), seller])];
+  b.status = 'open'; b.claim = null;
+  await _bountySave(b);
+  await _bountyNotify(seller, 'The collector passed on your card', `${b.card}: they passed on this one. The bounty is open again for others.`, b.id);
+  res.json({ bounty: _bountyView(b, who) });
+});
+// The buyer pays: Stripe Checkout for the price plus the buyer's 4%, with the
+// shipping address taken there. The money stays with the platform.
+app.post('/api/bounties/:id/pay', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (!bountyPaymentsOn()) return res.status(503).json({ error: 'Payments are not on yet.' });
+  if (b.user !== who || b.status !== 'claimed') return res.status(409).json({ error: 'Nothing to pay for.' });
+  const f = BOUNTY.fees(b.price);
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: f.buyerPays,
+        product_data: { name: `Bounty: ${b.card}`.slice(0, 250), description: `${b.grade} · $${b.price.toFixed(2)} + ${Math.round(BOUNTY.FEE_BUYER * 100)}% service fee · held until the card arrives` } } }],
+      shipping_address_collection: { allowed_countries: ['US'] },
+      client_reference_id: who,
+      metadata: { kind: 'bounty', bountyId: b.id, username: who },
+      payment_intent_data: { transfer_group: 'bounty_' + b.id, metadata: { kind: 'bounty', bountyId: b.id } },
+      success_url: `${siteOrigin(req)}/?bounty=${b.id}&paid=1`,
+      cancel_url: `${siteOrigin(req)}/?bounty=${b.id}`,
+    }, { idempotencyKey: `bounty-pay-${b.id}-${b.claim.at}` });
+    b.claim.acceptedAt = b.claim.acceptedAt || new Date().toISOString();
+    b.claim.sessionId = session.id;
+    await _bountySave(b);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('[bounty] pay', err && err.message);
+    res.status(500).json({ error: 'Could not start checkout. Try again.' });
+  }
+});
+// From the webhook: the buyer's payment landed.
+async function _bountyPaid(session) {
+  const b = await _bountyGet(session.metadata && session.metadata.bountyId);
+  if (!b || !b.claim || b.status !== 'claimed') return;
+  const ship = session.shipping_details || (session.collected_information && session.collected_information.shipping_details) || null;
+  b.status = 'paid';
+  b.claim.paidAt = new Date().toISOString();
+  b.claim.paymentIntent = session.payment_intent;
+  b.claim.amount = session.amount_total;
+  if (ship) b.claim.ship = { name: ship.name, address: ship.address };
+  await _bountyAlertOff(b);
+  await _bountySave(b);
+  if (session.payment_intent) await recordPut(BOUNTY_PI_KEY(session.payment_intent), { id: b.id });
+  await _bountyNotify(b.claim.seller, 'Paid: ship the card', `${b.card}: the collector paid. Ship it within ${BOUNTY.SHIP_DAYS} days with tracking; you're paid $${(BOUNTY.fees(b.price).sellerGets / 100).toFixed(2)} when it arrives.`, b.id);
+}
+app.post('/api/bounties/:id/ship', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (!b.claim || b.claim.seller !== who || b.status !== 'paid') return res.status(409).json({ error: 'Nothing to ship.' });
+  const carrier = String((req.body || {}).carrier || '').trim().slice(0, 30);
+  const tracking = String((req.body || {}).tracking || '').replace(/\s+/g, '').slice(0, 40);
+  if (!carrier || tracking.length < 8) return res.status(400).json({ error: 'Enter the carrier and the tracking number.' });
+  Object.assign(b.claim, { carrier, tracking, shippedAt: new Date().toISOString() });
+  b.status = 'shipped';
+  await _bountySave(b);
+  await _bountyNotify(b.user, 'Your card shipped', `${b.card} is on its way (${carrier} ${tracking}). Tell us when it arrives; the seller is paid then, or ${BOUNTY.RELEASE_DAYS} days after shipping unless you open a dispute.`, b.id);
+  res.json({ bounty: _bountyView(b, who) });
+});
+// Paying the seller: their share, from the buyer's charge, to their Connect
+// account. Idempotent on the bounty, so a retry never pays twice.
+async function _bountyRelease(b, by = 'buyer') {
+  const users = loadServerUsers();
+  const seller = users[b.claim.seller];
+  if (!seller || !seller.stripeConnectId) throw new Error('seller has no payout account');
+  const pi = await stripe.paymentIntents.retrieve(b.claim.paymentIntent);
+  const f = BOUNTY.fees(b.price);
+  const tr = await stripe.transfers.create({ amount: f.sellerGets, currency: 'usd', destination: seller.stripeConnectId,
+    transfer_group: 'bounty_' + b.id, source_transaction: pi.latest_charge, metadata: { bountyId: b.id } },
+    { idempotencyKey: 'bounty-release-' + b.id });
+  b.status = 'complete';
+  Object.assign(b.claim, { releasedAt: new Date().toISOString(), transferId: tr.id, releasedBy: by });
+  seller.bountySales = (seller.bountySales || 0) + 1;
+  saveServerUsers(users);
+  await _bountySave(b);
+  await _bountyNotify(b.claim.seller, 'You were paid', `${b.card}: $${(f.sellerGets / 100).toFixed(2)} is on its way to your bank.`, b.id);
+}
+async function _bountyRefund(b, reason) {
+  await stripe.refunds.create({ payment_intent: b.claim.paymentIntent, metadata: { bountyId: b.id } }, { idempotencyKey: 'bounty-refund-' + b.id });
+  b.status = 'refunded';
+  b.claim.refundedAt = new Date().toISOString();
+  b.claim.refundReason = reason;
+  await _bountySave(b);
+  await _bountyNotify(b.user, 'Refunded', `${b.card}: you were refunded in full (${reason}).`, b.id);
+  await _bountyNotify(b.claim.seller, 'A bounty was refunded', `${b.card}: the buyer was refunded (${reason}).`, b.id);
+}
+app.post('/api/bounties/:id/received', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.user !== who || b.status !== 'shipped') return res.status(409).json({ error: 'Nothing to confirm.' });
+  try { await _bountyRelease(b, 'buyer'); } catch (err) {
+    console.error('[bounty] release', err && err.message);
+    return res.status(500).json({ error: 'Could not pay the seller just now. We will retry.' });
+  }
+  res.json({ bounty: _bountyView(b, who) });
+});
+app.post('/api/bounties/:id/dispute', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.user !== who || !['paid', 'shipped'].includes(b.status)) return res.status(409).json({ error: 'There is nothing to dispute here.' });
+  const reason = String((req.body || {}).reason || '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  if (reason.length < 10) return res.status(400).json({ error: 'Say what went wrong, so we can sort it out.' });
+  const photos = (Array.isArray((req.body || {}).photos) ? req.body.photos : []).filter(u => /^\/bounty\/img\/[a-f0-9]{24}\.jpg$/.test(u)).slice(0, 6);
+  b.claim.dispute = { at: new Date().toISOString(), reason, photos, was: b.status };
+  b.status = 'disputed';
+  await _bountySave(b);
+  await _bountyNotify(b.claim.seller, 'A buyer opened a dispute', `${b.card}: "${reason.slice(0, 140)}". The payment is held while we look into it.`, b.id);
+  res.json({ bounty: _bountyView(b, who) });
+});
+app.post('/api/bounties/:id/rate', async (req, res) => {
+  const { who, b } = await _bountyOwn(req, res); if (!b) return;
+  if (b.status !== 'complete' || !b.claim) return res.status(409).json({ error: 'Rate a deal once it is done.' });
+  const stars = Math.max(1, Math.min(5, parseInt((req.body || {}).stars, 10) || 0));
+  if (!stars) return res.status(400).json({ error: 'Pick 1 to 5 stars.' });
+  const asBuyer = who === b.user, asSeller = who === b.claim.seller;
+  if (!asBuyer && !asSeller) return res.status(403).json({ error: 'Not your deal.' });
+  if ((asBuyer && b.claim.buyerRated) || (asSeller && b.claim.sellerRated)) return res.status(409).json({ error: 'Already rated.' });
+  const users = loadServerUsers();
+  const other = users[asBuyer ? b.claim.seller : b.user];
+  if (other) { const r = other.bountyRating || { sum: 0, n: 0 }; r.sum += stars; r.n += 1; other.bountyRating = r; saveServerUsers(users); }
+  if (asBuyer) b.claim.buyerRated = stars; else b.claim.sellerRated = stars;
+  await _bountySave(b);
+  res.json({ bounty: _bountyView(b, who) });
+});
+
+// ---- The owner's desk: disputes ----
+app.get('/api/admin/bounties', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const keys = await _bountyKeys();
+  const ids = keys.filter(k => k.s !== 'open').sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 80).map(k => k.id);
+  const list = (await Promise.all(ids.map(_bountyGet))).filter(Boolean);
+  const count = (s) => keys.filter(k => k.s === s).length;
+  res.set('Cache-Control', 'no-store').json({ payments: bountyPaymentsOn(),
+    counts: Object.fromEntries(BOUNTY.STATUSES.map(s => [s, count(s)])),
+    bounties: list.map(b => ({ ...b, fees: BOUNTY.fees(b.price) })) });
+});
+app.post('/api/admin/bounties/:id/resolve', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const b = await _bountyGet(req.params.id);
+  if (!b || b.status !== 'disputed') return res.status(409).json({ error: 'Not in dispute.' });
+  const action = (req.body || {}).action;
+  try {
+    if (action === 'refund') await _bountyRefund(b, 'dispute decided for the buyer');
+    else if (action === 'release') await _bountyRelease(b, 'owner');
+    else return res.status(400).json({ error: 'action must be refund or release' });
+  } catch (err) {
+    console.error('[bounty] resolve', err && err.message);
+    return res.status(500).json({ error: String(err && err.message || err) });
+  }
+  res.json({ ok: true, status: b.status });
+});
+
+// ---- The clock (every cron tick) ----
+// Expire, reopen unpaid claims, refund unshipped cards, pay out shipped
+// ones; and, hourly, tell collectors holding the card about new bounties.
+async function bountyTick({ now = Date.now(), notify = true } = {}) {
+  const keys = await _bountyKeys();
+  let acted = 0, told = 0;
+  for (const k of keys) {
+    if (!['open', 'claimed', 'paid', 'shipped'].includes(k.s)) continue;
+    if (k.s === 'open' && Date.parse(k.e) > now) continue;
+    const b = await _bountyGet(k.id);
+    const act = b && BOUNTY.due(b, now);
+    if (!act) continue;
+    try {
+      if (act === 'expire') {
+        b.status = 'expired'; await _bountyAlertOff(b); await _bountySave(b);
+        await _bountyNotify(b.user, 'Your bounty ended', `${b.card}: no one filled it in time. Post it again with one tap.`, b.id);
+      } else if (act === 'reopen') {
+        const seller = b.claim.seller;
+        b.status = 'open'; b.claim = null; await _bountySave(b);
+        await _bountyNotify(seller, 'Your claim lapsed', `${b.card}: the collector did not pay in time, so the bounty is open again.`, b.id);
+      } else if (act === 'refund' && bountyPaymentsOn()) {
+        await _bountyRefund(b, 'not shipped in time');
+      } else if (act === 'release' && bountyPaymentsOn()) {
+        await _bountyRelease(b, 'clock');
+      }
+      acted++;
+    } catch (err) { console.error('[bounty] tick', k.id, act, err && err.message); }
+  }
+  if (notify) told = await _bountyTellHolders(keys);
+  return { acted, told };
+}
+// New bounties: the collectors who have that card in Inventory or Collection.
+async function _bountyTellHolders(keys) {
+  const fresh = [];
+  for (const k of keys.filter(x => x.s === 'open')) {
+    if (fresh.length >= 3) break;
+    const b = await _bountyGet(k.id);
+    if (b && b.notified === false) fresh.push(b);
+  }
+  if (!fresh.length) return 0;
+  const users = Object.keys(loadServerUsers());
+  const hits = new Map(fresh.map(b => [b.id, []]));
+  for (const u of users) {
+    if (fresh.every(b => hits.get(b.id).length >= BOUNTY_NOTIFY_MAX)) break;
+    let data;
+    try { data = (await _userSyncLoad(u)).data; } catch (_) { continue; }
+    const names = [..._hiInv(data || {}).items.filter(i => Number(i.qty) > 0).map(i => String(i.name || '')), ..._hiColl(data || {}).map(_hiCollName)];
+    if (!names.length) continue;
+    for (const b of fresh) {
+      if (u === b.user || hits.get(b.id).length >= BOUNTY_NOTIFY_MAX) continue;
+      if (names.some(n => BOUNTY.cardMatches(b, n))) hits.get(b.id).push(u);
+    }
+  }
+  let told = 0;
+  for (const b of fresh) {
+    for (const u of hits.get(b.id)) {
+      try { await sendPushToUser(u, { title: `$${b.price} bounty for a card you have`, body: `A collector wants ${b.card} (${b.grade}). Claim it on the Bounty Board.`, url: `/?bounty=${b.id}` }); told++; } catch (_) {}
+    }
+    b.notified = true; b.notifiedCount = hits.get(b.id).length;
+    await _bountySave(b);
+  }
+  return told;
+}
+
+module.exports = { _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
