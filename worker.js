@@ -917,6 +917,25 @@ async function builtPages(env) {
   } catch (_) { /* unreadable: let everything through */ }
   return _builtPages;
 }
+// IndexNow for the pages whose prices changed in today's build (owner, Nov
+// 2026). Only pages the site builds (a priced key can name a page that is not
+// built, which answers 404), football first by the order given, at most
+// INDEXNOW_DAILY_MAX a day. The key file is public/<key>.txt.
+const INDEXNOW_KEY = '6d4386f41690944fb4fc16656b8290bb';
+const INDEXNOW_DAILY_MAX = 2000;
+export async function indexNowChanged(env, paths, { fetchFn = fetch, site = 'https://thecardhuddle.com' } = {}) {
+  const built = await builtPages(env);
+  if (!built) return { ok: false, reason: 'no built-pages list' };
+  const urls = [...new Set(paths)].filter(p => built.has(p)).slice(0, INDEXNOW_DAILY_MAX).map(p => site + p);
+  if (!urls.length) return { ok: true, submitted: 0 };
+  const resp = await fetchFn('https://api.indexnow.org/IndexNow', {
+    method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ host: new URL(site).host, key: INDEXNOW_KEY, keyLocation: `${site}/${INDEXNOW_KEY}.txt`, urlList: urls }),
+  });
+  console.log(`[IndexNow] ${urls.length} pages with moved prices: HTTP ${resp.status}`);
+  return { ok: resp.status === 200 || resp.status === 202, submitted: urls.length, status: resp.status };
+}
+
 export async function isUnbuiltPage(env, pathname) {
   const p = generatedPagePath(pathname);
   if (!p) return false;
@@ -1394,6 +1413,11 @@ export default {
               return null;
             });
             if (r && !r.ok) console.error('[Cron] price blocks not built:', r.reason);
+            // Bing (and every IndexNow engine) is told which pages' prices
+            // moved today, so their copies stay as fresh as the page.
+            if (r && r.ok && Array.isArray(r.changed) && r.changed.length) {
+              await indexNowChanged(env, r.changed).catch(err => console.error('[Cron] indexnow failed:', err && err.message || err));
+            }
           }
         } else {
           console.error('[Cron] buildPriceBlocks missing from init() — not wired through');

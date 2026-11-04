@@ -101,6 +101,7 @@ const check = (label, ok, detail) => {
   check('the block needs no JavaScript to appear',
     !/<script/i.test(html), 'a JS-rendered price is invisible to the crawler this is for');
 
+
   check('  ...and is a real section with a heading',
     /<section[^>]*class="lp-prices"/.test(html) && /<h2>/.test(html));
 }
@@ -351,7 +352,7 @@ const check = (label, ok, detail) => {
     /const title = `\$\{p\.name\} \$\{S\.Word\} Cards — Values & Checklist \| The Card Huddle`;/.test(builder),
     'build-landing-pages.js buildPlayerPage title changed; update pricedHead to match');
 
-  const w = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+  const w = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('the worker rewrites the title and descriptions on priced player pages only',
     /pkey\.startsWith\('player:'\) && blocks\.pages\[pkey\]/.test(w)
       && /\.on\('title', new PricedTitle\(summary, pricedHead\)\)/.test(w)
@@ -359,6 +360,23 @@ const check = (label, ok, detail) => {
   check('  ...with pricedHead handed over from server.js like the renderer',
     /renderPriceBlock: priceRender, pricedHead,/.test(fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8'))
       && (w.match(/renderPriceBlock, pricedHead, bizRevalueAll[, }]/g) || []).length === 2);
+}
+
+
+// Fresh prices to Bing (owner, Nov 2026): the pages whose prices moved.
+{
+  const { changedPages, pagePath } = require(path.join(__dirname, '..', 'price-block-core.js'));
+  const prev = { pages: { 'player:bo-nix': { median: 1000, sales: 40 }, 'set:2024-prizm': { median: 500, sales: 100 }, 'player:cam-ward': { median: 2000, sales: 10 } } };
+  const next = { pages: { 'player:bo-nix': { median: 1100, sales: 40 }, 'set:2024-prizm': { median: 505, sales: 101 }, 'player:cam-ward': { median: 2000, sales: 14 }, 'subset:2024-prizm/color-blast': { median: 9000, sales: 5 } } };
+  const ch = changedPages(prev, next).sort();
+  check('a page whose price moved 3%+, gained 3+ sales, or is newly priced counts as changed; a 1% wobble does not',
+    JSON.stringify(ch) === JSON.stringify(['player:bo-nix', 'player:cam-ward', 'subset:2024-prizm/color-blast']), JSON.stringify(ch));
+  check('price keys map to their page addresses',
+    pagePath('player:bo-nix') === '/players/bo-nix/' && pagePath('set:2024-prizm') === '/sets/2024-prizm/'
+      && pagePath('subset:2024-prizm/color-blast') === '/sets/2024-prizm/color-blast/' && pagePath('player:../x') === null);
+  const w = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+  check('the cron tells IndexNow about built pages whose prices moved',
+    /await indexNowChanged\(env, r\.changed\)/.test(w) && /filter\(p => built\.has\(p\)\)/.test(w));
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall price-block checks passed');

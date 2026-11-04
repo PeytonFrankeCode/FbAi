@@ -259,7 +259,32 @@ function pricedHead(summary, title, description) {
 // is the kind of failure that goes unnoticed for weeks.
 const keyFor = (kind, id) => `${kind}:${id}`;
 
+// The page a price key belongs to: player:<slug> -> /players/<slug>/,
+// set:<id> -> /sets/<id>/, subset:<id>/<slug> -> /sets/<id>/<slug>/.
+function pagePath(key) {
+  const m = /^(player|set|subset):(.+)$/.exec(String(key || ''));
+  if (!m || /[^a-z0-9/-]/.test(m[2])) return null;
+  return m[1] === 'player' ? `/players/${m[2]}/` : `/sets/${m[2]}/`;
+}
+
+// Which priced pages read differently after a rebuild (owner, Nov 2026: tell
+// Bing the day a page's prices move). A page is changed when it is newly
+// priced, or its typical price moved by at least `pct`, or it gained at least
+// `minSales` sales. Pages that dropped out of the map are not "changed": they
+// still show their checklist.
+function changedPages(prev, next, { pct = 0.03, minSales = 3 } = {}) {
+  const was = (prev && prev.pages) || {}, now = (next && next.pages) || {};
+  const out = [];
+  for (const [key, s] of Object.entries(now)) {
+    const p = was[key];
+    if (!p) { out.push(key); continue; }
+    const a = Number(p.median) || 0, b = Number(s.median) || 0;
+    if ((a > 0 && Math.abs(b - a) / a >= pct) || (Number(s.sales) || 0) - (Number(p.sales) || 0) >= minSales) out.push(key);
+  }
+  return out;
+}
+
 module.exports = {
   MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS, THUMB_SIZE, thumb,
-  median, money, esc, summarise, render, pricedHead, TITLE_PHRASE, keyFor, ebaySearchUrl, cardSearchHref,
+  median, money, esc, summarise, render, pricedHead, TITLE_PHRASE, keyFor, pagePath, changedPages, ebaySearchUrl, cardSearchHref,
 };

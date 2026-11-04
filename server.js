@@ -300,6 +300,7 @@ const {
 const {
   summarise: priceSummarise, render: priceRender, median: priceMedian, keyFor: priceKeyFor, pricedHead,
 } = require('./price-block-core');
+const PRICE_CORE = require('./price-block-core');
 
 const _dict = { card: null, parallel: null };
 async function _loadJson(name) {
@@ -21661,6 +21662,10 @@ async function _buildPriceBlocks() {
     to: (span && span.last) || '',
     pages: out,
   };
+  // Which pages' prices moved since the last build, for IndexNow (worker.js
+  // tells Bing about the ones that are built).
+  let changed = [];
+  try { changed = PRICE_CORE.changedPages(await cacheGet(PRICE_BLOCKS_KEY), payload).map(PRICE_CORE.pagePath).filter(Boolean); } catch (_) { changed = []; }
   try {
     await cachePut(PRICE_BLOCKS_KEY, payload, PRICE_BLOCKS_TTL);
   } catch (err) {
@@ -21669,7 +21674,7 @@ async function _buildPriceBlocks() {
   const bytes = JSON.stringify(payload).length;
   console.log(`[prices] ${kept} pages priced (${widened} from the 120-day window), ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
   await mark('ok', { pages: kept, widened, bytes, groups: pages.size });
-  return { ok: true, pages: kept, widened, bytes, from: payload.from, to: payload.to };
+  return { ok: true, pages: kept, widened, bytes, from: payload.from, to: payload.to, changed };
 }
 
 // RETIRED (owner, Oct 2026). Listing photos belong to the sellers who took
