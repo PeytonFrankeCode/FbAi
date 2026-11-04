@@ -150,12 +150,12 @@ check('  ...which is what the Search subtab strip depends on',
 // Search home (Oct 2026): the logo goes home, a search puts the market panel
 // away (and "back to search" brings it back), and the box offers typeahead.
 {
-  check('the logo links to the home page', /<a href="\/" class="header-logo-link"[^>]*><img src="logo(-dark)?\.png"/.test(html));
+  check('the logo links to the home page', /<a href="\/" class="header-logo-link"[^>]*><img src="logo(-dark)?(-h160\.webp|\.png)"/.test(html));
   // The logo for the background it sits on (Oct 2026): logo.png's charcoal
   // vanished on the dark theme. Dark places carry logo-dark.png, the light
   // theme's green header logo-on-green.png, and light places logo.png.
   check('  ...in a version made for each background',
-    /class="header-logo logo-for-dark"/.test(html) && /src="logo-on-green\.png"[^>]*class="header-logo logo-for-light"/.test(html)
+    /class="header-logo logo-for-dark"/.test(html) && /src="logo-on-green(-h160\.webp|\.png)"[^>]*class="header-logo logo-for-light"/.test(html)
     && /src="logo-dark\.png"[^>]*class="footer-logo-img logo-for-dark"/.test(html) && /src="logo\.png"[^>]*class="footer-logo-img logo-for-light"/.test(html)
     && ['logo-dark.png', 'logo-on-green.png'].every(f => fs.existsSync(path.join(__dirname, '..', 'public', f))));
   const hide = app.slice(app.indexOf('function _hideHomeContent('), app.indexOf('function _hideHomeContent(') + 400);

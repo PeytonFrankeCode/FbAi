@@ -40,10 +40,13 @@ check('eBay\'s image host is connected to early', /<link rel="preconnect" href="
 {
   const appRule = (app.match(/function _mpPhoto\(u\) \{ return String\(u \|\| ''\)\.replace\((\/.+?\/i), '(\/s-l\d+\.\$1)'\); \}/) || []);
   const headRule = (html.match(/i\.src=String\(x\.imageUrl\)\.replace\((\/.+?\/i),'(\/s-l\d+\.\$1)'\)/) || []);
-  check('market tiles use eBay\'s 300px photos, and the head preloads the same addresses',
-    appRule[1] && appRule[1] === headRule[1] && appRule[2] === '/s-l300.$1' && headRule[2] === '/s-l300.$1' && /src="' \+ escHtml\(_mpPhoto\(url\)\)/.test(app),
+  check('market tiles use eBay\'s 225px photos, and the head preloads the same addresses',
+    appRule[1] && appRule[1] === headRule[1] && appRule[2] === '/s-l225.$1' && headRule[2] === '/s-l225.$1' && /src="' \+ escHtml\(_mpPhoto\(url\)\)/.test(app),
     `${appRule[1]} ${appRule[2]} vs ${headRule[1]} ${headRule[2]}`);
 }
+
+check('the header logo is a header-sized WebP with its size given', /<img src="logo-dark-h160\.webp" alt="The Card Huddle" class="header-logo logo-for-dark" width="154" height="80" \/>/.test(html)
+  && fs.existsSync(path.join(ROOT, 'public', 'logo-dark-h160.webp')) && fs.statSync(path.join(ROOT, 'public', 'logo-dark-h160.webp')).size < 25000);
 
 console.log(failures ? `\n${failures} mobile-speed check(s) failed` : '\nall mobile-speed checks passed');
 process.exit(failures ? 1 : 0);
