@@ -170,6 +170,9 @@ if (require.main === module) (async () => {
       const pdf = path.join(tmp, 'c.pdf');
       fs.writeFileSync(pdf, await get(item.pdf, 'buffer'));
       const text = execFileSync('pdftotext', ['-layout', pdf, '-'], { encoding: 'utf8' });
+      if (process.env.ONIT_DUMP && `${item.year} ${item.brand} ${item.school}`.toLowerCase().includes(process.env.ONIT_DUMP)) {
+        console.log(`----- DUMP ${label}\n${text.slice(0, 3000)}\n----- END`);
+      }
       const sets = parseChecklistText(text);
       const doc = toProduct(item, sets);
       const file = path.join(DIR, doc.id + '.json');

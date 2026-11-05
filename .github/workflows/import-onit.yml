@@ -32,9 +32,11 @@ jobs:
         run: sudo apt-get install -y -qq poppler-utils
 
       - name: Import from onitathlete.com
+        env:
+          ONIT_DUMP: '2024 team set alabama'
         run: |
           set -o pipefail
-          ARGS="--write"
+          ARGS=""
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
           node scripts/import-onit.js $ARGS | tee import-report.txt
           { echo '## ONIT import'; echo '```'; tail -250 import-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
