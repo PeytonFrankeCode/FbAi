@@ -1,0 +1,1516 @@
+{
+  "id": "2026-onit-athlete-west-virginia-football",
+  "name": "2026 ONIT Athlete West Virginia Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 78,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-2",
+          "player": "Armoni Weaver-Bomar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-3",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-4",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-5",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-6",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-7",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-8",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-9",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-10",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-11",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-12",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-13",
+          "player": "Alex Adebayo",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-14",
+          "player": "Amare Grayson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-15",
+          "player": "Andre Devine",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-16",
+          "player": "Andreas Hunter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-17",
+          "player": "Andrew Powdrell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-18",
+          "player": "Ashton Woods",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-19",
+          "player": "Ben Cutter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-20",
+          "player": "Brad Mossor",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-21",
+          "player": "Brandon Caesar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-22",
+          "player": "Bryan Hansen",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-23",
+          "player": "Cam Ball",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-24",
+          "player": "Cam Griffin",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-25",
+          "player": "Cam Torbor",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-26",
+          "player": "Cameron Dwyer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-27",
+          "player": "Carsten Casady",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-28",
+          "player": "Carter Kessler",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-29",
+          "player": "Carter Zuliani",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-30",
+          "player": "Chams Diagne",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-31",
+          "player": "Corey Mcintyre Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-32",
+          "player": "Da'Mun Allen",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-33",
+          "player": "Darius Wiley",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-34",
+          "player": "David Afogho",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-35",
+          "player": "Devin Vass",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-36",
+          "player": "DJ Epps",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-37",
+          "player": "N/s",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-38",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-39",
+          "player": "N/s",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-40",
+          "player": "Greg Wilfred",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-41",
+          "player": "Harper Holloman",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-42",
+          "player": "Isaiah Patterson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-43",
+          "player": "Jaire Rawlison",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-44",
+          "player": "Jason Hall Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-45",
+          "player": "Jayden Bell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-46",
+          "player": "Jeremiah Johnson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-47",
+          "player": "Josh Aisosa",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-48",
+          "player": "Josh Sapp",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-49",
+          "player": "Kaden Seller",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-50",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-51",
+          "player": "Kayden Luke",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-52",
+          "player": "Kevin Brown",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-53",
+          "player": "Keyshawn Robinson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-54",
+          "player": "Kj Henson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-55",
+          "player": "Landen Livingston",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-56",
+          "player": "Macguire Moss",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-57",
+          "player": "Malik Agbo",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-58",
+          "player": "Matt Sieg",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-59",
+          "player": "Max Anderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-60",
+          "player": "Max Brown",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-61",
+          "player": "N/s",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-62",
+          "player": "Nate Flower",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-63",
+          "player": "Nate Gabriel",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-64",
+          "player": "Nick Krahe",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-65",
+          "player": "Nick Taylor",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-66",
+          "player": "Peter Notaro",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-67",
+          "player": "Raymond Kovalesky",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-68",
+          "player": "Rayshawn Reynolds Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-69",
+          "player": "Rhett Morris",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-70",
+          "player": "Rickey Giles Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-71",
+          "player": "Shane Cornali",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-72",
+          "player": "Taylor Brown",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-73",
+          "player": "Tobi Haastrup",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-74",
+          "player": "Trevor Bigelow",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-75",
+          "player": "Tyler Stolsky",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-76",
+          "player": "Will Leblanc",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-77",
+          "player": "Wilnerson Telemaque",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-78",
+          "player": "Zeke Durham-Campbell",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 12,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-2",
+          "player": "Armoni Weaver-Bomar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-3",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-4",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-5",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-6",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-7",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-8",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-9",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-10",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-11",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-12",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Armoni Weaver-Bomar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-6",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-7",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-8",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-9",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-10",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Armoni Weaver-Bomar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-6",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-7",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-8",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-9",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CC-10",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CL-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CL-3",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CL-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "CL-3",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-3",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-4",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-5",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-3",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-4",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "DS-5",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-3",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-4",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-5",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-7",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-8",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-9",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-10",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-3",
+          "player": "Martavious Boswell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-4",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-5",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-7",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-8",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-9",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "F-10",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GD-2",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GD-3",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-3",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-4",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-5",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-6",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-2",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-3",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-4",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-5",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-6",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-2",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-3",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-5",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-2",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-3",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "H-5",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-3",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-5",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-6",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium",
+      "name": "New Horizons Premium",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-3",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-4",
+          "player": "John Neider",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-5",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "NH-6",
+          "player": "Taron Francis",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-JBY",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KW",
+          "player": "Kamari Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-MH",
+          "player": "Malachi Hood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-KT",
+          "player": "Kedrick Triplett",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GA-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-AL",
+          "player": "Amari Latimer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "FS-CC",
+          "player": "Cam Cook",
+          "team": "West Virginia"
+        },
+        {
+          "number": "FS-GR",
+          "player": "Gabe Ryan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "FS-JBD",
+          "player": "Jacob Bradford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "FS-SFJ",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        }
+      ]
+    }
+  ]
+}

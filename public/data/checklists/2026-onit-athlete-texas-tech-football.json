@@ -1,0 +1,1496 @@
+{
+  "id": "2026-onit-athlete-texas-tech-football",
+  "name": "2026 ONIT Athlete Texas Tech Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 71,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-16",
+          "player": "A.J. Holmes Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-17",
+          "player": "Adam Trick",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-18",
+          "player": "Amarie Fleming",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-19",
+          "player": "Amier Boyd",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-20",
+          "player": "Ansel Nedore",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-21",
+          "player": "Ashton Hampton",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-22",
+          "player": "Braylan Mcdonald",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-23",
+          "player": "Brenden Jordan",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-24",
+          "player": "Brock Golwas",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-25",
+          "player": "Bryce Butler",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-26",
+          "player": "Cash Cleveland",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-27",
+          "player": "Charles Anderson Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-28",
+          "player": "Chris Lemons",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-29",
+          "player": "Corey Platt Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-30",
+          "player": "D'Anthis Upshaw Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-31",
+          "player": "Daniel Sill",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-32",
+          "player": "Danilo Guberinich",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-33",
+          "player": "Davin Martin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-34",
+          "player": "Donovan Webb",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-35",
+          "player": "Donte Lee Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-36",
+          "player": "Dylan Singleton",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-37",
+          "player": "Elias Gillen",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-38",
+          "player": "Felix Ojo",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-39",
+          "player": "Garin Maley",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-40",
+          "player": "Holden Phillips",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-41",
+          "player": "Holton Hendrix",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-42",
+          "player": "Jack Esparza",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-43",
+          "player": "Jackson Hildebrand",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-44",
+          "player": "Jacob Ponton",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-45",
+          "player": "Jason Llewellyn",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-46",
+          "player": "Jayden Cofield",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-47",
+          "player": "Jojo Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-48",
+          "player": "Kai Powell",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-49",
+          "player": "Leyton Stone",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-50",
+          "player": "Lloyd Jones III",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-51",
+          "player": "Maddox Quiller",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-52",
+          "player": "Malcolm Simmons",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-53",
+          "player": "Malik Esquerra",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-54",
+          "player": "Marcus Ramon-Edwards",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-55",
+          "player": "Mateen Ibirogba",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-56",
+          "player": "Michael Dever",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-57",
+          "player": "Michael Henderson III",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-58",
+          "player": "Mikal Harrison-Pilot",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-59",
+          "player": "Miquel Dingle Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-60",
+          "player": "Oliver Miles III",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-61",
+          "player": "Patrick Mcmath",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-62",
+          "player": "Quintaelyn Joyner",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-63",
+          "player": "Quinten Joyner",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-64",
+          "player": "Ren Brown",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-65",
+          "player": "S'Vioarean Martin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-66",
+          "player": "Sean Robinson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-67",
+          "player": "Stephen Cannon",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-68",
+          "player": "Trey White",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-69",
+          "player": "Tristian Gentry",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-70",
+          "player": "Wesley Smith",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-71",
+          "player": "Will Karoll",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-6",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-7",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-9",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-10",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-6",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-7",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-9",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CC-10",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CL-3",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "CL-3",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-2",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-3",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-4",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-5",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-2",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-3",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-4",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "DS-5",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-2",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-5",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-6",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-7",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-8",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-9",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-10",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-2",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-3",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-4",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-5",
+          "player": "Sheridan Wilson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-6",
+          "player": "Howard Sampson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-7",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-8",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-9",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "F-10",
+          "player": "John Curry",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GD-2",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GD-3",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-2",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-3",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-4",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-5",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-6",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-2",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-3",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-4",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-5",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-6",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-2",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-3",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-4",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-5",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-2",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-3",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-4",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "H-5",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-2",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-3",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-4",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-5",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-6",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-2",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-3",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-4",
+          "player": "Micah Hudson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-5",
+          "player": "Terrance Carter Jr.",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "NH-6",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-JW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BJ",
+          "player": "Bryson Jones",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "S-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-CD",
+          "player": "Cameron Dickey",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-CE",
+          "player": "Coy Eakin",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-WH",
+          "player": "Will Hammond",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "GA-KF",
+          "player": "Kirk Francis",
+          "team": "Texas Tech"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-AR",
+          "player": "Austin Romaine",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "FS-BR",
+          "player": "Ben Roberts",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "FS-BP",
+          "player": "Brice Pollock",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "FS-KW",
+          "player": "J'Koby Williams",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "FS-KJ",
+          "player": "Kenny Johnson",
+          "team": "Texas Tech"
+        }
+      ]
+    }
+  ]
+}

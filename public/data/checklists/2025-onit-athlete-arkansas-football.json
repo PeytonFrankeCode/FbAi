@@ -1,0 +1,774 @@
+{
+  "id": "2025-onit-athlete-arkansas-football",
+  "name": "2025 ONIT Athlete Arkansas Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 83,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Smith",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-2",
+          "player": "Ahkhari Johnson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-3",
+          "player": "Aidan Mccowan",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-4",
+          "player": "Aj Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-5",
+          "player": "Alex Johnson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-6",
+          "player": "Andreas Paaske",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-7",
+          "player": "Anton Pierce",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-8",
+          "player": "Ashton Ngo",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-9",
+          "player": "Blake Cherry",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-10",
+          "player": "Blake Ford",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-11",
+          "player": "Bradley Shaw",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-12",
+          "player": "Braylen Russell",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-13",
+          "player": "Braylon Watson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-14",
+          "player": "Brooks Edmonson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-15",
+          "player": "Bubba Craig",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-16",
+          "player": "Cade Fields",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-17",
+          "player": "Caden Kitler",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-18",
+          "player": "Cam Settles",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-19",
+          "player": "Cameron Ball",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-20",
+          "player": "Charlie Collins",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-21",
+          "player": "Charlie Von Der Meden",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-22",
+          "player": "Cj Brown",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-23",
+          "player": "Corey Robinson Ii",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-24",
+          "player": "Courtney Crutchfield",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-25",
+          "player": "Danny Saili",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-26",
+          "player": "David Oke",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-27",
+          "player": "Devin Bale",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-28",
+          "player": "Donovan Whitten",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-29",
+          "player": "E'Marion Harris",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-30",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-31",
+          "player": "Gavin Rush",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-32",
+          "player": "Grayson Wilson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-33",
+          "player": "Ian Geffrard",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-34",
+          "player": "Ja'Kayden Ferguson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-35",
+          "player": "Jabrae Shaw",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-36",
+          "player": "Jace Petty",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-37",
+          "player": "Jaden Platt",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-38",
+          "player": "Jaheim Singletary",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-39",
+          "player": "Jj Hollingsworth",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-40",
+          "player": "Jonas Nantze",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Young",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-42",
+          "player": "Joseph Whitt",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-43",
+          "player": "Justin Logan",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-44",
+          "player": "Justus Boone",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-45",
+          "player": "Kaleb James",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-46",
+          "player": "Kam Shanks",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-47",
+          "player": "Kani Walker",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-48",
+          "player": "Kash Courtney",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-49",
+          "player": "Kavion Broussard",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-50",
+          "player": "Kavion Henderson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-51",
+          "player": "Keiundre Johnson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-52",
+          "player": "Ken Talley",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-53",
+          "player": "Keshawn Davila",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-54",
+          "player": "Kevin Oatis",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-55",
+          "player": "Keyshawn Blackstock",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-56",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-57",
+          "player": "Kobe Branham",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-58",
+          "player": "Krosse Johnson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-59",
+          "player": "Kyle Thompson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-60",
+          "player": "Landon Phipps",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-61",
+          "player": "Larry Worth Iii",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-62",
+          "player": "Maddox Lassiter",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-63",
+          "player": "Marcus Dumervil",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-64",
+          "player": "Mason Schueck",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-65",
+          "player": "Max Schmidly",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-66",
+          "player": "Miguel Mitchell",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-67",
+          "player": "Mike Washington Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-68",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-69",
+          "player": "O'Mega Blake",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-70",
+          "player": "Preston Davis",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-71",
+          "player": "Quentavius Scandrett",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-72",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-73",
+          "player": "Rodney Hill",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-74",
+          "player": "Rykar Acebo",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-75",
+          "player": "Scott Starzyk",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-76",
+          "player": "Stephen Dix Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-77",
+          "player": "Taijh Overton",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-78",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-79",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-80",
+          "player": "Tim Dawn",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-81",
+          "player": "Walker Catsavis",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-82",
+          "player": "Wyatt Simmons",
+          "team": "Arkansas"
+        },
+        {
+          "number": "B-83",
+          "player": "Zach Taylor",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "blackout-silver-team-color-49",
+      "name": "Blackout (Silver; Team Color /49)",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "BL-2",
+          "player": "Braylen Russell",
+          "team": "Arkansas"
+        },
+        {
+          "number": "BL-3",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "BL-4",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        },
+        {
+          "number": "BL-5",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-day-shimmer-nitro-1",
+      "name": "City Limits Day (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "CL-2",
+          "player": "Braylen Russell",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-night-shimmer-nitro-1",
+      "name": "City Limits Night (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-3",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "CL-4",
+          "player": "Braylen Russell",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "aftershock",
+      "name": "Aftershock",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AS-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "AS-2",
+          "player": "Braylen Russell",
+          "team": "Arkansas"
+        },
+        {
+          "number": "AS-3",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "AS-4",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        },
+        {
+          "number": "AS-5",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "base-signature",
+      "name": "Base Signature",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-2",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-3",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-4",
+          "player": "Cameron Ball",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-5",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-6",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-7",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-orbs-10",
+      "name": "Team Color Signature Orbs (/10)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-2",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-3",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-4",
+          "player": "Cameron Ball",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-5",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-6",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-7",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-9",
+      "name": "Silver Signature (/9)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-2",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-3",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-4",
+          "player": "Cameron Ball",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-5",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-6",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-7",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-2",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-3",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-4",
+          "player": "Cameron Ball",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-5",
+          "player": "Fernando Carmona",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-6",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "S-7",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "film-signature-10",
+      "name": "Film Signature (/10)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FLS-1",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FLS-2",
+          "player": "Monte Harrison",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FLS-3",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FLS-4",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    },
+    {
+      "id": "fusion-signature-25",
+      "name": "Fusion Signature (/25)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-1",
+          "player": "Taylen Green",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FS-2",
+          "player": "Kj Jackson",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FS-3",
+          "player": "Quincy Rhodes Jr.",
+          "team": "Arkansas"
+        },
+        {
+          "number": "FS-4",
+          "player": "Tavion Wallace",
+          "team": "Arkansas"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1157 @@
+{
+  "id": "2024-onit-athlete-wake-forest-football",
+  "name": "2024 ONIT Athlete Wake Forest Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 126,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aiden Hall",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-2",
+          "player": "Ameir Glenn",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-3",
+          "player": "Andrew Hines Iii",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-4",
+          "player": "Anthony Borriello",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-5",
+          "player": "Antonio Robinson Jr.",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-6",
+          "player": "Ben Grice",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-7",
+          "player": "Ben Morgan",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-8",
+          "player": "Bj Williams",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-9",
+          "player": "Brandon Hoyle",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-10",
+          "player": "Branson Combs",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-11",
+          "player": "Bryce Ganious",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-12",
+          "player": "Busbee Phillips",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-13",
+          "player": "C Darius Kelley",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-14",
+          "player": "Cale Doyle",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-15",
+          "player": "Caleb Carlson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-16",
+          "player": "Camden Hardy",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-17",
+          "player": "Cameron Hite",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-18",
+          "player": "Capone Blue",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-19",
+          "player": "Carter Broers",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-20",
+          "player": "Charlie Gilliam",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-21",
+          "player": "Chris Marable, Jr.",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-22",
+          "player": "Christian Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-23",
+          "player": "Clinton Richard",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-24",
+          "player": "Dallas Hurley",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-25",
+          "player": "Darius Jones",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-26",
+          "player": "Davaughn Patterson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-27",
+          "player": "David Egbe",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-28",
+          "player": "Demarcus Rankin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-29",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-30",
+          "player": "Derrell Johnson Ii",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-31",
+          "player": "Deuce Alexander",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-32",
+          "player": "Devin Cook",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-33",
+          "player": "Devin Mcrae",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-34",
+          "player": "Devonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-35",
+          "player": "Dominic Deluca",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-36",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-37",
+          "player": "Drew Pickett",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-38",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-39",
+          "player": "Ej Reid",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-40",
+          "player": "Eldrick Robinson Ii",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-41",
+          "player": "Erik Russell",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-42",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-43",
+          "player": "George Sell",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-44",
+          "player": "George Steih",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-45",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-46",
+          "player": "Hank Lucas",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-47",
+          "player": "Harry Lodge",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-48",
+          "player": "Horatio Fields",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-49",
+          "player": "Ian Versteeg",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-50",
+          "player": "Ivan Mora",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-51",
+          "player": "Jack Hines",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-52",
+          "player": "Jack Ploszay",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-53",
+          "player": "Jacob Cosby-Mosley",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-54",
+          "player": "Jake Pascual",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-55",
+          "player": "Jake Ryan",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-56",
+          "player": "Jamare Glasker",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-57",
+          "player": "James Hillhouse",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-58",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-59",
+          "player": "Jason Woods",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-60",
+          "player": "Jaxon Mull",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-61",
+          "player": "Jaydn Girard",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-62",
+          "player": "Jaydon Collins",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-63",
+          "player": "Jeremiah Melvin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-64",
+          "player": "Jeremy Hecklinski",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-65",
+          "player": "Josh Harrison",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-66",
+          "player": "Justin Cody",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-67",
+          "player": "Ka Shawn Thomas",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-68",
+          "player": "Keagen Trost",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-69",
+          "player": "Kendal Howard",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-70",
+          "player": "Kendron Wayman",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-71",
+          "player": "Kennedy Fauntleroy",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-72",
+          "player": "Kerrington Lee",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-73",
+          "player": "Kevin Check",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-74",
+          "player": "Kevin Pointer",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-75",
+          "player": "Khyler Watson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-76",
+          "player": "Kyland Armstrong",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-77",
+          "player": "Landen Baker",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-78",
+          "player": "Luca Puccinelli",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-79",
+          "player": "Luke Beemer",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-80",
+          "player": "Luke Petitbon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-81",
+          "player": "Luke White",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-82",
+          "player": "Mark Rogalski",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-83",
+          "player": "Mason Andrade",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-84",
+          "player": "Mateen Ibirogba",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-85",
+          "player": "Matt Gulbin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-86",
+          "player": "Matthew Dennis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-87",
+          "player": "Matthew Lusardi",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-88",
+          "player": "Maurice Ghee",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-89",
+          "player": "Michael Frogge",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-90",
+          "player": "Michael Kern",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-91",
+          "player": "Miles Heard",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-92",
+          "player": "Myles Turpin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-93",
+          "player": "Nick Andersen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-94",
+          "player": "Nick Ragano",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-95",
+          "player": "Nick Rubino",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-96",
+          "player": "Nick Sharpe",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-97",
+          "player": "Owen Pisa",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-98",
+          "player": "Quincy Bryant",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-99",
+          "player": "Quincy Williams",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-100",
+          "player": "Rushaun Tongue",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-101",
+          "player": "Ryan Dupont",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-102",
+          "player": "Ryan Henley",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-103",
+          "player": "Sam Neely",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-104",
+          "player": "Sebastien Pierre",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-105",
+          "player": "Tate Carney",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-106",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-107",
+          "player": "Tayshaun Burney",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-108",
+          "player": "Travon West",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-109",
+          "player": "Trent Nicholson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-110",
+          "player": "Tyler Black",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-111",
+          "player": "Tyler Mizzell",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-112",
+          "player": "Tyler Walton",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-113",
+          "player": "Uber Ajongo",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-114",
+          "player": "Walker Ferguson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-115",
+          "player": "Walker Merrill",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-116",
+          "player": "Wesley Stroebel",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-117",
+          "player": "Whittman Whaley",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-118",
+          "player": "Will Cobb",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-119",
+          "player": "William Moy",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-120",
+          "player": "William Tackie, Jr.",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-121",
+          "player": "Wyatt Crespi",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-122",
+          "player": "Zach Igwebe",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-123",
+          "player": "Zach Lohavichan",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-124",
+          "player": "Zach Vaughan",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-125",
+          "player": "Zamari Stevenson",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "B-126",
+          "player": "Zeek Jackson",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-2",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-3",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-4",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-5",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-6",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-7",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-8",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-9",
+          "player": "Cameron Hite",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "P-10",
+          "player": "Nick Andersen",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Cameron Hite",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "IC-2",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "IC-3",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "IC-4",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "IC-5",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "CC-2",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "CC-3",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "CC-4",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "CC-5",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "ST-2",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "ST-3",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "ST-4",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "ST-5",
+          "player": "Nick Andersen",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "BL-2",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "BL-3",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "BL-4",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "BL-5",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "CL-2",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-2",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-3",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-4",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-5",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-6",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-7",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-8",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-9",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-10",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-11",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-12",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-13",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-14",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-15",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "S-16",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-2",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-3",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-4",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-5",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-6",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-7",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-8",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-9",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-10",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-11",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-12",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-13",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-14",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-15",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "O-16",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-2",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-3",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-4",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-5",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-6",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-7",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-8",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-9",
+          "player": "Demond Claiborne",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-10",
+          "player": "DeVonte Gordon",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-11",
+          "player": "Donavon Greene",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-12",
+          "player": "Dylan Hazen",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-13",
+          "player": "Evan Slocum",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-14",
+          "player": "Hank Bachmeier",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-15",
+          "player": "Jasheen Davis",
+          "team": "Wake Forest"
+        },
+        {
+          "number": "N-16",
+          "player": "Taylor Morin",
+          "team": "Wake Forest"
+        }
+      ]
+    }
+  ]
+}

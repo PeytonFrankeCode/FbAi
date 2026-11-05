@@ -1,0 +1,1541 @@
+{
+  "id": "2026-onit-athlete-arizona-state-football",
+  "name": "2026 ONIT Athlete Arizona State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 85,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-2",
+          "player": "AJ Ia",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Dyer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-4",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-5",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-6",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-7",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-8",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-10",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-11",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-12",
+          "player": "Martell Hughes",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-13",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-14",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-15",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-16",
+          "player": "Albert Smith Iii",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-17",
+          "player": "Anthony Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-18",
+          "player": "Antoine \"AJ\" Belgrave-Shorter",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-19",
+          "player": "Ashton Stamps",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-20",
+          "player": "Ben Alefaio-Lilii",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-21",
+          "player": "Blazen Lono-Wong",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-22",
+          "player": "Cardae Mack",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-23",
+          "player": "Carson Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-24",
+          "player": "Carston Kieffer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-25",
+          "player": "Champ Westbrooks",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-26",
+          "player": "Chance Ables",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-27",
+          "player": "Clayton Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-28",
+          "player": "Cortavius Tisaby",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-29",
+          "player": "Cory Butler Jr.",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-30",
+          "player": "Davis Kinney",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-31",
+          "player": "Demarius \"Man Man\" Robinson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-32",
+          "player": "Desean Bryant Jr.",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-33",
+          "player": "Doughless Teloma",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-34",
+          "player": "Emar'Rion Winston",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-35",
+          "player": "Grayson Curtis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-36",
+          "player": "Grayson Rigdon",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-37",
+          "player": "Harry Hassmann",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-38",
+          "player": "Hyrum Vaeono",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-39",
+          "player": "Isaiah Iosefa",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jalen Klemm",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-41",
+          "player": "Jalen Thompson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-42",
+          "player": "James Giggey",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-43",
+          "player": "Jeffrey Manns",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-44",
+          "player": "Joseph Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-45",
+          "player": "Kanyon Floyd",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-46",
+          "player": "Khamari Anderson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-47",
+          "player": "Kirt Vakalahi",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-48",
+          "player": "Kristian Ingman",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-49",
+          "player": "Kyan Mcdonald",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-50",
+          "player": "Landen Anderson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-51",
+          "player": "Lee \"Puka\" Fuimaono",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-52",
+          "player": "Luke Baklenko",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-53",
+          "player": "Lyrik Rawls",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-54",
+          "player": "Maki Stewart",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-55",
+          "player": "Makua Pule",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-56",
+          "player": "Manamo'Ui Muti",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-57",
+          "player": "Marques Uini",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-58",
+          "player": "Mason Marden",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-59",
+          "player": "Matai Jefferson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-60",
+          "player": "Maurice Williams",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-61",
+          "player": "Michael \"Butter\" Tollefson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-62",
+          "player": "Montana Warren",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-63",
+          "player": "Mykeil Gardner",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-64",
+          "player": "Nick Mclarty",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-65",
+          "player": "Niniva Nicholson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-66",
+          "player": "Owen Long",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-67",
+          "player": "Prayer Young-Blackgoat",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-68",
+          "player": "Raiden Vines-Bright",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-69",
+          "player": "Ramar Williams",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-70",
+          "player": "Ramere Davis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-71",
+          "player": "Rashad Mckenzie",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-72",
+          "player": "Rodney Bimage Jr.",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-73",
+          "player": "Roman Pitre",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-74",
+          "player": "Salesi Manu",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-75",
+          "player": "Siosaia \"Leni\" Lapuaho",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-76",
+          "player": "Tana Alo-Tupuola",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-77",
+          "player": "Terrell Kim",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-78",
+          "player": "Tristan Bacon",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-79",
+          "player": "Tyler Wigglesworth",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-80",
+          "player": "Uriah Neloms",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-81",
+          "player": "Wade Helton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-82",
+          "player": "Xander Ruggeroli",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-83",
+          "player": "Xavier Skowron",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-84",
+          "player": "Zac Swanson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-85",
+          "player": "Zeth Thues",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-2",
+          "player": "AJ Ia",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Dyer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-4",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-5",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-6",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-7",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-8",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-10",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-11",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-12",
+          "player": "Martell Hughes",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-13",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-14",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-15",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "AJ Ia",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Julian Hugo",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Martell Hughes",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Owen Long",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Raiden Vines-Bright",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "AJ Ia",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Julian Hugo",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Martell Hughes",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Owen Long",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Raiden Vines-Bright",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CL-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CL-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-2",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-3",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-4",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-5",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-6",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-7",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-8",
+          "player": "Cameron Dyer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-9",
+          "player": "Owen Long",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-10",
+          "player": "Raiden Vines-Bright",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-2",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-3",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-4",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-5",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-6",
+          "player": "Kyson Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-7",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-8",
+          "player": "Cameron Dyer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-9",
+          "player": "Owen Long",
+          "team": "Arizona State"
+        },
+        {
+          "number": "F-10",
+          "player": "Raiden Vines-Bright",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GD-2",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GD-3",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-2",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-2",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-4",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-5",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-2",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-4",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "H-5",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Jake Fette",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Reed Harris",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-DE",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MG",
+          "player": "Marquis Gillis",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-JH",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "GA-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-CB",
+          "player": "Cutter Boley",
+          "team": "Arizona State"
+        },
+        {
+          "number": "FS-DA",
+          "player": "David Avit",
+          "team": "Arizona State"
+        },
+        {
+          "number": "FS-MK",
+          "player": "Mikey Keene",
+          "team": "Arizona State"
+        },
+        {
+          "number": "FS-OM",
+          "player": "Omarion Miller",
+          "team": "Arizona State"
+        },
+        {
+          "number": "FS-AW",
+          "player": "Adrian \"Boogie\" Wilson",
+          "team": "Arizona State"
+        }
+      ]
+    }
+  ]
+}

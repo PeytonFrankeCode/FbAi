@@ -1,0 +1,1401 @@
+{
+  "id": "2024-onit-athlete-alabama-football",
+  "name": "2024 ONIT Athlete Alabama Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 79,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Amari Jefferson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-2",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-3",
+          "player": "Bray Hubbard",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-4",
+          "player": "Bubba Hampton",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-5",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-6",
+          "player": "Casey Poe",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-7",
+          "player": "Cayden Jones",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-8",
+          "player": "Cj Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-9",
+          "player": "Cole Adams",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-10",
+          "player": "Conor Talty",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-11",
+          "player": "Damon Payne Jr.",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-12",
+          "player": "Daniel Hill",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-13",
+          "player": "Danny Lewis Jr.",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-14",
+          "player": "Dashawn Jones",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-15",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-16",
+          "player": "Devonta Smith",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-17",
+          "player": "Domani Jackson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-18",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-19",
+          "player": "Edric Hill",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-20",
+          "player": "Elijah Pritchett",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-21",
+          "player": "Emmanuel Henderson Jr.",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-22",
+          "player": "Geno Vandemark",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-23",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-24",
+          "player": "Graham Nicholson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-25",
+          "player": "Hunter Osborne",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-26",
+          "player": "Isaia Faga",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-27",
+          "player": "Jaeden Roberts",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-28",
+          "player": "Jah-Marien Latham",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-29",
+          "player": "Jahlil Hurley",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-30",
+          "player": "Jalen Hale",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-31",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-32",
+          "player": "James Burnip",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-33",
+          "player": "James Smith",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-34",
+          "player": "Jaren Hamilton",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-35",
+          "player": "Jay Lindsey",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-36",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-37",
+          "player": "Jayshawn Ross",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-38",
+          "player": "Jeremiah Alexander",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-39",
+          "player": "Jeremiah Beaman",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-40",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Renaud",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-42",
+          "player": "Joseph Ionata",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-43",
+          "player": "Josh Cuevas",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-44",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-45",
+          "player": "Justin Jefferson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-46",
+          "player": "Justin Okoronkwo",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-47",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-48",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-49",
+          "player": "Keon Keeley",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-50",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-51",
+          "player": "Kevin Riley",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-52",
+          "player": "Kneeland Hibbett",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-53",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-54",
+          "player": "Lt Overton",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-55",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-56",
+          "player": "Miles Mcvay",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-57",
+          "player": "Noah Carter",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-58",
+          "player": "Olaus Alinen",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-59",
+          "player": "Parker Brailsford",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-60",
+          "player": "Qb Reese",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-61",
+          "player": "Qua Russaw",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-62",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-63",
+          "player": "Red Morgan",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-64",
+          "player": "Richard Young",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-65",
+          "player": "Rico Scott",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-66",
+          "player": "Robbie Ouzts",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-67",
+          "player": "Roq Montgomery",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-68",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-69",
+          "player": "Sterling Dixon",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-70",
+          "player": "Tim Keenan Iii",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-71",
+          "player": "Tim Smith",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-72",
+          "player": "Ty Lockwood",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-73",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-74",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-75",
+          "player": "Wilkin Formby",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-76",
+          "player": "William Sanders",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-77",
+          "player": "Yhonzae Pierre",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-78",
+          "player": "Zabien Brown",
+          "team": "Alabama"
+        },
+        {
+          "number": "B-79",
+          "player": "Zavier Mincey",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-2",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-3",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-4",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-5",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-6",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-7",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-8",
+          "player": "Parker Brailsford",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-9",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "P-10",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "IC-2",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "IC-3",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "IC-4",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "IC-5",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "CC-2",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "CC-3",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "CC-4",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "CC-5",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "ST-2",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "ST-3",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "ST-4",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "ST-5",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "BL-2",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "BL-3",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "BL-4",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "BL-5",
+          "player": "Parker Brailsford",
+          "team": "Alabama"
+        },
+        {
+          "number": "BL-6",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "CL-2",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-2",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-3",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-4",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-5",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-6",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-7",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-8",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-9",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-10",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-11",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-12",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-13",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-14",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-15",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-16",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-17",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-18",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-19",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-20",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-21",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-22",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-23",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-24",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-25",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-26",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-27",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-28",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-29",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-30",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-31",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-32",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-33",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-34",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-35",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-36",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-37",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-38",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-39",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "S-40",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-2",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-3",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-4",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-5",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-6",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-7",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-8",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-9",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-10",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-11",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-12",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-13",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-14",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-15",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-16",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-17",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-18",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-19",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-20",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-21",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-22",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-23",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-24",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-25",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-26",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-27",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-28",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-29",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-30",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-31",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-32",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-33",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-34",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-35",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-36",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-37",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-38",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-39",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-40",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-41",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-42",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-43",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "O-44",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "one-series-water",
+      "name": "ONE Series Water",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-45",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-2",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-3",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-4",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-5",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-6",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-7",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-8",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-9",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-10",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-11",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-12",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-13",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-14",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-15",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-16",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-17",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-18",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-19",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-20",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-21",
+          "player": "Austin Mack",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-22",
+          "player": "Caleb Odom",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-23",
+          "player": "CJ Dippre",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-24",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-25",
+          "player": "Dylan Lonergan",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-26",
+          "player": "Germie Bernard",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-27",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-28",
+          "player": "Jaylen Mbakwe",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-29",
+          "player": "Jihaad Campbell",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-30",
+          "player": "Justice Haynes",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-31",
+          "player": "Kadyn Proctor",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-32",
+          "player": "Kendrick Law",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-33",
+          "player": "Keon Sabb",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-34",
+          "player": "Kobe Prentice",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-35",
+          "player": "Malachi Moore",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-36",
+          "player": "Que Robinson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-37",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-38",
+          "player": "Tim Keenan III",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-39",
+          "player": "Ty Simpson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-40",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-41",
+          "player": "Tyler Booker",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-42",
+          "player": "Deontae Lawson",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-43",
+          "player": "Jam Miller",
+          "team": "Alabama"
+        },
+        {
+          "number": "N-44",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-water",
+      "name": "NINE Series Water",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-45",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-signature-edition",
+      "name": "City Limits Signature Edition",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CLS-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    },
+    {
+      "id": "college-colors-signature-edition",
+      "name": "College Colors Signature Edition",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CCS-1",
+          "player": "Ryan Williams",
+          "team": "Alabama"
+        }
+      ]
+    }
+  ]
+}

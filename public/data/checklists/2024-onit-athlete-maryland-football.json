@@ -1,0 +1,1030 @@
+{
+  "id": "2024-onit-athlete-maryland-football",
+  "name": "2024 ONIT Athlete Maryland Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 93,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Folivi",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-2",
+          "player": "Aj Szymanski",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-3",
+          "player": "Akindele Dare",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-4",
+          "player": "Alec Hughes",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-5",
+          "player": "Alex Moore",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-6",
+          "player": "Aliou Bah",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-7",
+          "player": "Anthony Robsock",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-8",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-9",
+          "player": "Braeden Wisloski",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-10",
+          "player": "Brandon Jacob",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-11",
+          "player": "Braydon Lee",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-12",
+          "player": "Brenden Segovia",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-13",
+          "player": "Bryce Mcferson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-14",
+          "player": "Caleb Wheatland",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-15",
+          "player": "Cameron Edge",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Petitbon",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-17",
+          "player": "Chantz Harley",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-18",
+          "player": "Colby Mcdonald",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-19",
+          "player": "Colin Reynolds",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-20",
+          "player": "Daniel Owens",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-21",
+          "player": "Daniel Wingate",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-22",
+          "player": "Dante Trader Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-23",
+          "player": "Davon Watkins",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-24",
+          "player": "Dillan Fontus",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-25",
+          "player": "Dimitry Nicolas",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-26",
+          "player": "Dj Samuels",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-27",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-28",
+          "player": "Dylan Gooden",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-29",
+          "player": "Eli Mason",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-30",
+          "player": "Emerson Smith",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-31",
+          "player": "Ethan Gough",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-32",
+          "player": "Ezekiel Avit",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-33",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-34",
+          "player": "Isaac Bunyun",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-35",
+          "player": "J Mar Branion",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-36",
+          "player": "L0q",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-37",
+          "player": "Jahmari Powell-Wonson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-38",
+          "player": "Jaiden Fair",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-39",
+          "player": "Jonathan Akins",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-40",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-41",
+          "player": "Josh Kaltenberger",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-42",
+          "player": "Josh Richards",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-43",
+          "player": "Joshua Simmons",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-44",
+          "player": "Josiah Mclaurin",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-45",
+          "player": "Judah Jenkins",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-46",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-47",
+          "player": "Karon Ball",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-48",
+          "player": "Keion Flowers",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-49",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-50",
+          "player": "Kellen Mcconnell",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-51",
+          "player": "Kevin Kalonji",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-52",
+          "player": "Keyshawn Flowers",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-53",
+          "player": "Khristian Martin",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-54",
+          "player": "Kyle Long",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-55",
+          "player": "La Khi Roland",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-56",
+          "player": "Lavain Scruggs",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-57",
+          "player": "Lavon Johnson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-58",
+          "player": "Leron Husbands",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-59",
+          "player": "Logan Bennett",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-60",
+          "player": "Maxwell Brown",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-61",
+          "player": "Mekhai White",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-62",
+          "player": "Michael Harris",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-63",
+          "player": "Michael Hershey",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-64",
+          "player": "Mykel Morman",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-65",
+          "player": "Neeo Avery",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-66",
+          "player": "Nolan Ray",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-67",
+          "player": "Octavian Smith Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-68",
+          "player": "Parker Jones",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-69",
+          "player": "Perry Fisher",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-70",
+          "player": "Philip Noyes",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-71",
+          "player": "Quashon Fuller",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-72",
+          "player": "Rex Fleming",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-73",
+          "player": "Ricardo Cooper Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-74",
+          "player": "Robert Smith",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-75",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-76",
+          "player": "Roman Jensen",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-77",
+          "player": "Ruben Hyppolite Ii",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-78",
+          "player": "Ryan Howerton",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-79",
+          "player": "Ryan Manning",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-80",
+          "player": "Ryne Acheson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-81",
+          "player": "Samuel Adu",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-82",
+          "player": "Sean Williams",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-83",
+          "player": "Sebastian Antoine-Pompey",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-84",
+          "player": "Shaleak Knotts",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-85",
+          "player": "Shamar Mcintosh",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-86",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-87",
+          "player": "Taizse Johnson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-88",
+          "player": "Tamarus Walker",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-89",
+          "player": "Taylor Best",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-90",
+          "player": "Tayvon Nelson",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-91",
+          "player": "Terez Davis",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-92",
+          "player": "Tommy Akingbesote",
+          "team": "Maryland"
+        },
+        {
+          "number": "B-93",
+          "player": "Trevor Szymanski",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Ruben Hyppolite Ii",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-2",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-3",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-4",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-5",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-6",
+          "player": "Dante Trader Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-7",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-8",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-9",
+          "player": "Quashon Fuller",
+          "team": "Maryland"
+        },
+        {
+          "number": "P-10",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Ruben Hyppolite Ii",
+          "team": "Maryland"
+        },
+        {
+          "number": "IC-2",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "IC-3",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "IC-4",
+          "player": "Dante Trader Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "IC-5",
+          "player": "Quashon Fuller",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Ruben Hyppolite Ii",
+          "team": "Maryland"
+        },
+        {
+          "number": "CC-2",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "CC-3",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "CC-4",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "CC-5",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Ruben Hyppolite Ii",
+          "team": "Maryland"
+        },
+        {
+          "number": "ST-2",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "ST-3",
+          "player": "Dante Trader Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "ST-4",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "ST-5",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "BL-2",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "BL-3",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "BL-4",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "BL-5",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "CL-2",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-2",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-3",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-4",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-5",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-6",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-7",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-8",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-9",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-10",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-11",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-12",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-13",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-14",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-15",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "S-16",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-2",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-3",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-4",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-5",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-6",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-7",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-8",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-9",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-10",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-11",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-12",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-13",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-14",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-15",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-16",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-17",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "O-18",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-2",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-3",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-4",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-5",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-6",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-7",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-8",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-9",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-10",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-11",
+          "player": "Kaden Prather",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-12",
+          "player": "Billy Edwards Jr.",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-13",
+          "player": "Tai Felton",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-14",
+          "player": "Kellan Wyatt",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-15",
+          "player": "Glendon Miller",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-16",
+          "player": "Donnell Brown",
+          "team": "Maryland"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-17",
+          "player": "Roman Hemby",
+          "team": "Maryland"
+        },
+        {
+          "number": "N-18",
+          "player": "Jordan Phillips",
+          "team": "Maryland"
+        }
+      ]
+    }
+  ]
+}

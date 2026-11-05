@@ -1,0 +1,449 @@
+{
+  "id": "2024-onit-athlete-georgia-football",
+  "name": "2024 ONIT Athlete Georgia Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 86,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TCS-1",
+          "player": "Ali Hall",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-2",
+          "player": "Anthony Evans III",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-3",
+          "player": "Arian Smith",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-4",
+          "player": "Ben Yurosek",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-5",
+          "player": "Bo Hughley",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-6",
+          "player": "Branson Robinson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-7",
+          "player": "Chauncey Bowens",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-8",
+          "player": "Chaz Chambliss",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-9",
+          "player": "Chris Cole",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-10",
+          "player": "Chris Peal",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-11",
+          "player": "Christen Miller",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-12",
+          "player": "Cj Allen",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-14",
+          "player": "Cole Speer",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-16",
+          "player": "Colton Heinrich",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-17",
+          "player": "Damon Wilson II",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-18",
+          "player": "Dan Jackson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-19",
+          "player": "Daniel Calhoun",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-20",
+          "player": "Daniel Harris",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-21",
+          "player": "Daylen Everette",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-22",
+          "player": "Demello Jones",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-23",
+          "player": "Dillon Bell",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-24",
+          "player": "Dominic Lovett",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-25",
+          "player": "Drew Bobo",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-26",
+          "player": "Drew Miller",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-27",
+          "player": "Dwight Phillips Jr.",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-28",
+          "player": "Dylan Fairchild",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-29",
+          "player": "Earnest Greene III",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-30",
+          "player": "Ellis Robinson IV",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-31",
+          "player": "Gabe Harris Jr.",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-32",
+          "player": "Gunner Stockton",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-33",
+          "player": "Jacorey Thomas",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-34",
+          "player": "Jaden Rashada",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-35",
+          "player": "Jaden Reddell",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-36",
+          "player": "Jahzare Jackson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-37",
+          "player": "Jake Pope",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-38",
+          "player": "Jalon Walker",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-39",
+          "player": "Jamaal Jarrett",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-40",
+          "player": "Jamal Meriweather",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-41",
+          "player": "Jared Wilson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-42",
+          "player": "Joenel Aguero",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-43",
+          "player": "Jordan Hall",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-44",
+          "player": "Jordan Thomas",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-45",
+          "player": "Julian Humphrey",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-46",
+          "player": "Justin Greene",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-47",
+          "player": "Justin Williams",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-48",
+          "player": "Justyn Rhett",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-49",
+          "player": "Kavon Townsend",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-50",
+          "player": "Kj Bolden",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-51",
+          "player": "Kris Jones",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-52",
+          "player": "Kyron Jones",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-53",
+          "player": "Lawson Luckie",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-54",
+          "player": "London Humphreys",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-55",
+          "player": "Malachi Toliver",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-56",
+          "player": "Malaki Starks",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-57",
+          "player": "Marcus Harrison",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-58",
+          "player": "Marques Easley",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-59",
+          "player": "Maurice Hayes",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-60",
+          "player": "Micah Morris",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-61",
+          "player": "Michael Jackson III",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-62",
+          "player": "Michael Uini",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-63",
+          "player": "Monroe Freeling",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-64",
+          "player": "Mykel Williams",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-65",
+          "player": "Nasir Johnson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-66",
+          "player": "Nate Frazier",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-67",
+          "player": "Nazir Stackhouse",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-68",
+          "player": "Nitro Tuggle",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-69",
+          "player": "Nnamdi Ogboko",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-70",
+          "player": "Nyier Daniels",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-71",
+          "player": "Ondre Evans",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-72",
+          "player": "Oscar Delp",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-73",
+          "player": "Raylen Wilson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-74",
+          "player": "Roderick Robinson II",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-75",
+          "player": "Ryan Puglisi",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-76",
+          "player": "Sacovie White",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-77",
+          "player": "Sam M Qfncb",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-78",
+          "player": "Smael Mondon Jr.",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-78",
+          "player": "Tate Ratledge",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-79",
+          "player": "Trevor Etienne",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-81",
+          "player": "Warren Brinson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-82",
+          "player": "Xavier Truss",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-83",
+          "player": "Xzavier Mcleod",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-83",
+          "player": "Troy Bowles",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-85",
+          "player": "Quintavius Johnson",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-86",
+          "player": "Beau Gardner",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-87",
+          "player": "Peyton Woodring",
+          "team": "Georgia"
+        },
+        {
+          "number": "TCS-88",
+          "player": "Tyrion Ingram-Dawkins EM",
+          "team": "Georgia"
+        }
+      ]
+    }
+  ]
+}

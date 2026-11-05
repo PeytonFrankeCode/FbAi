@@ -1,0 +1,304 @@
+{
+  "id": "2022-onit-athlete-oregon-football",
+  "name": "2022 ONIT Athlete Oregon Football",
+  "year": 2022,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "card-jersey-name-pos-year-card-jersey-name-pos-year",
+      "name": "Card Jersey Name Pos. Year Card Jersey Name Pos. Year",
+      "category": "memorabilia",
+      "totalCards": 57,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "2",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "3",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "4",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "5",
+          "player": "R-So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "6",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "7",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "8",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "9",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "10",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "11",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "12",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "13",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "14",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "15",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "16",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "17",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "18",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "19",
+          "player": "R-So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "20",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "21",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "22",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "23",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "24",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "25",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "26",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "27",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "28",
+          "player": "Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "29",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "30",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "31",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "32",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "33",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "34",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "35",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "36",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "37",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "38",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "39",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "40",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "41",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "42",
+          "player": "R-Fr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "43",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "44",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "45",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "46",
+          "player": "The Oregon Duck",
+          "team": "Oregon"
+        },
+        {
+          "number": "47",
+          "player": "Signature Cards",
+          "team": "Oregon"
+        },
+        {
+          "number": "48",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "49",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "50",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "51",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "52",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "53",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "54",
+          "player": "So.",
+          "team": "Oregon"
+        },
+        {
+          "number": "55",
+          "player": "Sr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "56",
+          "player": "Jr.",
+          "team": "Oregon"
+        },
+        {
+          "number": "200",
+          "player": "So.",
+          "team": "Oregon"
+        }
+      ]
+    }
+  ]
+}

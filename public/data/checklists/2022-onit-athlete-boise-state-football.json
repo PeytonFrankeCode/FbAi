@@ -1,0 +1,607 @@
+{
+  "id": "2022-onit-athlete-boise-state-football",
+  "name": "2022 ONIT Athlete Boise State Football",
+  "year": 2022,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "number-pos",
+      "name": "Number Pos.",
+      "category": "insert",
+      "totalCards": 103,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "0",
+          "player": "JL Skinner",
+          "team": "Boise State"
+        },
+        {
+          "number": "1",
+          "player": "Caleb Biggers",
+          "team": "Boise State"
+        },
+        {
+          "number": "2",
+          "player": "Ashton Jeanty",
+          "team": "Boise State"
+        },
+        {
+          "number": "3",
+          "player": "Brandon Hawkins",
+          "team": "Boise State"
+        },
+        {
+          "number": "3",
+          "player": "Riley Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "4",
+          "player": "Rodney Robinson",
+          "team": "Boise State"
+        },
+        {
+          "number": "4",
+          "player": "Sam Vidlak",
+          "team": "Boise State"
+        },
+        {
+          "number": "5",
+          "player": "Stefan Cobbs",
+          "team": "Boise State"
+        },
+        {
+          "number": "7",
+          "player": "Latrell Caples",
+          "team": "Boise State"
+        },
+        {
+          "number": "7",
+          "player": "Ezekiel Noa",
+          "team": "Boise State"
+        },
+        {
+          "number": "8",
+          "player": "Markel Reed",
+          "team": "Boise State"
+        },
+        {
+          "number": "9",
+          "player": "Shea Whiting",
+          "team": "Boise State"
+        },
+        {
+          "number": "10",
+          "player": "Taylen Green",
+          "team": "Boise State"
+        },
+        {
+          "number": "10",
+          "player": "Andrew Simpson",
+          "team": "Boise State"
+        },
+        {
+          "number": "14",
+          "player": "Kaonohi Kaniho",
+          "team": "Boise State"
+        },
+        {
+          "number": "14",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "15",
+          "player": "Colt Fulton",
+          "team": "Boise State"
+        },
+        {
+          "number": "15",
+          "player": "Deven Wright",
+          "team": "Boise State"
+        },
+        {
+          "number": "16",
+          "player": "Jared Reed",
+          "team": "Boise State"
+        },
+        {
+          "number": "17",
+          "player": "Davis Koetter",
+          "team": "Boise State"
+        },
+        {
+          "number": "18",
+          "player": "Billy Bowens",
+          "team": "Boise State"
+        },
+        {
+          "number": "19",
+          "player": "Keenan McCaddy",
+          "team": "Boise State"
+        },
+        {
+          "number": "21",
+          "player": "Tyreque Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "22",
+          "player": "Tyric LeBeauf",
+          "team": "Boise State"
+        },
+        {
+          "number": "23",
+          "player": "Seyi Oladipo",
+          "team": "Boise State"
+        },
+        {
+          "number": "24",
+          "player": "George Holani",
+          "team": "Boise State"
+        },
+        {
+          "number": "25",
+          "player": "Isaiah Bradford",
+          "team": "Boise State"
+        },
+        {
+          "number": "25",
+          "player": "Kaden Dudley",
+          "team": "Boise State"
+        },
+        {
+          "number": "26",
+          "player": "Taylor Marcum",
+          "team": "Boise State"
+        },
+        {
+          "number": "27",
+          "player": "Dionte Thornton",
+          "team": "Boise State"
+        },
+        {
+          "number": "28",
+          "player": "Seth Knothe",
+          "team": "Boise State"
+        },
+        {
+          "number": "29",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "30",
+          "player": "Isaiah Bagnah",
+          "team": "Boise State"
+        },
+        {
+          "number": "31",
+          "player": "Zion Washington",
+          "team": "Boise State"
+        },
+        {
+          "number": "32",
+          "player": "Bryce Cleave",
+          "team": "Boise State"
+        },
+        {
+          "number": "32",
+          "player": "Ethan Mikita",
+          "team": "Boise State"
+        },
+        {
+          "number": "33",
+          "player": "Tyler Crowe",
+          "team": "Boise State"
+        },
+        {
+          "number": "33",
+          "player": "Cortez Hogans",
+          "team": "Boise State"
+        },
+        {
+          "number": "34",
+          "player": "Alexander Teubner",
+          "team": "Boise State"
+        },
+        {
+          "number": "35",
+          "player": "K/p",
+          "team": "Boise State"
+        },
+        {
+          "number": "35",
+          "player": "Gavin Hambrick",
+          "team": "Boise State"
+        },
+        {
+          "number": "36",
+          "player": "Justus Del Rio",
+          "team": "Boise State"
+        },
+        {
+          "number": "36",
+          "player": "Elelyon Noa",
+          "team": "Boise State"
+        },
+        {
+          "number": "37",
+          "player": "Chip Mitchell",
+          "team": "Boise State"
+        },
+        {
+          "number": "38",
+          "player": "Demitri Washington",
+          "team": "Boise State"
+        },
+        {
+          "number": "39",
+          "player": "Jalen Neal",
+          "team": "Boise State"
+        },
+        {
+          "number": "39",
+          "player": "Wyatt Redding",
+          "team": "Boise State"
+        },
+        {
+          "number": "40",
+          "player": "Russell Corrigan",
+          "team": "Boise State"
+        },
+        {
+          "number": "40",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "41",
+          "player": "Jaylen Clark",
+          "team": "Boise State"
+        },
+        {
+          "number": "42",
+          "player": "Mason Hutton",
+          "team": "Boise State"
+        },
+        {
+          "number": "43",
+          "player": "Jake Ripp",
+          "team": "Boise State"
+        },
+        {
+          "number": "43",
+          "player": "Gavin Wale",
+          "team": "Boise State"
+        },
+        {
+          "number": "44",
+          "player": "George Tarlas",
+          "team": "Boise State"
+        },
+        {
+          "number": "45",
+          "player": "K/p",
+          "team": "Boise State"
+        },
+        {
+          "number": "45",
+          "player": "James Wilborn, Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "46",
+          "player": "James Ferguson-Reynolds",
+          "team": "Boise State"
+        },
+        {
+          "number": "46",
+          "player": "Hunter Steacker",
+          "team": "Boise State"
+        },
+        {
+          "number": "49",
+          "player": "Jack Beresford",
+          "team": "Boise State"
+        },
+        {
+          "number": "50",
+          "player": "Dishawn Misa",
+          "team": "Boise State"
+        },
+        {
+          "number": "52",
+          "player": "DJ Schramm",
+          "team": "Boise State"
+        },
+        {
+          "number": "53",
+          "player": "Marco Notarainni",
+          "team": "Boise State"
+        },
+        {
+          "number": "54",
+          "player": "Gabe Hunter",
+          "team": "Boise State"
+        },
+        {
+          "number": "55",
+          "player": "Kekaniokoa Holomalia-Gonzalez",
+          "team": "Boise State"
+        },
+        {
+          "number": "56",
+          "player": "Edge/ls",
+          "team": "Boise State"
+        },
+        {
+          "number": "57",
+          "player": "Nathan Cardona",
+          "team": "Boise State"
+        },
+        {
+          "number": "58",
+          "player": "Ty Tanner",
+          "team": "Boise State"
+        },
+        {
+          "number": "59",
+          "player": "Rejhan Tatum",
+          "team": "Boise State"
+        },
+        {
+          "number": "61",
+          "player": "Tyson Molio’o",
+          "team": "Boise State"
+        },
+        {
+          "number": "62",
+          "player": "Roger Carreon",
+          "team": "Boise State"
+        },
+        {
+          "number": "63",
+          "player": "Mason Randolph",
+          "team": "Boise State"
+        },
+        {
+          "number": "64",
+          "player": "Austin Schultsmeier",
+          "team": "Boise State"
+        },
+        {
+          "number": "65",
+          "player": "Hall Schmidt",
+          "team": "Boise State"
+        },
+        {
+          "number": "66",
+          "player": "Ben Dooley",
+          "team": "Boise State"
+        },
+        {
+          "number": "69",
+          "player": "Garrett Curran",
+          "team": "Boise State"
+        },
+        {
+          "number": "70",
+          "player": "John Ojukwu",
+          "team": "Boise State"
+        },
+        {
+          "number": "71",
+          "player": "Cade Beresford",
+          "team": "Boise State"
+        },
+        {
+          "number": "72",
+          "player": "Dallas Holliday",
+          "team": "Boise State"
+        },
+        {
+          "number": "73",
+          "player": "Joseph Amos",
+          "team": "Boise State"
+        },
+        {
+          "number": "75",
+          "player": "Will Farrar",
+          "team": "Boise State"
+        },
+        {
+          "number": "76",
+          "player": "Rick Moore",
+          "team": "Boise State"
+        },
+        {
+          "number": "77",
+          "player": "Kage Casey",
+          "team": "Boise State"
+        },
+        {
+          "number": "78",
+          "player": "Julian Simpson",
+          "team": "Boise State"
+        },
+        {
+          "number": "79",
+          "player": "Cord Kringlen",
+          "team": "Boise State"
+        },
+        {
+          "number": "80",
+          "player": "Eric McAlister",
+          "team": "Boise State"
+        },
+        {
+          "number": "81",
+          "player": "Austin Bolt",
+          "team": "Boise State"
+        },
+        {
+          "number": "83",
+          "player": "Cole Wright",
+          "team": "Boise State"
+        },
+        {
+          "number": "84",
+          "player": "Zamondre Merriweather",
+          "team": "Boise State"
+        },
+        {
+          "number": "85",
+          "player": "Matt Lauter",
+          "team": "Boise State"
+        },
+        {
+          "number": "86",
+          "player": "Austin Terry",
+          "team": "Boise State"
+        },
+        {
+          "number": "87",
+          "player": "Kurt Rafdal",
+          "team": "Boise State"
+        },
+        {
+          "number": "88",
+          "player": "Tyneil Hopper",
+          "team": "Boise State"
+        },
+        {
+          "number": "89",
+          "player": "Connor Riddle",
+          "team": "Boise State"
+        },
+        {
+          "number": "90",
+          "player": "Braxton Fely",
+          "team": "Boise State"
+        },
+        {
+          "number": "91",
+          "player": "Ahmed Hassanein",
+          "team": "Boise State"
+        },
+        {
+          "number": "92",
+          "player": "Michael Callahan",
+          "team": "Boise State"
+        },
+        {
+          "number": "93",
+          "player": "Andy Nwaoko",
+          "team": "Boise State"
+        },
+        {
+          "number": "94",
+          "player": "Jackson Cravens",
+          "team": "Boise State"
+        },
+        {
+          "number": "95",
+          "player": "Divine Obichere",
+          "team": "Boise State"
+        },
+        {
+          "number": "96",
+          "player": "Luke Voorhees",
+          "team": "Boise State"
+        },
+        {
+          "number": "97",
+          "player": "JJ Talo",
+          "team": "Boise State"
+        },
+        {
+          "number": "98",
+          "player": "Herbert Gums",
+          "team": "Boise State"
+        },
+        {
+          "number": "99",
+          "player": "Scott Matlock",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "andy-avalos-head-coach",
+      "name": "Andy Avalos Head Coach",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "0",
+          "player": "Mascot",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "0",
+          "player": "JL Skinner",
+          "team": "Boise State"
+        },
+        {
+          "number": "1",
+          "player": "Caleb Biggers",
+          "team": "Boise State"
+        },
+        {
+          "number": "3",
+          "player": "Riley Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "5",
+          "player": "Stefan Cobbs",
+          "team": "Boise State"
+        },
+        {
+          "number": "7",
+          "player": "Ezekiel Noa",
+          "team": "Boise State"
+        },
+        {
+          "number": "21",
+          "player": "Tyreque Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "35",
+          "player": "K/p",
+          "team": "Boise State"
+        },
+        {
+          "number": "38",
+          "player": "Demitri Washington",
+          "team": "Boise State"
+        },
+        {
+          "number": "70",
+          "player": "John Ojukwu",
+          "team": "Boise State"
+        },
+        {
+          "number": "99",
+          "player": "Scott Matlock",
+          "team": "Boise State"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1311 @@
+{
+  "id": "2026-onit-athlete-louisville-football",
+  "name": "2026 ONIT Athlete Louisville Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 65,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-2",
+          "player": "Brody Foley",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-3",
+          "player": "DJ Waller Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-4",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-5",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-7",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-8",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-9",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-10",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-11",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-12",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-13",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-14",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-15",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-16",
+          "player": "Adam Winkenhofer",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-17",
+          "player": "AJ Green",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-18",
+          "player": "Anderson Mitchell",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-19",
+          "player": "Antonio Harris",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-20",
+          "player": "Benjamin Perry",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-21",
+          "player": "Blake Ruffin",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-22",
+          "player": "Brady Ballart",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-23",
+          "player": "Brycen Scott",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-24",
+          "player": "Caleb Matelau",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-25",
+          "player": "Cason Henry",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-26",
+          "player": "Chris Jones Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-27",
+          "player": "Daylen Russell",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-28",
+          "player": "Dillon Smith",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-29",
+          "player": "Dylan Mesman",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-30",
+          "player": "Ellis Mcadoo",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-31",
+          "player": "Eric Hazzard",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-32",
+          "player": "Eryx Daugherty",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-33",
+          "player": "Evan Wibberley",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-34",
+          "player": "Gradey Anthony",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-35",
+          "player": "Hamilton Atkins",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-36",
+          "player": "Hayden Travelstead",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-37",
+          "player": "Jacob Smith",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-38",
+          "player": "Jakob Dixon",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-39",
+          "player": "James Glover-Tyson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-40",
+          "player": "Jerod Smith II",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-41",
+          "player": "Jimmy Williams, III",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-42",
+          "player": "Julius Miles",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-43",
+          "player": "Justyn Reid",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-44",
+          "player": "Kris Brunson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-45",
+          "player": "Kris Hughes",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-46",
+          "player": "Lance Robinson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-47",
+          "player": "Lekhy Thompkins",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-48",
+          "player": "Marquise Davis",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-49",
+          "player": "Maurice Davis",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-50",
+          "player": "Micah Carter",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-51",
+          "player": "Micah Rice",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-52",
+          "player": "Montavin Quisenberry",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-53",
+          "player": "Myles Norwood",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-54",
+          "player": "Nick Keller",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-55",
+          "player": "Payton Cook",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-56",
+          "player": "Ryan Manis",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-57",
+          "player": "Ryan Zimmerman",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-58",
+          "player": "Sam Dawson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-59",
+          "player": "Sam Secrest",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-60",
+          "player": "Santana Wilson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-61",
+          "player": "Taj Powell",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-62",
+          "player": "Tommy Ziesmer",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-63",
+          "player": "Te/qb",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-64",
+          "player": "Trent Carter",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-65",
+          "player": "Tyler Folmar",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checker",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-2",
+          "player": "Brody Foley",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-3",
+          "player": "DJ Waller Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-4",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-5",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-7",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-8",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-9",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-10",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-11",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-12",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-13",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-14",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "B-15",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-2",
+          "player": "Brody Foley",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-5",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-6",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-7",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-8",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-9",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-10",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-2",
+          "player": "Brody Foley",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-5",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-6",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-7",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-8",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-9",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "CC-10",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "CL-2",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "CL-3",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "CL-2",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "CL-3",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-3",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-4",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-5",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-3",
+          "player": "Clev Lubin",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-4",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "DS-5",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-2",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-3",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-4",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-5",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-6",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-7",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-8",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-9",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-10",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-2",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-3",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-4",
+          "player": "Tayon Holloway",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-5",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-6",
+          "player": "Stanquan Clark",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-7",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-8",
+          "player": "Jackson Voth",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-9",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "F-10",
+          "player": "Antonio Watts",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "GD-2",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "GD-3",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-2",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-3",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-4",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-6",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-2",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-3",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-4",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-6",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-3",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-4",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-5",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-3",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-4",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "H-5",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-3",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-4",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-5",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-6",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Isaac Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jaleel Skinner",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-3",
+          "player": "Koen Entringer",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-4",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-5",
+          "player": "Tre Richardson",
+          "team": "Louisville"
+        },
+        {
+          "number": "NH-6",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "S-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "GA-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-TH",
+          "player": "Treyshun Hurry",
+          "team": "Louisville"
+        },
+        {
+          "number": "FS-LM",
+          "player": "Lawayne Mccoy",
+          "team": "Louisville"
+        },
+        {
+          "number": "FS-KB",
+          "player": "Keyjuan Brown",
+          "team": "Louisville"
+        },
+        {
+          "number": "FS-TMJ",
+          "player": "Terrence Mcwilliams Jr.",
+          "team": "Louisville"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1070 @@
+{
+  "id": "2024-onit-athlete-cincinnati-football",
+  "name": "2024 ONIT Athlete Cincinnati Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 89,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Turner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-2",
+          "player": "Aiden Pastoriza",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-3",
+          "player": "Antwan Peek Jr.",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-4",
+          "player": "Ben Blevins",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-5",
+          "player": "Ben Mehan",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-6",
+          "player": "Brady Drogosh",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-7",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-8",
+          "player": "Brady Young",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-9",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-10",
+          "player": "Brian Doneghy Ii",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-11",
+          "player": "Brian Simms Iii",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-12",
+          "player": "Cam Roetherford",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-13",
+          "player": "Chance Williams",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-14",
+          "player": "Cincear Lewis",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-15",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-16",
+          "player": "D.J. Taylor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-17",
+          "player": "Dakarai Anderson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-18",
+          "player": "Daniel James",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-19",
+          "player": "Darian Varner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-20",
+          "player": "Dartanyan Tinsley",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-21",
+          "player": "Deondre Buford",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-22",
+          "player": "Devyn Zahursky",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-23",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-24",
+          "player": "Drew Logan",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-25",
+          "player": "Drew Robinson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-26",
+          "player": "Elijah Jones",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-27",
+          "player": "Eric Phillips",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-28",
+          "player": "Ethan Green",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-29",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-30",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-31",
+          "player": "Evan Tengesdahl",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-32",
+          "player": "Francis Sherman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-33",
+          "player": "Garrison Butler",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-34",
+          "player": "Gavin Gerhardt",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-35",
+          "player": "Gavin Grover",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-36",
+          "player": "George Leibold",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-37",
+          "player": "Grant Edgington",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-38",
+          "player": "Jack Dingle",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-39",
+          "player": "Jacob Hoying",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-40",
+          "player": "Jake Golday",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-41",
+          "player": "Jake Wheelock",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-42",
+          "player": "Jamoi Mayes",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-43",
+          "player": "Jayden Perry",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-44",
+          "player": "Star",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-45",
+          "player": "Joe Royer",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-46",
+          "player": "Joey Beljan",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-47",
+          "player": "John Williams",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-48",
+          "player": "Jonathan Harder",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-49",
+          "player": "Jonathan Thompson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-50",
+          "player": "Jordan Young",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-51",
+          "player": "Josh Minkins",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-52",
+          "player": "Jp Schrieber",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-53",
+          "player": "Judea Milon",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-54",
+          "player": "Kalen Carroll",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-55",
+          "player": "Kamari Burns",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-56",
+          "player": "Keilan Smith",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-57",
+          "player": "Ken Willis",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-58",
+          "player": "Kye Stokes",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-59",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-60",
+          "player": "Lyviel Waters",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-61",
+          "player": "Manny Covey",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-62",
+          "player": "Marquaze Parker",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-63",
+          "player": "Mason Fletcher",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-64",
+          "player": "Max Lemasters",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-65",
+          "player": "Maxwell Cummings",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-66",
+          "player": "Michael Mccalmont",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-67",
+          "player": "Michael Mussari",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-68",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-69",
+          "player": "Montay Weedon",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-70",
+          "player": "Nathan Hawks",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-71",
+          "player": "Nick Herbst",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-72",
+          "player": "Nijal Mooney",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-73",
+          "player": "Ormanie Arnold",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-74",
+          "player": "Quinn Staten",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-75",
+          "player": "Rob Jackson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-76",
+          "player": "Samaj Jones",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-77",
+          "player": "Simeon Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-78",
+          "player": "Stanley Clyne",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-79",
+          "player": "Sterling Berkhalter",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-80",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-81",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-82",
+          "player": "Victor Dawson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-83",
+          "player": "Weston Simmons",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-84",
+          "player": "Will Kocher",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-85",
+          "player": "Zac Clarke",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-86",
+          "player": "Zander Blue",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-87",
+          "player": "Zane Kinsey",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-88",
+          "player": "Zay \"Gravy\" Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "B-89",
+          "player": "Xzavier Henderson",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-2",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-3",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-4",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-5",
+          "player": "Xzavier Henderson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-6",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-7",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-8",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-9",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "P-10",
+          "player": "Gavin Gerhardt",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "IC-2",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "IC-3",
+          "player": "Xzavier Henderson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "IC-4",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "IC-5",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "CC-3",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "CC-4",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "CC-5",
+          "player": "Xzavier Henderson",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "ST-2",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "ST-3",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "ST-4",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "ST-5",
+          "player": "Gavin Gerhardt",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "BL-2",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "BL-3",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "BL-4",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "BL-5",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "CL-2",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-2",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-3",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-4",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-5",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-6",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-7",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-8",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-9",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-10",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-11",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-12",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-13",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-14",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-15",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-16",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-17",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-18",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-19",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "S-20",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-2",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-3",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-4",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-5",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-6",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-7",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-8",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-9",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-10",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-11",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-12",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-13",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-14",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-15",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-16",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-17",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-18",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-19",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-20",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-21",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "O-22",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-2",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-3",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-4",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-5",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-6",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-7",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-8",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-9",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-10",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-11",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-12",
+          "player": "Evan Prater",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-13",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-14",
+          "player": "Evan Pryor",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-15",
+          "player": "Brendan Sorsby",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-16",
+          "player": "Brady Lichtenberg",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-17",
+          "player": "Mikah Coleman",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-18",
+          "player": "Luke Kandra",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-19",
+          "player": "Tony Johnson",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-20",
+          "player": "Tyrin Smith",
+          "team": "Cincinnati"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-21",
+          "player": "Dontay Corleone",
+          "team": "Cincinnati"
+        },
+        {
+          "number": "N-22",
+          "player": "Corey Kiner",
+          "team": "Cincinnati"
+        }
+      ]
+    }
+  ]
+}

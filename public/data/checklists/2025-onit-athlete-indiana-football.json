@@ -1,0 +1,640 @@
+{
+  "id": "2025-onit-athlete-indiana-football",
+  "name": "2025 ONIT Athlete Indiana Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 57,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ace Ciongoli",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-2",
+          "player": "Adedamola Ajani",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-3",
+          "player": "Aiden Fisher",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-4",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-5",
+          "player": "Amare Ferrell",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-6",
+          "player": "Amariyun Knighten",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-7",
+          "player": "Andrew Barker",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-8",
+          "player": "Anthony Chung",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-9",
+          "player": "Baylor Wilkin",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-10",
+          "player": "Brendan Franke",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-11",
+          "player": "Bryce Taylor",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-12",
+          "player": "Bryson Bonds",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-13",
+          "player": "Camden Jordan",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-14",
+          "player": "Clayton Allen",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-15",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-16",
+          "player": "Davion Chandler",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-17",
+          "player": "Dontrae Henderson",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-18",
+          "player": "Drew Evans",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-19",
+          "player": "E.J. Williams Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-20",
+          "player": "Elijah Sarratt",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-21",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-22",
+          "player": "Grant Wilson",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-23",
+          "player": "Heath Kizer",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-24",
+          "player": "Holden Staes",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-25",
+          "player": "Hosea Wheeler",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-26",
+          "player": "Isaiah Jones",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-27",
+          "player": "Jack Greer",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-28",
+          "player": "Jah Jah Boyd",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-29",
+          "player": "Jaylen Bell",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-30",
+          "player": "Jhrevious Hall",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-31",
+          "player": "Jonathan Brady",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-32",
+          "player": "Josh Placzek",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-33",
+          "player": "Kaden Mcconnell",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-34",
+          "player": "Kaelon Black",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-35",
+          "player": "Kahlil Benson",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-36",
+          "player": "Kaiden Turner",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-37",
+          "player": "Keishaun Calhoun",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-38",
+          "player": "Kellan Wyatt",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-39",
+          "player": "Khobie Martin",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-40",
+          "player": "Lebron Bond",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-41",
+          "player": "Lincoln Murff",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-42",
+          "player": "Mario Landino",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-43",
+          "player": "Mark Langston",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-44",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-45",
+          "player": "Mitch Mccarthy",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-46",
+          "player": "Mitch Verstegen",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-47",
+          "player": "Myles Kendrick",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-48",
+          "player": "Omar Cooper Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-49",
+          "player": "PJ Nelson",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-50",
+          "player": "Quentin Clark",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-51",
+          "player": "Quinn Warren",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-52",
+          "player": "Riley Nowakowski",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-53",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-54",
+          "player": "Ryland Gandy",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-55",
+          "player": "Tyrique Tucker",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-56",
+          "player": "William Depaepe",
+          "team": "Indiana"
+        },
+        {
+          "number": "B-57",
+          "player": "Zen Michalski",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "blackout-silver-team-color-75",
+      "name": "Blackout (Silver; Team Color /75)",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "BL-2",
+          "player": "Elijah Sarratt",
+          "team": "Indiana"
+        },
+        {
+          "number": "BL-3",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "BL-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "BL-5",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "BL-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-day-shimmer-nitro-1",
+      "name": "City Limits Day (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-2",
+          "player": "Elijah Sarratt",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-night-shimmer-nitro-1",
+      "name": "City Limits Night (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-5",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-6",
+          "player": "Elijah Sarratt",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-7",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "CL-8",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "base-signature",
+      "name": "Base Signature",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-2",
+          "player": "E.J. Williams Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-7",
+          "player": "Kaelon Black",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-orbs-50",
+      "name": "Team Color Signature Orbs (/50)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-9",
+      "name": "Silver Signature (/9)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-2",
+          "player": "E.J. Williams Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-7",
+          "player": "Kaelon Black",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-2",
+          "player": "E.J. Williams Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "S-7",
+          "player": "Kaelon Black",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "film-signature-15",
+      "name": "Film Signature (/15)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FLS-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-2",
+          "player": "E.J. Williams Jr.",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "FLS-7",
+          "player": "Kaelon Black",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "fusion-signature-25",
+      "name": "Fusion Signature (/25)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-1",
+          "player": "Fernando Mendoza",
+          "team": "Indiana"
+        },
+        {
+          "number": "FS-3",
+          "player": "Roman Hemby",
+          "team": "Indiana"
+        },
+        {
+          "number": "FS-4",
+          "player": "Mikail Kamara",
+          "team": "Indiana"
+        },
+        {
+          "number": "FS-5",
+          "player": "D'Angelo Ponds",
+          "team": "Indiana"
+        },
+        {
+          "number": "FS-6",
+          "player": "Alberto Mendoza",
+          "team": "Indiana"
+        }
+      ]
+    }
+  ]
+}

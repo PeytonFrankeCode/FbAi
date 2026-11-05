@@ -1,0 +1,1157 @@
+{
+  "id": "2024-onit-athlete-penn-state-football",
+  "name": "2024 ONIT Athlete Penn State Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 118,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A.J. Harris",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-2",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-3",
+          "player": "Alex Birchmeier",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-4",
+          "player": "Alonzo Ford Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-5",
+          "player": "Amiel Davis",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-6",
+          "player": "Amin Vanover",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-7",
+          "player": "Andrew Dufault",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-8",
+          "player": "Andrew Rappleyea",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-9",
+          "player": "Anthony Donkoh",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-10",
+          "player": "Anthony Ivey",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-11",
+          "player": "Anthony Speca",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-12",
+          "player": "Antoine Belgrave-Shorter",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-13",
+          "player": "Audavion Collins",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-14",
+          "player": "Beau Pribula",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-15",
+          "player": "Beckham Dee",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-16",
+          "player": "Ben Chizmar",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-17",
+          "player": "Blaise Sokach-Minnick",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-18",
+          "player": "Bobby Mears",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-19",
+          "player": "Caleb Brewer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-20",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-21",
+          "player": "Cam Wallace",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-22",
+          "player": "Chase Meyer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-23",
+          "player": "Chimdy Onoh",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-24",
+          "player": "Cooper Cousins",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-25",
+          "player": "Corey Smith",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-26",
+          "player": "Coziah Izzard",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-27",
+          "player": "Dakaari Nelson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-28",
+          "player": "Dani Dennis-Sutton",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-29",
+          "player": "De Andre Cook",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-30",
+          "player": "Dejuan Lane",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-31",
+          "player": "Dominic Deluca",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-32",
+          "player": "Dominic Rulli",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-33",
+          "player": "Donnie Harbour",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-34",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-35",
+          "player": "Drew Shelton",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-36",
+          "player": "Dvon J-Thomas",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-37",
+          "player": "Eagan Boyer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-38",
+          "player": "Elliot Washington Ii",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-39",
+          "player": "Ethan Black",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-40",
+          "player": "Ethan Grunkemeyer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-41",
+          "player": "Finn Furmanek",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-42",
+          "player": "Gabriel Nwosu",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-43",
+          "player": "Garrett Sexton",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-44",
+          "player": "Harrison Wallace Iii",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-45",
+          "player": "Henry Boehme",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-46",
+          "player": "Ian Harvie",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-47",
+          "player": "J Ven Williams",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-48",
+          "player": "Jack Lambert",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-49",
+          "player": "Jackson Pryts",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-50",
+          "player": "Jake Spencer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-51",
+          "player": "Jalen Kimber",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-52",
+          "player": "Jashaun Green",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-53",
+          "player": "Jason Estrella",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-54",
+          "player": "Jaylen Harvey",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-55",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-56",
+          "player": "Jb Nelson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-57",
+          "player": "Jerry Cross",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-58",
+          "player": "Jim Fitzgerald",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-59",
+          "player": "Jon Mitchell",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-60",
+          "player": "Jordan Mayer",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-61",
+          "player": "Joseph Mupoyi",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-62",
+          "player": "Josiah Brown",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-63",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-64",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-65",
+          "player": "Kaleb Artis",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-66",
+          "player": "Kari Jackson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-67",
+          "player": "Karson Kiesewetter",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-68",
+          "player": "Kaytron Allen",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-69",
+          "player": "Kenny Woseley Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-70",
+          "player": "Keon Wylie",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-71",
+          "player": "Kevin Winston Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-72",
+          "player": "Khalil Dinkins",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-73",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-74",
+          "player": "Kolin Dinkins",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-75",
+          "player": "Lamont Payne Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-76",
+          "player": "Liam Andrews",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-77",
+          "player": "Liam Clifford",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-78",
+          "player": "Liam Horan",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-79",
+          "player": "Logan Cunningham",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-80",
+          "player": "Luke Reynolds",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-81",
+          "player": "Mason Robinson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-82",
+          "player": "Matt Detisch",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-83",
+          "player": "Mehki Flowers",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-84",
+          "player": "Mitchell Groh",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-85",
+          "player": "Mylachi Williams",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-86",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-87",
+          "player": "Nick Dawkins",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-88",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-89",
+          "player": "Olaivavega Ioane",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-90",
+          "player": "Omari Evans",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-91",
+          "player": "Patrick Williams",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-92",
+          "player": "Peter Gonzalez",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-93",
+          "player": "Quinton Martin Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-94",
+          "player": "Riley Thompson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-95",
+          "player": "Ryan Barker",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-96",
+          "player": "Sal Wormley",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-97",
+          "player": "Sam Siafa",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-98",
+          "player": "Sander Sahaydak",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-99",
+          "player": "Smith Vilbert",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-100",
+          "player": "T.A. Cunningham",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-101",
+          "player": "Ta Mere Robinson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-102",
+          "player": "Tony Rojas",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-103",
+          "player": "Ty Blanding",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-104",
+          "player": "Tyler Duzansky",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-105",
+          "player": "Tyler Elsdon",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-106",
+          "player": "Tyler Holzworth",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-107",
+          "player": "Tyler Johnson",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-108",
+          "player": "Tyler Warren",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-109",
+          "player": "Tyrece Mills",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-110",
+          "player": "Tyseer Denmark",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-111",
+          "player": "Vaboue Toure",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-112",
+          "player": "Will Patton",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-113",
+          "player": "Winston Yates",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-114",
+          "player": "Xavier Gilliam",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-115",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-116",
+          "player": "Zane Durant",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-117",
+          "player": "Zion Tracy",
+          "team": "Penn State"
+        },
+        {
+          "number": "B-118",
+          "player": "Zuriah Fisher",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-3",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-4",
+          "player": "Kevin Winston Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-5",
+          "player": "Dani Dennis-Sutton",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-6",
+          "player": "Tyler Warren",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-7",
+          "player": "Kaytron Allen",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-8",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-9",
+          "player": "Dvon J-Thomas",
+          "team": "Penn State"
+        },
+        {
+          "number": "P-10",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "IC-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "IC-3",
+          "player": "Dani Dennis-Sutton",
+          "team": "Penn State"
+        },
+        {
+          "number": "IC-4",
+          "player": "Tyler Warren",
+          "team": "Penn State"
+        },
+        {
+          "number": "IC-5",
+          "player": "Dvon J-Thomas",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Kevin Winston Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Dani Dennis-Sutton",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "ST-2",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "ST-3",
+          "player": "Dani Dennis-Sutton",
+          "team": "Penn State"
+        },
+        {
+          "number": "ST-4",
+          "player": "Kaytron Allen",
+          "team": "Penn State"
+        },
+        {
+          "number": "ST-5",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "white-out",
+      "name": "White Out",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "WH-1",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "WH-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "WH-3",
+          "player": "Kevin Winston Jr.",
+          "team": "Penn State"
+        },
+        {
+          "number": "WH-4",
+          "player": "Kaytron Allen",
+          "team": "Penn State"
+        },
+        {
+          "number": "WH-5",
+          "player": "Kobe King",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Kaytron Allen",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-3",
+          "player": "Dominic Deluca",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-4",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-7",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-8",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-9",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-11",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-13",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-15",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-16",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-17",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-19",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-22",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-23",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-24",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-25",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-26",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-28",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "S-30",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-2",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-3",
+          "player": "Dominic Deluca",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-4",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-7",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-8",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-9",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-10",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-11",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-13",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-15",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-16",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-17",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-18",
+          "player": "Dominic Deluca",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-19",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-22",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-23",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-24",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-25",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-26",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-28",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-30",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-31",
+          "player": "Drew Allar",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-32",
+          "player": "Nicholas Singleton",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-33",
+          "player": "Dominic Deluca",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-34",
+          "player": "Abdul Carter",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-37",
+          "player": "Julian Fleming",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-38",
+          "player": "Kaden Saunders",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-39",
+          "player": "Kobe King",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-40",
+          "player": "Jaylen Reed",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-41",
+          "player": "Zakee Wheatley",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-43",
+          "player": "Nolan Rucci",
+          "team": "Penn State"
+        },
+        {
+          "number": "O-45",
+          "player": "Cam Miller",
+          "team": "Penn State"
+        }
+      ]
+    },
+    {
+      "id": "timeless-series-insert",
+      "name": "TimeLess Series Insert",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TL-1",
+          "player": "2024 Penn State Football Season",
+          "team": "Penn State"
+        },
+        {
+          "number": "TL-2",
+          "player": "2024 Penn State Football Season",
+          "team": "Penn State"
+        }
+      ]
+    }
+  ]
+}
