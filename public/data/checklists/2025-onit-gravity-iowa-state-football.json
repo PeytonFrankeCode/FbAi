@@ -1,0 +1,760 @@
+{
+  "id": "2025-onit-gravity-iowa-state-football",
+  "name": "2025 ONIT Gravity Iowa State Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-2",
+          "player": "Aiden Flora",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-3",
+          "player": "Alec Cook",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-4",
+          "player": "Alex Manske",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-5",
+          "player": "Angelo Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-6",
+          "player": "Beau Goodwin",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-7",
+          "player": "Beni Ngoyi",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-8",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-9",
+          "player": "Brett Eskildsen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-10",
+          "player": "Caden Kock",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-11",
+          "player": "Caden Matson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-12",
+          "player": "Cael Brezina",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-13",
+          "player": "Caleb Bacon",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-14",
+          "player": "Cam Smith",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-15",
+          "player": "Carson Brown",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-17",
+          "player": "Carson Robbins",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-18",
+          "player": "Carson Van Dinter",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-19",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-20",
+          "player": "Charlie Whelpley",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-22",
+          "player": "CJ Hayden",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-23",
+          "player": "Connor Moberly",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-24",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-25",
+          "player": "Danny Inglis",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-26",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-27",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-28",
+          "player": "Dylan Lee",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-29",
+          "player": "Easton Miller",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-30",
+          "player": "Eddie Lemos",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-31",
+          "player": "Eli Green",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-32",
+          "player": "Gabe Burkle",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-33",
+          "player": "Pk/p",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-34",
+          "player": "Jack Bjorn",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-35",
+          "player": "James Neal",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-36",
+          "player": "Jamison Patton",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-37",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-38",
+          "player": "John Klosterman",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-39",
+          "player": "Jonathan Vande Walle",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-41",
+          "player": "Joshua Patterson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-42",
+          "player": "Kai Black",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-43",
+          "player": "Khijohnn Cummings-Coleman",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-44",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-45",
+          "player": "Major Cantrell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-46",
+          "player": "Marcus Neal",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-47",
+          "player": "Michael Parkes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-48",
+          "player": "Myles Mendeszoon",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-49",
+          "player": "Quentin Taylor Jr.",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-50",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-51",
+          "player": "Rylan Barnes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-52",
+          "player": "Ryver Peppers",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-53",
+          "player": "Ta'Shawn James",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-54",
+          "player": "Tre Bell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-55",
+          "player": "Tyler Claiborne",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-56",
+          "player": "Vince Benetti",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-57",
+          "player": "Vontroy Malone",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-58",
+          "player": "Will Mclaughlin",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-59",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-60",
+          "player": "Zachary Lovett",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-8",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-15",
+          "player": "Carson Brown",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-24",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-29",
+          "player": "Easton Miller",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-37",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-44",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-50",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-59",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "color-parallel-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Color Parallel (Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-8",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-15",
+          "player": "Carson Brown",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-24",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-29",
+          "player": "Easton Miller",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-37",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-44",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-50",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-59",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-2",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-3",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-4",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-5",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-6",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-7",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-8",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-9",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "HD-10",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-2",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-3",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-4",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-5",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-6",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-7",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "SD-8",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-1",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-2",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-3",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-4",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-5",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-6",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "W-7",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-base-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Galaxy (Base; Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "base",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "G-1",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-2",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-3",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-4",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-5",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-6",
+          "player": "Xavier Townsend",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-7",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-8",
+          "player": "Chase Sowell",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-9",
+          "player": "Benjamin Brahmer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "G-10",
+          "player": "Carson Hansen",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-base-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Gravity Signature (Base; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-2",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-3",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-4",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-5",
+          "player": "Kooper Ebel",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-6",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-7",
+          "player": "Gabe Burkle",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Rocco Becht",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GS-2",
+          "player": "Abu Sama III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GS-3",
+          "player": "Jeremiah Cooper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GS-4",
+          "player": "Jontez Williams",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GS-5",
+          "player": "Daniel Jackson",
+          "team": "Iowa State"
+        }
+      ]
+    }
+  ]
+}

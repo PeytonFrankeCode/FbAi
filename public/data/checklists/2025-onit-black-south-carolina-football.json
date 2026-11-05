@@ -1,0 +1,1080 @@
+{
+  "id": "2025-onit-black-south-carolina-football",
+  "name": "2025 ONIT Black South Carolina Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A.J. Holloway",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-2",
+          "player": "Air Noland",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-3",
+          "player": "Andrew Colasurdo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-4",
+          "player": "Bradley Dunn",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-5",
+          "player": "Brady Hunt",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-6",
+          "player": "Brandon Cisse",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-7",
+          "player": "Brian Rowe Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-8",
+          "player": "Bryan Thomas Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-9",
+          "player": "Buddy Mack III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-10",
+          "player": "Chase McCracken",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-11",
+          "player": "Colin Bryant",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-12",
+          "player": "David Bucey",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-13",
+          "player": "Davonte Miles",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-14",
+          "player": "Desmond Umeozulu",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-15",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-16",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-17",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-18",
+          "player": "Emazon Littlejohn",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-19",
+          "player": "Eriq Rice",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-20",
+          "player": "Fred \"Jayr\" Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-21",
+          "player": "Gabriel Brownlow-Dindy",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-22",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-23",
+          "player": "Isaiah McClary",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-24",
+          "player": "Jackson Burger",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-25",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-26",
+          "player": "Jamian Risher Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-27",
+          "player": "Jared Brown",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-28",
+          "player": "Jaron Willis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-29",
+          "player": "Jatius Geer",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-30",
+          "player": "Jawarn Howell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-31",
+          "player": "Jimmy Francis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-32",
+          "player": "Jordan Dingle",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-33",
+          "player": "Jordon Gidron",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-34",
+          "player": "Josiah Thompson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-35",
+          "player": "Judge Collier",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-36",
+          "player": "Justin Okoronkwo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-37",
+          "player": "Kelvin Hunter",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-38",
+          "player": "Landon Kurtz",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-39",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-40",
+          "player": "Larry Scott",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-41",
+          "player": "Lukas Vozeh",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-42",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-43",
+          "player": "Malik Clark",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-44",
+          "player": "Matthew Fuller",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-45",
+          "player": "Maurice Brown II",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-46",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-47",
+          "player": "Monkell Goodwine",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-48",
+          "player": "Myles Norwood",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-49",
+          "player": "Nathan Harris-Waynick",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-50",
+          "player": "Neil Salvage III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-51",
+          "player": "Nick Barrett",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-52",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-53",
+          "player": "Oscar Adaway III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-54",
+          "player": "Peyton Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-55",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-56",
+          "player": "Shawn Murphy",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-57",
+          "player": "Tree Babalade",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-58",
+          "player": "Trovon Baugh",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-59",
+          "player": "Vicari Swain",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-60",
+          "player": "Zahbari Sandy",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 12,
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": null
+        },
+        {
+          "name": "Pink",
+          "printRun": 150
+        },
+        {
+          "name": "Purple",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Silver",
+          "printRun": 20
+        },
+        {
+          "name": "Red",
+          "printRun": 9
+        },
+        {
+          "name": "Green",
+          "printRun": 5
+        },
+        {
+          "name": "Black",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-2",
+          "player": "Air Noland",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-15",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-16",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-17",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-20",
+          "player": "Fred \"Jayr\" Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-25",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-36",
+          "player": "Justin Okoronkwo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-39",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-46",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-52",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-53",
+          "player": "Oscar Adaway III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-55",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "blackout-gold-purple-ice-120-blue-25-red-ice-9-green-ice-5-black-ice-1",
+      "name": "Blackout (Gold; Purple Ice /120; Blue /25; Red Ice /9; Green Ice /5; Black Ice /1)",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-2",
+          "player": "Air Noland",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-4",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-5",
+          "player": "Justin Okoronkwo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-6",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-7",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-8",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-9",
+          "player": "FRED \"JayR\" JOHNSON",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-10",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-11",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-12",
+          "player": "Oscar Adaway III",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "name": "Access",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "A-1",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-2",
+          "player": "Justin Okoronkwo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-4",
+          "player": "Fred \"Jayr\" Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-5",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-6",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-7",
+          "player": "Oscar Adaway III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-8",
+          "player": "Jordan Dingle",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-9",
+          "player": "Brian Rowe Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-10",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "access-ultimate-edition-1",
+      "name": "Access Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "A-1",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-2",
+          "player": "Justin Okoronkwo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-4",
+          "player": "Fred \"Jayr\" Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-5",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-6",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-7",
+          "player": "Oscar Adaway III",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-8",
+          "player": "Jordan Dingle",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-9",
+          "player": "Brian Rowe Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "A-10",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "ascend",
+      "name": "Ascend",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AD-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-4",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-5",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "ascend-ultimate-edition-1",
+      "name": "Ascend Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AD-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-4",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "AD-5",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "solaris",
+      "name": "Solaris",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SP-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "SP-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "SP-3",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "polaris",
+      "name": "Polaris",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SP-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "SP-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "SP-3",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "roar-of-the-crowd",
+      "name": "Roar of the Crowd",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "RC-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "RC-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "RC-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "roar-of-the-crowd-ultimate-edition-1",
+      "name": "Roar of the Crowd Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "RC-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "RC-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "RC-3",
+          "player": "Rahsul Faison",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "base-signatures",
+      "name": "Base Signatures",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Qb",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-2",
+          "player": "Te",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-3",
+          "player": "Ol",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-4",
+          "player": "Db",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-5",
+          "player": "Wr",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-6",
+          "player": "Edge",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-7",
+          "player": "Db",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-8",
+          "player": "Wr",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-9",
+          "player": "Db",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature",
+      "name": "Team Color Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Qb",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-2",
+          "player": "Te",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-3",
+          "player": "Ol",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-4",
+          "player": "Db",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-5",
+          "player": "Wr",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-6",
+          "player": "Edge",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-7",
+          "player": "Db",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-8",
+          "player": "Wr",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-9",
+          "player": "Db",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-15",
+      "name": "Silver Signature (/15)",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-2",
+          "player": "Brady Hunt",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-3",
+          "player": "Tree Babalade",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-4",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-5",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-6",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-7",
+          "player": "Brandon Cisse",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-8",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-9",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-2",
+          "player": "Brady Hunt",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-3",
+          "player": "Tree Babalade",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-4",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-5",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-6",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-7",
+          "player": "Brandon Cisse",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-8",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-9",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "dual-signature-black-9",
+      "name": "Dual Signature Black (/9)",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Edge /",
+          "team": "South Carolina"
+        },
+        {
+          "number": "DS-2",
+          "player": "Db /",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "dual-signature-gold-1",
+      "name": "Dual Signature Gold (/1)",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Edge /",
+          "team": "South Carolina"
+        },
+        {
+          "number": "DS-2",
+          "player": "Db /",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "circuit-signature-25",
+      "name": "Circuit Signature (/25)",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CS-1",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-2",
+          "player": "Brady Hunt",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-3",
+          "player": "Tree Babalade",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-4",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-5",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-6",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-7",
+          "player": "Brandon Cisse",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-8",
+          "player": "Donovan Murph",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CS-9",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1090 @@
+{
+  "id": "2024-onit-athlete-tcu-football",
+  "name": "2024 ONIT Athlete TCU Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 99,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "B-2",
+          "player": "Austin Scheets",
+          "team": "TCU"
+        },
+        {
+          "number": "B-3",
+          "player": "Avery Helm",
+          "team": "TCU"
+        },
+        {
+          "number": "B-4",
+          "player": "Bless Harris",
+          "team": "TCU"
+        },
+        {
+          "number": "B-5",
+          "player": "Braylon James",
+          "team": "TCU"
+        },
+        {
+          "number": "B-6",
+          "player": "Brent Matiscik",
+          "team": "TCU"
+        },
+        {
+          "number": "B-7",
+          "player": "Bud Clark",
+          "team": "TCU"
+        },
+        {
+          "number": "B-8",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "B-9",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "B-10",
+          "player": "Carson Bruno",
+          "team": "TCU"
+        },
+        {
+          "number": "B-11",
+          "player": "Channing Canada",
+          "team": "TCU"
+        },
+        {
+          "number": "B-12",
+          "player": "Chase Curtis",
+          "team": "TCU"
+        },
+        {
+          "number": "B-13",
+          "player": "Cooper Mcdonald",
+          "team": "TCU"
+        },
+        {
+          "number": "B-14",
+          "player": "Devean Deal",
+          "team": "TCU"
+        },
+        {
+          "number": "B-15",
+          "player": "Dj Rogers",
+          "team": "TCU"
+        },
+        {
+          "number": "B-16",
+          "player": "Easton Black",
+          "team": "TCU"
+        },
+        {
+          "number": "B-17",
+          "player": "Franklin Estrada Ii",
+          "team": "TCU"
+        },
+        {
+          "number": "B-18",
+          "player": "Jack Bech",
+          "team": "TCU"
+        },
+        {
+          "number": "B-19",
+          "player": "Jamel Johnson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-20",
+          "player": "James Brockermeyer",
+          "team": "TCU"
+        },
+        {
+          "number": "B-21",
+          "player": "Jatravis Broughton",
+          "team": "TCU"
+        },
+        {
+          "number": "B-22",
+          "player": "Jevon Mciver Jr.",
+          "team": "TCU"
+        },
+        {
+          "number": "B-23",
+          "player": "Joe Laterza",
+          "team": "TCU"
+        },
+        {
+          "number": "B-24",
+          "player": "Johnny Hodges",
+          "team": "TCU"
+        },
+        {
+          "number": "B-25",
+          "player": "Jojo Earle",
+          "team": "TCU"
+        },
+        {
+          "number": "B-26",
+          "player": "Jordan Lester",
+          "team": "TCU"
+        },
+        {
+          "number": "B-27",
+          "player": "Jordyn Bailey",
+          "team": "TCU"
+        },
+        {
+          "number": "B-28",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "B-29",
+          "player": "Jp Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-30",
+          "player": "Kaleb Elarms-Orr",
+          "team": "TCU"
+        },
+        {
+          "number": "B-31",
+          "player": "Kyle Lemmermann",
+          "team": "TCU"
+        },
+        {
+          "number": "B-32",
+          "player": "Lafayette Kaiuway",
+          "team": "TCU"
+        },
+        {
+          "number": "B-33",
+          "player": "Lamareon \"Scud\" James",
+          "team": "TCU"
+        },
+        {
+          "number": "B-34",
+          "player": "Luke Lingard",
+          "team": "TCU"
+        },
+        {
+          "number": "B-35",
+          "player": "Major Everhart",
+          "team": "TCU"
+        },
+        {
+          "number": "B-36",
+          "player": "Micheal Ibukun-Okeyode",
+          "team": "TCU"
+        },
+        {
+          "number": "B-37",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "B-38",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "B-39",
+          "player": "Nate Mccashland",
+          "team": "TCU"
+        },
+        {
+          "number": "B-40",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "B-41",
+          "player": "Savion Williams",
+          "team": "TCU"
+        },
+        {
+          "number": "B-42",
+          "player": "Shad Banks Jr.",
+          "team": "TCU"
+        },
+        {
+          "number": "B-43",
+          "player": "Trent Battle",
+          "team": "TCU"
+        },
+        {
+          "number": "B-44",
+          "player": "Vernon Glover",
+          "team": "TCU"
+        },
+        {
+          "number": "B-45",
+          "player": "Zachary Chapman",
+          "team": "TCU"
+        },
+        {
+          "number": "B-46",
+          "player": "Cam Smith",
+          "team": "TCU"
+        },
+        {
+          "number": "B-47",
+          "player": "Devyn Hidrogo",
+          "team": "TCU"
+        },
+        {
+          "number": "B-48",
+          "player": "Ethan Craw",
+          "team": "TCU"
+        },
+        {
+          "number": "B-49",
+          "player": "Hayden Parga",
+          "team": "TCU"
+        },
+        {
+          "number": "B-50",
+          "player": "Hudson Hooper",
+          "team": "TCU"
+        },
+        {
+          "number": "B-51",
+          "player": "Hunter Krepp",
+          "team": "TCU"
+        },
+        {
+          "number": "B-52",
+          "player": "Jacob Porter",
+          "team": "TCU"
+        },
+        {
+          "number": "B-53",
+          "player": "Jaise Oliver",
+          "team": "TCU"
+        },
+        {
+          "number": "B-54",
+          "player": "Jake Milliman",
+          "team": "TCU"
+        },
+        {
+          "number": "B-55",
+          "player": "Jax Porter",
+          "team": "TCU"
+        },
+        {
+          "number": "B-56",
+          "player": "Jeremy Payne",
+          "team": "TCU"
+        },
+        {
+          "number": "B-57",
+          "player": "Jonathan Bax",
+          "team": "TCU"
+        },
+        {
+          "number": "B-58",
+          "player": "Judson Crockett",
+          "team": "TCU"
+        },
+        {
+          "number": "B-59",
+          "player": "Kaden Mcfadden",
+          "team": "TCU"
+        },
+        {
+          "number": "B-60",
+          "player": "Ken Seals",
+          "team": "TCU"
+        },
+        {
+          "number": "B-61",
+          "player": "Keviyan Huddleston",
+          "team": "TCU"
+        },
+        {
+          "number": "B-62",
+          "player": "Kylan Salter",
+          "team": "TCU"
+        },
+        {
+          "number": "B-63",
+          "player": "Nana Osafo-Mensah",
+          "team": "TCU"
+        },
+        {
+          "number": "B-64",
+          "player": "Quinton Harris",
+          "team": "TCU"
+        },
+        {
+          "number": "B-65",
+          "player": "Remington Strickland",
+          "team": "TCU"
+        },
+        {
+          "number": "B-66",
+          "player": "Rhett Steppe",
+          "team": "TCU"
+        },
+        {
+          "number": "B-67",
+          "player": "Richard Toney Jr.",
+          "team": "TCU"
+        },
+        {
+          "number": "B-68",
+          "player": "Ryan Hughes",
+          "team": "TCU"
+        },
+        {
+          "number": "B-69",
+          "player": "Sebastian Peterson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-70",
+          "player": "Steel Tobin",
+          "team": "TCU"
+        },
+        {
+          "number": "B-71",
+          "player": "Sterlin Brooks",
+          "team": "TCU"
+        },
+        {
+          "number": "B-72",
+          "player": "Terrence Cooks Jr.",
+          "team": "TCU"
+        },
+        {
+          "number": "B-73",
+          "player": "Tj Willson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-74",
+          "player": "Tristan Johnson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-75",
+          "player": "Ty Witte",
+          "team": "TCU"
+        },
+        {
+          "number": "B-76",
+          "player": "Avion Carter",
+          "team": "TCU"
+        },
+        {
+          "number": "B-77",
+          "player": "Blake Jones",
+          "team": "TCU"
+        },
+        {
+          "number": "B-78",
+          "player": "Brant Ahlfinger",
+          "team": "TCU"
+        },
+        {
+          "number": "B-79",
+          "player": "Cade Bennett",
+          "team": "TCU"
+        },
+        {
+          "number": "B-80",
+          "player": "Caleb Sempebwa",
+          "team": "TCU"
+        },
+        {
+          "number": "B-81",
+          "player": "Colton Dobson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-82",
+          "player": "Cooper Powers",
+          "team": "TCU"
+        },
+        {
+          "number": "B-83",
+          "player": "Dozie Ezukanma",
+          "team": "TCU"
+        },
+        {
+          "number": "B-84",
+          "player": "Gannon Gaubert",
+          "team": "TCU"
+        },
+        {
+          "number": "B-85",
+          "player": "Hudson White",
+          "team": "TCU"
+        },
+        {
+          "number": "B-86",
+          "player": "Jackson Mcneff",
+          "team": "TCU"
+        },
+        {
+          "number": "B-87",
+          "player": "Jake Boozer",
+          "team": "TCU"
+        },
+        {
+          "number": "B-88",
+          "player": "Jax Thompson",
+          "team": "TCU"
+        },
+        {
+          "number": "B-89",
+          "player": "Keagan Cunningham",
+          "team": "TCU"
+        },
+        {
+          "number": "B-90",
+          "player": "Lucas Vargas-Diaz",
+          "team": "TCU"
+        },
+        {
+          "number": "B-91",
+          "player": "Luke Dodds",
+          "team": "TCU"
+        },
+        {
+          "number": "B-92",
+          "player": "Mike Stoker",
+          "team": "TCU"
+        },
+        {
+          "number": "B-93",
+          "player": "Mitch Hodnett",
+          "team": "TCU"
+        },
+        {
+          "number": "B-94",
+          "player": "Parker Clark",
+          "team": "TCU"
+        },
+        {
+          "number": "B-95",
+          "player": "Riley Self",
+          "team": "TCU"
+        },
+        {
+          "number": "B-96",
+          "player": "Samir Camacho",
+          "team": "TCU"
+        },
+        {
+          "number": "B-97",
+          "player": "Tobias Steppes",
+          "team": "TCU"
+        },
+        {
+          "number": "B-98",
+          "player": "Wesley Harvey",
+          "team": "TCU"
+        },
+        {
+          "number": "B-99",
+          "player": "Will Frost",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "P-2",
+          "player": "Savion Williams",
+          "team": "TCU"
+        },
+        {
+          "number": "P-3",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "P-4",
+          "player": "Bud Clark",
+          "team": "TCU"
+        },
+        {
+          "number": "P-5",
+          "player": "Jp Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "P-6",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "P-7",
+          "player": "Devean Deal",
+          "team": "TCU"
+        },
+        {
+          "number": "P-8",
+          "player": "Shad Banks Jr.",
+          "team": "TCU"
+        },
+        {
+          "number": "P-9",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "P-10",
+          "player": "Kaleb Elarms-Orr",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "IC-2",
+          "player": "Savion Williams",
+          "team": "TCU"
+        },
+        {
+          "number": "IC-3",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "IC-4",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "IC-5",
+          "player": "Cam Cook",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "CC-2",
+          "player": "Savion Williams",
+          "team": "TCU"
+        },
+        {
+          "number": "CC-3",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "CC-4",
+          "player": "Bud Clark",
+          "team": "TCU"
+        },
+        {
+          "number": "CC-5",
+          "player": "JP Richardson",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "ST-2",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "ST-3",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "ST-4",
+          "player": "Devean Deal",
+          "team": "TCU"
+        },
+        {
+          "number": "ST-5",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Savion Williams",
+          "team": "TCU"
+        },
+        {
+          "number": "BL-2",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "BL-3",
+          "player": "Bud Clark",
+          "team": "TCU"
+        },
+        {
+          "number": "BL-4",
+          "player": "Trey Sanders",
+          "team": "TCU"
+        },
+        {
+          "number": "BL-5",
+          "player": "Shad Banks Jr.",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "CL-2",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "S-2",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "S-3",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "S-4",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "S-5",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "S-6",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "S-7",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "S-8",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "S-9",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-10",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "S-11",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "S-12",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "S-13",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "S-14",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "S-15",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "S-16",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "S-17",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "S-18",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "O-2",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "O-3",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "O-4",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "O-5",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "O-6",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "O-7",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "O-8",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "O-9",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-10",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "O-11",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "O-12",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "O-13",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "O-14",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "O-15",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "O-16",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "O-17",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "O-18",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-19",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "O-20",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "N-2",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "N-3",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "N-4",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "N-5",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "N-6",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "N-7",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "N-8",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "N-9",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-10",
+          "player": "Abe Camara",
+          "team": "TCU"
+        },
+        {
+          "number": "N-11",
+          "player": "Caleb Fox",
+          "team": "TCU"
+        },
+        {
+          "number": "N-12",
+          "player": "Cam Cook",
+          "team": "TCU"
+        },
+        {
+          "number": "N-13",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "N-14",
+          "player": "JP Richardson",
+          "team": "TCU"
+        },
+        {
+          "number": "N-15",
+          "player": "Mike Nichols",
+          "team": "TCU"
+        },
+        {
+          "number": "N-16",
+          "player": "Namdi Obiazor",
+          "team": "TCU"
+        },
+        {
+          "number": "N-17",
+          "player": "Paul Oyewale",
+          "team": "TCU"
+        },
+        {
+          "number": "N-18",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-19",
+          "player": "Josh Hoover",
+          "team": "TCU"
+        },
+        {
+          "number": "N-20",
+          "player": "Savion Williams",
+          "team": "TCU"
+        }
+      ]
+    }
+  ]
+}

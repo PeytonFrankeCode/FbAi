@@ -1,0 +1,477 @@
+{
+  "id": "2025-onit-timeless-kansas-football",
+  "name": "2025 ONIT Timeless Kansas Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 76,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adrian Holley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-2",
+          "player": "Amir Herring",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-3",
+          "player": "Austin Alexander",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-4",
+          "player": "Blake Herold",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-5",
+          "player": "Bryce Cohoon",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-6",
+          "player": "Bryce Foster",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-7",
+          "player": "Bryson Hayes",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-8",
+          "player": "Caleb Redd",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-9",
+          "player": "Calvin Clements",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-10",
+          "player": "Cam Pickett",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-11",
+          "player": "Carson Bruhn",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-12",
+          "player": "Cole Ballard",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-13",
+          "player": "Cole Mondi",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-14",
+          "player": "Cole Petrus",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-15",
+          "player": "Colter Mcdaniel",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-16",
+          "player": "D.J. Withers",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-17",
+          "player": "Daniel Hishaw Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-18",
+          "player": "David Abajian",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-19",
+          "player": "David Mccomb",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-20",
+          "player": "Dean Miller",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-21",
+          "player": "Deshawn Hanika",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-22",
+          "player": "Devin Dye",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-23",
+          "player": "Dj Graham Ii",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-24",
+          "player": "Donald Collier",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-25",
+          "player": "Doug Emilien",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-26",
+          "player": "Dylan Brooks",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-27",
+          "player": "Eli Richmond",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-28",
+          "player": "Emmanuel Henderson Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-29",
+          "player": "Emory Duggar",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-30",
+          "player": "Ezra Vedral",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-31",
+          "player": "Gage Keys",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-32",
+          "player": "Grady Seyfert",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-33",
+          "player": "Grayden Addison",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-34",
+          "player": "Greydon Grimes",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-35",
+          "player": "Hank Kelly",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-36",
+          "player": "Harry Stewart Iii",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-37",
+          "player": "Isaiah Marshall",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-38",
+          "player": "Jack Schneider",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-39",
+          "player": "Jacoby Davis",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-40",
+          "player": "Jacorey Stewart",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-41",
+          "player": "Jaden Hamm",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-42",
+          "player": "Jahlil Hurley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-43",
+          "player": "Jalen Dye",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-44",
+          "player": "Jalen Todd",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-45",
+          "player": "Jalon Daniels",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-46",
+          "player": "James Livingston",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-47",
+          "player": "Jason Strickland",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-48",
+          "player": "Jayson Gilliom",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-49",
+          "player": "Johnny Thompson Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-50",
+          "player": "Joseph Sipp Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-51",
+          "player": "Justice Finkley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-52",
+          "player": "Kael Farkes",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-53",
+          "player": "Keaton Kubecka",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-54",
+          "player": "Kene Anene",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-55",
+          "player": "Kenean Caldwell",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-56",
+          "player": "Kobe Baynes",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-57",
+          "player": "Laith Marjan",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-58",
+          "player": "Landon Nelson",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-59",
+          "player": "Laquan Robinson",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-60",
+          "player": "Leshon Williams",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-61",
+          "player": "Levi Wentz",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-62",
+          "player": "Leyton Cure",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-63",
+          "player": "Logan Brantley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-64",
+          "player": "Lyrik Rawls",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-65",
+          "player": "Mack Moeller",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-66",
+          "player": "Malachi Curvey",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-67",
+          "player": "Marcus Calvin",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-68",
+          "player": "Mason Ellis",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-69",
+          "player": "Micah Johnson",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-70",
+          "player": "Mikey Pauley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-71",
+          "player": "Myles Ewell",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-72",
+          "player": "Nolan Gorczyca",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-73",
+          "player": "Quinton Conley",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-74",
+          "player": "Taylor Davis",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-75",
+          "player": "Tommy Dunn Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "B-76",
+          "player": "Trey Lathan",
+          "team": "Kansas"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Bryce Foster",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-2",
+          "player": "Dean Miller",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-3",
+          "player": "Emmanuel Henderson Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-4",
+          "player": "Jalon Daniels",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-5",
+          "player": "Levi Wentz",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-6",
+          "player": "Taylor Davis",
+          "team": "Kansas"
+        },
+        {
+          "number": "C-7",
+          "player": "Tommy Dunn Jr.",
+          "team": "Kansas"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "D.J. Withers",
+          "team": "Kansas"
+        },
+        {
+          "number": "SG-2",
+          "player": "Daniel Hishaw Jr.",
+          "team": "Kansas"
+        },
+        {
+          "number": "SG-3",
+          "player": "Jalon Daniels",
+          "team": "Kansas"
+        },
+        {
+          "number": "SG-4",
+          "player": "Justice Finkley",
+          "team": "Kansas"
+        },
+        {
+          "number": "SG-5",
+          "player": "Leshon Williams",
+          "team": "Kansas"
+        }
+      ]
+    }
+  ]
+}

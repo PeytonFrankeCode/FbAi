@@ -1,0 +1,1641 @@
+{
+  "id": "2026-onit-athlete-texas-football",
+  "name": "2026 ONIT Athlete Texas Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 67,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-2",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-3",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-4",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "B-5",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "B-6",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-7",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-10",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "B-11",
+          "player": "Nick Townsend",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "B-14",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        },
+        {
+          "number": "B-15",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "B-16",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        },
+        {
+          "number": "B-17",
+          "player": "Alex January",
+          "team": "Texas"
+        },
+        {
+          "number": "B-18",
+          "player": "Andre Cojoe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-19",
+          "player": "Edge/lb",
+          "team": "Texas"
+        },
+        {
+          "number": "B-20",
+          "player": "Brady Sarkisian",
+          "team": "Texas"
+        },
+        {
+          "number": "B-21",
+          "player": "Brooks Kieschnick Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-22",
+          "player": "Bryce Chambers",
+          "team": "Texas"
+        },
+        {
+          "number": "B-23",
+          "player": "Carson Berger",
+          "team": "Texas"
+        },
+        {
+          "number": "B-24",
+          "player": "Charlie Jilek",
+          "team": "Texas"
+        },
+        {
+          "number": "B-25",
+          "player": "Chris Stewart",
+          "team": "Texas"
+        },
+        {
+          "number": "B-26",
+          "player": "Colton Vasek",
+          "team": "Texas"
+        },
+        {
+          "number": "B-27",
+          "player": "Connor Robertson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-28",
+          "player": "Derek Williams Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-29",
+          "player": "Dylan Sikorski",
+          "team": "Texas"
+        },
+        {
+          "number": "B-30",
+          "player": "Emaree Winston",
+          "team": "Texas"
+        },
+        {
+          "number": "B-31",
+          "player": "Eric Garza",
+          "team": "Texas"
+        },
+        {
+          "number": "B-32",
+          "player": "Graceson Littleton",
+          "team": "Texas"
+        },
+        {
+          "number": "B-33",
+          "player": "Ian Geffrard",
+          "team": "Texas"
+        },
+        {
+          "number": "B-34",
+          "player": "Jackson Christian",
+          "team": "Texas"
+        },
+        {
+          "number": "B-35",
+          "player": "Jackson Duffey",
+          "team": "Texas"
+        },
+        {
+          "number": "B-36",
+          "player": "Jamarion Carlton",
+          "team": "Texas"
+        },
+        {
+          "number": "B-37",
+          "player": "Jaydon Chatman",
+          "team": "Texas"
+        },
+        {
+          "number": "B-38",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "B-39",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "B-40",
+          "player": "Jonte Newman",
+          "team": "Texas"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordon Johnson-Rubell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-42",
+          "player": "Kade Phillips",
+          "team": "Texas"
+        },
+        {
+          "number": "B-43",
+          "player": "Luke Dunham",
+          "team": "Texas"
+        },
+        {
+          "number": "B-44",
+          "player": "Mac Chiumento",
+          "team": "Texas"
+        },
+        {
+          "number": "B-45",
+          "player": "Maraad Watson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-46",
+          "player": "Markus Boswell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-47",
+          "player": "Michael Masunas",
+          "team": "Texas"
+        },
+        {
+          "number": "B-48",
+          "player": "MJ Morris",
+          "team": "Texas"
+        },
+        {
+          "number": "B-49",
+          "player": "Rett Andersen",
+          "team": "Texas"
+        },
+        {
+          "number": "B-50",
+          "player": "Ridge Barker",
+          "team": "Texas"
+        },
+        {
+          "number": "B-51",
+          "player": "Robert Sweeney",
+          "team": "Texas"
+        },
+        {
+          "number": "B-52",
+          "player": "Rb/wr",
+          "team": "Texas"
+        },
+        {
+          "number": "B-53",
+          "player": "Samari Matthews",
+          "team": "Texas"
+        },
+        {
+          "number": "B-54",
+          "player": "Smith Orogbo",
+          "team": "Texas"
+        },
+        {
+          "number": "B-55",
+          "player": "Spencer Barnett",
+          "team": "Texas"
+        },
+        {
+          "number": "B-56",
+          "player": "Spencer Shannon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-57",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "B-58",
+          "player": "Trey Dubuc",
+          "team": "Texas"
+        },
+        {
+          "number": "B-59",
+          "player": "Ty Boatright",
+          "team": "Texas"
+        },
+        {
+          "number": "B-60",
+          "player": "Tyler Atkinson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-61",
+          "player": "Wardell Mack",
+          "team": "Texas"
+        },
+        {
+          "number": "B-62",
+          "player": "Warren Roberson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-63",
+          "player": "Will Randle",
+          "team": "Texas"
+        },
+        {
+          "number": "B-64",
+          "player": "Xavier Filsaime",
+          "team": "Texas"
+        },
+        {
+          "number": "B-65",
+          "player": "Ziky Umeozulu",
+          "team": "Texas"
+        },
+        {
+          "number": "B-66",
+          "player": "Zina Umeozulu",
+          "team": "Texas"
+        },
+        {
+          "number": "B-67",
+          "player": "Zion Williams",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 16,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-2",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-3",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-4",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "B-5",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "B-6",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-7",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-10",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "B-11",
+          "player": "Nick Townsend",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "B-14",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        },
+        {
+          "number": "B-15",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "B-16",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-2",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-5",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-6",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-7",
+          "player": "Nick Townsend",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-8",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-9",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-10",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-2",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-5",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-6",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-7",
+          "player": "Nick Townsend",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-8",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-9",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "CC-10",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "CL-2",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "CL-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "CL-2",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "CL-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-2",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-3",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-5",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-2",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-3",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "DS-5",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "F-2",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "F-3",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "F-4",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "F-5",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "F-6",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "F-7",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "F-8",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "F-9",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "F-10",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "F-2",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "F-3",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "F-4",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "F-5",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "F-6",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "F-7",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "F-8",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "F-9",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "F-10",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "GD-2",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "GD-3",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-2",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-3",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-4",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-5",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-6",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-2",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-3",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-4",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-5",
+          "player": "Sterling Berkhalter",
+          "team": "Texas"
+        },
+        {
+          "number": "GA-6",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "H-2",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "H-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "H-4",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "H-5",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "H-2",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "H-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "H-4",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "H-5",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-2",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-5",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-6",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-2",
+          "player": "Hero Kanu",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-3",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jermaine Bishop Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-5",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "NH-6",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-DM",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "S-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "S-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "S-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "S-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "S-RBI",
+          "player": "Rasheem Biles",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "S-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-CS",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-EM",
+          "player": "Emmett Mosley V",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-HS",
+          "player": "Hollywood Smothers",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-JM",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-JW",
+          "player": "Jonah Williams",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-JT",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-LJ",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-RBR",
+          "player": "Raleek Brown",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-TD",
+          "player": "Toray Davis",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-TG",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "FS-TS",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        }
+      ]
+    }
+  ]
+}

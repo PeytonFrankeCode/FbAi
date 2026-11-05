@@ -1,0 +1,1586 @@
+{
+  "id": "2026-onit-athlete-oklahoma-state-football",
+  "name": "2026 ONIT Athlete Oklahoma State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 88,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-2",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-3",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-4",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-5",
+          "player": "Evan Jackson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-6",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-7",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-8",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-10",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-11",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-12",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-13",
+          "player": "Miles Coleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-14",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-15",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-16",
+          "player": "Ashton Lepo",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-17",
+          "player": "Ayden Webb",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-18",
+          "player": "Billy Walton III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-19",
+          "player": "Bodie Boydstun",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-20",
+          "player": "Braeden Presley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-21",
+          "player": "Braydon Nelson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-22",
+          "player": "Braylon Rigsby",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-23",
+          "player": "Broderick Vehrs",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-24",
+          "player": "Caden Yates",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-25",
+          "player": "Caleb Hackleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-26",
+          "player": "Cameron Epps",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-27",
+          "player": "Carl'Veon Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-28",
+          "player": "Carson Kolb",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-29",
+          "player": "Christian Bodnar",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-30",
+          "player": "Cooper Lai",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-31",
+          "player": "Cooper Mailand",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-32",
+          "player": "Dallas Winner-Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-33",
+          "player": "Dennis Moody III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-34",
+          "player": "Desean Brown",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-35",
+          "player": "Desmond Magiya",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-36",
+          "player": "DJ Jackson Jr.",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-37",
+          "player": "Dominic Macon",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-38",
+          "player": "Enai White",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-39",
+          "player": "Ethan Wesloski",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-40",
+          "player": "Fatafehi Vailea II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-41",
+          "player": "Gunnar Wilson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-42",
+          "player": "Harrison Dempsey",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-43",
+          "player": "Isaiah Bowman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-44",
+          "player": "Jabarie Thornton",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-45",
+          "player": "Jack Puckett",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-46",
+          "player": "Jacob Sexton",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-47",
+          "player": "Jakobe Sanders",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-48",
+          "player": "Jamison Mejia",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-49",
+          "player": "Jerry Lawson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-50",
+          "player": "Johnny Dickson III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-51",
+          "player": "Joseph Hanson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-52",
+          "player": "Joseph Kim",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-53",
+          "player": "Kai Holec",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-54",
+          "player": "Kam Powell",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-55",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-56",
+          "player": "Keviyan Huddleston",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-57",
+          "player": "Kobi Foreman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-58",
+          "player": "Kollin Lewis",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-59",
+          "player": "Lachie Pozzobon",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-60",
+          "player": "Landon Bland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-61",
+          "player": "Landon Dean",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-62",
+          "player": "Louie Canepa",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-63",
+          "player": "Luke Logan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-64",
+          "player": "Luke Tepas",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-65",
+          "player": "Luke Webb",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-66",
+          "player": "Malik Charles",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-67",
+          "player": "Marrel Davis III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-68",
+          "player": "Matrail Lopez",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-69",
+          "player": "Miguel Chavez",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-70",
+          "player": "Mo Horn",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-71",
+          "player": "Mose Phillips III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-72",
+          "player": "Nate Ost",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-73",
+          "player": "Nolan Akins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-74",
+          "player": "Nygel Farsee",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-75",
+          "player": "Oscar Hammond",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-76",
+          "player": "Quincy Shelton",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-77",
+          "player": "Quinton Hammonds",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-78",
+          "player": "Rashod Bradley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-79",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-80",
+          "player": "Sam Keltner",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-81",
+          "player": "Shaun Torgeson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-82",
+          "player": "Tate Romney",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-83",
+          "player": "Terrence Lewis",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-84",
+          "player": "Tre Page III",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-85",
+          "player": "Trip White",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-86",
+          "player": "Tyler Mercer",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-87",
+          "player": "Vincent Holmes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-88",
+          "player": "William Mason",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-2",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-3",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-4",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-5",
+          "player": "Evan Jackson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-6",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-7",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-8",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-10",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-11",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-12",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-13",
+          "player": "Miles Coleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-14",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-15",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Ethan Wesloski",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-7",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kd Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Ethan Wesloski",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-7",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kd Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Ethan Wesloski",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Ethan Wesloski",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-2",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-3",
+          "player": "Evan Jackson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-4",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-5",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-7",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-8",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-9",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-10",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-2",
+          "player": "Saadiq Clements",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-3",
+          "player": "Evan Jackson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-4",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-5",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-7",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-8",
+          "player": "Rodney Harris II",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-9",
+          "player": "Grant Jordan",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "F-10",
+          "player": "Donovan Green",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GD-2",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GD-3",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-2",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-3",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-4",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-5",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-2",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-3",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-4",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "H-5",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Miles Coleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Justin Bowick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Miles Coleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-CB",
+          "player": "Chris Barnes",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-KJ",
+          "player": "KD Jones",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-WY",
+          "player": "Wyatt Young",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-DM",
+          "player": "Drew Mestemaker",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "GA-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-CH",
+          "player": "Caleb Hawkins",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-IC",
+          "player": "Isaiah Chisom",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-IP",
+          "player": "Israel Polk",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-JW",
+          "player": "James Williams",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-LF",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1140 @@
+{
+  "id": "2024-onit-athlete-illinois-football",
+  "name": "2024 ONIT Athlete Illinois Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 97,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Ball",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-2",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-3",
+          "player": "Alec Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-4",
+          "player": "Alex Bray",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-5",
+          "player": "Alexander Capka-Jones",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-6",
+          "player": "Ashton Hollins",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-7",
+          "player": "Ben Clawson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-8",
+          "player": "Brandon Henderson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-9",
+          "player": "Ca Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-10",
+          "player": "Cal Swanson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-11",
+          "player": "Clayton Leonard",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-12",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-13",
+          "player": "David Olano",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-14",
+          "player": "Declan Duley",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-15",
+          "player": "Demetrius Hill",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-16",
+          "player": "Dennis Briggs Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-17",
+          "player": "Donovan Leary",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-18",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-19",
+          "player": "Ethan Moczulski",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-20",
+          "player": "Ezekiel Holmes",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-21",
+          "player": "L0q",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-22",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-23",
+          "player": "Gentle Hunt",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-24",
+          "player": "Hank Beatty",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-25",
+          "player": "Henry Boyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-26",
+          "player": "Hugh Robertson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-27",
+          "player": "Hunter Whitenack",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-28",
+          "player": "J.C. Davis",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-29",
+          "player": "Jacob Huber",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-30",
+          "player": "Jaheim Clarke",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-31",
+          "player": "James Kreutz",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-32",
+          "player": "Jeremiah Warren",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-33",
+          "player": "Josh Gesky",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-34",
+          "player": "Josh Kreutz",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-35",
+          "player": "Josh Mccray",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-36",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-37",
+          "player": "Kaleb Patterson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-38",
+          "player": "Kellen Francis",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-39",
+          "player": "Kenari Wilcher",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-40",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-41",
+          "player": "Kirkland Michaux",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-42",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-43",
+          "player": "Luke Zardzin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-44",
+          "player": "Mac Resetich",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-45",
+          "player": "0djqxv\u00030¡oohu",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-46",
+          "player": "Malachi Hood",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-47",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-48",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-49",
+          "player": "Melvin Priestly",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-50",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-51",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-52",
+          "player": "Pat Farrell",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-53",
+          "player": "Ryan Meed",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-54",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-55",
+          "player": "Tanner Arkin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-56",
+          "player": "Terah Edwards",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-57",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-58",
+          "player": "Tj Griffin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-59",
+          "player": "Torrie Cox Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-60",
+          "player": "Trey Petty",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-61",
+          "player": "Tyler Strain",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-62",
+          "player": "Tyson Rooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-63",
+          "player": "Weston Adams",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-64",
+          "player": "Xavier Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-65",
+          "player": "Zach Barrett",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-66",
+          "player": "Zakhari Franklin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-67",
+          "player": "Zy Crisler",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-68",
+          "player": "Blayne Sisson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-69",
+          "player": "Brandon Hansen",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-70",
+          "player": "Carlos Orr-Gillespie",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-71",
+          "player": "Carson Goda",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-72",
+          "player": "Chase Canada",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-73",
+          "player": "Daniel Brown",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-74",
+          "player": "Demetrius John",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-75",
+          "player": "Devin Hale",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-76",
+          "player": "Easton Baker",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-77",
+          "player": "Eddie Tuerk",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-78",
+          "player": "Grayson Griffin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-79",
+          "player": "Joep Engbers",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-80",
+          "player": "Jordan Anderson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-81",
+          "player": "Karson Kaiser",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-82",
+          "player": "Kevin Wigenton Ii",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-83",
+          "player": "Lane Hansen",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-84",
+          "player": "Mario Sanders Ii",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-85",
+          "player": "Mason Muragin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-86",
+          "player": "Michael Bartolotta",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-87",
+          "player": "Nick True",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-88",
+          "player": "Patrick Mahoney Iii",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-89",
+          "player": "Ronan Poynton",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-90",
+          "player": "Sage Luther",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-91",
+          "player": "Sam Tsagalis",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-92",
+          "player": "Tanner Heckel",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-93",
+          "player": "Tanner Hollinger",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-94",
+          "player": "Tj Mcmillen",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-95",
+          "player": "Vernon Woodward Iii",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-96",
+          "player": "Zach Aamland",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-97",
+          "player": "Zafir Stewart",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-3",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-4",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-5",
+          "player": "Tyler Strain",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-6",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-7",
+          "player": "Xavier Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-8",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-9",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "P-10",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "IC-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "IC-3",
+          "player": "Tyler Strain",
+          "team": "Illinois"
+        },
+        {
+          "number": "IC-4",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "IC-5",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-3",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-4",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-5",
+          "player": "Tyler Strain",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "ST-2",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "ST-3",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "ST-4",
+          "player": "Xavier Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "ST-5",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "BL-2",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "BL-3",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "BL-4",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "BL-5",
+          "player": "Xavier Scott",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "CL-2",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-3",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-4",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-5",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-6",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-7",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-8",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-9",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-10",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-11",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-12",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-13",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-14",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-15",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-16",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-17",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-18",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-19",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-20",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-21",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "S-22",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-3",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-4",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-5",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-6",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-7",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-8",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-9",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-10",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-11",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-12",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-13",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-14",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-15",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-16",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-17",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-18",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-19",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-20",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-21",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-22",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "O-24",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-2",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-3",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-4",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-5",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-6",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-7",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-8",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-9",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-10",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-11",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-12",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-13",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-14",
+          "player": "Dylan Rosiek",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-15",
+          "player": "Kenenna Odeluga",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-16",
+          "player": "Pat Bryant",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-17",
+          "player": "Seth Coleman",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-18",
+          "player": "Gabe Jacas",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-19",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-20",
+          "player": "Miles Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-21",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-22",
+          "player": "Terrance Brooks",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Luke Altmyer",
+          "team": "Illinois"
+        },
+        {
+          "number": "N-24",
+          "player": "Malik Elzy",
+          "team": "Illinois"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1100 @@
+{
+  "id": "2024-onit-athlete-hawaii-football",
+  "name": "2024 ONIT Athlete Hawaii Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 83,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aiden Mccomber",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Perry",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-3",
+          "player": "Alika Cavaco-Amoy",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-4",
+          "player": "Alvin Puefua",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-5",
+          "player": "Anthony Sagapolutele",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-6",
+          "player": "Armando Lewis Jr.",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-7",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-8",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-9",
+          "player": "Cam Barfield",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-10",
+          "player": "Cam Bell",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-11",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-12",
+          "player": "Carlito Capanang Jr.",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-13",
+          "player": "Christian Perry",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-14",
+          "player": "Christian Vaughn",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-15",
+          "player": "Daniel \"Sauce\" Williams",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-16",
+          "player": "David Cordero",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-17",
+          "player": "Dean Briski",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-18",
+          "player": "Dekel Crowdus",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-19",
+          "player": "Deliyon Freeman",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-20",
+          "player": "Derek Boyd Ii",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-21",
+          "player": "Devon Tauaefa",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-22",
+          "player": "Devyn King",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-23",
+          "player": "Dion Washington",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-24",
+          "player": "Elijah Palmer",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-25",
+          "player": "Elijah Robinson",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-26",
+          "player": "Ethan Spencer",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-27",
+          "player": "Ezekiel Rodrigues",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-28",
+          "player": "Ezra Evaimalo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-29",
+          "player": "Fabian Ross",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-30",
+          "player": "Ha Aheo Dela Cruz",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-31",
+          "player": "Isaac Maugaleoo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-32",
+          "player": "Jackie Johnson Iii",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-33",
+          "player": "Jaheim Wilson-Jones",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-34",
+          "player": "Jake Farrell",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-35",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-36",
+          "player": "James Milovale",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-37",
+          "player": "Jamih Otis",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-38",
+          "player": "Jarvis \"Dino\" Heimuli",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-39",
+          "player": "Jay Tauala-Harris",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-40",
+          "player": "John-Keawe Sagapolutele",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-41",
+          "player": "Jojo Forest",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-42",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-43",
+          "player": "Junior Fiaui",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-44",
+          "player": "Justin Sinclair",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-45",
+          "player": "Ka Ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-46",
+          "player": "Karsyn Pupunu",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-47",
+          "player": "Kilinahe Mendiola-Jensen",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-48",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-49",
+          "player": "Kona Moore",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-50",
+          "player": "Kt Carter",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-51",
+          "player": "Kuao Peihopa",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-52",
+          "player": "Landon Sims",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-53",
+          "player": "Lesterlaisene Lagafuaina",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-54",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-55",
+          "player": "Luke Felix-Fualalo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-56",
+          "player": "Maclane Watkins",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-57",
+          "player": "Makana Meyer",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-58",
+          "player": "Malachi Finau",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-59",
+          "player": "Matagi Thompson",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-60",
+          "player": "Maurice Ta Ala",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-61",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-62",
+          "player": "Micah Alejado",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-63",
+          "player": "Micah Mariteragi",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-64",
+          "player": "Nalu Emerson",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-65",
+          "player": "Nazaiah Caravallo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-66",
+          "player": "Nick Cenacle",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-67",
+          "player": "Noah Kema",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-68",
+          "player": "Oakie Salave A",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-69",
+          "player": "Patrick Hisatake",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-70",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-71",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-72",
+          "player": "Sergio Muasau",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-73",
+          "player": "Spencer Curtis",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-74",
+          "player": "Steven Mcbride",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-75",
+          "player": "Tama Uiliata",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-76",
+          "player": "Tamatoa Mokiao-Atimalala",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-77",
+          "player": "Tariq Jones",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-78",
+          "player": "7xµ,\u00030xwl",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-79",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-80",
+          "player": "Virdel Edwards Ii",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-81",
+          "player": "Wynden Ho Ohuli",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-82",
+          "player": "Zhen Sotelo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "B-83",
+          "player": "Zoram Petelo",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-2",
+          "player": "Steven Mcbride",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-3",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-4",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-5",
+          "player": "Luke Felix-Fualalo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-6",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-7",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-8",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-9",
+          "player": "Virdel Edwards Ii",
+          "team": "Hawaii"
+        },
+        {
+          "number": "P-10",
+          "player": "Ezra Evaimalo",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "IC-2",
+          "player": "Steven Mcbride",
+          "team": "Hawaii"
+        },
+        {
+          "number": "IC-3",
+          "player": "Luke Felix-Fualalo",
+          "team": "Hawaii"
+        },
+        {
+          "number": "IC-4",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "IC-5",
+          "player": "Virdel Edwards Ii",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "CC-2",
+          "player": "Steven Mcbride",
+          "team": "Hawaii"
+        },
+        {
+          "number": "CC-3",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "CC-4",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "CC-5",
+          "player": "Luke Felix-Fualalo",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "ST-2",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "ST-3",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "ST-4",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "ST-5",
+          "player": "Virdel Edwards Ii",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "BL-2",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "BL-3",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "BL-4",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "BL-5",
+          "player": "Steven McBride",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "CL-2",
+          "player": "Steven McBride",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-2",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-3",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-4",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-5",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-6",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-7",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-8",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-9",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-10",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-11",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-12",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-13",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-14",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-15",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-16",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-17",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-18",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-19",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-20",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-21",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-22",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-23",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "S-24",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-2",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-3",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-4",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-5",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-6",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-7",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-8",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-9",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-10",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-11",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-12",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-13",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-14",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-15",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-16",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-17",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-18",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-19",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-20",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-21",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-22",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-23",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-24",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-25",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "O-26",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-2",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-3",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-4",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-5",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-6",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-7",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-8",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-9",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-10",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-11",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-12",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-13",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-14",
+          "player": "Caleb Brown",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-15",
+          "player": "Cam Stone",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-16",
+          "player": "Jalen Smith",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-17",
+          "player": "Jonah Panoke",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-18",
+          "player": "Ka ena Decambra",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-19",
+          "player": "Koali Nishigaya",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-20",
+          "player": "Logan Taylor",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-21",
+          "player": "Meki Pei",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-22",
+          "player": "Peter Manuma",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-23",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-24",
+          "player": "Tylan Hines",
+          "team": "Hawaii"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-25",
+          "player": "Brayden Schager",
+          "team": "Hawaii"
+        },
+        {
+          "number": "N-26",
+          "player": "Pofele Ashlock",
+          "team": "Hawaii"
+        }
+      ]
+    }
+  ]
+}

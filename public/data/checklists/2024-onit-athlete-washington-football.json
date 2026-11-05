@@ -1,0 +1,1165 @@
+{
+  "id": "2024-onit-athlete-washington-football",
+  "name": "2024 ONIT Athlete Washington Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 90,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adam Mohammed",
+          "team": "Washington"
+        },
+        {
+          "number": "B-2",
+          "player": "Adam Saul",
+          "team": "Washington"
+        },
+        {
+          "number": "B-3",
+          "player": "Aidan Anderson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-4",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "B-5",
+          "player": "Anay Nagarajan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-6",
+          "player": "Anthony Ward",
+          "team": "Washington"
+        },
+        {
+          "number": "B-7",
+          "player": "Armon Parker",
+          "team": "Washington"
+        },
+        {
+          "number": "B-8",
+          "player": "Audric Harris",
+          "team": "Washington"
+        },
+        {
+          "number": "B-9",
+          "player": "Bryce Butler",
+          "team": "Washington"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Johnston",
+          "team": "Washington"
+        },
+        {
+          "number": "B-11",
+          "player": "Caleb Presley",
+          "team": "Washington"
+        },
+        {
+          "number": "B-12",
+          "player": "Camden Sirmon",
+          "team": "Washington"
+        },
+        {
+          "number": "B-13",
+          "player": "Cameron Broussard",
+          "team": "Washington"
+        },
+        {
+          "number": "B-14",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "B-15",
+          "player": "Cameron Warchuck",
+          "team": "Washington"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "B-17",
+          "player": "Charlie Crowell",
+          "team": "Washington"
+        },
+        {
+          "number": "B-18",
+          "player": "Curley Reed Iii",
+          "team": "Washington"
+        },
+        {
+          "number": "B-19",
+          "player": "Daniyel Ngata",
+          "team": "Washington"
+        },
+        {
+          "number": "B-20",
+          "player": "Darren Barkins",
+          "team": "Washington"
+        },
+        {
+          "number": "B-21",
+          "player": "Decker Degraaf",
+          "team": "Washington"
+        },
+        {
+          "number": "B-22",
+          "player": "Demond Williams Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-23",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "B-24",
+          "player": "Deshawn Lynch",
+          "team": "Washington"
+        },
+        {
+          "number": "B-25",
+          "player": "Deven Bryant",
+          "team": "Washington"
+        },
+        {
+          "number": "B-26",
+          "player": "Drew Azzopardi",
+          "team": "Washington"
+        },
+        {
+          "number": "B-27",
+          "player": "Drew Fowler",
+          "team": "Washington"
+        },
+        {
+          "number": "B-28",
+          "player": "Dyson Mccutcheon",
+          "team": "Washington"
+        },
+        {
+          "number": "B-29",
+          "player": "Elias Johnson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-30",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-31",
+          "player": "Elinneus Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "B-32",
+          "player": "Elishah Jackett",
+          "team": "Washington"
+        },
+        {
+          "number": "B-33",
+          "player": "Ephesians Prysock",
+          "team": "Washington"
+        },
+        {
+          "number": "B-34",
+          "player": "Gaard Memmelaar",
+          "team": "Washington"
+        },
+        {
+          "number": "B-35",
+          "player": "Giles Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-36",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "B-37",
+          "player": "Griffin Miller",
+          "team": "Washington"
+        },
+        {
+          "number": "B-38",
+          "player": "Jack Mccallister",
+          "team": "Washington"
+        },
+        {
+          "number": "B-39",
+          "player": "Jackson Girouard",
+          "team": "Washington"
+        },
+        {
+          "number": "B-40",
+          "player": "Jacob Bandes",
+          "team": "Washington"
+        },
+        {
+          "number": "B-41",
+          "player": "Jacob Lane",
+          "team": "Washington"
+        },
+        {
+          "number": "B-42",
+          "player": "Jake Jennings",
+          "team": "Washington"
+        },
+        {
+          "number": "B-43",
+          "player": "Jayden Wayne",
+          "team": "Washington"
+        },
+        {
+          "number": "B-44",
+          "player": "Jayvon Parker",
+          "team": "Washington"
+        },
+        {
+          "number": "B-45",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "B-46",
+          "player": "Jonah Coleman",
+          "team": "Washington"
+        },
+        {
+          "number": "B-47",
+          "player": "Jordan Shaw",
+          "team": "Washington"
+        },
+        {
+          "number": "B-48",
+          "player": "Jordan Washington",
+          "team": "Washington"
+        },
+        {
+          "number": "B-49",
+          "player": "Justin Hylkema",
+          "team": "Washington"
+        },
+        {
+          "number": "B-50",
+          "player": "Kahlee Tafai",
+          "team": "Washington"
+        },
+        {
+          "number": "B-51",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-52",
+          "player": "Keith Reynolds",
+          "team": "Washington"
+        },
+        {
+          "number": "B-53",
+          "player": "Khmori House",
+          "team": "Washington"
+        },
+        {
+          "number": "B-54",
+          "player": "Lance Holtzclaw",
+          "team": "Washington"
+        },
+        {
+          "number": "B-55",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "B-56",
+          "player": "Leroy Bryant",
+          "team": "Washington"
+        },
+        {
+          "number": "B-57",
+          "player": "Logan Lisherness",
+          "team": "Washington"
+        },
+        {
+          "number": "B-58",
+          "player": "Logan Sagapolu",
+          "team": "Washington"
+        },
+        {
+          "number": "B-59",
+          "player": "Luke Gayton",
+          "team": "Washington"
+        },
+        {
+          "number": "B-60",
+          "player": "Luke Luchini",
+          "team": "Washington"
+        },
+        {
+          "number": "B-61",
+          "player": "Makell Esteen",
+          "team": "Washington"
+        },
+        {
+          "number": "B-62",
+          "player": "Maurice Heims",
+          "team": "Washington"
+        },
+        {
+          "number": "B-63",
+          "player": "Maximus Mccree",
+          "team": "Washington"
+        },
+        {
+          "number": "B-64",
+          "player": "Michael Levelle Watkins",
+          "team": "Washington"
+        },
+        {
+          "number": "B-65",
+          "player": "Milton Hopkins Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-66",
+          "player": "Omar Khan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-67",
+          "player": "Paki Finau",
+          "team": "Washington"
+        },
+        {
+          "number": "B-68",
+          "player": "Parker Cross",
+          "team": "Washington"
+        },
+        {
+          "number": "B-69",
+          "player": "Paul Mencke Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-70",
+          "player": "Peyton Waters",
+          "team": "Washington"
+        },
+        {
+          "number": "B-71",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "B-72",
+          "player": "Rahshawn Clark",
+          "team": "Washington"
+        },
+        {
+          "number": "B-73",
+          "player": "Rashid Williams",
+          "team": "Washington"
+        },
+        {
+          "number": "B-74",
+          "player": "Roice Cleeland",
+          "team": "Washington"
+        },
+        {
+          "number": "B-75",
+          "player": "Russell Davis Ii",
+          "team": "Washington"
+        },
+        {
+          "number": "B-76",
+          "player": "Ryan Otton",
+          "team": "Washington"
+        },
+        {
+          "number": "B-77",
+          "player": "Ryder Bumgarner",
+          "team": "Washington"
+        },
+        {
+          "number": "B-78",
+          "player": "Sam Adams Ii",
+          "team": "Washington"
+        },
+        {
+          "number": "B-79",
+          "player": "Shea Kuykendall",
+          "team": "Washington"
+        },
+        {
+          "number": "B-80",
+          "player": "Teddy Purcell",
+          "team": "Washington"
+        },
+        {
+          "number": "B-81",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "B-82",
+          "player": "Tristan Warner",
+          "team": "Washington"
+        },
+        {
+          "number": "B-83",
+          "player": "Troy Petz",
+          "team": "Washington"
+        },
+        {
+          "number": "B-84",
+          "player": "Tyrese Johnson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-85",
+          "player": "Vincent Holmes",
+          "team": "Washington"
+        },
+        {
+          "number": "B-86",
+          "player": "Voi Tunuufi",
+          "team": "Washington"
+        },
+        {
+          "number": "B-87",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "B-88",
+          "player": "Wilson Schwartz",
+          "team": "Washington"
+        },
+        {
+          "number": "B-89",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        },
+        {
+          "number": "B-90",
+          "player": "Zachary Henning",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "P-2",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "P-3",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "P-4",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "P-5",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "P-6",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "P-7",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "P-8",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "P-9",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        },
+        {
+          "number": "P-10",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "IC-2",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "IC-3",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "IC-4",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "IC-5",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "CC-2",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "CC-3",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "CC-4",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "CC-5",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "ST-2",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "ST-3",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "ST-4",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "ST-5",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "BL-2",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "BL-3",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "BL-4",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "BL-5",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "CL-2",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "S-2",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "S-3",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "S-4",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "S-5",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "S-6",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "S-7",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "S-8",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "S-9",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "S-10",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "S-11",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "S-12",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "S-13",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-14",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "S-15",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "S-16",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "S-17",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "S-18",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "S-19",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "S-20",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "S-21",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "S-22",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "S-23",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "S-24",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "S-25",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "S-26",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "O-2",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "O-3",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "O-4",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "O-5",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "O-6",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "O-7",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "O-8",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "O-9",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "O-10",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "O-11",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "O-12",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "O-13",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-14",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "O-15",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "O-16",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "O-17",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "O-18",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "O-19",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "O-20",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "O-21",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "O-22",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "O-23",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "O-24",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "O-25",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "O-26",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-27",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "O-28",
+          "player": "Will Rogers",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "N-2",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "N-3",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "N-4",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "N-5",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "N-6",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "N-7",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "N-8",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "N-9",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "N-10",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "N-11",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "N-12",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "N-13",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-14",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "N-15",
+          "player": "Alphonzo Tuputala",
+          "team": "Washington"
+        },
+        {
+          "number": "N-16",
+          "player": "Jeremiah Hunter",
+          "team": "Washington"
+        },
+        {
+          "number": "N-17",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "N-18",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "N-19",
+          "player": "Will Rogers",
+          "team": "Washington"
+        },
+        {
+          "number": "N-20",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "N-21",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "N-22",
+          "player": "Kamren Fabiculanan",
+          "team": "Washington"
+        },
+        {
+          "number": "N-23",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "N-24",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "N-25",
+          "player": "Thaddeus Dixon",
+          "team": "Washington"
+        },
+        {
+          "number": "N-26",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-27",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "N-28",
+          "player": "Will Rogers",
+          "team": "Washington"
+        }
+      ]
+    }
+  ]
+}

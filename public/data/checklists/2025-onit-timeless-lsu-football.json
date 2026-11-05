@@ -1,0 +1,526 @@
+{
+  "id": "2025-onit-timeless-lsu-football",
+  "name": "2025 ONIT Timeless LSU Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 77,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Anderson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-2",
+          "player": "Aeron Burrell",
+          "team": "LSU"
+        },
+        {
+          "number": "B-3",
+          "player": "Ahmad Breaux",
+          "team": "LSU"
+        },
+        {
+          "number": "B-4",
+          "player": "Aidan Corbello",
+          "team": "LSU"
+        },
+        {
+          "number": "B-5",
+          "player": "Ashton Stamps",
+          "team": "LSU"
+        },
+        {
+          "number": "B-6",
+          "player": "Badger Hargett",
+          "team": "LSU"
+        },
+        {
+          "number": "B-7",
+          "player": "Barion Brown",
+          "team": "LSU"
+        },
+        {
+          "number": "B-8",
+          "player": "Bauer Sharp",
+          "team": "LSU"
+        },
+        {
+          "number": "B-9",
+          "player": "Bo Bordelon",
+          "team": "LSU"
+        },
+        {
+          "number": "B-10",
+          "player": "Braden Augustus",
+          "team": "LSU"
+        },
+        {
+          "number": "B-11",
+          "player": "Braelin Moore",
+          "team": "LSU"
+        },
+        {
+          "number": "B-12",
+          "player": "Charles Ross Il",
+          "team": "LSU"
+        },
+        {
+          "number": "B-13",
+          "player": "Chris Hilton Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-14",
+          "player": "CJ Jackson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-15",
+          "player": "Coen Echols",
+          "team": "LSU"
+        },
+        {
+          "number": "B-16",
+          "player": "Colin Hurley",
+          "team": "LSU"
+        },
+        {
+          "number": "B-17",
+          "player": "Cowinn Helaire",
+          "team": "LSU"
+        },
+        {
+          "number": "B-18",
+          "player": "Craig Walton Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-19",
+          "player": "Damian Ramos",
+          "team": "LSU"
+        },
+        {
+          "number": "B-20",
+          "player": "Damien Shanklin",
+          "team": "LSU"
+        },
+        {
+          "number": "B-21",
+          "player": "Dashawn Spears",
+          "team": "LSU"
+        },
+        {
+          "number": "B-22",
+          "player": "Davhon Keys",
+          "team": "LSU"
+        },
+        {
+          "number": "B-23",
+          "player": "Destyn Hill",
+          "team": "LSU"
+        },
+        {
+          "number": "B-24",
+          "player": "DJ Chester",
+          "team": "LSU"
+        },
+        {
+          "number": "B-25",
+          "player": "DJ Pickett",
+          "team": "LSU"
+        },
+        {
+          "number": "B-26",
+          "player": "Dominick Mckinley",
+          "team": "LSU"
+        },
+        {
+          "number": "B-27",
+          "player": "Donovan Green",
+          "team": "LSU"
+        },
+        {
+          "number": "B-28",
+          "player": "Dylan Carpenter",
+          "team": "LSU"
+        },
+        {
+          "number": "B-29",
+          "player": "Gabe Leonards",
+          "team": "LSU"
+        },
+        {
+          "number": "B-30",
+          "player": "Gabriel Reliford",
+          "team": "LSU"
+        },
+        {
+          "number": "B-31",
+          "player": "Garrett Nussmeier",
+          "team": "LSU"
+        },
+        {
+          "number": "B-32",
+          "player": "Grant Chadwick",
+          "team": "LSU"
+        },
+        {
+          "number": "B-33",
+          "player": "Harold Perkins Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-34",
+          "player": "Isaiah Stone",
+          "team": "LSU"
+        },
+        {
+          "number": "B-35",
+          "player": "Ja'Keem Jackson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-36",
+          "player": "Jack Pyburn",
+          "team": "LSU"
+        },
+        {
+          "number": "B-37",
+          "player": "Jacobian Guillory",
+          "team": "LSU"
+        },
+        {
+          "number": "B-38",
+          "player": "Jake Ibieta",
+          "team": "LSU"
+        },
+        {
+          "number": "B-39",
+          "player": "Jardin Gilbert",
+          "team": "LSU"
+        },
+        {
+          "number": "B-40",
+          "player": "Javien Toviano",
+          "team": "LSU"
+        },
+        {
+          "number": "B-41",
+          "player": "JD Lafleur",
+          "team": "LSU"
+        },
+        {
+          "number": "B-42",
+          "player": "Jelani Watkins",
+          "team": "LSU"
+        },
+        {
+          "number": "B-43",
+          "player": "Jimari Butler",
+          "team": "LSU"
+        },
+        {
+          "number": "B-44",
+          "player": "Joel Rogers",
+          "team": "LSU"
+        },
+        {
+          "number": "B-45",
+          "player": "Jonathan Ferguson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-46",
+          "player": "Josh Thompson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-47",
+          "player": "Ju'Juan Johnson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-48",
+          "player": "Justin Echols",
+          "team": "LSU"
+        },
+        {
+          "number": "B-49",
+          "player": "Kaleb Jackson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-50",
+          "player": "Kenzel Kelly",
+          "team": "LSU"
+        },
+        {
+          "number": "B-51",
+          "player": "Khayree Lee Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-52",
+          "player": "Kolaj Cobbins",
+          "team": "LSU"
+        },
+        {
+          "number": "B-53",
+          "player": "Kylan Billiot",
+          "team": "LSU"
+        },
+        {
+          "number": "B-54",
+          "player": "Kyle Parker",
+          "team": "LSU"
+        },
+        {
+          "number": "B-55",
+          "player": "Landon Craig",
+          "team": "LSU"
+        },
+        {
+          "number": "B-56",
+          "player": "Malachi Lane",
+          "team": "LSU"
+        },
+        {
+          "number": "B-57",
+          "player": "Mansoor Delane",
+          "team": "LSU"
+        },
+        {
+          "number": "B-58",
+          "player": "Michael Turner Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-59",
+          "player": "Michael Van Buren Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "B-60",
+          "player": "Nic Anderson",
+          "team": "LSU"
+        },
+        {
+          "number": "B-61",
+          "player": "Paul Mubenga",
+          "team": "LSU"
+        },
+        {
+          "number": "B-62",
+          "player": "PJ Woodland",
+          "team": "LSU"
+        },
+        {
+          "number": "B-63",
+          "player": "Princeton Malbrue",
+          "team": "LSU"
+        },
+        {
+          "number": "B-64",
+          "player": "Shone Washington",
+          "team": "LSU"
+        },
+        {
+          "number": "B-65",
+          "player": "Sydir Mitchell",
+          "team": "LSU"
+        },
+        {
+          "number": "B-66",
+          "player": "Tamarcus Cooley",
+          "team": "LSU"
+        },
+        {
+          "number": "B-67",
+          "player": "Trey Holly",
+          "team": "LSU"
+        },
+        {
+          "number": "B-68",
+          "player": "Trey'Dez Green",
+          "team": "LSU"
+        },
+        {
+          "number": "B-69",
+          "player": "Tylen Singleton",
+          "team": "LSU"
+        },
+        {
+          "number": "B-70",
+          "player": "Tyree Adams",
+          "team": "LSU"
+        },
+        {
+          "number": "B-71",
+          "player": "Tyson Short",
+          "team": "LSU"
+        },
+        {
+          "number": "B-72",
+          "player": "Wallace Foster IV",
+          "team": "LSU"
+        },
+        {
+          "number": "B-73",
+          "player": "West Weeks",
+          "team": "LSU"
+        },
+        {
+          "number": "B-74",
+          "player": "Weston Davis",
+          "team": "LSU"
+        },
+        {
+          "number": "B-75",
+          "player": "Whit Weeks",
+          "team": "LSU"
+        },
+        {
+          "number": "B-76",
+          "player": "Zavion Thomas",
+          "team": "LSU"
+        },
+        {
+          "number": "B-77",
+          "player": "Zion Williams",
+          "team": "LSU"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Aaron Anderson",
+          "team": "LSU"
+        },
+        {
+          "number": "C-2",
+          "player": "Barion Brown",
+          "team": "LSU"
+        },
+        {
+          "number": "C-3",
+          "player": "Damian Ramos",
+          "team": "LSU"
+        },
+        {
+          "number": "C-4",
+          "player": "DJ Pickett",
+          "team": "LSU"
+        },
+        {
+          "number": "C-5",
+          "player": "Garrett Nussmeier",
+          "team": "LSU"
+        },
+        {
+          "number": "C-6",
+          "player": "Harold Perkins Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "C-7",
+          "player": "Jardin Gilbert",
+          "team": "LSU"
+        },
+        {
+          "number": "C-8",
+          "player": "Mansoor Delane",
+          "team": "LSU"
+        },
+        {
+          "number": "C-9",
+          "player": "Whit Weeks",
+          "team": "LSU"
+        },
+        {
+          "number": "C-10",
+          "player": "Zavion Thomas",
+          "team": "LSU"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Braelin Moore",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-2",
+          "player": "Chris Hilton Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-3",
+          "player": "Garrett Nussmeier",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-4",
+          "player": "Harold Perkins Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-5",
+          "player": "Jardin Gilbert",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-6",
+          "player": "Javien Toviano",
+          "team": "LSU"
+        },
+        {
+          "number": "SG-7",
+          "player": "Nic Anderson",
+          "team": "LSU"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-signature",
+      "name": "Stained Glass Signature",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SGS-1",
+          "player": "Chris Hilton Jr.",
+          "team": "LSU"
+        },
+        {
+          "number": "SGS-2",
+          "player": "Jardin Gilbert",
+          "team": "LSU"
+        }
+      ]
+    }
+  ]
+}

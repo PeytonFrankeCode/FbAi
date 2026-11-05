@@ -1,0 +1,1195 @@
+{
+  "id": "2024-onit-athlete-nc-state-football",
+  "name": "2024 ONIT Athlete NC State Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 90,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Addison Carlson",
+          "team": "NC State"
+        },
+        {
+          "number": "B-2",
+          "player": "Aiden Arias",
+          "team": "NC State"
+        },
+        {
+          "number": "B-3",
+          "player": "Aiden Hollingsworth",
+          "team": "NC State"
+        },
+        {
+          "number": "B-4",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "B-5",
+          "player": "Anthony Carter, Jr.",
+          "team": "NC State"
+        },
+        {
+          "number": "B-6",
+          "player": "Asaad Brown Jr.",
+          "team": "NC State"
+        },
+        {
+          "number": "B-7",
+          "player": "Ashton Locklear",
+          "team": "NC State"
+        },
+        {
+          "number": "B-8",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "B-9",
+          "player": "Bishop Fitzgerald",
+          "team": "NC State"
+        },
+        {
+          "number": "B-10",
+          "player": "Blair Alexander",
+          "team": "NC State"
+        },
+        {
+          "number": "B-11",
+          "player": "Blake Raphael",
+          "team": "NC State"
+        },
+        {
+          "number": "B-12",
+          "player": "Brandon Cisse",
+          "team": "NC State"
+        },
+        {
+          "number": "B-13",
+          "player": "Brandon Cleveland",
+          "team": "NC State"
+        },
+        {
+          "number": "B-14",
+          "player": "Brody Barnhardt",
+          "team": "NC State"
+        },
+        {
+          "number": "B-15",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "B-16",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "B-17",
+          "player": "Charlie Birtwistle",
+          "team": "NC State"
+        },
+        {
+          "number": "B-18",
+          "player": "Chase Bond",
+          "team": "NC State"
+        },
+        {
+          "number": "B-19",
+          "player": "Cj Bailey",
+          "team": "NC State"
+        },
+        {
+          "number": "B-20",
+          "player": "Coleson Fields",
+          "team": "NC State"
+        },
+        {
+          "number": "B-21",
+          "player": "Collin Smith",
+          "team": "NC State"
+        },
+        {
+          "number": "B-22",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "B-23",
+          "player": "Dante Daniels",
+          "team": "NC State"
+        },
+        {
+          "number": "B-24",
+          "player": "Darion Rivers",
+          "team": "NC State"
+        },
+        {
+          "number": "B-25",
+          "player": "Darius Johnson",
+          "team": "NC State"
+        },
+        {
+          "number": "B-26",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "B-27",
+          "player": "Dawson Jaramillo",
+          "team": "NC State"
+        },
+        {
+          "number": "B-28",
+          "player": "Demarcus Jones Ii",
+          "team": "NC State"
+        },
+        {
+          "number": "B-29",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "B-30",
+          "player": "Devon Betty",
+          "team": "NC State"
+        },
+        {
+          "number": "B-31",
+          "player": "Devon Marshall",
+          "team": "NC State"
+        },
+        {
+          "number": "B-32",
+          "player": "Dj Jackson",
+          "team": "NC State"
+        },
+        {
+          "number": "B-33",
+          "player": "Dylan Gray",
+          "team": "NC State"
+        },
+        {
+          "number": "B-34",
+          "player": "Elijah Tillery",
+          "team": "NC State"
+        },
+        {
+          "number": "B-35",
+          "player": "Ethan Rhodes",
+          "team": "NC State"
+        },
+        {
+          "number": "B-36",
+          "player": "Foster Burt",
+          "team": "NC State"
+        },
+        {
+          "number": "B-37",
+          "player": "Grayson Mccall",
+          "team": "NC State"
+        },
+        {
+          "number": "B-38",
+          "player": "Isaiah Shirley",
+          "team": "NC State"
+        },
+        {
+          "number": "B-39",
+          "player": "Jacarrius Peak",
+          "team": "NC State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jackson Vick",
+          "team": "NC State"
+        },
+        {
+          "number": "B-41",
+          "player": "Jakolbe Baldwin",
+          "team": "NC State"
+        },
+        {
+          "number": "B-42",
+          "player": "Jalen Coit",
+          "team": "NC State"
+        },
+        {
+          "number": "B-43",
+          "player": "Jaxon Godbey",
+          "team": "NC State"
+        },
+        {
+          "number": "B-44",
+          "player": "Jayden \"Duke\" Scott",
+          "team": "NC State"
+        },
+        {
+          "number": "B-45",
+          "player": "Jayden Hollar",
+          "team": "NC State"
+        },
+        {
+          "number": "B-46",
+          "player": "Jordan Poole",
+          "team": "NC State"
+        },
+        {
+          "number": "B-47",
+          "player": "Jordan Waters",
+          "team": "NC State"
+        },
+        {
+          "number": "B-48",
+          "player": "Josh Alexander-Felton",
+          "team": "NC State"
+        },
+        {
+          "number": "B-49",
+          "player": "Juice Vereen",
+          "team": "NC State"
+        },
+        {
+          "number": "B-50",
+          "player": "Justin Joly",
+          "team": "NC State"
+        },
+        {
+          "number": "B-51",
+          "player": "Justin Terrell",
+          "team": "NC State"
+        },
+        {
+          "number": "B-52",
+          "player": "Kamal Bonner",
+          "team": "NC State"
+        },
+        {
+          "number": "B-53",
+          "player": "Kamen Smith",
+          "team": "NC State"
+        },
+        {
+          "number": "B-54",
+          "player": "Kanoah Vinesett",
+          "team": "NC State"
+        },
+        {
+          "number": "B-55",
+          "player": "Kelvon Mcbride",
+          "team": "NC State"
+        },
+        {
+          "number": "B-56",
+          "player": "Kendrick Raphael",
+          "team": "NC State"
+        },
+        {
+          "number": "B-57",
+          "player": "Kevin \"Kc\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "B-58",
+          "player": "Keyaan Abdul-Rahim",
+          "team": "NC State"
+        },
+        {
+          "number": "B-59",
+          "player": "Kj Martin",
+          "team": "NC State"
+        },
+        {
+          "number": "B-60",
+          "player": "Levi Temple",
+          "team": "NC State"
+        },
+        {
+          "number": "B-61",
+          "player": "Lex Thomas",
+          "team": "NC State"
+        },
+        {
+          "number": "B-62",
+          "player": "Logan Foust",
+          "team": "NC State"
+        },
+        {
+          "number": "B-63",
+          "player": "Luke Peters",
+          "team": "NC State"
+        },
+        {
+          "number": "B-64",
+          "player": "Matt Mccabe",
+          "team": "NC State"
+        },
+        {
+          "number": "B-65",
+          "player": "Michael Tate",
+          "team": "NC State"
+        },
+        {
+          "number": "B-66",
+          "player": "Nathan Carr",
+          "team": "NC State"
+        },
+        {
+          "number": "B-67",
+          "player": "Nick Koniecznski",
+          "team": "NC State"
+        },
+        {
+          "number": "B-68",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "B-69",
+          "player": "Obadiah \"Obi\" Obasuyi",
+          "team": "NC State"
+        },
+        {
+          "number": "B-70",
+          "player": "Odera Orizu",
+          "team": "NC State"
+        },
+        {
+          "number": "B-71",
+          "player": "Owen Fehr",
+          "team": "NC State"
+        },
+        {
+          "number": "B-72",
+          "player": "Patrick Matan",
+          "team": "NC State"
+        },
+        {
+          "number": "B-73",
+          "player": "Reid Mitchell",
+          "team": "NC State"
+        },
+        {
+          "number": "B-74",
+          "player": "5hqw«\u0003+lqwrq",
+          "team": "NC State"
+        },
+        {
+          "number": "B-75",
+          "player": "Rico Jackson",
+          "team": "NC State"
+        },
+        {
+          "number": "B-76",
+          "player": "Robert Shockey",
+          "team": "NC State"
+        },
+        {
+          "number": "B-77",
+          "player": "Rodney Lacewell",
+          "team": "NC State"
+        },
+        {
+          "number": "B-78",
+          "player": "Ronnie Royal Iii",
+          "team": "NC State"
+        },
+        {
+          "number": "B-79",
+          "player": "Rylan Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "B-80",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "B-81",
+          "player": "Sean Hill",
+          "team": "NC State"
+        },
+        {
+          "number": "B-82",
+          "player": "Tamarcus Tmac Cooley",
+          "team": "NC State"
+        },
+        {
+          "number": "B-83",
+          "player": "Terrell Anderson",
+          "team": "NC State"
+        },
+        {
+          "number": "B-84",
+          "player": "Pu0h",
+          "team": "NC State"
+        },
+        {
+          "number": "B-85",
+          "player": "Travali Price",
+          "team": "NC State"
+        },
+        {
+          "number": "B-86",
+          "player": "Tyler West",
+          "team": "NC State"
+        },
+        {
+          "number": "B-87",
+          "player": "Walt Gerard",
+          "team": "NC State"
+        },
+        {
+          "number": "B-88",
+          "player": "Wesley Grimes",
+          "team": "NC State"
+        },
+        {
+          "number": "B-89",
+          "player": "Wyatt Wright",
+          "team": "NC State"
+        },
+        {
+          "number": "B-90",
+          "player": "Zack Myers",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "P-2",
+          "player": "Kevin \"Kc\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "P-3",
+          "player": "Grayson Mccall",
+          "team": "NC State"
+        },
+        {
+          "number": "P-4",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "P-5",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "P-6",
+          "player": "Pu0h",
+          "team": "NC State"
+        },
+        {
+          "number": "P-7",
+          "player": "Jordan Waters",
+          "team": "NC State"
+        },
+        {
+          "number": "P-8",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "P-9",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "P-10",
+          "player": "Juice Vereen",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "IC-2",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "IC-3",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "IC-4",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "IC-5",
+          "player": "Pu0h",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Davin Vann",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "ST-2",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        },
+        {
+          "number": "ST-3",
+          "player": "Pu0h",
+          "team": "NC State"
+        },
+        {
+          "number": "ST-4",
+          "player": "Jordan Waters",
+          "team": "NC State"
+        },
+        {
+          "number": "ST-5",
+          "player": "Juice Vereen",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "BL-2",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "BL-3",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "BL-4",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        },
+        {
+          "number": "BL-5",
+          "player": "Jordan Waters",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "S-2",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "S-3",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "S-4",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "S-5",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "S-6",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "S-8",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "S-9",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "S-10",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "S-11",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-12",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "S-13",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "S-14",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "S-15",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "S-16",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "S-17",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "S-18",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "S-19",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "S-20",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "S-21",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "S-22",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "O-2",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "O-3",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "O-4",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "O-5",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "O-6",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "O-7",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "O-8",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "O-9",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "O-10",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "O-11",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-12",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "O-13",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "O-14",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "O-15",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "O-16",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "O-17",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "O-18",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "O-19",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "O-20",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "O-21",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "O-22",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "O-24",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "O-25",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "O-26",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "O-27",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "O-28",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "O-29",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "O-30",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "O-31",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "O-32",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "O-33",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "N-2",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "N-3",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "N-4",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "N-5",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "N-6",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "N-7",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "N-8",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "N-9",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "N-10",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "N-11",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-12",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "N-13",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "N-14",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "N-15",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "N-16",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "N-17",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "N-18",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "N-19",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "N-20",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "N-21",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "N-22",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Kevin \"KC\" Concepcion",
+          "team": "NC State"
+        },
+        {
+          "number": "N-24",
+          "player": "Aydan White",
+          "team": "NC State"
+        },
+        {
+          "number": "N-25",
+          "player": "Anthony Belton",
+          "team": "NC State"
+        },
+        {
+          "number": "N-26",
+          "player": "Noah Potter",
+          "team": "NC State"
+        },
+        {
+          "number": "N-27",
+          "player": "Caden Fordham",
+          "team": "NC State"
+        },
+        {
+          "number": "N-28",
+          "player": "Sean Brown",
+          "team": "NC State"
+        },
+        {
+          "number": "N-29",
+          "player": "Davin Vann",
+          "team": "NC State"
+        },
+        {
+          "number": "N-30",
+          "player": "Dacari Collins",
+          "team": "NC State"
+        },
+        {
+          "number": "N-31",
+          "player": "Devan Boykin",
+          "team": "NC State"
+        },
+        {
+          "number": "N-32",
+          "player": "Caden Noonkester",
+          "team": "NC State"
+        },
+        {
+          "number": "N-33",
+          "player": "Grayson McCall",
+          "team": "NC State"
+        }
+      ]
+    }
+  ]
+}

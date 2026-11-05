@@ -1,0 +1,1838 @@
+{
+  "id": "2024-onit-athlete-michigan-football",
+  "name": "2024 ONIT Athlete Michigan Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 108,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aamir Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-2",
+          "player": "Adam Samaha",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-3",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-4",
+          "player": "Amorion Walker",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-5",
+          "player": "Andrew Gentry",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-6",
+          "player": "Andrew Sprague",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-7",
+          "player": "Anthony Arnou",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-8",
+          "player": "Aymeric Koumba",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-9",
+          "player": "Ben Roebuck",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-10",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-11",
+          "player": "Blake Frazier",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-12",
+          "player": "Brady Prieskorn",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-13",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-14",
+          "player": "Breeon Ishmail",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-15",
+          "player": "Brooks Bahr",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-16",
+          "player": "Bryson Kuzdzal",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-17",
+          "player": "C.J. Charleston",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-18",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-19",
+          "player": "Channing Goodwin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-20",
+          "player": "Chibi Anwunah",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-21",
+          "player": "Christian Boivin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-22",
+          "player": "Cole Cabana",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-23",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-24",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-25",
+          "player": "Connor Jones",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-26",
+          "player": "Dan Taraboi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-27",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-28",
+          "player": "Deakon Tonielli",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-29",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-30",
+          "player": "Deyvid Palepale",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-31",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-32",
+          "player": "Dominick Giudice",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-33",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-34",
+          "player": "Enow Etta",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-35",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-36",
+          "player": "Evan Link",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-37",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-38",
+          "player": "Giovanni El-Hadi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-39",
+          "player": "Greg Crippen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-40",
+          "player": "Greg Tarr",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-41",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-42",
+          "player": "Hudson Hollenbeck",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-43",
+          "player": "I Marion Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-44",
+          "player": "Ike Iwunnah",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-45",
+          "player": "Ja Den Mcburrows",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-46",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-47",
+          "player": "Jacob Oden",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-48",
+          "player": "Jaden Mangham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-49",
+          "player": "Jadyn Davis",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-50",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-51",
+          "player": "Jake Guarnera",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-52",
+          "player": "Jalen Hoffman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-53",
+          "player": "Pm0mt",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-54",
+          "player": "Jason Hewlett",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-55",
+          "player": "Jayden Denegal",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-56",
+          "player": "Jaydon Hood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-57",
+          "player": "Jeffrey Persi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-58",
+          "player": "Jeremiah Lowe",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-59",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-60",
+          "player": "Jo Ziah Edmond",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-61",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-62",
+          "player": "Joel Metzger",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-63",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-64",
+          "player": "Josaiah Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-65",
+          "player": "Josh Priebe",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-66",
+          "player": "Joshua Nichols",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-67",
+          "player": "Jyaire Hill",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-68",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-69",
+          "player": "Kechaun Bennett",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-70",
+          "player": "Kendrick Bell",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-71",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-72",
+          "player": "Keshaun Harris",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-73",
+          "player": "Kody Jones",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-74",
+          "player": "Leon Franklin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-75",
+          "player": "Lugard Edokpayi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-76",
+          "player": "Luke Hamilton",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-77",
+          "player": "Makari Paige",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-78",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-79",
+          "player": "Mason Curtis",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-80",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-81",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-82",
+          "player": "Micah Ka Apana",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-83",
+          "player": "Micah Pollard",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-84",
+          "player": "Myles Hinton",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-85",
+          "player": "Myles Pollard",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-86",
+          "player": "Nathan Efobi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-87",
+          "player": "Noah Howes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-88",
+          "player": "Owen Wafle",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-89",
+          "player": "Peyton O Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-90",
+          "player": "Quinten Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-91",
+          "player": "Raheem Anderson",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-92",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-93",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-94",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-95",
+          "player": "Shomari Stone",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-96",
+          "player": "L0q",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-97",
+          "player": "Tavierre Dunlap",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-98",
+          "player": "Ted Hammond",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-99",
+          "player": "Tj Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-100",
+          "player": "L0q",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-101",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-102",
+          "player": "Tristan Bounds",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-103",
+          "player": "Tyler Mclaurin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-104",
+          "player": "Tyler Morris",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-105",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-106",
+          "player": "William Wagner",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-107",
+          "player": "Zack Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-108",
+          "player": "Zeke Berry",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-2",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-3",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-4",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-5",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-6",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-7",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-8",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-9",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "P-10",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "IC-2",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "IC-3",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "IC-4",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "IC-5",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "CC-2",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "CC-3",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "CC-4",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "CC-5",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "ST-2",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "ST-3",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "ST-4",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "ST-5",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "ST-6",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-2",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-3",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-4",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-5",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "CL-2",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 92,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Aamir Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-2",
+          "player": "Adam Samaha",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-3",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-4",
+          "player": "Amorion Walker",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-5",
+          "player": "Andrew Gentry",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-6",
+          "player": "Andrew Sprague",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-7",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-8",
+          "player": "Blake Frazier",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-9",
+          "player": "Brady Prieskorn",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-10",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-11",
+          "player": "Breeon Ishmail",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-12",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-13",
+          "player": "Channing Goodwin",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-14",
+          "player": "Christian Boivin",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-15",
+          "player": "Cole Cabana",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-16",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-17",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-18",
+          "player": "Connor Jones",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-19",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-20",
+          "player": "Deakon Tonielli",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-21",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-22",
+          "player": "Deyvid Palepale",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-23",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-24",
+          "player": "Dominick Giudice",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-25",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-26",
+          "player": "Enow Etta",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-27",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-28",
+          "player": "Evan Link",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-29",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-30",
+          "player": "Giovanni El-Hadi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-31",
+          "player": "Greg Crippen",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-32",
+          "player": "Greg Tarr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-33",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-34",
+          "player": "I Marion Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-35",
+          "player": "Ike Iwunnah",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-36",
+          "player": "Ja Den Mcburrows",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-37",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-38",
+          "player": "Jacob Oden",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-39",
+          "player": "Jaden Mangham",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-40",
+          "player": "Jadyn Davis",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-41",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-42",
+          "player": "Jake Guarnera",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-43",
+          "player": "Jayden Denegal",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-44",
+          "player": "Jaydon Hood",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-45",
+          "player": "Jeffrey Persi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-46",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-47",
+          "player": "Jo Ziah Edmond",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-48",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-49",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-50",
+          "player": "Josaiah Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-51",
+          "player": "Josh Priebe",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-52",
+          "player": "Jyaire Hill",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-53",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-54",
+          "player": "Kechaun Bennett",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-55",
+          "player": "Kendrick Bell",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-56",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-57",
+          "player": "Keshaun Harris",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-58",
+          "player": "Kody Jones",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-59",
+          "player": "Lugard Edokpayi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-60",
+          "player": "Makari Paige",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-61",
+          "player": "Mason Curtis",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-62",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-63",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-64",
+          "player": "Micah Ka Apana",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-65",
+          "player": "Micah Pollard",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-66",
+          "player": "Myles Hinton",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-67",
+          "player": "Myles Pollard",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-68",
+          "player": "Nathan Efobi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-69",
+          "player": "Owen Wafle",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-70",
+          "player": "Peyton O Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-71",
+          "player": "Quinten Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-72",
+          "player": "Raheem Anderson",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-73",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-74",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-75",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-76",
+          "player": "Tavierre Dunlap",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-77",
+          "player": "Tj Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-78",
+          "player": "L0q",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-79",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-80",
+          "player": "Tristan Bounds",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-81",
+          "player": "Tyler Mclaurin",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-82",
+          "player": "Tyler Morris",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-83",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-84",
+          "player": "William Wagner",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-85",
+          "player": "Zack Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-86",
+          "player": "Zeke Berry",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-120",
+          "player": "Jason Hewlett",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-121",
+          "player": "Jeremiah Lowe",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-122",
+          "player": "Luke Hamilton",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-123",
+          "player": "Brooks Bahr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-124",
+          "player": "Ben Roebuck",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-125",
+          "player": "Ted Hammond",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 36,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-87",
+          "player": "Aamir Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-88",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-89",
+          "player": "Andrew Sprague",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-90",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-91",
+          "player": "Channing Goodwin",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-92",
+          "player": "Christian Boivin",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-93",
+          "player": "Cole Cabana",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-94",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-95",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-96",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-97",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-98",
+          "player": "Greg Tarr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-99",
+          "player": "I Marion Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-100",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-101",
+          "player": "Jaden Mangham",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-102",
+          "player": "Jake Guarnera",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-103",
+          "player": "Jayden Denegal",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-104",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-105",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-106",
+          "player": "Kechaun Bennett",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-107",
+          "player": "Kendrick Bell",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-108",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-109",
+          "player": "Lugard Edokpayi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-110",
+          "player": "Mason Curtis",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-111",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-112",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-113",
+          "player": "Nathan Efobi",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-114",
+          "player": "Peyton O Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-115",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-116",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-117",
+          "player": "Tavierre Dunlap",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-118",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-119",
+          "player": "Zack Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-126",
+          "player": "Luke Hamilton",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-127",
+          "player": "Ben Roebuck",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-128",
+          "player": "Ted Hammond",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-2",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-3",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-4",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-5",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-6",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-7",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-8",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-9",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-10",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-11",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-12",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-13",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-14",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-15",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-16",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-17",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-18",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-19",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-20",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-21",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-22",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-23",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-24",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-25",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-26",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-27",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-28",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-29",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-30",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-31",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "O-32",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-2",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-3",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-4",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-5",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-6",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-7",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-8",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-9",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-10",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-11",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-12",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-13",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-14",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-15",
+          "player": "Alex Orji",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-16",
+          "player": "Benjamin Hall",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-17",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-18",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-19",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-20",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-21",
+          "player": "Jack Tuttle",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-22",
+          "player": "Kalel Mullings",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-23",
+          "player": "Kenneth Grant",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-24",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-25",
+          "player": "Uf0gc",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-26",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-27",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-28",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-29",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-30",
+          "player": "Donovan Edwards",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-31",
+          "player": "Mason Graham",
+          "team": "Michigan"
+        },
+        {
+          "number": "N-32",
+          "player": "Will Johnson",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "black-friday-drop-card",
+      "name": "Black Friday Drop Card",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BF-7",
+          "player": "Colston Loveland",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "timeless",
+      "name": "Timeless",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TL-1",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        }
+      ]
+    }
+  ]
+}

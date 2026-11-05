@@ -1,0 +1,734 @@
+{
+  "id": "2025-onit-athlete-usc-football",
+  "name": "2025 ONIT Athlete USC Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 71,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Alex Payne",
+          "team": "USC"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthony Beavers Jr.",
+          "team": "USC"
+        },
+        {
+          "number": "B-3",
+          "player": "Anthony Lucas",
+          "team": "USC"
+        },
+        {
+          "number": "B-4",
+          "player": "Asante Das",
+          "team": "USC"
+        },
+        {
+          "number": "B-5",
+          "player": "Bishop Fitzgerald",
+          "team": "USC"
+        },
+        {
+          "number": "B-6",
+          "player": "Brady Jung",
+          "team": "USC"
+        },
+        {
+          "number": "B-7",
+          "player": "Brandon Shepherd",
+          "team": "USC"
+        },
+        {
+          "number": "B-8",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "B-9",
+          "player": "Braylon Conley",
+          "team": "USC"
+        },
+        {
+          "number": "B-10",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "B-11",
+          "player": "Caden Chittenden",
+          "team": "USC"
+        },
+        {
+          "number": "B-12",
+          "player": "Carson Tabaracci",
+          "team": "USC"
+        },
+        {
+          "number": "B-13",
+          "player": "Cash Jacobsen",
+          "team": "USC"
+        },
+        {
+          "number": "B-14",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "B-15",
+          "player": "Cian McKelvey",
+          "team": "USC"
+        },
+        {
+          "number": "B-16",
+          "player": "Collin Fasse",
+          "team": "USC"
+        },
+        {
+          "number": "B-17",
+          "player": "DeCarlos Nicholson",
+          "team": "USC"
+        },
+        {
+          "number": "B-18",
+          "player": "Desman Stephens Il",
+          "team": "USC"
+        },
+        {
+          "number": "B-19",
+          "player": "Devan Thompkins",
+          "team": "USC"
+        },
+        {
+          "number": "B-20",
+          "player": "Devin McDonough",
+          "team": "USC"
+        },
+        {
+          "number": "B-21",
+          "player": "DJ Harvey",
+          "team": "USC"
+        },
+        {
+          "number": "B-22",
+          "player": "DJ Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "B-23",
+          "player": "Dylan Gebbia",
+          "team": "USC"
+        },
+        {
+          "number": "B-24",
+          "player": "Eli Sanders",
+          "team": "USC"
+        },
+        {
+          "number": "B-25",
+          "player": "Elijah Newby",
+          "team": "USC"
+        },
+        {
+          "number": "B-26",
+          "player": "Elijah Paige",
+          "team": "USC"
+        },
+        {
+          "number": "B-27",
+          "player": "Erwin Taomi",
+          "team": "USC"
+        },
+        {
+          "number": "B-28",
+          "player": "Garrett Pomerantz",
+          "team": "USC"
+        },
+        {
+          "number": "B-29",
+          "player": "Garrison Madden",
+          "team": "USC"
+        },
+        {
+          "number": "B-30",
+          "player": "Hank Pepper",
+          "team": "USC"
+        },
+        {
+          "number": "B-31",
+          "player": "Hayden Treter",
+          "team": "USC"
+        },
+        {
+          "number": "B-32",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "B-33",
+          "player": "J'Onre Reed",
+          "team": "USC"
+        },
+        {
+          "number": "B-34",
+          "player": "Ja'Kobi Lane",
+          "team": "USC"
+        },
+        {
+          "number": "B-35",
+          "player": "Jack Susnjar",
+          "team": "USC"
+        },
+        {
+          "number": "B-36",
+          "player": "Jaden Richardson",
+          "team": "USC"
+        },
+        {
+          "number": "B-37",
+          "player": "Jadyn Walker",
+          "team": "USC"
+        },
+        {
+          "number": "B-38",
+          "player": "Jamaal Jarrett",
+          "team": "USC"
+        },
+        {
+          "number": "B-39",
+          "player": "James Johnson",
+          "team": "USC"
+        },
+        {
+          "number": "B-40",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "B-41",
+          "player": "Jide Abasiri",
+          "team": "USC"
+        },
+        {
+          "number": "B-42",
+          "player": "Joey Olsen",
+          "team": "USC"
+        },
+        {
+          "number": "B-43",
+          "player": "Josiah Zamora",
+          "team": "USC"
+        },
+        {
+          "number": "B-44",
+          "player": "Justin Tauanuu",
+          "team": "USC"
+        },
+        {
+          "number": "B-45",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "B-46",
+          "player": "Kameryn Fountain",
+          "team": "USC"
+        },
+        {
+          "number": "B-47",
+          "player": "Kash Amos",
+          "team": "USC"
+        },
+        {
+          "number": "B-48",
+          "player": "Kaylon Miller",
+          "team": "USC"
+        },
+        {
+          "number": "B-49",
+          "player": "Keeshawn Silver",
+          "team": "USC"
+        },
+        {
+          "number": "B-50",
+          "player": "Kilian O'Connor",
+          "team": "USC"
+        },
+        {
+          "number": "B-51",
+          "player": "Kobe Pepe",
+          "team": "USC"
+        },
+        {
+          "number": "B-52",
+          "player": "Lake McRee",
+          "team": "USC"
+        },
+        {
+          "number": "B-53",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "B-54",
+          "player": "Makai Saina",
+          "team": "USC"
+        },
+        {
+          "number": "B-55",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-56",
+          "player": "Marquis Gallegos",
+          "team": "USC"
+        },
+        {
+          "number": "B-57",
+          "player": "Micah Banuelos",
+          "team": "USC"
+        },
+        {
+          "number": "B-58",
+          "player": "Prophet Brown",
+          "team": "USC"
+        },
+        {
+          "number": "B-59",
+          "player": "Riley Wormley",
+          "team": "USC"
+        },
+        {
+          "number": "B-60",
+          "player": "Roman Marchetti",
+          "team": "USC"
+        },
+        {
+          "number": "B-61",
+          "player": "Ryan Quintanar",
+          "team": "USC"
+        },
+        {
+          "number": "B-62",
+          "player": "P/k",
+          "team": "USC"
+        },
+        {
+          "number": "B-63",
+          "player": "Sam Huard",
+          "team": "USC"
+        },
+        {
+          "number": "B-64",
+          "player": "Sam Johnson",
+          "team": "USC"
+        },
+        {
+          "number": "B-65",
+          "player": "Ta'Mere Robinson",
+          "team": "USC"
+        },
+        {
+          "number": "B-66",
+          "player": "Tobias Raymond",
+          "team": "USC"
+        },
+        {
+          "number": "B-67",
+          "player": "Travis Leonard",
+          "team": "USC"
+        },
+        {
+          "number": "B-68",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "B-69",
+          "player": "Walker Lyons",
+          "team": "USC"
+        },
+        {
+          "number": "B-70",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "B-71",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "blackout-silver-team-color-125",
+      "name": "Blackout (Silver; Team Color /125)",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "BL-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "BL-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "BL-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "BL-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "BL-6",
+          "player": "Elijah Paige",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-day-shimmer-nitro-1",
+      "name": "City Limits Day (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "CL-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "CL-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "CL-4",
+          "player": "Makai Lemon",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-night-shimmer-nitro-1",
+      "name": "City Limits Night (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "CL-6",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "CL-7",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "CL-8",
+          "player": "Makai Lemon",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "base-signature",
+      "name": "Base Signature",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "S-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "S-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "S-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "S-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-6",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-shimmer-25-or-less",
+      "name": "Team Color Signature Shimmer (/25 or less )",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "S-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "S-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "S-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "S-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-6",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-orbs-10",
+      "name": "Team Color Signature Orbs (/10)",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "S-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "S-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "S-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "S-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-6",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-9",
+      "name": "Silver Signature (/9)",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "S-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "S-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "S-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "S-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-6",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "S-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "S-3",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "S-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "S-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-6",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "film-signature-15",
+      "name": "Film Signature (/15)",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FLS-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "FLS-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "FLS-3",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "FLS-4",
+          "player": "Kamari Ramsey",
+          "team": "USC"
+        },
+        {
+          "number": "FLS-5",
+          "player": "Lake Mcree",
+          "team": "USC"
+        },
+        {
+          "number": "FLS-6",
+          "player": "Makai Lemon",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "fusion-signature-10",
+      "name": "Fusion Signature (/10)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-1",
+          "player": "Makai Lemon",
+          "team": "USC"
+        },
+        {
+          "number": "FS-2",
+          "player": "Bryan Jackson",
+          "team": "USC"
+        },
+        {
+          "number": "FS-3",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "FS-4",
+          "player": "Lake Mcree",
+          "team": "USC"
+        }
+      ]
+    }
+  ]
+}

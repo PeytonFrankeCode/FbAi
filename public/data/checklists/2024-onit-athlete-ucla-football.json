@@ -1,0 +1,1130 @@
+{
+  "id": "2024-onit-athlete-ucla-football",
+  "name": "2024 ONIT Athlete UCLA Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 95,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A.J. Fuimaono",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-3",
+          "player": "Blake Glessner",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-4",
+          "player": "Braden Pegan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-5",
+          "player": "Brett Barry",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-6",
+          "player": "Brody Richter",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-7",
+          "player": "Bryan Addison",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-8",
+          "player": "Caleb Walker",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-9",
+          "player": "Cameron Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-10",
+          "player": "Carson Schwesinger",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-11",
+          "player": "Chase Barry",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-12",
+          "player": "Clint Stephens",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-13",
+          "player": "Collins Acheampong",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-14",
+          "player": "Croix Stewart",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-15",
+          "player": "David Dellenbach",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-16",
+          "player": "Dermaricus Davis",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-17",
+          "player": "Deshun Murrell",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-18",
+          "player": "Devanti Dillard",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-19",
+          "player": "Devin Delgado",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-20",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-21",
+          "player": "Donavyn Pellot",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-22",
+          "player": "Dovid Magna",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-23",
+          "player": "Drew Tuazama",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-24",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-25",
+          "player": "Evan Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-26",
+          "player": "Ezavier Staples",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-27",
+          "player": "Garrett Digiorgio",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-28",
+          "player": "Gary Smith Iii",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-29",
+          "player": "Grant Buckey",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-30",
+          "player": "Grant Gray",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-31",
+          "player": "Henry Hasselbeck",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-32",
+          "player": "Hudson Habermehl",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-33",
+          "player": "Isaiah Carlson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-34",
+          "player": "Isaiah Patterson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-35",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-36",
+          "player": "Jack Clarke",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-37",
+          "player": "Jadyn Marshall",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-38",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-39",
+          "player": "Jamir Benjamin",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-40",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-41",
+          "player": "Jaylan Jeffers",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-42",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-43",
+          "player": "Jensen Somerville",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-44",
+          "player": "Jonjon Vaughns",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-45",
+          "player": "Joseph Firebaugh Jr.",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-46",
+          "player": "Joseph Vaughn",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-47",
+          "player": "Josh Carlin",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-48",
+          "player": "Joshua Dixon",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-49",
+          "player": "Joshua Swift",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-50",
+          "player": "K.J. Wallace",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-51",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-52",
+          "player": "Kanye Clark",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-53",
+          "player": "Kaylin Moore",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-54",
+          "player": "Keanu Williams",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-55",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-56",
+          "player": "Khristian Dunbar-Hawkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-57",
+          "player": "Kwazi Gilmer",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-58",
+          "player": "Larry Edwards Iii",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-59",
+          "player": "Leo Kemp",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-60",
+          "player": "Luke Duncan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-61",
+          "player": "Luke Schuermann",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-62",
+          "player": "Marcus Macneal",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-63",
+          "player": "Mark Schroller",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-64",
+          "player": "Marquise Thorpe-Taylor",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-65",
+          "player": "Marquise Villahermosa",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-66",
+          "player": "Mateen Bhaghani",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-67",
+          "player": "Michael Churich",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-68",
+          "player": "Michael Sullivan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-69",
+          "player": "Michael Sultemeier",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-70",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-71",
+          "player": "Niki Prongos",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-72",
+          "player": "Noah Pulealii",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-73",
+          "player": "Oluwafemi Oladejo",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-74",
+          "player": "Oluwafunto Akinshilo",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-75",
+          "player": "Peter Bario",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-76",
+          "player": "R.J. Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-77",
+          "player": "Ramon Henderson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-78",
+          "player": "Reuben Unije",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-79",
+          "player": "Rico Flores Jr.",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-80",
+          "player": "Salem Abdul-Wahab",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-81",
+          "player": "Sam Summa",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-82",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-83",
+          "player": "Siale Taupaki",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-84",
+          "player": "Sitiveni Havili-Kaufusi",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-85",
+          "player": "Spencer Holstege",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-86",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-87",
+          "player": "Tannen Vagle",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-88",
+          "player": "Travis Drosos",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-89",
+          "player": "Trent Middleton",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-90",
+          "player": "Troy Leigber",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-91",
+          "player": "Ty Lee",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-92",
+          "player": "Walker Andersen",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-93",
+          "player": "Wyatt Mosier",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-94",
+          "player": "Yutaka Mahe",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-95",
+          "player": "Zeke Thomas",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-2",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-3",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-4",
+          "player": "Oluwafemi Oladejo",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-5",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-6",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-7",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-8",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-9",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "P-10",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "IC-2",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "IC-3",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "IC-4",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "IC-5",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-2",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-3",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-4",
+          "player": "Oluwafemi Oladejo",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "ST-2",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        },
+        {
+          "number": "ST-3",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "ST-4",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "ST-5",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Oluwafemi Oladejo",
+          "team": "UCLA"
+        },
+        {
+          "number": "BL-2",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "BL-3",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "BL-4",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        },
+        {
+          "number": "BL-5",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "CL-2",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-2",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-3",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-4",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-5",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-6",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-7",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-8",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-9",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-10",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-21",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-11",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-12",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-13",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-14",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-15",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-16",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-17",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-18",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-19",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-20",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-22",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-2",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-3",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-4",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-5",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-6",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-7",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-8",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-9",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-10",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-23",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-11",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-12",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-13",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-14",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-15",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-16",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-17",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-18",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-19",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-20",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-24",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-21",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "O-22",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-2",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-3",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-4",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-5",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-6",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-7",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-8",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-9",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-10",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-23",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-11",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-12",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-13",
+          "player": "Moliki Matavao",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-14",
+          "player": "Keegan Jones",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-15",
+          "player": "Anthony Adkins",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-16",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-17",
+          "player": "Jay Toia",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-18",
+          "player": "Devin Kirkwood",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-19",
+          "player": "Jaylin Davies",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-20",
+          "player": "Kain Medrano",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-24",
+          "player": "T.J. Harden",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-21",
+          "player": "Ethan Garbers",
+          "team": "UCLA"
+        },
+        {
+          "number": "N-22",
+          "player": "J.Michael Sturdivant",
+          "team": "UCLA"
+        }
+      ]
+    }
+  ]
+}
