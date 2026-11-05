@@ -1,0 +1,1138 @@
+{
+  "id": "2026-onit-athlete-oklahoma-football",
+  "name": "2026 ONIT Athlete Oklahoma Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 101,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Oklahoma Football",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-1",
+          "player": "Adepoju Adebawore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-2",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-3",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-4",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-5",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-6",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-7",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-8",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-9",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-10",
+          "player": "Kip Lewis",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-11",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-12",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-13",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-14",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-15",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-16",
+          "player": "Ace Hodges",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-17",
+          "player": "Alex Shieldnight",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-18",
+          "player": "Andy Bass",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-19",
+          "player": "Ben Anderson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-20",
+          "player": "Bergin Kysar",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-21",
+          "player": "Bishop Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-22",
+          "player": "Bowe Bentley",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-23",
+          "player": "Caleb Nitta",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-24",
+          "player": "Casen Calmus",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-25",
+          "player": "CJ Nickson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-26",
+          "player": "Dane Bathurst",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-27",
+          "player": "Daniel Akinkunmi",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-28",
+          "player": "Danny Okoye",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-29",
+          "player": "Darius Afalava",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-30",
+          "player": "Deacon Schmitt",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-31",
+          "player": "Derrick Johnson II",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-32",
+          "player": "DeZephen Walker",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-33",
+          "player": "Elgee Webster",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-34",
+          "player": "Eli Merck",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-35",
+          "player": "Gabe Sawchuk",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-36",
+          "player": "Grayson Miller",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-37",
+          "player": "Gunnar Allen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-38",
+          "player": "Hayden Hansen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-39",
+          "player": "Heath Ozaeta",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-40",
+          "player": "Ivan Carreon",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-41",
+          "player": "Jack Van Dorselaer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-42",
+          "player": "Jacob Henry",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-43",
+          "player": "Jacob Ulrich",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-44",
+          "player": "Jacobe Johnson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-45",
+          "player": "Jahsiear Rogers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-46",
+          "player": "Jake Maikkula",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-47",
+          "player": "Jer'Michael Carter",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-48",
+          "player": "Jeremiah Newcombe",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-49",
+          "player": "John Locke Jr.",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-50",
+          "player": "Jonathan Hatton Jr.",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-51",
+          "player": "Kade McIntyre",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-52",
+          "player": "Kenneth Wermy",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-53",
+          "player": "Kenny Ozowalu",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-54",
+          "player": "Kristan Moore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-55",
+          "player": "Liam Evans",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-56",
+          "player": "Lloyd Avant",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-57",
+          "player": "Mackenzie Alleyne",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-58",
+          "player": "Marcus James",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-59",
+          "player": "Markel Ford",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-60",
+          "player": "Michael Boganowski",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-61",
+          "player": "Michael Fasusi",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-62",
+          "player": "Nigel Smith II",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-63",
+          "player": "Niko Jandreau",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-64",
+          "player": "Noah Best",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-65",
+          "player": "Omarion Robinson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-66",
+          "player": "Peyton Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-67",
+          "player": "Peyton Joseph",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-68",
+          "player": "Preston Mickens",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-69",
+          "player": "Preston Tarpley",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-70",
+          "player": "Prince Ijioma",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-71",
+          "player": "Reed DeQuasie",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-72",
+          "player": "Rocky Beers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-73",
+          "player": "Ryan Fodje",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-74",
+          "player": "Ryder Mix",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-75",
+          "player": "Sean Hutton",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-76",
+          "player": "Seth Freeman",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-77",
+          "player": "Tate Sandell",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-78",
+          "player": "Taylor Heim",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-79",
+          "player": "Taylor Wein",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-80",
+          "player": "Trace Rudd",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-81",
+          "player": "Trent Wilson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-82",
+          "player": "Trey Brown",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-83",
+          "player": "Trynae Washington",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-84",
+          "player": "Whitt Newbauer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-85",
+          "player": "Wyatt Gilmore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-1",
+          "player": "Adepoju Adebawore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-2",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-3",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-4",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-5",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-6",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-7",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-8",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-9",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-10",
+          "player": "Kip Lewis",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-11",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-12",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-13",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-14",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "B-15",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Adepoju Adebawore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-3",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-4",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-6",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-7",
+          "player": "Peyton Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-8",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-9",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-10",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Adepoju Adebawore",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-3",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-4",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-6",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-7",
+          "player": "Peyton Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-8",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-9",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CC-10",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CL-2",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CL-3",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CL-2",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "CL-3",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-2",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-4",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-5",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-2",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-4",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "DS-5",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-2",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-3",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-4",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-5",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-6",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-7",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-8",
+          "player": "Kip Lewis",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-9",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-10",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-2",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-3",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-4",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-5",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-6",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-7",
+          "player": "Jayden Jackson",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-8",
+          "player": "Kip Lewis",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-9",
+          "player": "Eli Bowen",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "F-10",
+          "player": "Cole Sullivan",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GD-2",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GD-3",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-2",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-3",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-4",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-5",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-6",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "John Mateer",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-2",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-3",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-4",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-5",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "GA-6",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-2",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-3",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-4",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-5",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "David Stone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-2",
+          "player": "Isaiah Sategna III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-3",
+          "player": "Tory Blaylock",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-4",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "H-5",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-2",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-3",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-4",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-5",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-6",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Courtland Guillory",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-2",
+          "player": "Elijah Thomas",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-3",
+          "player": "Parker Livingstone",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-4",
+          "player": "Reggie Powers III",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-5",
+          "player": "Trell Harris",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "NH-6",
+          "player": "Xavier Robinson",
+          "team": "Oklahoma"
+        }
+      ]
+    }
+  ]
+}

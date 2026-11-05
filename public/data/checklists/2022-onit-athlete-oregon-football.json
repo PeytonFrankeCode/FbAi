@@ -1,0 +1,304 @@
+{
+  "id": "2022-onit-athlete-oregon-football",
+  "name": "2022 ONIT Athlete Oregon Football",
+  "year": 2022,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "card-pack-list",
+      "name": "CARD PACK LIST",
+      "category": "insert",
+      "totalCards": 57,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Christian Gonzalez DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "2",
+          "player": "Mar’Keise Irving RB",
+          "team": "Oregon"
+        },
+        {
+          "number": "3",
+          "player": "Kris Hutson",
+          "team": "Oregon"
+        },
+        {
+          "number": "4",
+          "player": "DJ Johnson",
+          "team": "Oregon"
+        },
+        {
+          "number": "5",
+          "player": "Brandon Dorlus DE",
+          "team": "Oregon"
+        },
+        {
+          "number": "6",
+          "player": "Terrance Ferguson TE",
+          "team": "Oregon"
+        },
+        {
+          "number": "7",
+          "player": "Bennett Williams DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "8",
+          "player": "Anthony Jones OLB",
+          "team": "Oregon"
+        },
+        {
+          "number": "9",
+          "player": "Isaah Crocker",
+          "team": "Oregon"
+        },
+        {
+          "number": "10",
+          "player": "Jahlil Florence DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "11",
+          "player": "Steve Stephens IV DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "12",
+          "player": "Dontae Manning DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "13",
+          "player": "Moliki Matavao TE",
+          "team": "Oregon"
+        },
+        {
+          "number": "14",
+          "player": "Jaden Navarrette OLB",
+          "team": "Oregon"
+        },
+        {
+          "number": "15",
+          "player": "Bo Nix",
+          "team": "Oregon"
+        },
+        {
+          "number": "16",
+          "player": "Trikweze Bridges DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "17",
+          "player": "Troy Franklin",
+          "team": "Oregon"
+        },
+        {
+          "number": "18",
+          "player": "Daymon David DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "19",
+          "player": "Jake Van Dyne QB",
+          "team": "Oregon"
+        },
+        {
+          "number": "20",
+          "player": "Bryan Addison DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "21",
+          "player": "Ty Thompson",
+          "team": "Oregon"
+        },
+        {
+          "number": "22",
+          "player": "Justius Lowe",
+          "team": "Oregon"
+        },
+        {
+          "number": "23",
+          "player": "Khamari Terrell DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "24",
+          "player": "Isaiah Brevard WR",
+          "team": "Oregon"
+        },
+        {
+          "number": "25",
+          "player": "Marcus Sanders QB",
+          "team": "Oregon"
+        },
+        {
+          "number": "26",
+          "player": "Kyler Kasper",
+          "team": "Oregon"
+        },
+        {
+          "number": "27",
+          "player": "Mase Funa",
+          "team": "Oregon"
+        },
+        {
+          "number": "28",
+          "player": "Caleb Chapman WR",
+          "team": "Oregon"
+        },
+        {
+          "number": "29",
+          "player": "Jamal Hill",
+          "team": "Oregon"
+        },
+        {
+          "number": "30",
+          "player": "Jordan James",
+          "team": "Oregon"
+        },
+        {
+          "number": "31",
+          "player": "Jalil Tucker",
+          "team": "Oregon"
+        },
+        {
+          "number": "32",
+          "player": "Keith Brown",
+          "team": "Oregon"
+        },
+        {
+          "number": "33",
+          "player": "Darren Barkins DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "34",
+          "player": "Noah Whittington RB",
+          "team": "Oregon"
+        },
+        {
+          "number": "35",
+          "player": "Chase Cota",
+          "team": "Oregon"
+        },
+        {
+          "number": "36",
+          "player": "Trejon Williams DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "37",
+          "player": "JJ Greenfield",
+          "team": "Oregon"
+        },
+        {
+          "number": "38",
+          "player": "Brison Cobbins RB",
+          "team": "Oregon"
+        },
+        {
+          "number": "39",
+          "player": "Jonathan Flowe DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "40",
+          "player": "Ellis Bynum",
+          "team": "Oregon"
+        },
+        {
+          "number": "41",
+          "player": "Devon Jackson ILB",
+          "team": "Oregon"
+        },
+        {
+          "number": "42",
+          "player": "Preston Alford RB",
+          "team": "Oregon"
+        },
+        {
+          "number": "43",
+          "player": "Avante Dickerson DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "44",
+          "player": "Dominic Stephens DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "45",
+          "player": "Donovan Dalton DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "46",
+          "player": "La’Vaughn Luellen RB",
+          "team": "Oregon"
+        },
+        {
+          "number": "47",
+          "player": "Jeffrey Bassa",
+          "team": "Oregon"
+        },
+        {
+          "number": "48",
+          "player": "Aaron Smith",
+          "team": "Oregon"
+        },
+        {
+          "number": "49",
+          "player": "Harrison Taggart ILB",
+          "team": "Oregon"
+        },
+        {
+          "number": "50",
+          "player": "Micah Roth",
+          "team": "Oregon"
+        },
+        {
+          "number": "51",
+          "player": "Timon Davis",
+          "team": "Oregon"
+        },
+        {
+          "number": "52",
+          "player": "Max Wysocki",
+          "team": "Oregon"
+        },
+        {
+          "number": "53",
+          "player": "Rayquan Williams DB",
+          "team": "Oregon"
+        },
+        {
+          "number": "54",
+          "player": "Kade Wisher",
+          "team": "Oregon"
+        },
+        {
+          "number": "55",
+          "player": "Dane Sipos",
+          "team": "Oregon"
+        },
+        {
+          "number": "56",
+          "player": "Sir Mells",
+          "team": "Oregon"
+        },
+        {
+          "number": "200",
+          "player": "total",
+          "team": "Oregon"
+        }
+      ]
+    }
+  ]
+}

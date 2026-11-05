@@ -1,0 +1,648 @@
+{
+  "id": "2025-onit-gravity-florida-football",
+  "name": "2025 ONIT Gravity Florida Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Chiles",
+          "team": "Florida"
+        },
+        {
+          "number": "B-2",
+          "player": "Aaron Gates",
+          "team": "Florida"
+        },
+        {
+          "number": "B-3",
+          "player": "Aaron Williams",
+          "team": "Florida"
+        },
+        {
+          "number": "B-4",
+          "player": "Aidan Mizell",
+          "team": "Florida"
+        },
+        {
+          "number": "B-5",
+          "player": "Aidan Warner",
+          "team": "Florida"
+        },
+        {
+          "number": "B-6",
+          "player": "Alex Gonzalez",
+          "team": "Florida"
+        },
+        {
+          "number": "B-7",
+          "player": "Alfonzo Allen Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-8",
+          "player": "Amir Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-9",
+          "player": "Anthony Rubio",
+          "team": "Florida"
+        },
+        {
+          "number": "B-10",
+          "player": "Austin Barber",
+          "team": "Florida"
+        },
+        {
+          "number": "B-11",
+          "player": "Brayden Slade",
+          "team": "Florida"
+        },
+        {
+          "number": "B-12",
+          "player": "Brien Taylor Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-13",
+          "player": "Cahron Rackley",
+          "team": "Florida"
+        },
+        {
+          "number": "B-14",
+          "player": "Caden Jones",
+          "team": "Florida"
+        },
+        {
+          "number": "B-15",
+          "player": "Cameron Kossmann",
+          "team": "Florida"
+        },
+        {
+          "number": "B-16",
+          "player": "Chad Gasper Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-17",
+          "player": "Charles Emanuel III",
+          "team": "Florida"
+        },
+        {
+          "number": "B-18",
+          "player": "Clay Millen",
+          "team": "Florida"
+        },
+        {
+          "number": "B-19",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-20",
+          "player": "Debraun Hampton",
+          "team": "Florida"
+        },
+        {
+          "number": "B-21",
+          "player": "Devin Moore",
+          "team": "Florida"
+        },
+        {
+          "number": "B-22",
+          "player": "Dijon Johnson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-23",
+          "player": "George Gumbs Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-24",
+          "player": "Grayson Howard",
+          "team": "Florida"
+        },
+        {
+          "number": "B-25",
+          "player": "Harrison Bailey",
+          "team": "Florida"
+        },
+        {
+          "number": "B-26",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "B-27",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "B-28",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-29",
+          "player": "Jackson Wade",
+          "team": "Florida"
+        },
+        {
+          "number": "B-30",
+          "player": "Jaden Edgecombe",
+          "team": "Florida"
+        },
+        {
+          "number": "B-31",
+          "player": "Jaden Robinson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-32",
+          "player": "Jake Slaughter",
+          "team": "Florida"
+        },
+        {
+          "number": "B-33",
+          "player": "Jake Xeller",
+          "team": "Florida"
+        },
+        {
+          "number": "B-34",
+          "player": "Jamari Lyons",
+          "team": "Florida"
+        },
+        {
+          "number": "B-35",
+          "player": "Javion Toombs",
+          "team": "Florida"
+        },
+        {
+          "number": "B-36",
+          "player": "Kahleil Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-37",
+          "player": "Kamran James",
+          "team": "Florida"
+        },
+        {
+          "number": "B-38",
+          "player": "KD Daniels",
+          "team": "Florida"
+        },
+        {
+          "number": "B-39",
+          "player": "Kelvin Jimenez",
+          "team": "Florida"
+        },
+        {
+          "number": "B-40",
+          "player": "Knijeah Harris",
+          "team": "Florida"
+        },
+        {
+          "number": "B-41",
+          "player": "Kofi Asare",
+          "team": "Florida"
+        },
+        {
+          "number": "B-42",
+          "player": "Layne Swafford",
+          "team": "Florida"
+        },
+        {
+          "number": "B-43",
+          "player": "LJ Mccray",
+          "team": "Florida"
+        },
+        {
+          "number": "B-44",
+          "player": "Matthew Kade",
+          "team": "Florida"
+        },
+        {
+          "number": "B-45",
+          "player": "Micah Jones",
+          "team": "Florida"
+        },
+        {
+          "number": "B-46",
+          "player": "Micheal Caraway Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-47",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "B-48",
+          "player": "Naeshaun Montgomery",
+          "team": "Florida"
+        },
+        {
+          "number": "B-49",
+          "player": "Nicolas Flynn",
+          "team": "Florida"
+        },
+        {
+          "number": "B-50",
+          "player": "Scott Isacks",
+          "team": "Florida"
+        },
+        {
+          "number": "B-51",
+          "player": "Sebastian Scott",
+          "team": "Florida"
+        },
+        {
+          "number": "B-52",
+          "player": "Tank Hawkins",
+          "team": "Florida"
+        },
+        {
+          "number": "B-53",
+          "player": "Taylor Spierto",
+          "team": "Florida"
+        },
+        {
+          "number": "B-54",
+          "player": "Teddy Foster",
+          "team": "Florida"
+        },
+        {
+          "number": "B-55",
+          "player": "TJ Abrams",
+          "team": "Florida"
+        },
+        {
+          "number": "B-56",
+          "player": "Tony Livingston",
+          "team": "Florida"
+        },
+        {
+          "number": "B-57",
+          "player": "Trey Smack",
+          "team": "Florida"
+        },
+        {
+          "number": "B-58",
+          "player": "Treyaun Webb",
+          "team": "Florida"
+        },
+        {
+          "number": "B-59",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        },
+        {
+          "number": "B-60",
+          "player": "Vincent Brown Jr.",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-4",
+          "player": "Aidan Mizell",
+          "team": "Florida"
+        },
+        {
+          "number": "B-19",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-23",
+          "player": "George Gumbs Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-25",
+          "player": "Harrison Bailey",
+          "team": "Florida"
+        },
+        {
+          "number": "B-27",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "B-47",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "B-52",
+          "player": "Tank Hawkins",
+          "team": "Florida"
+        },
+        {
+          "number": "B-59",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        },
+        {
+          "number": "B-4",
+          "player": "Aidan Mizell",
+          "team": "Florida"
+        },
+        {
+          "number": "B-19",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "B-23",
+          "player": "George Gumbs Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "B-25",
+          "player": "Harrison Bailey",
+          "team": "Florida"
+        },
+        {
+          "number": "B-27",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "B-47",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "B-52",
+          "player": "Tank Hawkins",
+          "team": "Florida"
+        },
+        {
+          "number": "B-59",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "HD-2",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "HD-3",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-4",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "HD-5",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "HD-6",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        },
+        {
+          "number": "SD-2",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "SD-3",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 26,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-4",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        },
+        {
+          "number": "SD-5",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "SD-6",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Florida"
+        },
+        {
+          "number": "W-1",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-2",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-3",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-4",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-5",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-6",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "W-7",
+          "player": "J. Michael Sturdivant",
+          "team": "Florida"
+        },
+        {
+          "number": "G-1",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "G-2",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "G-3",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "G-4",
+          "player": "KD Daniels",
+          "team": "Florida"
+        },
+        {
+          "number": "G-5",
+          "player": "Treyaun Webb",
+          "team": "Florida"
+        },
+        {
+          "number": "G-6",
+          "player": "Grayson Howard",
+          "team": "Florida"
+        },
+        {
+          "number": "G-7",
+          "player": "Devin Moore",
+          "team": "Florida"
+        },
+        {
+          "number": "S-1",
+          "player": "Myles Graham",
+          "team": "Florida"
+        },
+        {
+          "number": "S-2",
+          "player": "Tyreak Sapp",
+          "team": "Florida"
+        },
+        {
+          "number": "S-3",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "S-4",
+          "player": "KD Daniels",
+          "team": "Florida"
+        },
+        {
+          "number": "S-5",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "S-6",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "S-7",
+          "player": "George Gumbs Jr.",
+          "team": "Florida"
+        },
+        {
+          "number": "S-8",
+          "player": "Dijon Johnson",
+          "team": "Florida"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Dallas Wilson",
+          "team": "Florida"
+        },
+        {
+          "number": "GS-2",
+          "player": "Ja'Kobi Jackson",
+          "team": "Florida"
+        },
+        {
+          "number": "GS-3",
+          "player": "Hayden Hansen",
+          "team": "Florida"
+        },
+        {
+          "number": "GS-4",
+          "player": "KD Daniels",
+          "team": "Florida"
+        }
+      ]
+    }
+  ]
+}

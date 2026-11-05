@@ -1,0 +1,653 @@
+{
+  "id": "2025-onit-gravity-florida-state-football",
+  "name": "2025 ONIT Gravity Florida State Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adrian Medley",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-2",
+          "player": "AJ Cottrill",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-3",
+          "player": "Amaree Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-4",
+          "player": "Ashlynd Barker",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-5",
+          "player": "BJ Gibson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-6",
+          "player": "Blake Nichelson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-7",
+          "player": "Brock Glenn",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-8",
+          "player": "Cai Bates",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-9",
+          "player": "Caleb Lavallee",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-10",
+          "player": "Camdon Frier",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-11",
+          "player": "Caziah Holmes",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-12",
+          "player": "Charles Lester III",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-13",
+          "player": "Conrad Hussey",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-14",
+          "player": "Daniel Lyons",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-15",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-16",
+          "player": "Deamontae Diggs",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-17",
+          "player": "Deante Mccray",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-18",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-19",
+          "player": "Earl Little Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-20",
+          "player": "Edwin Joseph",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-21",
+          "player": "Elijah Herring",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-22",
+          "player": "Elijah Moore",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-23",
+          "player": "Ethan Pritchard",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-24",
+          "player": "Gunnar Hansen",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-25",
+          "player": "Ja'Bril Rawls",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-26",
+          "player": "Jamari Howard",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-27",
+          "player": "James Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-28",
+          "player": "Jamorie Flagg",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-29",
+          "player": "Jayden Parrish",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-30",
+          "player": "Jaylin Lucas",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-31",
+          "player": "Jayson Jenkins",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-32",
+          "player": "Jayvan Boggs",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-33",
+          "player": "Justin Cryer",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-34",
+          "player": "K.J. Kirkland",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-35",
+          "player": "Kam Davis",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-36",
+          "player": "Kevin Sperry",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-37",
+          "player": "Kevin Wynn",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-38",
+          "player": "KJ Sampson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-39",
+          "player": "La Jessie Harrold",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-40",
+          "player": "Landen Thomas",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-41",
+          "player": "Lawayne Mccoy",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-42",
+          "player": "Lucas Simmons",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-43",
+          "player": "Luke Petitbon",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-44",
+          "player": "Mandrell Desir",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-45",
+          "player": "Markeston Douglas",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-46",
+          "player": "Micah Pettus",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-47",
+          "player": "Micahi Danzy",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-48",
+          "player": "Quindarrius Jones",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-49",
+          "player": "Randy Pittman Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-50",
+          "player": "Richie Leonard IV",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-51",
+          "player": "Ricky Knight III",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-52",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-53",
+          "player": "Shamar Arnoux",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-54",
+          "player": "Shyheim Brown",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-55",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-56",
+          "player": "Stefon Thompson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-57",
+          "player": "Tae'Shaun Gelsey",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-58",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-59",
+          "player": "Tyeland Coleman",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-60",
+          "player": "Tylon Lee",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-7",
+          "player": "Brock Glenn",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-11",
+          "player": "Caziah Holmes",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-15",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-18",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-21",
+          "player": "Elijah Herring",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-22",
+          "player": "Elijah Moore",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-52",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-55",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-56",
+          "player": "Stefon Thompson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-58",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-7",
+          "player": "Brock Glenn",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-11",
+          "player": "Caziah Holmes",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-15",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-18",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-21",
+          "player": "Elijah Herring",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-22",
+          "player": "Elijah Moore",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-52",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-55",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-56",
+          "player": "Stefon Thompson",
+          "team": "Florida State"
+        },
+        {
+          "number": "B-58",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "HD-2",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-3",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "HD-4",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "SD-2",
+          "player": "Caziah Holmes",
+          "team": "Florida State"
+        },
+        {
+          "number": "SD-3",
+          "player": "Lawayne Mccoy",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-4",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "SD-5",
+          "player": "Caziah Holmes",
+          "team": "Florida State"
+        },
+        {
+          "number": "SD-6",
+          "player": "Lawayne Mccoy",
+          "team": "Florida State"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-1",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-2",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-3",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-4",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-5",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-6",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "W-7",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-1",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-2",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-3",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-4",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-5",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-6",
+          "player": "Shyheim Brown",
+          "team": "Florida State"
+        },
+        {
+          "number": "G-7",
+          "player": "Landen Thomas",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-1",
+          "player": "Squirrel White",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-2",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-3",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-4",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-5",
+          "player": "Micah Pettus",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-6",
+          "player": "Cai Bates",
+          "team": "Florida State"
+        },
+        {
+          "number": "S-7",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Duce Robinson",
+          "team": "Florida State"
+        },
+        {
+          "number": "GS-2",
+          "player": "Tommy Castellanos",
+          "team": "Florida State"
+        },
+        {
+          "number": "GS-3",
+          "player": "Roydell Williams",
+          "team": "Florida State"
+        },
+        {
+          "number": "GS-4",
+          "player": "Darrell Jackson Jr.",
+          "team": "Florida State"
+        }
+      ]
+    }
+  ]
+}

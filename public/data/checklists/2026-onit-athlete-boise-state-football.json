@@ -1,0 +1,1167 @@
+{
+  "id": "2026-onit-athlete-boise-state-football",
+  "name": "2026 ONIT Athlete Boise State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 132,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Boise State Football",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-1",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-2",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-4",
+          "player": "Darren Morris",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-5",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-7",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-8",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-9",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-10",
+          "player": "Max Stege",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-11",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-12",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-13",
+          "player": "Sherrod Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-14",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-15",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-16",
+          "player": "Adam Auston",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-17",
+          "player": "Adonte Medley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-18",
+          "player": "AJ Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-19",
+          "player": "AJ Logan",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-20",
+          "player": "AJ Maes",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-21",
+          "player": "Akeem Wright",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-22",
+          "player": "Alma Taleni",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-23",
+          "player": "Andrew Rheubottom Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-24",
+          "player": "Arthur De Boachie",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-25",
+          "player": "Ashton Kershner",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-26",
+          "player": "Austin Terry",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-27",
+          "player": "Beckham Hofland",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-28",
+          "player": "Bethel Imasuen",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-29",
+          "player": "Bol Bol",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-30",
+          "player": "Bradan Scott",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-31",
+          "player": "Caden Kellow",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-32",
+          "player": "Cam Jamerson",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-33",
+          "player": "Canaan Moore",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-34",
+          "player": "Carson Rasmussen",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-35",
+          "player": "Carter Kuchenbuch",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-36",
+          "player": "Cash Herrera",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-37",
+          "player": "Cole Miller",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-38",
+          "player": "Colton Boomer",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-39",
+          "player": "Connor Lagrow",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-40",
+          "player": "Connor Warkentin",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-41",
+          "player": "Corey Webb Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-42",
+          "player": "Daniil Starykh",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-43",
+          "player": "David Latu",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-44",
+          "player": "Davin Hill",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-45",
+          "player": "Daylon Metoyer",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-46",
+          "player": "De'Shawn Toilolo",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-47",
+          "player": "Demetrius Freeney Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-48",
+          "player": "Derek Ganter Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-49",
+          "player": "Deuce Alailefaleula",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-50",
+          "player": "Dom Calhoun",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-51",
+          "player": "Franklyn Johnson Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-52",
+          "player": "Gavin Packer",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-53",
+          "player": "Greg Bienvenue",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-54",
+          "player": "Gustaf Henriks Ras",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-55",
+          "player": "Hakeim Smalls",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-56",
+          "player": "Harry Stewart III",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-57",
+          "player": "Jackson Taylor",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-58",
+          "player": "Jacob Arbuckle II",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-59",
+          "player": "Jacob Tracy",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-60",
+          "player": "Jaden Williams",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-61",
+          "player": "Jake Ripp",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-62",
+          "player": "Jake Steele",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-63",
+          "player": "Jameson Perry",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-64",
+          "player": "Jason Steele",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-65",
+          "player": "Jeremyah Lane",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-66",
+          "player": "Jerico Washington Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-67",
+          "player": "Josiah Alanis",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-68",
+          "player": "Juelz Goff",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-69",
+          "player": "Kaden Anderson",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-70",
+          "player": "Kamryn Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-71",
+          "player": "Keawe Browne",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-72",
+          "player": "Keilan Chavies",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-73",
+          "player": "Kole Cronin",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-74",
+          "player": "Kyle Cox",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-75",
+          "player": "Kyle Hall",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-76",
+          "player": "Lincoln Dunn",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-77",
+          "player": "Logan Brantley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-78",
+          "player": "Lopez Sanusi",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-79",
+          "player": "Madden Soliai",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-80",
+          "player": "Mana Tuioti",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-81",
+          "player": "Mariyon Sloan",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-82",
+          "player": "Markell Bowens",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-83",
+          "player": "Max Cutforth",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-84",
+          "player": "Michael Madrie",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-85",
+          "player": "Mikaio Edward",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-86",
+          "player": "Oscar Doyle",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-87",
+          "player": "Parker Perkins",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-88",
+          "player": "Paz St. John",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-89",
+          "player": "Quinton Brown",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-90",
+          "player": "Rocky Dunn",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-91",
+          "player": "Roger Carreon",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-92",
+          "player": "Roman Caywood",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-93",
+          "player": "Roman Tillmon",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-94",
+          "player": "Romeo Carter",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-95",
+          "player": "Rowan Rupp",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-96",
+          "player": "Ryan Brekke",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-97",
+          "player": "Ryder Swanson",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-98",
+          "player": "Sam Brooks",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-99",
+          "player": "Sterling Lane II",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-100",
+          "player": "Stewart Taufa",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-101",
+          "player": "Sua Faleagafua",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-102",
+          "player": "Syncere Brackett-Lambey",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-103",
+          "player": "Taebron Bennie-Powell",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-104",
+          "player": "Tahj Crutchfield",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-105",
+          "player": "Timothy Mitchell",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-106",
+          "player": "Travis Anderson",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-107",
+          "player": "Trey Tolmaire",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-108",
+          "player": "Troy Grizzle",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-109",
+          "player": "Ty Tanner",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-110",
+          "player": "Tyler Ethridge",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-111",
+          "player": "Tyler Himebauch",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-112",
+          "player": "Zander Esty",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-113",
+          "player": "Zeke Martinez",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-114",
+          "player": "Zyhaire Lewis",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-115",
+          "player": "North End Zone Expansion",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-116",
+          "player": "Years Of The Blue",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-1",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-2",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-4",
+          "player": "Darren Morris",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-5",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-7",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-8",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-9",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-10",
+          "player": "Max Stege",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-11",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-12",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-13",
+          "player": "Sherrod Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-14",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-15",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Darren Morris",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jake Ripp",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Roman Tillmon",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Darren Morris",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jake Ripp",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Roman Tillmon",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-4",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "CL-5",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "CL-6",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift",
+      "name": "Dynamic Shift",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Darren Morris",
+          "team": "Boise State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-2",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-3",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-4",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-5",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-6",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-7",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-8",
+          "player": "Max Stege",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-9",
+          "player": "Sherrod Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-10",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-2",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-3",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-4",
+          "player": "Terrious Favors",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-5",
+          "player": "Rasean Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-6",
+          "player": "Qumonte Williams Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-7",
+          "player": "Jaden Mickey",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-8",
+          "player": "Max Stege",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-9",
+          "player": "Sherrod Smith",
+          "team": "Boise State"
+        },
+        {
+          "number": "F-10",
+          "player": "Matt Wagner",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "GD-2",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "GD-3",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-2",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-3",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-4",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-5",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-2",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-3",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-4",
+          "player": "Jayden Virgin-Morgan",
+          "team": "Boise State"
+        },
+        {
+          "number": "H-5",
+          "player": "Sire Gaines",
+          "team": "Boise State"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,703 @@
+{
+  "id": "2025-onit-gravity-nebraska-football",
+  "name": "2025 ONIT Gravity Nebraska Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aidan Flege",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-2",
+          "player": "Amare Sanders",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-3",
+          "player": "Ashton Murphy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-4",
+          "player": "Blye Hill",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-5",
+          "player": "Bode Soukup",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-6",
+          "player": "Brice Turner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-7",
+          "player": "Caleb Benning",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-8",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-9",
+          "player": "Carter Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-10",
+          "player": "Cayden Echternach",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-11",
+          "player": "Christian Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-12",
+          "player": "Connor Schutt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-13",
+          "player": "Conor Connealy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-14",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-15",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-16",
+          "player": "Danny King",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-17",
+          "player": "Dawson Merritt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-18",
+          "player": "Derek Branch",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-19",
+          "player": "Derek Wacker",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-20",
+          "player": "Deshon Singleton",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-21",
+          "player": "Dylan Parrott",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-22",
+          "player": "Dylan Rogers",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-23",
+          "player": "Elijah Jeudy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-24",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-25",
+          "player": "Eric Ingwerson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-26",
+          "player": "Ethan Duda",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-27",
+          "player": "Gage Stenger",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-28",
+          "player": "Gunnar Gottula",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-29",
+          "player": "Hayes Miller",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-30",
+          "player": "Heinrich Haarberg",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-31",
+          "player": "Henry Lutovsky",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-32",
+          "player": "Izaac Dickey",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-33",
+          "player": "Jacob Bower",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-34",
+          "player": "Jaidyn Doss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-35",
+          "player": "Jalyn Gramstad",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-36",
+          "player": "Jamir Conn",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-37",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-38",
+          "player": "Javin Wright",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-39",
+          "player": "Jaylen George",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-40",
+          "player": "Jeremiah Charles",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Ochoa",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-42",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-43",
+          "player": "Keelan Smith",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-44",
+          "player": "Keona Davis",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-45",
+          "player": "Kwinten Ives",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-46",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-47",
+          "player": "Luke Longval",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-48",
+          "player": "Malcolm Hartzog Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-49",
+          "player": "Mario Buford",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-50",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-51",
+          "player": "Mason Goldman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-52",
+          "player": "Michael Booker III",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-53",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-54",
+          "player": "Roman Mangini",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-55",
+          "player": "Rowdy Bauer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-56",
+          "player": "Sam Sledge",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-57",
+          "player": "Sua Lefotu",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-58",
+          "player": "Trent Uhlir",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-59",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-60",
+          "player": "Willis Mcgahee IV",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-14",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-15",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-24",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-32",
+          "player": "Izaac Dickey",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-38",
+          "player": "Javin Wright",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-45",
+          "player": "Kwinten Ives",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-46",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-49",
+          "player": "Mario Buford",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-50",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-52",
+          "player": "Michael Booker III",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-14",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-15",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-24",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-32",
+          "player": "Izaac Dickey",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-38",
+          "player": "Javin Wright",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-45",
+          "player": "Kwinten Ives",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-46",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-49",
+          "player": "Mario Buford",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-50",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-52",
+          "player": "Michael Booker III",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "HD-2",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "HD-3",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-4",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "HD-5",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "HD-6",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "SD-2",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "SD-3",
+          "player": "Malcolm Hartzog Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 29,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-4",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "SD-5",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "SD-6",
+          "player": "Malcolm Hartzog Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-1",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-2",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-3",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-4",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-5",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-6",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "W-7",
+          "player": "Dane Key",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-1",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-2",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-3",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-4",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-5",
+          "player": "Heinrich Haarberg",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-6",
+          "player": "Henry Lutovsky",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-7",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "G-8",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-1",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-2",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-3",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-4",
+          "player": "Malcolm Hartzog Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-5",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-6",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-7",
+          "player": "Heinrich Haarberg",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-8",
+          "player": "Henry Lutovsky",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-9",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-10",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Emmett Johnson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-2",
+          "player": "Marques Buford Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-3",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-4",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-5",
+          "player": "Heinrich Haarberg",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-6",
+          "player": "Henry Lutovsky",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-7",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GS-8",
+          "player": "Cortez Mills",
+          "team": "Nebraska"
+        }
+      ]
+    }
+  ]
+}

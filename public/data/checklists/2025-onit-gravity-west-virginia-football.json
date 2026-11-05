@@ -1,0 +1,643 @@
+{
+  "id": "2025-onit-gravity-west-virginia-football",
+  "name": "2025 ONIT Gravity West Virginia Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adam Tomczyk",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-2",
+          "player": "Asani Redwood",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-3",
+          "player": "Ben Cutter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-4",
+          "player": "Braden Siders",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-5",
+          "player": "Brandon Caesar",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-6",
+          "player": "Caden Biser",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-7",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-8",
+          "player": "Chase Wilson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-9",
+          "player": "Chris Fileppo",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-10",
+          "player": "Colin Mcbee",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-11",
+          "player": "Corey Mcintyre Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-12",
+          "player": "Curtis Jones Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-13",
+          "player": "Dawayne Galloway Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-14",
+          "player": "Devin Grant",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-15",
+          "player": "Devonte Golden-Nelson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-16",
+          "player": "Diore Hubbard",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-17",
+          "player": "Ethan Head",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-18",
+          "player": "Fred Perry",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-19",
+          "player": "Grayson Barnes",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-20",
+          "player": "Greg Genross",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-21",
+          "player": "Hammond Russell IV",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-22",
+          "player": "Jackson Biser",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-23",
+          "player": "Jacob Barrick",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-24",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-25",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-26",
+          "player": "Jarel Williams",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-27",
+          "player": "Jarod Bowie",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-28",
+          "player": "Jason Chambers",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-29",
+          "player": "Jason Cross Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-30",
+          "player": "Jayden Bell",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-31",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-32",
+          "player": "Jordan Mccants",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-33",
+          "player": "Jordan Walker",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-34",
+          "player": "Kaden Seller",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-35",
+          "player": "Kannon Katzer",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-36",
+          "player": "Kekoura Tarnue",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-37",
+          "player": "Keyshawn Robinson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-38",
+          "player": "Khalil Wilkins",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-39",
+          "player": "Kimo Makane'Ole",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-40",
+          "player": "Landen Livingston",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-41",
+          "player": "Logan Ramper",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-42",
+          "player": "Macguire Moss",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-43",
+          "player": "Max Anderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-44",
+          "player": "Mickel Clay",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-45",
+          "player": "Nick Taylor",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-46",
+          "player": "Oran Singleton Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-47",
+          "player": "Preston Fox",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-48",
+          "player": "Reid Carrico",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-49",
+          "player": "RJ Kocan",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-50",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-51",
+          "player": "Ryan Ward",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-52",
+          "player": "Scott Kean",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-53",
+          "player": "Scotty Fox Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-54",
+          "player": "Ty'Kieast Crawford",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-55",
+          "player": "Tyshawn Dues",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-56",
+          "player": "William Davis",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-57",
+          "player": "Wilnerson Telemaque",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-58",
+          "player": "Wyatt Minor",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-59",
+          "player": "Xavier Bausley",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-60",
+          "player": "Zae Jennings",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-16",
+          "player": "Diore Hubbard",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-19",
+          "player": "Grayson Barnes",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-24",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-25",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-31",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-46",
+          "player": "Oran Singleton Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-48",
+          "player": "Reid Carrico",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-50",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-16",
+          "player": "Diore Hubbard",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-19",
+          "player": "Grayson Barnes",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-24",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-25",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-31",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-46",
+          "player": "Oran Singleton Jr.",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-48",
+          "player": "Reid Carrico",
+          "team": "West Virginia"
+        },
+        {
+          "number": "B-50",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "HD-3",
+          "player": "Khalil Wilkins",
+          "team": "West Virginia"
+        },
+        {
+          "number": "HD-4",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-2",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "HD-5",
+          "player": "Khalil Wilkins",
+          "team": "West Virginia"
+        },
+        {
+          "number": "HD-6",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Reid Carrico",
+          "team": "West Virginia"
+        },
+        {
+          "number": "SD-3",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "SD-4",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 24,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-2",
+          "player": "Reid Carrico",
+          "team": "West Virginia"
+        },
+        {
+          "number": "SD-5",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "SD-6",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-1",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-2",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-3",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-4",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-5",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-6",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "W-7",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-1",
+          "player": "Ben Cutter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-2",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-3",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-4",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-5",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-6",
+          "player": "Jaden Bray",
+          "team": "West Virginia"
+        },
+        {
+          "number": "G-7",
+          "player": "Braden Siders",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-1",
+          "player": "Ben Cutter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-2",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-3",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-4",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-5",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        },
+        {
+          "number": "S-6",
+          "player": "Ty'Kieast Crawford",
+          "team": "West Virginia"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Ben Cutter",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GS-2",
+          "player": "Cam Vaughn",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GS-3",
+          "player": "Jahiem White",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GS-4",
+          "player": "Jaylen Henderson",
+          "team": "West Virginia"
+        },
+        {
+          "number": "GS-5",
+          "player": "Rodney Gallagher III",
+          "team": "West Virginia"
+        }
+      ]
+    }
+  ]
+}

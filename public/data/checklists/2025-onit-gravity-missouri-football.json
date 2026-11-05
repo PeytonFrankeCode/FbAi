@@ -1,0 +1,623 @@
+{
+  "id": "2025-onit-gravity-missouri-football",
+  "name": "2025 ONIT Gravity Missouri Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 58,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthony Favrow",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-3",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-4",
+          "player": "Blake Craig",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-5",
+          "player": "Brady Hultman",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-6",
+          "player": "Brandon Solis",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-7",
+          "player": "Brett Le Blanc",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-8",
+          "player": "Brett Norfleet",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-9",
+          "player": "Brian Huff",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Flagg",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-11",
+          "player": "Cameron Keys",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-12",
+          "player": "Cayden Green",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-13",
+          "player": "Chris Mcclellan",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-14",
+          "player": "Connor Tollison",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-15",
+          "player": "Curtis Peagler",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-16",
+          "player": "Daniel Blood",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-17",
+          "player": "Daylan Carnell",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-18",
+          "player": "Dreyden Norwood",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-19",
+          "player": "Elias Williams",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-20",
+          "player": "Jackson Daily",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-21",
+          "player": "Jackson Hancock",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-22",
+          "player": "Jadon Frick",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-23",
+          "player": "Jalen Catalon",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-24",
+          "player": "Jalen Marshall",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-25",
+          "player": "Jamal Roberts",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-26",
+          "player": "James Madison II",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-27",
+          "player": "Javion Hilson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-28",
+          "player": "Jayven Richardson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-29",
+          "player": "Jeremiah Beasley",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-30",
+          "player": "Jordon Harris",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-31",
+          "player": "Joshua Manning",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-32",
+          "player": "Jude James",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-33",
+          "player": "Justin Bodford",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-34",
+          "player": "Keagen Trost",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-35",
+          "player": "Khalil Jacobs",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-36",
+          "player": "Langden Kitchen",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-37",
+          "player": "Logan Muckey",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-38",
+          "player": "Logan Reichert",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-39",
+          "player": "Marquis Gracial",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-40",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-41",
+          "player": "Marvin Burks Jr.",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-42",
+          "player": "Nasir Pogue",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-43",
+          "player": "Nicholas Rodriguez",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-44",
+          "player": "Noah Flaskamp",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-45",
+          "player": "Ricardo Merriweather",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-46",
+          "player": "Ryan Jostes",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-47",
+          "player": "Sam Horn",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-48",
+          "player": "Sam Williams",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-49",
+          "player": "Santana Banner",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-50",
+          "player": "Shaun Terry II",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-51",
+          "player": "Sterling Webb",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-52",
+          "player": "Tommy Lock",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-53",
+          "player": "Tommy Reese",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-54",
+          "player": "Trajen Greco",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-55",
+          "player": "Tristan Wilson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-56",
+          "player": "Triston Newson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-57",
+          "player": "Vince Brown II",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-58",
+          "player": "Whit Hafer",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-3",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-8",
+          "player": "Brett Norfleet",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-13",
+          "player": "Chris Mcclellan",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-31",
+          "player": "Joshua Manning",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-35",
+          "player": "Khalil Jacobs",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-40",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-47",
+          "player": "Sam Horn",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-1",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-3",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-8",
+          "player": "Brett Norfleet",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-13",
+          "player": "Chris Mcclellan",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-31",
+          "player": "Joshua Manning",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-35",
+          "player": "Khalil Jacobs",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-40",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-47",
+          "player": "Sam Horn",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "HD-2",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "HD-3",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-4",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "HD-5",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "HD-6",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "SD-2",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "SD-3",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-4",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "SD-5",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "SD-6",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-1",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-2",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-3",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-4",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-5",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-6",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "W-7",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-1",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-2",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-3",
+          "player": "Joshua Manning",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-4",
+          "player": "Dreyden Norwood",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-5",
+          "player": "Sterling Webb",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-6",
+          "player": "Triston Newson",
+          "team": "Missouri"
+        },
+        {
+          "number": "G-7",
+          "player": "Brett Norfleet",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-1",
+          "player": "Marquis Johnson",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-2",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-3",
+          "player": "Brett Norfleet",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-4",
+          "player": "Daylan Carnell",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-5",
+          "player": "Cayden Green",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-6",
+          "player": "Connor Tollison",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-7",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Beau Pribula",
+          "team": "Missouri"
+        },
+        {
+          "number": "GS-2",
+          "player": "Ahmad Hardy",
+          "team": "Missouri"
+        }
+      ]
+    }
+  ]
+}

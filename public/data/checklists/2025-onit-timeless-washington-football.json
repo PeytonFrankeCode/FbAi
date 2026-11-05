@@ -1,0 +1,492 @@
+{
+  "id": "2025-onit-timeless-washington-football",
+  "name": "2025 ONIT Timeless Washington Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 77,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adam Mohammed",
+          "team": "Washington"
+        },
+        {
+          "number": "B-2",
+          "player": "Aidan Anderson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-3",
+          "player": "Alex Mclaughlin",
+          "team": "Washington"
+        },
+        {
+          "number": "B-4",
+          "player": "Anterio Thompson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-5",
+          "player": "Anthony Ward",
+          "team": "Washington"
+        },
+        {
+          "number": "B-6",
+          "player": "Armon Parker",
+          "team": "Washington"
+        },
+        {
+          "number": "B-7",
+          "player": "Audric Harris",
+          "team": "Washington"
+        },
+        {
+          "number": "B-8",
+          "player": "Bryce Butler",
+          "team": "Washington"
+        },
+        {
+          "number": "B-9",
+          "player": "Caleb Smith",
+          "team": "Washington"
+        },
+        {
+          "number": "B-10",
+          "player": "Carver Willis",
+          "team": "Washington"
+        },
+        {
+          "number": "B-11",
+          "player": "Charlie Crowell",
+          "team": "Washington"
+        },
+        {
+          "number": "B-12",
+          "player": "Chris Lawson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-13",
+          "player": "CJ Christian",
+          "team": "Washington"
+        },
+        {
+          "number": "B-14",
+          "player": "Dash Beierly",
+          "team": "Washington"
+        },
+        {
+          "number": "B-15",
+          "player": "Davit Boyajyan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-16",
+          "player": "Decker Degraaf",
+          "team": "Washington"
+        },
+        {
+          "number": "B-17",
+          "player": "Demond Williams Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-18",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "B-19",
+          "player": "Deshawn Lynch",
+          "team": "Washington"
+        },
+        {
+          "number": "B-20",
+          "player": "Deven Bryant",
+          "team": "Washington"
+        },
+        {
+          "number": "B-21",
+          "player": "Dominic Macon",
+          "team": "Washington"
+        },
+        {
+          "number": "B-22",
+          "player": "Drew Azzopardi",
+          "team": "Washington"
+        },
+        {
+          "number": "B-23",
+          "player": "Dyson Mccutcheon",
+          "team": "Washington"
+        },
+        {
+          "number": "B-24",
+          "player": "Elias Johnson",
+          "team": "Washington"
+        },
+        {
+          "number": "B-25",
+          "player": "Elinneus Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "B-26",
+          "player": "Elishah Jackett",
+          "team": "Washington"
+        },
+        {
+          "number": "B-27",
+          "player": "Ephesians Prysock",
+          "team": "Washington"
+        },
+        {
+          "number": "B-28",
+          "player": "Geirean Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "B-29",
+          "player": "Grady Gross",
+          "team": "Washington"
+        },
+        {
+          "number": "B-30",
+          "player": "Griffin Miller",
+          "team": "Washington"
+        },
+        {
+          "number": "B-31",
+          "player": "Jacob Lane",
+          "team": "Washington"
+        },
+        {
+          "number": "B-32",
+          "player": "Jacob Manu",
+          "team": "Washington"
+        },
+        {
+          "number": "B-33",
+          "player": "Jake Flores",
+          "team": "Washington"
+        },
+        {
+          "number": "B-34",
+          "player": "Jayvon Parker",
+          "team": "Washington"
+        },
+        {
+          "number": "B-35",
+          "player": "Jonah Coleman",
+          "team": "Washington"
+        },
+        {
+          "number": "B-36",
+          "player": "Jonathan Epperson Jr. LB",
+          "team": "Washington"
+        },
+        {
+          "number": "B-37",
+          "player": "Jordan Washington",
+          "team": "Washington"
+        },
+        {
+          "number": "B-38",
+          "player": "Justice Williams",
+          "team": "Washington"
+        },
+        {
+          "number": "B-39",
+          "player": "Justin Hylkema",
+          "team": "Washington"
+        },
+        {
+          "number": "B-40",
+          "player": "Kade Eldridge",
+          "team": "Washington"
+        },
+        {
+          "number": "B-41",
+          "player": "Kai Horton",
+          "team": "Washington"
+        },
+        {
+          "number": "B-42",
+          "player": "Kevin Green Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-43",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "B-44",
+          "player": "Leroy Bryant",
+          "team": "Washington"
+        },
+        {
+          "number": "B-45",
+          "player": "Logan Sagapolu",
+          "team": "Washington"
+        },
+        {
+          "number": "B-46",
+          "player": "Luke Gayton",
+          "team": "Washington"
+        },
+        {
+          "number": "B-47",
+          "player": "Luke Luchini",
+          "team": "Washington"
+        },
+        {
+          "number": "B-48",
+          "player": "Makell Esteen",
+          "team": "Washington"
+        },
+        {
+          "number": "B-49",
+          "player": "Marcus Harris",
+          "team": "Washington"
+        },
+        {
+          "number": "B-50",
+          "player": "Maximus Mccree",
+          "team": "Washington"
+        },
+        {
+          "number": "B-51",
+          "player": "Milton Hopkins Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-52",
+          "player": "Omar Khan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-53",
+          "player": "Omari Evans",
+          "team": "Washington"
+        },
+        {
+          "number": "B-54",
+          "player": "Paki Finau",
+          "team": "Washington"
+        },
+        {
+          "number": "B-55",
+          "player": "Parker Cross",
+          "team": "Washington"
+        },
+        {
+          "number": "B-56",
+          "player": "Paul Mencke Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-57",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "B-58",
+          "player": "Rahim Wright II",
+          "team": "Washington"
+        },
+        {
+          "number": "B-59",
+          "player": "Rahshawn Clark",
+          "team": "Washington"
+        },
+        {
+          "number": "B-60",
+          "player": "Raiden Vines-Bright",
+          "team": "Washington"
+        },
+        {
+          "number": "B-61",
+          "player": "Ramonz Adams Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "B-62",
+          "player": "Rashid Williams",
+          "team": "Washington"
+        },
+        {
+          "number": "B-63",
+          "player": "Russell Davis II",
+          "team": "Washington"
+        },
+        {
+          "number": "B-64",
+          "player": "Ryan Kean",
+          "team": "Washington"
+        },
+        {
+          "number": "B-65",
+          "player": "Ryan Otton",
+          "team": "Washington"
+        },
+        {
+          "number": "B-66",
+          "player": "Sam Finnegan",
+          "team": "Washington"
+        },
+        {
+          "number": "B-67",
+          "player": "Shea Kuykendall",
+          "team": "Washington"
+        },
+        {
+          "number": "B-68",
+          "player": "Soane Faasolo",
+          "team": "Washington"
+        },
+        {
+          "number": "B-69",
+          "player": "Ta'Ita'I Uiagalelei",
+          "team": "Washington"
+        },
+        {
+          "number": "B-70",
+          "player": "Tacario Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "B-71",
+          "player": "Tristan Warner",
+          "team": "Washington"
+        },
+        {
+          "number": "B-72",
+          "player": "Troy Petz",
+          "team": "Washington"
+        },
+        {
+          "number": "B-73",
+          "player": "Vincent Holmes",
+          "team": "Washington"
+        },
+        {
+          "number": "B-74",
+          "player": "Xe'Ree Alexander",
+          "team": "Washington"
+        },
+        {
+          "number": "B-75",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        },
+        {
+          "number": "B-76",
+          "player": "Zachary Henning",
+          "team": "Washington"
+        },
+        {
+          "number": "B-77",
+          "player": "Zaydrius Rainey-Sale",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Jayvon Parker",
+          "team": "Washington"
+        },
+        {
+          "number": "C-2",
+          "player": "Jonah Coleman",
+          "team": "Washington"
+        },
+        {
+          "number": "C-3",
+          "player": "Kevin Green Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "C-4",
+          "player": "Landen Hatchett",
+          "team": "Washington"
+        },
+        {
+          "number": "C-5",
+          "player": "Makell Esteen",
+          "team": "Washington"
+        },
+        {
+          "number": "C-6",
+          "player": "Quentin Moore",
+          "team": "Washington"
+        },
+        {
+          "number": "C-7",
+          "player": "Tacario Davis",
+          "team": "Washington"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Decker Degraaf",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-2",
+          "player": "Demond Williams Jr.",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-3",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-4",
+          "player": "Ephesians Prysock",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-5",
+          "player": "Omari Evans",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-6",
+          "player": "Zach Durfee",
+          "team": "Washington"
+        },
+        {
+          "number": "SG-7",
+          "player": "Zaydrius Rainey-Sale",
+          "team": "Washington"
+        }
+      ]
+    }
+  ]
+}

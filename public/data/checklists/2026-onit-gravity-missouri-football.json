@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-missouri-football",
+  "name": "2026 ONIT Gravity Missouri Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Missouri"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Missouri"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Missouri"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Missouri"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Missouri"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Missouri"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Missouri"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Missouri"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Missouri"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Missouri"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Missouri"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Missouri"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Missouri"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Missouri"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Missouri"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Missouri"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Missouri"
+        }
+      ]
+    }
+  ]
+}

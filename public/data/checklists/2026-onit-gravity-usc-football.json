@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-usc-football",
+  "name": "2026 ONIT Gravity USC Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "USC"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "USC"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "USC"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "USC"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "USC"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "USC"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "USC"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "USC"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "USC"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "USC"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "USC"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "USC"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "USC"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "USC"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "USC"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "USC"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "USC"
+        }
+      ]
+    }
+  ]
+}

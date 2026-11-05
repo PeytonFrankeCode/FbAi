@@ -1,0 +1,1043 @@
+{
+  "id": "2026-onit-athlete-tennessee-football",
+  "name": "2026 ONIT Athlete Tennessee Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 82,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Tennessee Football",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-3",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-4",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-6",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-7",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-8",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Gabriel Osenda",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-10",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-11",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-12",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-13",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-14",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-16",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-17",
+          "player": "TJ Metcalf",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-18",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-19",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Ty Redmond",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-21",
+          "player": "Amare Campbell",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-22",
+          "player": "Antoni Ogumoro",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-23",
+          "player": "Bennett Brady",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-24",
+          "player": "Breeze Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-25",
+          "player": "Christian Gass",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-26",
+          "player": "Cooper Ranvier",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-27",
+          "player": "DaSaahn Brame",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-28",
+          "player": "Dejuan Lane",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-29",
+          "player": "DJ Burks",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-30",
+          "player": "Edwin Spillman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-31",
+          "player": "Ethan Utley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-32",
+          "player": "Hezekiah Harris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-33",
+          "player": "Isaiah Campbell",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-34",
+          "player": "Isaiah Hardge",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-35",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-36",
+          "player": "Jaedon Harmon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-37",
+          "player": "Javin Gordon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-38",
+          "player": "Jeremias Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-39",
+          "player": "Jesse Perry",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-40",
+          "player": "JJ Finch",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-41",
+          "player": "Joel Wyatt",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-42",
+          "player": "Jordan Norman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-43",
+          "player": "Josh Turbyville",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-44",
+          "player": "Justin Baker",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-45",
+          "player": "Kayin Lee",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-46",
+          "player": "Mariyon Dye",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-47",
+          "player": "Nathan Robinson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-48",
+          "player": "Nic Moore",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-49",
+          "player": "Ory Williams",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-50",
+          "player": "Qua Moss",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-51",
+          "player": "Sam Pendleton",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-52",
+          "player": "Shamurad Umarov",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-53",
+          "player": "Sidney Walton",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-54",
+          "player": "Tevis Metcalf",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-55",
+          "player": "Tim Merritt",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-56",
+          "player": "TJ White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-57",
+          "player": "Tre Poteat III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-58",
+          "player": "Trent Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-59",
+          "player": "Tyree Weathersby",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-60",
+          "player": "Wendell Moe Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-61",
+          "player": "Xavier Gilliam",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-3",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-4",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-6",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-7",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-8",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Gabriel Osenda",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-10",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-11",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-12",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-13",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-14",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-16",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-17",
+          "player": "TJ Metcalf",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-18",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-19",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Ty Redmond",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-2",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-3",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-4",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-5",
+          "player": "Javin Gordon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-7",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-9",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-10",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-2",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-3",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-4",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-5",
+          "player": "Javin Gordon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-7",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-9",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-10",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CL-2",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CL-3",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CL-2",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CL-3",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-2",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-3",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-4",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-5",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-2",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-3",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-4",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DS-5",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-3",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-4",
+          "player": "TJ Metcalf",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-5",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-6",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-7",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-8",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-9",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-10",
+          "player": "Ty Redmond",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Joakim Dodson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-3",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-4",
+          "player": "TJ Metcalf",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-5",
+          "player": "Ryan Staub",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-6",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-7",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-8",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-9",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "F-10",
+          "player": "Ty Redmond",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GD-2",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GD-3",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "general-admission",
+      "name": "General Admission",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-2",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-3",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-5",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-2",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-3",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-5",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GA-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-2",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-3",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-5",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-2",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-3",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "H-5",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-3",
+          "player": "Javin Gordon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-5",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-6",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "George MacIntyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jadon Perlotte",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-3",
+          "player": "Javin Gordon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-5",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "NH-6",
+          "player": "TK Keys",
+          "team": "Tennessee"
+        }
+      ]
+    }
+  ]
+}

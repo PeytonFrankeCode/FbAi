@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-nebraska-football",
+  "name": "2026 ONIT Gravity Nebraska Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Nebraska"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Nebraska"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Nebraska"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Nebraska"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Nebraska"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Nebraska"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Nebraska"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Nebraska"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Nebraska"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Nebraska"
+        }
+      ]
+    }
+  ]
+}

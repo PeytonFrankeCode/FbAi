@@ -1,0 +1,339 @@
+{
+  "id": "2022-onit-athlete-washington-football",
+  "name": "2022 ONIT Athlete Washington Football",
+  "year": 2022,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "card-pack-list",
+      "name": "CARD PACK LIST",
+      "category": "insert",
+      "totalCards": 64,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Giles Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "2",
+          "player": "Sav’ell Smalls",
+          "team": "Washington"
+        },
+        {
+          "number": "3",
+          "player": "Rome Odunze",
+          "team": "Washington"
+        },
+        {
+          "number": "4",
+          "player": "Jordan Perryman",
+          "team": "Washington"
+        },
+        {
+          "number": "5",
+          "player": "Cam Bright",
+          "team": "Washington"
+        },
+        {
+          "number": "6",
+          "player": "Ja’Lynn Polk",
+          "team": "Washington"
+        },
+        {
+          "number": "7",
+          "player": "Taj Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "8",
+          "player": "Jeremiah Martin",
+          "team": "Washington"
+        },
+        {
+          "number": "9",
+          "player": "Lonyatta Alexander Jr. WR",
+          "team": "Washington"
+        },
+        {
+          "number": "10",
+          "player": "Alex Cook",
+          "team": "Washington"
+        },
+        {
+          "number": "11",
+          "player": "Dylan Morris",
+          "team": "Washington"
+        },
+        {
+          "number": "12",
+          "player": "Richard Newton RB",
+          "team": "Washington"
+        },
+        {
+          "number": "13",
+          "player": "Cameron Williams S",
+          "team": "Washington"
+        },
+        {
+          "number": "14",
+          "player": "Dominique Hampton HUSKY",
+          "team": "Washington"
+        },
+        {
+          "number": "15",
+          "player": "Sam Huard",
+          "team": "Washington"
+        },
+        {
+          "number": "16",
+          "player": "Will Nixon",
+          "team": "Washington"
+        },
+        {
+          "number": "17",
+          "player": "Bralen Trice",
+          "team": "Washington"
+        },
+        {
+          "number": "18",
+          "player": "Kristopher Moll",
+          "team": "Washington"
+        },
+        {
+          "number": "19",
+          "player": "Michael Penix JR. QB",
+          "team": "Washington"
+        },
+        {
+          "number": "20",
+          "player": "Davon Banks",
+          "team": "Washington"
+        },
+        {
+          "number": "21",
+          "player": "Jalen McMillan",
+          "team": "Washington"
+        },
+        {
+          "number": "22",
+          "player": "Alphonzo Tuputala LB",
+          "team": "Washington"
+        },
+        {
+          "number": "23",
+          "player": "Denzel Boston",
+          "team": "Washington"
+        },
+        {
+          "number": "24",
+          "player": "Tristan Dunn",
+          "team": "Washington"
+        },
+        {
+          "number": "25",
+          "player": "Kamren Fabiculanan HUSKY",
+          "team": "Washington"
+        },
+        {
+          "number": "26",
+          "player": "Camdyn Stiegeler QB",
+          "team": "Washington"
+        },
+        {
+          "number": "27",
+          "player": "Tyson Lang",
+          "team": "Washington"
+        },
+        {
+          "number": "28",
+          "player": "Zakhari Spears",
+          "team": "Washington"
+        },
+        {
+          "number": "29",
+          "player": "Daniel Heimuli",
+          "team": "Washington"
+        },
+        {
+          "number": "30",
+          "player": "Jabez Tinae",
+          "team": "Washington"
+        },
+        {
+          "number": "31",
+          "player": "Teddy Purcell",
+          "team": "Washington"
+        },
+        {
+          "number": "32",
+          "player": "Camden Sirmon RB",
+          "team": "Washington"
+        },
+        {
+          "number": "33",
+          "player": "Styles Siva-Tu’u",
+          "team": "Washington"
+        },
+        {
+          "number": "34",
+          "player": "Nick Juran",
+          "team": "Washington"
+        },
+        {
+          "number": "35",
+          "player": "Dyson McCutcheon HUSKY",
+          "team": "Washington"
+        },
+        {
+          "number": "36",
+          "player": "Asa Turner",
+          "team": "Washington"
+        },
+        {
+          "number": "37",
+          "player": "Demario King",
+          "team": "Washington"
+        },
+        {
+          "number": "38",
+          "player": "Wayne Taulapapa RB",
+          "team": "Washington"
+        },
+        {
+          "number": "39",
+          "player": "Cameron Davis",
+          "team": "Washington"
+        },
+        {
+          "number": "40",
+          "player": "Jaivion Green",
+          "team": "Washington"
+        },
+        {
+          "number": "41",
+          "player": "Mishael Powell",
+          "team": "Washington"
+        },
+        {
+          "number": "42",
+          "player": "Makell Esteen",
+          "team": "Washington"
+        },
+        {
+          "number": "43",
+          "player": "Elijah Jackson",
+          "team": "Washington"
+        },
+        {
+          "number": "44",
+          "player": "Jay’Veon Sunday RB",
+          "team": "Washington"
+        },
+        {
+          "number": "45",
+          "player": "Sean Toomey-Stout S",
+          "team": "Washington"
+        },
+        {
+          "number": "46",
+          "player": "Sam Adams II",
+          "team": "Washington"
+        },
+        {
+          "number": "47",
+          "player": "Vincent Nunley",
+          "team": "Washington"
+        },
+        {
+          "number": "48",
+          "player": "Brennan Holmes WR",
+          "team": "Washington"
+        },
+        {
+          "number": "49",
+          "player": "Julius Irvin",
+          "team": "Washington"
+        },
+        {
+          "number": "50",
+          "player": "David Pritchard",
+          "team": "Washington"
+        },
+        {
+          "number": "51",
+          "player": "Jakson Berman",
+          "team": "Washington"
+        },
+        {
+          "number": "52",
+          "player": "Aaron Dumas",
+          "team": "Washington"
+        },
+        {
+          "number": "53",
+          "player": "Tristan Warner",
+          "team": "Washington"
+        },
+        {
+          "number": "54",
+          "player": "Antonio Hill",
+          "team": "Washington"
+        },
+        {
+          "number": "55",
+          "player": "Caden Jumper",
+          "team": "Washington"
+        },
+        {
+          "number": "56",
+          "player": "Charlie Fuller",
+          "team": "Washington"
+        },
+        {
+          "number": "57",
+          "player": "Jack Westover",
+          "team": "Washington"
+        },
+        {
+          "number": "58",
+          "player": "Jack McCallister P",
+          "team": "Washington"
+        },
+        {
+          "number": "59",
+          "player": "Zeke Pelluer",
+          "team": "Washington"
+        },
+        {
+          "number": "60",
+          "player": "Anay Nagarajan CB",
+          "team": "Washington"
+        },
+        {
+          "number": "61",
+          "player": "Lance Holtzclaw EDGE",
+          "team": "Washington"
+        },
+        {
+          "number": "62",
+          "player": "Carson Bruener",
+          "team": "Washington"
+        },
+        {
+          "number": "63",
+          "player": "Austin Harnetiaux LB",
+          "team": "Washington"
+        },
+        {
+          "number": "64",
+          "player": "Maurice Heims",
+          "team": "Washington"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1584 @@
+{
+  "id": "2025-onit-gravity-tennessee-football",
+  "name": "2025 ONIT Gravity Tennessee Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-2",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-3",
+          "player": "Bennett Warren",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-4",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-6",
+          "player": "Bryson Eason",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-7",
+          "player": "Caleb Herring",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-8",
+          "player": "Carson Gentle",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-10",
+          "player": "Colin Brazzell",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-11",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-12",
+          "player": "Dasaahn Brame",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-13",
+          "player": "Daune Morris",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-14",
+          "player": "David Sanders Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-16",
+          "player": "Dominic Bailey",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-17",
+          "player": "Dylan Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-18",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-19",
+          "player": "Edwin Spillman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-21",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-22",
+          "player": "Isaiah Campbell",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-23",
+          "player": "Jack Van Dorselaer",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-24",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-25",
+          "player": "Jaedon Harmon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-26",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-27",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-28",
+          "player": "Jamal Wallace",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-29",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-30",
+          "player": "Jayden Loftin",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-31",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-32",
+          "player": "Jeremias Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-33",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-34",
+          "player": "Jesse Perry",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-35",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-36",
+          "player": "Jordan Burns",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-37",
+          "player": "Josh Turbyville",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-38",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-39",
+          "player": "Justin Baker",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-40",
+          "player": "Kaleb Beasley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-41",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-42",
+          "player": "Marcus Goree Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-43",
+          "player": "Max Gilbert",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-44",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-45",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-46",
+          "player": "Nic Moore",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-47",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-48",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-49",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-50",
+          "player": "Sam Pendleton",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-51",
+          "player": "Shamurad Umarov",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-52",
+          "player": "Star Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-53",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-54",
+          "player": "Tre Poteat",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-55",
+          "player": "Ty Redmond",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-56",
+          "player": "Tyre West",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-57",
+          "player": "Tyree Weathersby",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-58",
+          "player": "Wendell Moe Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-59",
+          "player": "William Satterwhite",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-60",
+          "player": "William Wright",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 40,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-21",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-26",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-27",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-29",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-31",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-33",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-35",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-38",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-44",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-45",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-47",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-48",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-52",
+          "player": "Star Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-53",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-60",
+          "player": "William Wright",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-21",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-26",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-27",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-29",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-31",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-33",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-35",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-38",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-44",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-45",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-47",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-48",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-52",
+          "player": "Star Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-53",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-60",
+          "player": "William Wright",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-2",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-4",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-5",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-6",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-7",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-8",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-9",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "HD-10",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-2",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-3",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-4",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 23,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-5",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-6",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-7",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "SD-8",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-1",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-2",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-3",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-4",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-5",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-6",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "W-7",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-1",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-2",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-3",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-4",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-5",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-6",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-7",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-8",
+          "player": "George Macintyre",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-9",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-10",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "G-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-base",
+      "name": "Gravity Signature Base",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson Iii",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-orange-49",
+      "name": "Gravity Signature Orange /49",
+      "category": "autograph",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson Iii",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-purple-25",
+      "name": "Gravity Signature Purple /25",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-silver-15",
+      "name": "Gravity Signature Silver /15",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-red-9",
+      "name": "Gravity Signature Red /9",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-green-5",
+      "name": "Gravity Signature Green /5",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-gold-1",
+      "name": "Gravity Signature Gold /1",
+      "category": "autograph",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Mcmurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Jermod Mccoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Radarious Jackson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Josh Heupel",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9",
+      "name": "Galaxy Signature Red /9",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-2",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-3",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-4",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-5",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-6",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-7",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-8",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-9",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-green-5",
+      "name": "Galaxy Signature Green /5",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-2",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-3",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-4",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-5",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-6",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-7",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-8",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-9",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-10",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-gold-1",
+      "name": "Galaxy Signature Gold /1",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-1",
+          "player": "Joey Aguilar",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-2",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-3",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-4",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-5",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-6",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-7",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-8",
+          "player": "Travis Smith Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-9",
+          "player": "Desean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-10",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "GS-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        }
+      ]
+    }
+  ]
+}

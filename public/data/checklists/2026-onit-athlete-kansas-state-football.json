@@ -1,0 +1,1029 @@
+{
+  "id": "2026-onit-athlete-kansas-state-football",
+  "name": "2026 ONIT Athlete Kansas State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 87,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Kansas State Football",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-2",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-3",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-4",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-5",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-7",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-8",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-9",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-10",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-11",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-12",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-13",
+          "player": "Adonis Moise",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-14",
+          "player": "Adrian Maddox",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-15",
+          "player": "Andrew Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-16",
+          "player": "Arley Morrell",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-17",
+          "player": "Asa Newsom",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-18",
+          "player": "Ashton Moore",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-19",
+          "player": "Blake Barnett",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-20",
+          "player": "Brad Stanyer",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Duarte",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-22",
+          "player": "Dalton Knapp",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-23",
+          "player": "Damion Miller",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-24",
+          "player": "Delvin Morris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-25",
+          "player": "Dillon Duff",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-26",
+          "player": "DJ Ackerson Jr.",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-27",
+          "player": "Dominic Mitchell",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-28",
+          "player": "Dylan Davidson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-29",
+          "player": "Dylan Villarouel",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-30",
+          "player": "Gabe Powers",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-31",
+          "player": "Gus Hawkins",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-32",
+          "player": "Isaac Koch",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-33",
+          "player": "Ja'Son Prevard",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-34",
+          "player": "Jacob Knuth",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-35",
+          "player": "Jacobi Oliphant Jr.",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-36",
+          "player": "Jaxson Duffield",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-37",
+          "player": "Jet Dineen",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-38",
+          "player": "John Pastore",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-39",
+          "player": "Jojo Scott",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jordan Allen",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Jensen",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-42",
+          "player": "Josiah Vilmael",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-43",
+          "player": "Kaleb Patterson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-44",
+          "player": "Kaprice Keith",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-45",
+          "player": "Keiton Jones",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-46",
+          "player": "Koy Beasley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-47",
+          "player": "Kyle Rakers",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-48",
+          "player": "Lamarcus Barber",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-49",
+          "player": "Lawson Mcgraw",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-50",
+          "player": "Logan Bartley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-51",
+          "player": "Luis Rodriguez",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-52",
+          "player": "Martel Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-53",
+          "player": "Max Lovett",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-54",
+          "player": "Mekhi Mason",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-55",
+          "player": "Michael Capria",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-56",
+          "player": "Micheal Graham Jr.",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-57",
+          "player": "Mikey Bergeron",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-58",
+          "player": "Monterrio Elston Jr.",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-59",
+          "player": "Navarro Schunke",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-60",
+          "player": "Nick Mcclellan",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-61",
+          "player": "Oliver Miller",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-62",
+          "player": "Patrick Tackie",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-63",
+          "player": "Rex Van Wyhe",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-64",
+          "player": "RJ Collins",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-65",
+          "player": "Robert Hammond III K",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-66",
+          "player": "Ryan Howard",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-67",
+          "player": "Serious Stinyard",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-68",
+          "player": "Simon Mcclannan",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-69",
+          "player": "Sterling Lockett",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-70",
+          "player": "Tanner Morley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-71",
+          "player": "Travis Bates",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-72",
+          "player": "Tyler Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-73",
+          "player": "Wesley Fair",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-74",
+          "player": "Will Anciaux",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-2",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-3",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-4",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-5",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-7",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-8",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-9",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-10",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-11",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "B-12",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-parallel",
+      "name": "Campus Colors Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Elijah Hill",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-2",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-3",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-4",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-5",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-7",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-8",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-9",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-10",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-2",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-3",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-4",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-5",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-7",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-8",
+          "player": "Wendell Gregory",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-9",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "F-10",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GD-2",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GD-3",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Donovan Mcintosh",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-2",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-3",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-4",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-5",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-2",
+          "player": "Joe Jackson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-3",
+          "player": "Josh Manning",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-4",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        },
+        {
+          "number": "H-5",
+          "player": "Zashon Rich",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Avery Johnson",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Garrett Oakley",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Izaiah Williams",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jaron Tibbs",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Jay Harris",
+          "team": "Kansas State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Linkon Cure",
+          "team": "Kansas State"
+        }
+      ]
+    }
+  ]
+}

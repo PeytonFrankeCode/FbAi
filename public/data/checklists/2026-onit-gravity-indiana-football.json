@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-indiana-football",
+  "name": "2026 ONIT Gravity Indiana Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Indiana"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Indiana"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Indiana"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Indiana"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Indiana"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Indiana"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Indiana"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Indiana"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Indiana"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Indiana"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Indiana"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Indiana"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Indiana"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Indiana"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Indiana"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Indiana"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Indiana"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Indiana"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-texas-football",
+  "name": "2026 ONIT Gravity Texas Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Texas"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Texas"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Texas"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Texas"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Texas"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Texas"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Texas"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Texas"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Texas"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Texas"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Texas"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Texas"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Texas"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Texas"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Texas"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Texas"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Texas"
+        }
+      ]
+    }
+  ]
+}

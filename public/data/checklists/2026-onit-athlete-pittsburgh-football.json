@@ -1,0 +1,1113 @@
+{
+  "id": "2026-onit-athlete-pittsburgh-football",
+  "name": "2026 ONIT Athlete Pittsburgh Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 96,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Pittsburgh Football",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-3",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-4",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-5",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-6",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-7",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-8",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-9",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-10",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-11",
+          "player": "Adam Howanitz",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-12",
+          "player": "Akram Elnagmi",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-13",
+          "player": "Alex Rudolph",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-14",
+          "player": "Amah Agwu",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-15",
+          "player": "Angelo Renda",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-16",
+          "player": "Antonio Chadha",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-17",
+          "player": "Beau Jackson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-18",
+          "player": "Benny Haselrig",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-19",
+          "player": "BJ Williams",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-20",
+          "player": "Bryan Hamilton",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-21",
+          "player": "Cameron Lindsey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-22",
+          "player": "Carter Genchi",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-23",
+          "player": "Censere Lee",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-24",
+          "player": "Cole Woodson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-25",
+          "player": "Da'Ron Barksdale",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-26",
+          "player": "Damon Ferguson Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-27",
+          "player": "Davin Brewton",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-28",
+          "player": "DeMarco Ward",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-29",
+          "player": "Demetrice McCray",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-30",
+          "player": "Denim Cook",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-31",
+          "player": "Dylan Wester",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-32",
+          "player": "Eliyt Nairne",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-33",
+          "player": "Emmanuel Taylor",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-34",
+          "player": "Gabe Russo",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-35",
+          "player": "Isaac Patterson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-36",
+          "player": "Isaiah Montgomery",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-37",
+          "player": "Isaiah Neal",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-38",
+          "player": "Jaeden Moore",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-39",
+          "player": "Jake Sassic",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-40",
+          "player": "Jaxson Mark",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-41",
+          "player": "Jaylin Brown",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-42",
+          "player": "Jeremiah Marcelin",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-43",
+          "player": "Jeremiah Warren",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-44",
+          "player": "Jimmy Scott",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-45",
+          "player": "John Curran",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-46",
+          "player": "John Wetzel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-47",
+          "player": "Jordan Fields",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-48",
+          "player": "Josh Guerrier",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-49",
+          "player": "Josh Nindl",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-50",
+          "player": "Josh Pittman",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-51",
+          "player": "JuJu Anderson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-52",
+          "player": "Justin Cook",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-53",
+          "player": "Justin Schmidt",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-54",
+          "player": "Justin Thompson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-55",
+          "player": "Kaemon Tijerina",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-56",
+          "player": "Kanye Thompson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-57",
+          "player": "Keith Gouveia",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-58",
+          "player": "Kendall Stanley",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-59",
+          "player": "Kentrail Mcrae Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-60",
+          "player": "Keylen Davis",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-61",
+          "player": "Lincoln Hoke",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-62",
+          "player": "Mike van der Oord",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-63",
+          "player": "Netinho Olivieri",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-64",
+          "player": "Nick Howard",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-65",
+          "player": "Nigel Maynard",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-66",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-67",
+          "player": "Rashan Murray",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-68",
+          "player": "Reston Lehman",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-69",
+          "player": "Ryan Baer",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-70",
+          "player": "Sam Hunsaker",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-71",
+          "player": "Sean FitzSimmons",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-72",
+          "player": "Sean Franklin",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-73",
+          "player": "Shadarian Harrison",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-74",
+          "player": "Shawn Lee Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-75",
+          "player": "Shep Turk",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-76",
+          "player": "Synkwan Smith",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-77",
+          "player": "Tony Forney",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-78",
+          "player": "Tony Kinsler",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-79",
+          "player": "Trevor Sommers",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-80",
+          "player": "Ty Banco",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-81",
+          "player": "Ty Millhimes",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-82",
+          "player": "Ty Yuhas",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-83",
+          "player": "Tyreek Robinson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-84",
+          "player": "Zach Crothers",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-85",
+          "player": "Zion Ferguson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-3",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-4",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-5",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-6",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-7",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-8",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-9",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-10",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-3",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-4",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-5",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-6",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-7",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-9",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-10",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-3",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-4",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-5",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-6",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-7",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-9",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-10",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CL-2",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CL-3",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CL-2",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CL-3",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-2",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-3",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-4",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-5",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-2",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-3",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-4",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "DS-5",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-2",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-3",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-4",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-5",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-6",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-7",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-8",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-9",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-10",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-2",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-3",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-4",
+          "player": "Raion Strader",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-5",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-6",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-7",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-8",
+          "player": "Corey Dailey",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-9",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "F-10",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GD-2",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GD-3",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-2",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-3",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-4",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-6",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-2",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-3",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-4",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cam Sapp",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "GA-6",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-3",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-4",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-5",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-3",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-4",
+          "player": "Cataurus Hicks",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "H-5",
+          "player": "Mason Heintschel",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-3",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-4",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-5",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-6",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-2",
+          "player": "Bryce Yates",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-3",
+          "player": "Carson Kent",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-4",
+          "player": "Holden Geriner",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-5",
+          "player": "Malik Knight",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "NH-6",
+          "player": "Nick James",
+          "team": "Pittsburgh"
+        }
+      ]
+    }
+  ]
+}

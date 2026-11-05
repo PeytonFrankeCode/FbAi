@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-iowa-state-football",
+  "name": "2026 ONIT Gravity Iowa State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Iowa State"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Iowa State"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Iowa State"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Iowa State"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Iowa State"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Iowa State"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Iowa State"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Iowa State"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Iowa State"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Iowa State"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Iowa State"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Iowa State"
+        }
+      ]
+    }
+  ]
+}

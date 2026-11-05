@@ -1,0 +1,1073 @@
+{
+  "id": "2026-onit-athlete-ole-miss-football",
+  "name": "2026 ONIT Athlete Ole Miss Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 88,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Ole Miss Football",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-1",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-2",
+          "player": "Caleb Odom",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-3",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-4",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-5",
+          "player": "Edwin Joseph",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-6",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-7",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-8",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-9",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-10",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-11",
+          "player": "Luke Ferrelli",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-12",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-13",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-14",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-15",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-16",
+          "player": "Andrew Maddox",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-17",
+          "player": "Andy Jaffe",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-18",
+          "player": "Blake Purchase",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-19",
+          "player": "Brycen Sanders",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-20",
+          "player": "Bryson Walters",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-21",
+          "player": "Caleb Blankenship",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-22",
+          "player": "Cam Clark",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-23",
+          "player": "Case Thomas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-24",
+          "player": "Connor Howes",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-25",
+          "player": "Craig Tutt",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-26",
+          "player": "Deuce Alexander",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-27",
+          "player": "Dillon Alfred",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-28",
+          "player": "Dorian Barney",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-29",
+          "player": "Enoch Wangoy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-30",
+          "player": "George Hamsley",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-31",
+          "player": "Hayden Bradley",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-32",
+          "player": "Isaiah Spencer",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-33",
+          "player": "Isreal Solomon",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-34",
+          "player": "Jack Patterson",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-35",
+          "player": "Jalan Chapman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-36",
+          "player": "Jaylon Braxton",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-37",
+          "player": "Jehiem Oatis",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-38",
+          "player": "Joe Koury",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-39",
+          "player": "Joenel Aguero",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-40",
+          "player": "Jonathan Maldonado",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Renaud",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-42",
+          "player": "Joshua Dye",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-43",
+          "player": "Kamron Beavers",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-44",
+          "player": "Keaton Thomas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-45",
+          "player": "Ladarian Clardy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-46",
+          "player": "Levi Blount",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-47",
+          "player": "Maison Dunn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-48",
+          "player": "Mark Trigg Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-49",
+          "player": "Mason Waddle",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-50",
+          "player": "Michael Smith",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-51",
+          "player": "MJ Preston",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-52",
+          "player": "Nick Cull",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-53",
+          "player": "Oscar Bird",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-54",
+          "player": "Pat Broomfield",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-55",
+          "player": "Patrick Kutas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-56",
+          "player": "Raymond Collins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-57",
+          "player": "Rees Wise",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-58",
+          "player": "Samari Reed",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-59",
+          "player": "Sean Judge",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-60",
+          "player": "Sharif Denson",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-61",
+          "player": "Shekai Mills-Knight",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-62",
+          "player": "Tah'j Butler",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-63",
+          "player": "Talib Graham",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-64",
+          "player": "Tavoy Feagin",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-65",
+          "player": "Tommy Kinsler IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-66",
+          "player": "Tony Mitchell",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-67",
+          "player": "Traylon Ray",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-68",
+          "player": "Trey Nightingale",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-69",
+          "player": "Troy Everett",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-70",
+          "player": "Walker Howard",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-71",
+          "player": "Will Echoles",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-72",
+          "player": "Wyatt Smalley",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-1",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-2",
+          "player": "Caleb Odom",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-3",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-4",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-5",
+          "player": "Edwin Joseph",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-6",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-7",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-8",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-9",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-10",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-11",
+          "player": "Luke Ferrelli",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-12",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-13",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-14",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-15",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-2",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-3",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-4",
+          "player": "Caleb Odom",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-5",
+          "player": "Luke Ferrelli",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-7",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-9",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-10",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-2",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-3",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-4",
+          "player": "Caleb Odom",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-5",
+          "player": "Luke Ferrelli",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-7",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-8",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-9",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CC-10",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CL-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CL-3",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CL-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "CL-3",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-2",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-3",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-4",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-5",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-2",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-3",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-4",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "DS-5",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-2",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-3",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-4",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-5",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-7",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-8",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-9",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-10",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-2",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-3",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-4",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-5",
+          "player": "Makhi Frazier",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-7",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-8",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-9",
+          "player": "Lucas Carneiro",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "F-10",
+          "player": "Michai Boireau",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GD-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GD-3",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-3",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-4",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-5",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-3",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-4",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-5",
+          "player": "Carius Curne",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jalyn Crawford",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-2",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-3",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-4",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-5",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Darrell Gill Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-2",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-3",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-4",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "H-5",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-3",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-4",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-5",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-6",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Trinidad Chambliss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-2",
+          "player": "Kewan Lacy",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-3",
+          "player": "Horatio Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-4",
+          "player": "Johntay Cook II",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-5",
+          "player": "Luke Hasz",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "NH-6",
+          "player": "Antonio Kite",
+          "team": "Ole Miss"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1018 @@
+{
+  "id": "2026-onit-athlete-georgia-tech-football",
+  "name": "2026 ONIT Athlete Georgia Tech Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 77,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Georgia Tech Football",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Debron Gatling",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-16",
+          "player": "A.J. Hoffler",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-17",
+          "player": "Aidan Birr",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-18",
+          "player": "Amontrae Bradford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-19",
+          "player": "Andrew Rosinski",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-20",
+          "player": "Blake Belin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-21",
+          "player": "Blake Ragsdale",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-22",
+          "player": "Brayden Manley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-23",
+          "player": "Cal Keeler",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-24",
+          "player": "Cayman Spaulding",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-25",
+          "player": "Chad Alexander",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-26",
+          "player": "Chris Corbo",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-27",
+          "player": "Cole Bergeron",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-28",
+          "player": "Daiquan White",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-29",
+          "player": "Derry Norris, Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-30",
+          "player": "Elgin Sessions",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-31",
+          "player": "Eli Rickell",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-32",
+          "player": "Evan Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-33",
+          "player": "Favour Edwin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-34",
+          "player": "Gavin Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-35",
+          "player": "Grady Adamson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-36",
+          "player": "Graham Knowles",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-37",
+          "player": "Jayden Barr",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-38",
+          "player": "Jimmy Bryson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-39",
+          "player": "Jon Mitchell",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-40",
+          "player": "Jonas Duclona",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-41",
+          "player": "Jordan Boyd",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-42",
+          "player": "Jordan Floyd",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-43",
+          "player": "Joseph Ionata",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-44",
+          "player": "Joseph Moseley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-45",
+          "player": "Joshua Taylor",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-46",
+          "player": "Kelvin Hill",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-47",
+          "player": "Kevin Roche, Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-48",
+          "player": "Krew Moledor",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-49",
+          "player": "Landon Shaffer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-50",
+          "player": "Lawson Pritchett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-51",
+          "player": "Nate Agyemang",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-52",
+          "player": "Rocco Xerogeanes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-53",
+          "player": "Ronnie Thomas Iii",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-54",
+          "player": "Savion Riley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-55",
+          "player": "Shymeik Jones",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-56",
+          "player": "Taje Mccoy",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-57",
+          "player": "Tawfiq Thomas",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-58",
+          "player": "Tim Griffin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-59",
+          "player": "Trelain Maddox",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-60",
+          "player": "Vincent Carroll-Jackson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-61",
+          "player": "Will Kiker",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Debron Gatling",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-6",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-7",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-8",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-9",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-6",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-7",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-8",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-9",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CL-3",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CL-3",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-4",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-2",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-4",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "DS-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Debron Gatling",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-2",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-4",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-5",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-7",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-8",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-9",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-10",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Debron Gatling",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-2",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-4",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-5",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-6",
+          "player": "Jaiven Plummer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-7",
+          "player": "Christian Garrett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-8",
+          "player": "Rahkeem Smith",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-9",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "F-10",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GD-2",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GD-3",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-2",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-3",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-4",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-5",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-6",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-2",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-3",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-4",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-5",
+          "player": "Tae Harris",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "GA-6",
+          "player": "Josh Petty",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-3",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-4",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-3",
+          "player": "Jaylen Mbakwe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-4",
+          "player": "Justice Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "H-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-6",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Alberto Mendoza",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-2",
+          "player": "Dalen Penson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-3",
+          "player": "E.J. Lightsey",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-4",
+          "player": "Jordan Allen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-5",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "NH-6",
+          "player": "Malachi Hosley",
+          "team": "Georgia Tech"
+        }
+      ]
+    }
+  ]
+}

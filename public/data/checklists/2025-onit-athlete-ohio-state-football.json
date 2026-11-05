@@ -1,0 +1,1344 @@
+{
+  "id": "2025-onit-athlete-ohio-state-football",
+  "name": "2025 ONIT Athlete Ohio State Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 93,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Scott Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-2",
+          "player": "Ahmed Tounkara",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-3",
+          "player": "Alec Delsignore",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-4",
+          "player": "Arvell Reese",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-5",
+          "player": "Austin Siereveld",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-6",
+          "player": "Bennett Christian",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-7",
+          "player": "Bo Jackson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-8",
+          "player": "Bodpegn Miller",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-9",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-10",
+          "player": "Brennen Schramm",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-11",
+          "player": "Brenten \"Inky\" Jones",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-12",
+          "player": "Bryce West",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-13",
+          "player": "Bryson Rodgers",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-14",
+          "player": "Bukari Miles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-15",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-16",
+          "player": "C.J. Hicks",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-17",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-18",
+          "player": "Caleb Downs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-19",
+          "player": "Carnell Tate",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-20",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-21",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-22",
+          "player": "Cody Haddad",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-23",
+          "player": "Damarion Witten",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-24",
+          "player": "David Adolph",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-25",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-26",
+          "player": "Deontae Armstong",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-27",
+          "player": "Deshawn Stewart",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-28",
+          "player": "Devontae Armstrong",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-29",
+          "player": "Dianté Griffin",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-30",
+          "player": "Dominic Kirks",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-31",
+          "player": "Dorian Williams",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-32",
+          "player": "Eddrick Houston",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-33",
+          "player": "Eli Lee",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-34",
+          "player": "Eli Riggs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-35",
+          "player": "Eric Mensah",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-36",
+          "player": "Ethan Onianwa",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-37",
+          "player": "Faheem Delane",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-38",
+          "player": "Gabe Vansickle",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-39",
+          "player": "Garrett Stover",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-40",
+          "player": "Glorien Gough",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-41",
+          "player": "Ian Moore",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-42",
+          "player": "Isaiah West",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-43",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-44",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-45",
+          "player": "Jarquez Carter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-46",
+          "player": "Jason Moore",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-47",
+          "player": "Jayden Fielding",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-48",
+          "player": "Jaylen Mcclain",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-49",
+          "player": "Jayvon Mcfadden",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-50",
+          "player": "Jelani Thurman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-51",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-52",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-53",
+          "player": "Joe Mcguire",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-54",
+          "player": "John Ferlmann",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-55",
+          "player": "Joshua Padilla",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-56",
+          "player": "Joshua Mickens",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-57",
+          "player": "Julian Goines-Jackson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-58",
+          "player": "Kayden Mcdonald",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-59",
+          "player": "Keenan Nelson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-60",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-61",
+          "player": "Leroy Roker Iii",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-62",
+          "player": "Lincoln Kienholz",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-63",
+          "player": "Logan George",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-64",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-65",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-66",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-67",
+          "player": "Mason Maggs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-68",
+          "player": "Max Klare",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-69",
+          "player": "Maxence Leblanc",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-70",
+          "player": "Miles Lockhart",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-71",
+          "player": "Nate Riegle",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-72",
+          "player": "Nate Roberts",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-73",
+          "player": "Nick Mclarty",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-74",
+          "player": "Nolan Baudo",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-75",
+          "player": "Payton Pierce",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-76",
+          "player": "Phillip Daniels",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-77",
+          "player": "Phillip Bell",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-78",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-79",
+          "player": "Riley Pettijohn",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-80",
+          "player": "Ryan Rudzinski",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-81",
+          "player": "Sam Williams-Dixon",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-82",
+          "player": "Shawn Lodge",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-83",
+          "player": "Simon Lorentz",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-84",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-85",
+          "player": "Tarvos \"Tj\" Alford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-86",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-87",
+          "player": "Trajen Odom",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-88",
+          "player": "Ty Howard",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-89",
+          "player": "Tywone Malone Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-90",
+          "player": "Will Kacmarek",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-91",
+          "player": "Will Smith Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-92",
+          "player": "Zach Hayes",
+          "team": "Ohio State"
+        },
+        {
+          "number": "B-93",
+          "player": "Zion Grady",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "vestige",
+      "name": "Vestige",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-2",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-3",
+          "player": "Caleb Downs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-4",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-5",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-6",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-7",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-8",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-9",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-10",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-11",
+          "player": "Carnell Tate",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-12",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-14",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "BL-15",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-day-shimmer-nitro-1",
+      "name": "City Limits Day (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Caleb Downs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-4",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-5",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-6",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-7",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-8",
+          "player": "Carnell Tate",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-night-shimmer-nitro-1",
+      "name": "City Limits Night (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-9",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-10",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-11",
+          "player": "Caleb Downs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-13",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-14",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-15",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "CL-16",
+          "player": "Carnell Tate",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "aftershock",
+      "name": "Aftershock",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AS-1",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-2",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-3",
+          "player": "Caleb Downs",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-4",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-5",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-6",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-7",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-8",
+          "player": "Carnell Tate",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-9",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "AS-10",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "base-signature",
+      "name": "Base Signature",
+      "category": "autograph",
+      "totalCards": 34,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-4",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-5",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-6",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-8",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-9",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-11",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-14",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-15",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-16",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-17",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-1",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-4",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-5",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-6",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-8",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-9",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-11",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-14",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-15",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-16",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-17",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-orbs-99",
+      "name": "Team Color Signature Orbs (/99)",
+      "category": "autograph",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-4",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-5",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-6",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-8",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-9",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-11",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-14",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-15",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-16",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-17",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-9",
+      "name": "Silver Signature (/9)",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-4",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-5",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-6",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-8",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-9",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-11",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-14",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-15",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-16",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-17",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-4",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-5",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-6",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-7",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-8",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-9",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-10",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-11",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-12",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-13",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-14",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-15",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-16",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "S-17",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "film-signature-15",
+      "name": "Film Signature (/15)",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FLS-1",
+          "player": "Jeremiah Smith",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-2",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-3",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-4",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-5",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-6",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-7",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-8",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-9",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-10",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-11",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-12",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FLS-13",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-signature-60",
+      "name": "Fusion Signature (/60)",
+      "category": "autograph",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-1",
+          "player": "Brandon Inniss",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-2",
+          "player": "Cj Donaldson",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-3",
+          "player": "Caden Curry",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-4",
+          "player": "Carson Hinzman",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-5",
+          "player": "Carter Lowe",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-6",
+          "player": "Davison Igbinosun",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-7",
+          "player": "Jake Cook",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-8",
+          "player": "James Peoples",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-9",
+          "player": "Jermaine Mathews Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-10",
+          "player": "Kenyatta Jackson Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-11",
+          "player": "Lorenzo Styles Jr.",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-12",
+          "player": "Luke Montgomery",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-13",
+          "player": "Malik Hartford",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-14",
+          "player": "Quincy Porter",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-15",
+          "player": "Sonny Styles",
+          "team": "Ohio State"
+        },
+        {
+          "number": "FS-16",
+          "player": "Tegra Tshabola",
+          "team": "Ohio State"
+        }
+      ]
+    }
+  ]
+}

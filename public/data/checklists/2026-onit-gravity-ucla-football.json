@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-ucla-football",
+  "name": "2026 ONIT Gravity UCLA Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "UCLA"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "UCLA"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "UCLA"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "UCLA"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "UCLA"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "UCLA"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "UCLA"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "UCLA"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "UCLA"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "UCLA"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "UCLA"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "UCLA"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "UCLA"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "UCLA"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "UCLA"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "UCLA"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "UCLA"
+        }
+      ]
+    }
+  ]
+}

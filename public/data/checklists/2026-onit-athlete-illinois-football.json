@@ -1,0 +1,1173 @@
+{
+  "id": "2026-onit-athlete-illinois-football",
+  "name": "2026 ONIT Athlete Illinois Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "onit-team-trading-cards-checklist",
+      "name": "ONIT Team Trading Cards Checklist",
+      "category": "insert",
+      "totalCards": 108,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "Illinois Football",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-1",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-3",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-4",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-5",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-6",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-7",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-9",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-11",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-12",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-13",
+          "player": "Alfred Washington",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-14",
+          "player": "Almirian Thomas",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-15",
+          "player": "Andre Lovett Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-16",
+          "player": "Ben Clawson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-17",
+          "player": "Brandon Hansen",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-18",
+          "player": "Brandon Henderson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-19",
+          "player": "Cameron Brooks",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-20",
+          "player": "Cameron Thomas",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-21",
+          "player": "Carson Boyd",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-22",
+          "player": "Carter Janki",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-23",
+          "player": "Carter Smith",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-24",
+          "player": "Cedric Wyche II",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-25",
+          "player": "Champ Smith",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-26",
+          "player": "Corey Rashad",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-27",
+          "player": "Daniel Brown",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-28",
+          "player": "Darrell Prater",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-29",
+          "player": "Davin Stoffel",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-30",
+          "player": "Davon Grant",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-31",
+          "player": "Demetrius John",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-32",
+          "player": "Des Straughton",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-33",
+          "player": "Deuce Fillmore",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-34",
+          "player": "Dylan Frechette",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-35",
+          "player": "Eddie Kasper",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-36",
+          "player": "Eddie Tuerk",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-37",
+          "player": "Erik Gayle",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-38",
+          "player": "Ethan Moczulski",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-39",
+          "player": "Grant Beerman",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-40",
+          "player": "Grant Smith",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-41",
+          "player": "Griffin Rousseau",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-42",
+          "player": "Guillermo Gallardo",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-43",
+          "player": "Isaiah White",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-44",
+          "player": "Isaiah Williams",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-45",
+          "player": "Ismael Kante",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-46",
+          "player": "Jack Paris",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-47",
+          "player": "Jacob Alexander",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-48",
+          "player": "Jacob Eberhart",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-49",
+          "player": "Jacob Harvey",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-50",
+          "player": "Jake Renfro",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-51",
+          "player": "Jakwon Morris",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-52",
+          "player": "James Kreutz",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-53",
+          "player": "Jershaun Newton",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-54",
+          "player": "JJ Hirdes",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-55",
+          "player": "Joe Barna",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-56",
+          "player": "John Forster",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-57",
+          "player": "Jordan Anderson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-58",
+          "player": "Juice Clarke",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-59",
+          "player": "Kaden Feagin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-60",
+          "player": "Kai Pritchard",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-61",
+          "player": "Karson Kaiser",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-62",
+          "player": "King Liggins",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-63",
+          "player": "Kingston Shaw",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-64",
+          "player": "Landen Von Seggern",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-65",
+          "player": "Lars Rau",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-66",
+          "player": "Lavon Williams",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-67",
+          "player": "Logan Farrell",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-68",
+          "player": "Lucas Osada",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-69",
+          "player": "Mac Resetich",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-70",
+          "player": "Maika Matelau",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-71",
+          "player": "Mason Muragin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-72",
+          "player": "Maurice Smith Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-73",
+          "player": "Michael Clayton Ii",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-74",
+          "player": "Michael Mcdonough",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-75",
+          "player": "Murphy Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-76",
+          "player": "Nas Rankin",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-77",
+          "player": "Nathan Knapik",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-78",
+          "player": "Nelsyn Wheeler",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-79",
+          "player": "Parker Crim",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-80",
+          "player": "Pat Farrell",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-81",
+          "player": "Patrick Mahoney III",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-82",
+          "player": "RJ Jones III",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-83",
+          "player": "Robert Edmonson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-84",
+          "player": "Tanner Heckel",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-85",
+          "player": "Tanner Hollinger",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-86",
+          "player": "TJ Mcmillen",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-87",
+          "player": "Tony Williams",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-88",
+          "player": "Ty Robinson",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-89",
+          "player": "Tywan Cox",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-90",
+          "player": "Will Holmes",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-91",
+          "player": "Will Vala III",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-92",
+          "player": "Xanai Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-93",
+          "player": "Xavier Scott",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-94",
+          "player": "Zach Haber",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-95",
+          "player": "Zafir Stewart",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-1",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-3",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-4",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-5",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-6",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-7",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-9",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-11",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "B-12",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-3",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-4",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-5",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-6",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-7",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-9",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-3",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-4",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-5",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-6",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-7",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-9",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "CC-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "CL-2",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "CL-3",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "CL-2",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "CL-3",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-2",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-3",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-4",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-5",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-2",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-3",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-4",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "DS-5",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-3",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-4",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-5",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-6",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-7",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-9",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-2",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-3",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-4",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-5",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-6",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-7",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-8",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-9",
+          "player": "Nick Hankins Jr.",
+          "team": "Illinois"
+        },
+        {
+          "number": "F-10",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "GD-2",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "GD-3",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-2",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-3",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-4",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-5",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-2",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-3",
+          "player": "Matthew Bailey",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-4",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-5",
+          "player": "Kenyon Alston",
+          "team": "Illinois"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-2",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-3",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-4",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-5",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-2",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-3",
+          "player": "Hudson Clement",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-4",
+          "player": "Alex Perry",
+          "team": "Illinois"
+        },
+        {
+          "number": "H-5",
+          "player": "Collin Dixon",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-2",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-3",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-4",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-5",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-6",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Katin Houser",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-2",
+          "player": "Ca'Lil Valentine",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-3",
+          "player": "Aidan Laughery",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-4",
+          "player": "Christian Abney",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-5",
+          "player": "Brayden Trimble",
+          "team": "Illinois"
+        },
+        {
+          "number": "NH-6",
+          "player": "Jayshon Platt",
+          "team": "Illinois"
+        }
+      ]
+    }
+  ]
+}

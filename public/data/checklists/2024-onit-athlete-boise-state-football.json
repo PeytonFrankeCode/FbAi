@@ -1,0 +1,382 @@
+{
+  "id": "2024-onit-athlete-boise-state-football",
+  "name": "2024 ONIT Athlete Boise State Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 46,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A’Marion McCoy",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-2",
+          "player": "Ahmed Hassanein",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-3",
+          "player": "AJ Maes",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-4",
+          "player": "Alexander Teubner",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-5",
+          "player": "Andrew Simpson",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-6",
+          "player": "Ashton Jeanty",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-7",
+          "player": "Austin Bolt",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-8",
+          "player": "Austin Terry",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-9",
+          "player": "Ben Dooley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-10",
+          "player": "Ben Ford",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-11",
+          "player": "Boen Phelps",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-12",
+          "player": "Braxton Fely",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-13",
+          "player": "Bryce Cleave",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-14",
+          "player": "Cameron Bates",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-15",
+          "player": "Cameron Camper",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-16",
+          "player": "Carson Rasmussen",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-17",
+          "player": "Chase Martin",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-18",
+          "player": "Chase Penry",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-19",
+          "player": "Chris Marshall",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-20",
+          "player": "Clay Martineau",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-21",
+          "player": "Cole Miller",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-22",
+          "player": "Colt Fulton",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-23",
+          "player": "Connor Gilbreath",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-24",
+          "player": "Connor Warkentin",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-25",
+          "player": "Cooper Jones",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-26",
+          "player": "Davis Thacker",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-27",
+          "player": "Davon Banks",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-28",
+          "player": "Daylon Metoyer",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-29",
+          "player": "Demanuel Brown, Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-30",
+          "player": "Dionte Thornton",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-31",
+          "player": "Dylan Riley",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-32",
+          "player": "Ethan Mikita",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-33",
+          "player": "Eyitayo Omotinugbon",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-34",
+          "player": "Franklyn Johnson, Jr.",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-35",
+          "player": "Gabe Hunter",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-36",
+          "player": "Gabe Tahir",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-37",
+          "player": "Gavin Hambrick",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-38",
+          "player": "Gregory Bienvenue",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-39",
+          "player": "Hall Schmidt",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-40",
+          "player": "Hayden Hanks",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-41",
+          "player": "Herbert Gums",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-42",
+          "player": "Hunter Steacker",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-43",
+          "player": "Jackson Grier",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-44",
+          "player": "Jacob Williams",
+          "team": "Boise State"
+        },
+        {
+          "number": "B-45",
+          "player": "Jake Ripp",
+          "team": "Boise State"
+        },
+        {
+          "number": "2024",
+          "player": "Boise State Football",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "series-cards-look-for-holographic-parallels",
+      "name": "* Series Cards Look for Holographic Parallels",
+      "category": "insert",
+      "totalCards": 22,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Ashton Jeanty",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-2",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-3",
+          "player": "Latrell Caples",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-4",
+          "player": "Malachi Nelson",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-5",
+          "player": "Andrew Simpson",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-6",
+          "player": "Jonah Dalmas",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-7",
+          "player": "Ty Benefield",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-8",
+          "player": "Marco Notarainni",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-9",
+          "player": "Seyi Oladipo",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-10",
+          "player": "Mason Randolph",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-11",
+          "player": "Ahmed Hassanein",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-12",
+          "player": "Ashton Jeanty",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-13",
+          "player": "Maddux Madsen",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-14",
+          "player": "Latrell Caples",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-15",
+          "player": "Malachi Nelson",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-16",
+          "player": "Andrew Simpson",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-17",
+          "player": "Jonah Dalmas",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-18",
+          "player": "Ty Benefield",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-19",
+          "player": "Marco Notarainni",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-20",
+          "player": "Seyi Oladipo",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-21",
+          "player": "Mason Randolph",
+          "team": "Boise State"
+        },
+        {
+          "number": "S-22",
+          "player": "Ahmed Hassanein",
+          "team": "Boise State"
+        }
+      ]
+    },
+    {
+      "id": "s-jd35-jonah-dalmas-35-k-p",
+      "name": "S - JD35     Jonah Dalmas         35    K/P",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2024",
+          "player": "Boise State Football",
+          "team": "Boise State"
+        }
+      ]
+    }
+  ]
+}

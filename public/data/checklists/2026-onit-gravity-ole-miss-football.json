@@ -1,0 +1,1047 @@
+{
+  "id": "2026-onit-gravity-ole-miss-football",
+  "name": "2026 ONIT Gravity Ole Miss Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2026",
+          "player": "ONIT Gravity Football Checklist",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "black-pulsar-1-ultra-gold-1",
+      "name": "Black Pulsar /1, Ultra Gold /1)",
+      "category": "insert",
+      "totalCards": 200,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "2",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "3",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "4",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "5",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "6",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "7",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "8",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "9",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "10",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "11",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "12",
+          "player": "Ohio State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "13",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "14",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "15",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "16",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "17",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "18",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "19",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "20",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "21",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "22",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "23",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "24",
+          "player": "Iowa State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "25",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "26",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "27",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "28",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "29",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "30",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "31",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "32",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "33",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "34",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "35",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "36",
+          "player": "Kansas State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "37",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "38",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "39",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "40",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "41",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "42",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "43",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "44",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "45",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "46",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "47",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "48",
+          "player": "Mississippi State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "49",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "50",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "51",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "52",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "53",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "54",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "55",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "56",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "57",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "58",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "59",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "60",
+          "player": "Missouri",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "61",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "62",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "63",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "64",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "65",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "66",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "67",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "68",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "69",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "70",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "71",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "72",
+          "player": "Nebraska",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "73",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "74",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "75",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "76",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "77",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "78",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "79",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "80",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "81",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "82",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "83",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "84",
+          "player": "Oklahoma",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "85",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "86",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "87",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "88",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "89",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "90",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "91",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "92",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "93",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "94",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "95",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "96",
+          "player": "Oklahoma State",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "97",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "98",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "99",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "100",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "101",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "102",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "103",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "104",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "105",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "106",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "107",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "108",
+          "player": "Ole Miss",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "109",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "110",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "111",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "112",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "113",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "114",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "115",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "116",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "117",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "118",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "119",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "120",
+          "player": "Texas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "121",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "122",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "123",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "124",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "125",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "126",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "127",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "128",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "129",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "130",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "131",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "132",
+          "player": "Texas Tech",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "133",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "134",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "135",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "136",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "137",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "138",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "139",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "140",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "141",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "142",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "143",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "144",
+          "player": "Ucla",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "145",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "146",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "147",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "148",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "149",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "150",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "151",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "152",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "153",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "154",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "155",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "156",
+          "player": "Usc",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "157",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "158",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "159",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "160",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "161",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "162",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "163",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "164",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "165",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "166",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "167",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "168",
+          "player": "West Virginia",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "169",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "170",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "171",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "172",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "173",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "174",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "175",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "176",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "177",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "178",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "179",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "180",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "181",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "182",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "183",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "184",
+          "player": "Michigan",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "185",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "186",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "187",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "188",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "189",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "190",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "191",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "192",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "193",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "194",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "195",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "196",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "197",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "198",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "199",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "200",
+          "player": "Indiana",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "sd-mh-west-virginia-malachi-hood-1",
+      "name": "SD-MH    West Virginia   Malachi Hood         /1",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Ole Miss"
+        }
+      ]
+    }
+  ]
+}
