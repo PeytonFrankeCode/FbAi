@@ -11040,6 +11040,44 @@ function buildChecklistQuery(player, year, brand, setName, category, printRun) {
 
 // ---- Inline Player Listings in Checklist ----
 let activePlayerPanel = null;
+// The words a seller would use for the product. Every ONIT product carries
+// the brand "ONIT Athlete", but listings say "Onit", plus the line when it is
+// not the team set ("Onit Gravity", "Onit Black").
+function checklistSearchBrand(data, brand) {
+  const name = String((data && data.name) || '');
+  if (/^ONIT/i.test(String(brand || '')) || /\bONIT\b/i.test(name)) {
+    const line = (/\bONIT (Gravity|Black|Timeless)\b/i.exec(name) || [])[1];
+    return line ? `Onit ${line}` : 'Onit';
+  }
+  return brand;
+}
+
+// A set's name as a seller would write it: no "(/15)", no "Checklist", no
+// "Standard" (the plain version is the default), no "(2)" from a heading
+// printed twice.
+function checklistSetWords(setName) {
+  return String(setName || '')
+    .replace(/\([^)]*\)/g, ' ').replace(/\b(Checklist|Standard)\b/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+// The searches to try for one checklist card, most exact first. eBay returns
+// only listings with every word, so the full card name often finds nothing;
+// each step drops words a seller is least likely to have typed: the set name,
+// then the year. The panel says when it fell back.
+function checklistQueryLadder(player, year, brand, setName, category, printRun) {
+  const b = checklistSearchBrand(typeof checklistData !== 'undefined' ? checklistData : null, brand);
+  const set = checklistSetWords(setName);
+  const pr = printRun ? ` /${printRun}` : '';
+  const steps = [];
+  if (category && category !== 'base' && set) steps.push(`${year} ${b} ${set} ${player}${pr}`);
+  steps.push(`${year} ${b} ${player}${pr}`);
+  if (pr) steps.push(`${year} ${b} ${player}`);
+  steps.push(`${b} ${player}`);
+  const seen = new Set();
+  return steps.map(q => q.replace(/\s+/g, ' ').trim()).filter(q => q && !seen.has(q.toLowerCase()) && seen.add(q.toLowerCase()));
+}
+
 
 function togglePlayerListings(linkEl, player, year, brand, setName, category, cardNum, printRun) {
   const row = linkEl.closest('tr');
@@ -11072,7 +11110,7 @@ function togglePlayerListings(linkEl, player, year, brand, setName, category, ca
   td.colSpan = headerCols;
   td.className = 'cl-listings-cell';
 
-  const query = buildChecklistQuery(player, year, brand, setName, category, printRun);
+  const query = checklistQueryLadder(player, year, brand, setName, category, printRun);
   const subtitle = (setName && category !== 'base') ? setName : (printRun ? setName : '');
   const printRunLabel = printRun ? ` /${printRun}` : '';
 
@@ -16200,7 +16238,9 @@ function updateLayoutButtons(mode) {
   if (mBtn) mBtn.classList.toggle('active', mode === 'mobile');
 }
 
-async function fetchPlayerListings(container, query, mode) {
+async function fetchPlayerListings(container, queries, mode) {
+  const ladder = Array.isArray(queries) ? queries : [queries];
+  const query = ladder[0];
   const body = container.querySelector('.cl-listings-body');
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
 
@@ -16213,16 +16253,24 @@ async function fetchPlayerListings(container, query, mode) {
       totalShown: 0, allPrices: [],
       statsEl: null, grid: null, sentinel: null, observer: null,
       isSimilar: false,
+      ladder: ladder.slice(1), fellBackTo: null,
     };
     await loadPlayerPage(body);
     return;
   }
 
   try {
-    const params = new URLSearchParams({ q: query, mode, limit: '50' });
-    const response = await fetch(`/api/search?${params}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+    // Step down the ladder until a search finds sales.
+    let data = null, usedQuery = query;
+    for (let i = 0; i < ladder.length; i++) {
+      const params = new URLSearchParams({ q: ladder[i], mode, limit: '50' });
+      const response = await fetch(`/api/search?${params}`);
+      const d = await response.json();
+      if (!response.ok) throw new Error(d.error || `Server error ${response.status}`);
+      data = d; usedQuery = ladder[i];
+      if ((d.results || []).length || d.rateLimited || d.soldUnavailable) break;
+    }
+    const fellBack = usedQuery !== query;
 
     const results = data.results || [];
     const serial = data.serial || null;
@@ -16251,7 +16299,9 @@ async function fetchPlayerListings(container, query, mode) {
     const reasoning = generateListingReasoning(results, true, serial);
 
     let html = '';
-    if (searchType === 'broadened') {
+    if (fellBack) {
+      html += `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No sales of this exact card found. Showing sales for <strong>${escHtml(usedQuery)}</strong>.</div>`;
+    } else if (searchType === 'broadened') {
       html += `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No exact match found. Showing similar items`;
       if (approximateValue) {
         html += ` &mdash; estimated value <strong>~$${approximateValue.medianPrice.toFixed(2)}</strong>`;
@@ -16299,6 +16349,14 @@ async function loadPlayerPage(body) {
     if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
 
     const raw = data.results || [];
+    // Nothing for this search on the first page: try the next, simpler one.
+    if (s.offset === 0 && !raw.length && s.ladder && s.ladder.length && !data.rateLimited) {
+      s.query = s.ladder.shift();
+      s.fellBackTo = s.query;
+      s.isSimilar = true;
+      s.loading = false;
+      return await loadPlayerPage(body);
+    }
     if (s.offset === 0 && data.searchType === 'broadened') s.isSimilar = true;
     s.offset += s.pageSize;
     if (raw.length < s.pageSize) s.hasMore = false;
@@ -16324,7 +16382,9 @@ function renderPlayerPage(body, items, data) {
       return;
     }
     let header = '';
-    if (s.isSimilar) {
+    if (s.fellBackTo) {
+      header = `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No listings of this exact card right now. Showing listings for <strong>${escHtml(s.fellBackTo)}</strong>.</div>`;
+    } else if (s.isSimilar) {
       header = `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No exact match found. Showing similar listings.</div>`;
     }
     body.innerHTML = `${header}<div class="cl-listings-stats" data-stats></div><div class="cl-listings-grid"></div><div class="cl-load-more-wrap"></div>`;

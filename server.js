@@ -2827,7 +2827,16 @@ app.get('/api/search', async (req, res) => {
         // that legitimately mixes raw and graded copies, so a pricier graded
         // listing is a real result, not noise. The junk filter (applied in
         // fetchEbayItems) already removes reprints/lots/customs.
-        const filtered = applyVariantFilter(applyPriceFilter(searchData.results));
+        let filtered = applyVariantFilter(applyPriceFilter(searchData.results));
+        // eBay found listings but the word-for-word filter kept none (the
+        // query named the set one way, sellers another): show eBay's own
+        // matches, marked as similar, rather than an empty list.
+        if (!filtered.length && offset === 0 && !clientFilters) {
+          const loose = applyPriceFilter(searchData.results);
+          if (loose.length) {
+            return res.json({ results: loose, total: loose.length, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: query, approximateValue: null, offset, nextOffset: offset + limit, hasMore: false });
+          }
+        }
         // More is eBay's to say, from its own total. It was read off how many
         // listings survived the junk filter, so a page that lost one listing
         // to it (39 of 40) ended the list with hundreds still to come. And the
