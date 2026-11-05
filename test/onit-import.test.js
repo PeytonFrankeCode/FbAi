@@ -64,11 +64,55 @@ Black & Team Color Base Signature
 `;
 const ts = parseChecklistText(tt);
 check('2026 layout: title lines skipped, group before the header names the base set',
-  JSON.stringify(ts.map(s => [s.name, s.cards.length])) === JSON.stringify([['Base', 3], ['Campus Colors Standard', 1], ['City Limits Gold Parallel', 1], ['Black & Team Color Base Signature', 2]]), JSON.stringify(ts.map(s => [s.name, s.cards.length])));
-check('  ...the parallels line becomes the base set\'s parallels, not a second copy of the cards',
-  JSON.stringify(ts[0].parallels) === JSON.stringify([{ name: 'Teal', printRun: null }, { name: 'Purple', printRun: null }, { name: 'Black', printRun: null }, { name: 'Green', printRun: 100 }, { name: 'Orange', printRun: 75 }, { name: 'Gold', printRun: 1 }]));
-check('  ...lettered numbers and a trailing print run read cleanly', ts[2].cards[0].player === 'Cameron Dickey' && ts[3].cards[0].number === 'S-CD' && ts[3].cards[1].number === 'GA-WH' && ts[3].cards[1].player === 'Will Hammond');
-check('  ...and the product carries them', toProduct({ brand: 'Team Set', school: 'Texas Tech', year: '2026' }, ts).sets[0].parallels.length === 6);
+  JSON.stringify(ts.map(s => [s.name, s.cards.length])) === JSON.stringify([['Base', 3], ['Base Parallels', 2], ['Campus Colors Standard', 1], ['City Limits Gold Parallel', 1], ['Black & Team Color Base Signature', 2]]), JSON.stringify(ts.map(s => [s.name, s.cards.length])));
+check('  ...the parallels line, which covers some of the base cards, is a "Base Parallels" set carrying the list',
+  !ts[0].parallels && JSON.stringify(ts[1].parallels) === JSON.stringify([{ name: 'Teal', printRun: null }, { name: 'Purple', printRun: null }, { name: 'Black', printRun: null }, { name: 'Green', printRun: 100 }, { name: 'Orange', printRun: 75 }, { name: 'Gold', printRun: 1 }]));
+check('  ...lettered numbers and a trailing print run read cleanly', ts[3].cards[0].player === 'Cameron Dickey' && ts[4].cards[0].number === 'S-CD' && ts[4].cards[1].number === 'GA-WH' && ts[4].cards[1].player === 'Will Hammond');
+check('  ...and the product carries them', toProduct({ brand: 'Team Set', school: 'Texas Tech', year: '2026' }, ts).sets[1].parallels.length === 6);
+
+// 2026 Gravity: one checklist for every school, a SCHOOL column, parallels
+// in the heading running onto the next line.
+const grav = `                               2026 ONIT Gravity Football Checklist
+BASE SET            CARD NUMBER            SCHOOL                   PLAYER                           SEQ
+Base Set (Parallels: Orange, Silver, Teal /250, Blue /200,
+Pulsar /175, Ultra Gold /1)
+                                        1 Ohio State                Jeremiah Smith
+39 Mississippi State   Fluff Bothwell
+Galaxy (Parallels: Blue /200, Ultra Gold /1)
+G-KMA   Indiana    Kurtis Mitchell-Allen
+Base Signatures                                           SEQ
+S-BI    Ohio State     Bo Jackson     /25
+`;
+const gs = parseChecklistText(grav);
+check('Gravity: school column read as the team, the player after it',
+  JSON.stringify(gs.map(s => [s.name, s.cards.map(c => c.number + ' ' + c.player + ' / ' + c.team)])) === JSON.stringify([['Base', ['1 Jeremiah Smith / Ohio State', '39 Fluff Bothwell / Mississippi State']], ['Galaxy', ['G-KMA Kurtis Mitchell-Allen / Indiana']], ['Base Signatures', ['S-BI Bo Jackson / Ohio State']]]), JSON.stringify(gs.map(s => [s.name, s.cards])));
+check('  ...a heading\'s parallels across two lines', gs[0].parallels.length === 6 && gs[0].parallels[5].name === 'Ultra Gold' && gs[0].parallels[4].printRun === 175 && gs[1].parallels.length === 2);
+check('  ...and a multi-school product keeps each card\'s own school', toProduct({ brand: 'Gravity', school: 'Multi-School', year: '2026' }, gs).sets[0].cards[1].team === 'Mississippi State');
+
+// ONIT Black: a parallels line covering only some base cards stays a set.
+const blk = parseChecklistText(`Base
+B-1     72 ADEDAMOLA AJANI    OL
+B-2     4 AIDEN FISHER        LB
+B-3     16 ALBERTO MENDOZA    QB
+Parallels (Blue; Pink /150; Black /1)
+B-2     4 AIDEN FISHER        LB
+`);
+check('a parallels list for some of the base cards stays its own set', blk.length === 2 && blk[0].cards.length === 3 && !blk[0].parallels && blk[1].name === 'Base Parallels' && blk[1].cards.length === 1 && blk[1].parallels.length === 3, JSON.stringify(blk));
+const full = parseChecklistText('Base\nB-1  1 Al Bee  QB\nB-2  2 Cy Dee  WR\nBase Parallels (Gold /1)\nB-1  1 Al Bee  QB\nB-2  2 Cy Dee  WR\n');
+check('  ...and one for all of them becomes the base set\'s parallels', full.length === 1 && full[0].parallels[0].name === 'Gold' && full[0].parallels[0].printRun === 1, JSON.stringify(full));
+
+// 2023/2024 team sets: a font drawn 29 codes below its letters, and a note
+// column before the jersey number.
+const enc = (s) => s.split('').map(c => c === ' ' ? '\u0003' : String.fromCharCode(c.charCodeAt(0) - 29)).join('');
+const old = parseChecklistText(['       ' + enc('CARD NUMBER') + '     ' + enc('No') + '    ' + enc('Name'), enc('Base'),
+  enc('B-1') + '          ' + enc('17') + ' ' + enc('Amari Jefferson') + '      ' + enc('WR'),
+  '   * Series Cards Look for Parallels', enc('B-2') + '    ' + enc('10') + ' ' + enc('Austin Mack') + '  ' + enc('QB'), enc('ICON'),
+  enc('IC-1') + '     ' + enc('Additional Signature Edition') + '       ' + enc('2') + ' ' + enc('Ryan Williams') + '       ' + enc('WR')].join('\n'));
+check('shifted-font PDFs are read back', JSON.stringify(old.map(s => [s.name, s.cards.map(c => c.number + ' ' + c.player)])) === JSON.stringify([['Base', ['B-1 Amari Jefferson', 'B-2 Austin Mack']], ['ICON', ['IC-1 Ryan Williams']]]), JSON.stringify(old));
+
+const dup = parseChecklistText('Hype Standard\nH-1  2 Isaiah Mozee  WR\nHype Standard\nH-1  2 Isaiah Mozee  WR\nFilm Signature\nFS-DM   14 Dwayne Mcdougle III S\n');
+check('a heading printed twice gets a (2); a position set against the name is dropped',
+  dup.map(s => s.name).join('|') === 'Hype Standard|Hype Standard (2)|Film Signature' && dup[2].cards[0].player === 'Dwayne Mcdougle III', JSON.stringify(dup));
 
 const page = '<script type="application/json" data-ca-part>{"checklists":[{"brand":"Team Set","school":"Alabama","sport":"Football","year":"2026","pdf":"x.pdf"}]}</script>'
   + '<script type="application/json" data-ca-part>{"checklists":[{"brand":"Gravity","school":"Texas","sport":"Football","year":"2025","pdf":"y.pdf"}]}</script>';
