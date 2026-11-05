@@ -7,20 +7,34 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Onit checklist page structure
+      - name: Onit checklist data
         shell: bash {0}
         run: |
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36'
           curl -sS -L -m 30 -A "$UA" -o c.html https://onitathlete.com/pages/checklists
-          echo "bytes $(wc -c < c.html)"
-          echo "== links (non-asset)"
-          grep -oE 'href="[^"]+"' c.html | grep -viE 'cdn/|fonts|\.css|facebook|twitter|instagram|tiktok|youtube|/collections/|/products/' | sort -u | head -80
-          echo "== file links"
-          grep -oiE '(https?:)?//[^"'"'"' ]+\.(pdf|xlsx|xls|csv)[^"'"'"' ]*' c.html | sort -u | head -40
-          grep -oiE 'docs\.google\.com/[^"'"'"' ]+' c.html | sort -u | head -20
-          echo "== headings"
-          grep -oE '<h[1-4][^>]*>[^<]{2,120}</h[1-4]>' c.html | head -60
-          echo "== checklist markup sample"
-          grep -n -i 'checklist' c.html | cut -c1-300 | head -60
-          echo "== json blobs"
-          grep -oE '"(title|name|url|file|pdf)":"[^"]{2,150}"' c.html | sort -u | head -80
+          python3 - <<'PY'
+          import re, json, collections
+          h = open('c.html', encoding='utf-8', errors='replace').read()
+          parts = re.findall(r'<script type="application/json" data-ca-part>(.*?)</script>', h, re.S)
+          items = []
+          for p in parts:
+              try: items += json.loads(p).get('checklists', [])
+              except Exception as e: print('bad part', e)
+          print('checklists', len(items))
+          print('keys', sorted(items[0].keys()) if items else None)
+          c = collections.Counter((i.get('brand'), i.get('sport')) for i in items)
+          for k, v in sorted(c.items(), key=lambda x: -x[1])[:40]: print(v, k)
+          fb = [i for i in items if i.get('sport') == 'Football']
+          print('football by year/brand', collections.Counter((i.get('year'), i.get('brand')) for i in fb))
+          print(json.dumps(fb[:3], indent=1))
+          m = re.search(r'data-athletes="([^"]+)"', h); print('athletes', m and m.group(1))
+          PY
+          A=$(grep -o 'data-athletes="[^"]*"' c.html | head -1 | sed 's/data-athletes="//; s/"$//')
+          curl -sS -L -m 30 -A "$UA" -o a.json "$A"; echo "athletes bytes $(wc -c < a.json)"; head -c 1500 a.json; echo
+          sudo apt-get install -y -qq poppler-utils >/dev/null 2>&1 || true
+          for pdf in archive-team-set-alabama-football-2025 archive-gravity-alabama-football-2025 archive-onit-black-ohio-state-football-2025; do
+            u=$(grep -o "https:[^\"]*$pdf.pdf[^\"]*" c.html | head -1 | sed 's#\\/#/#g')
+            echo "=== $pdf $u"
+            curl -sS -L -m 30 -A "$UA" -o p.pdf "$u"; echo "bytes $(wc -c < p.pdf)"
+            pdftotext -layout p.pdf - | head -60
+          done
