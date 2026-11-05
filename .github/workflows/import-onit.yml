@@ -38,7 +38,13 @@ jobs:
           set -o pipefail
           ARGS=""
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
-          node scripts/import-onit.js $ARGS | tee import-report.txt
+          node scripts/import-onit.js $ARGS > import-report.txt 2>&1 || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "onit-peek/${GITHUB_RUN_ID}"
+          git add -f import-report.txt
+          git commit -qm peek
+          git push -q origin "onit-peek/${GITHUB_RUN_ID}"
           { echo '## ONIT import'; echo '```'; tail -250 import-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Anything new?
