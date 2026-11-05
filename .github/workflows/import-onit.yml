@@ -1,0 +1,76 @@
+name: Import ONIT checklists
+
+# ONIT Athlete's own checklists (scripts/import-onit.js), on GitHub's runner:
+# the agent sandbox cannot reach onitathlete.com. Started by pushing the
+# run/onit-import branch, or by hand. Never on a schedule. Pushes what it
+# wrote to a branch of its own (onit-import/<run id>), opened as a pull request
+# and tested like any other change; nothing reaches main from here.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Rewrite ONIT products already here'
+        type: boolean
+        default: false
+  push:
+    branches: ['run/onit-import']
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: pdftotext
+        run: sudo apt-get install -y -qq poppler-utils
+
+      - name: Import from onitathlete.com
+        run: |
+          set -o pipefail
+          ARGS="--write"
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          node scripts/import-onit.js $ARGS | tee import-report.txt
+          { echo '## ONIT import'; echo '```'; tail -250 import-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Anything new?
+        id: changed
+        run: |
+          files=$(git status --porcelain -- public/data/checklists | awk '{print $2}' | grep '\.json$' | grep -v '/index\.json$' || true)
+          if [ -z "$files" ]; then
+            echo "Nothing new to bring in." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$files" > changed.txt
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Validator results are kept for review rather than stopping the job: a
+      # new brand's files are read by a person before the pull request merges.
+      - name: Rebuild the index, validate, rebuild the card index
+        if: steps.changed.outputs.any == 'true'
+        run: |
+          node scripts/rebuild-checklist-index.js
+          while read -r f; do
+            node scripts/validate-checklist.js "$f" > v.txt 2>&1 || { echo "::warning::$f — validator errors"; cat v.txt; }
+          done < changed.txt
+          npm run build:card-index
+          node scripts/build-sport-players.js
+
+      - name: Push the changes to a branch
+        if: steps.changed.outputs.any == 'true'
+        run: |
+          BRANCH="onit-import/${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add public/data
+          git commit -q -m "Checklists: ONIT Athlete football from onitathlete.com (run ${GITHUB_RUN_ID})" -m "$(tail -60 import-report.txt)"
+          git push -u origin "$BRANCH"
+          echo "Pushed **$BRANCH**." >> "$GITHUB_STEP_SUMMARY"
