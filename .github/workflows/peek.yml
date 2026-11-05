@@ -1,5 +1,5 @@
 name: Peek at a live endpoint
-# Temporary (run/peek-newest): are the pages Bing suggests indexable?
+# Temporary (run/peek-newest): which Onit checklists does checklistinsider.com publish?
 on:
   push:
     branches: ['run/peek-newest']
@@ -7,18 +7,17 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Robots signals on the suggested pages
+      - name: Onit pages on checklistinsider.com
         shell: bash {0}
         run: |
-          for base in https://thecardhuddle.com https://the-card-huddle.thecardhuddleoffical.workers.dev; do
-            echo "=== $base"
-            for p in /sets/2025-panini-select-football/ /sets/2026-donruss-football/ /sets/2026-topps-football/ /sets/2026-topps-heritage-football/ /sets/2025-topps-resurgence-football/ /sets/2024-panini-prizm-football/ /players/bo-nix/; do
-              curl -sS -m 30 -D h.txt -o b.html -A 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)' "$base$p" || true
-              code=$(head -1 h.txt | awk '{print $2}')
-              xr=$(grep -i '^x-robots-tag' h.txt | tr -d '\r' || true)
-              meta=$(grep -o '<meta name="robots" content="[^"]*"' b.html | head -1 || true)
-              priced=$(grep -c 'id="sold-prices"' b.html || true)
-              chal=$(grep -ci 'just a moment' b.html || true)
-              echo "$code $p | $xr | $meta | priced=$priced challenge=$chal"
-            done
+          for sm in post-sitemap.xml post-sitemap2.xml post-sitemap3.xml page-sitemap.xml; do
+            curl -sS -m 30 -A 'Mozilla/5.0 (TheCardHuddle checklist sync)' "https://www.checklistinsider.com/$sm" -o "$sm" || true
+            echo "== $sm $(wc -c < $sm) bytes"
+            grep -o '<loc>[^<]*</loc>' "$sm" | grep -i 'onit' | sed 's#<loc>##; s#</loc>##' || true
           done
+          echo "== sample onit page"
+          u=$(cat post-sitemap*.xml | grep -o '<loc>[^<]*onit[^<]*</loc>' | head -1 | sed 's#<loc>##; s#</loc>##')
+          echo "$u"
+          [ -n "$u" ] && curl -sS -m 30 -A 'Mozilla/5.0 (TheCardHuddle checklist sync)' "$u" | sed 's/<script[^>]*>.*<\/script>//g' | grep -o '<h[23][^>]*>[^<]*</h[23]>' | head -40
+          echo "== search other sources"
+          curl -sS -m 30 -A 'Mozilla/5.0' "https://www.checklistinsider.com/?s=onit" | grep -o 'href="https://www.checklistinsider.com/[^"]*onit[^"]*"' | sort -u | head -40
