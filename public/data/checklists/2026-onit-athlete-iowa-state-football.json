@@ -1,0 +1,1556 @@
+{
+  "id": "2026-onit-athlete-iowa-state-football",
+  "name": "2026 ONIT Athlete Iowa State Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 77,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aiden Flora",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-2",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-4",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-5",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-6",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-7",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-8",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-10",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-11",
+          "player": "Max Baloun",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-12",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-13",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-14",
+          "player": "Zaimir Hawk",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-15",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-16",
+          "player": "Ajibola Afuye",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-17",
+          "player": "Amiri Barnes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-18",
+          "player": "Angelo Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-19",
+          "player": "Arnold Barnes III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-20",
+          "player": "Austin Barrett",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-21",
+          "player": "Beau Goodwin",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-22",
+          "player": "Beni Ngoyi",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-23",
+          "player": "Braden Goellner",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-24",
+          "player": "Braden Simonsen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-25",
+          "player": "Braden Smith",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-26",
+          "player": "Brody Miller",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-27",
+          "player": "Bryson Lamb",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-28",
+          "player": "Cade Myer",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-29",
+          "player": "Caden Matson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-30",
+          "player": "Caleb Schmidt",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-31",
+          "player": "Carson Robbins",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-32",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-33",
+          "player": "Cash Hayden",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-34",
+          "player": "Chase Smith",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-35",
+          "player": "Chet Andrews",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-36",
+          "player": "Colin Amick",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-37",
+          "player": "Connor Moberly",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-38",
+          "player": "Connor Welsch",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-39",
+          "player": "Daniel Howard",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-40",
+          "player": "Deandre Carter",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-41",
+          "player": "Donovan Fitzmaurice DT",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-42",
+          "player": "Dontrell Holt",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-43",
+          "player": "Duhron Goodman",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-44",
+          "player": "Easton Miller",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-45",
+          "player": "Eddie Lemos",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-46",
+          "player": "Ethan Stecker",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-47",
+          "player": "Gabriel Greenlee",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-48",
+          "player": "Garret Rutledge",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-49",
+          "player": "Gavin Broscious",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-50",
+          "player": "Jack Bjorn",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-51",
+          "player": "Jack Janikowski",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-52",
+          "player": "Jacob Lyftogt",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-53",
+          "player": "Jaheim Singletary",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-54",
+          "player": "Jake Taylor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-55",
+          "player": "Jareb Ramos",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-56",
+          "player": "Jonah Dupont",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-57",
+          "player": "Jordyn Bailey",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-58",
+          "player": "Ka'Mori Moore",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-59",
+          "player": "Kaleb Bilal-Jones",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-60",
+          "player": "Keaton Roskop",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-61",
+          "player": "Kyle Konrardy",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-62",
+          "player": "Maasai King",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-63",
+          "player": "Makai Sat",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-64",
+          "player": "Malaki Ta'Ase",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-65",
+          "player": "Micah Harper",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-66",
+          "player": "Ray Coffey",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-67",
+          "player": "Rylan Barnes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-68",
+          "player": "Ryver Peppers",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-69",
+          "player": "Sullivan Schlimgen",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-70",
+          "player": "Tayten Duncan",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-71",
+          "player": "Toe Sanders",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-72",
+          "player": "Trey Verdon",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-73",
+          "player": "Ty Claiborne",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-74",
+          "player": "Tyler Burnstein",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-75",
+          "player": "Tyrone Cotton III",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-76",
+          "player": "Vince Benetti",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-77",
+          "player": "Wyatt Archer",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aiden Flora",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-2",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-3",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-4",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-5",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-6",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-7",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-8",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-9",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-10",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-11",
+          "player": "Max Baloun",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-12",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-13",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-14",
+          "player": "Zaimir Hawk",
+          "team": "Iowa State"
+        },
+        {
+          "number": "B-15",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Max Baloun",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-3",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-4",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-5",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-6",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-7",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-8",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-9",
+          "player": "Max Baloun",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CC-10",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "CL-3",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-2",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-3",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-4",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "DS-5",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Aiden Flora",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-2",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-3",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-4",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-5",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-6",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-7",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-8",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-9",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-10",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Aiden Flora",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-2",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-3",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-4",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-5",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-6",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-7",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-8",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-9",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        },
+        {
+          "number": "F-10",
+          "player": "Braden Awls",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GD-2",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GD-3",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-3",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-4",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-5",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-6",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-3",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-4",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-5",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Carter Pabst",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-3",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-4",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "H-5",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-2",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-3",
+          "player": "Dominic Overby",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-4",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-5",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "NH-6",
+          "player": "Zane Flores",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-KW",
+          "player": "Keyon Washington",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "S-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-OH",
+          "player": "Omari Hayes",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "GA-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-CP",
+          "player": "Cameron Pettaway",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-CJ",
+          "player": "Cody Jackson",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-DS",
+          "player": "Drew Surges",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-EB",
+          "player": "Evan Boyd",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-JR",
+          "player": "Jaylen Raynor",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-SA",
+          "player": "Salahadin Allah",
+          "team": "Iowa State"
+        },
+        {
+          "number": "FS-CW",
+          "player": "Carson Willich",
+          "team": "Iowa State"
+        }
+      ]
+    }
+  ]
+}

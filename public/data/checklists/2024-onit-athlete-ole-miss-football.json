@@ -1,0 +1,1146 @@
+{
+  "id": "2024-onit-athlete-ole-miss-football",
+  "name": "2024 ONIT Athlete Ole Miss Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 72,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Akelo Stone",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-2",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-3",
+          "player": "Austin Acton",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-4",
+          "player": "Austin Simmons",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-5",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-6",
+          "player": "Braden Waterman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-7",
+          "player": "Brycen Sanders",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-8",
+          "player": "Caden Davis",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-9",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Blankenship",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-11",
+          "player": "Calvin Wilson",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-12",
+          "player": "Cam Clark",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-13",
+          "player": "Cam East",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-14",
+          "player": "Cayden Lee",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-15",
+          "player": "Charlie Pollock",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-16",
+          "player": "Chris Hardie",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-17",
+          "player": "Chris Paul Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-18",
+          "player": "Cj Barney",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-19",
+          "player": "Dae Quan Wright",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-20",
+          "player": "Daniel Demery",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-21",
+          "player": "Diego Pounds",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-22",
+          "player": "Domonique Thomas",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-23",
+          "player": "Drew Burnett",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-24",
+          "player": "Eli Acker",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-25",
+          "player": "Ethan Fields",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-26",
+          "player": "Fraser Masin",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-27",
+          "player": "Gerquan Scott",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-28",
+          "player": "Harrison Craig",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-29",
+          "player": "Jack Mills",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-30",
+          "player": "Jared Ivey",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-31",
+          "player": "Jarnorris Hopson",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-32",
+          "player": "Jeremy James",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-33",
+          "player": "Jj Pegues",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-34",
+          "player": "Joe Koury",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-35",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-36",
+          "player": "John Wayne Oliver",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-37",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-38",
+          "player": "Josh Aka",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-39",
+          "player": "Joshua Pfeifer",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-40",
+          "player": "Jude Foster",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-41",
+          "player": "Julius Buelow",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-42",
+          "player": "Justin Kowalak",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-43",
+          "player": "Kam Franklin",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-44",
+          "player": "Kavion Broussard",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-45",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-46",
+          "player": "Lane Hewett",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-47",
+          "player": "Louis Moore",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-48",
+          "player": "Micah Davis",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-49",
+          "player": "Micah Stallworth",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-50",
+          "player": "Mike Baker",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-51",
+          "player": "Paris Evans",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-52",
+          "player": "Pat Broomfield",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-53",
+          "player": "Preston Cushman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-54",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-55",
+          "player": "Raphael Ekechi",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-56",
+          "player": "Reece Mcintyre",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-57",
+          "player": "Salathiel Hemphill",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-58",
+          "player": "Sean Judge",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-59",
+          "player": "Shamaar Darden",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-60",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-61",
+          "player": "Tavion Prather",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-62",
+          "player": "Tj Banks",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-63",
+          "player": "Tj Dottery",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-64",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-65",
+          "player": "Trey Amos",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-66",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-67",
+          "player": "Trip White",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-68",
+          "player": "Tyler Banks",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-69",
+          "player": "Ulysses Bentley Iv",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-70",
+          "player": "Walker Howard",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-71",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "B-72",
+          "player": "William Echoles",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-2",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-3",
+          "player": "Jared Ivey",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-4",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-5",
+          "player": "Chris Paul Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-6",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-7",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-8",
+          "player": "Ulysses Bentley Iv",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-9",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "P-10",
+          "player": "Trey Amos",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "IC-2",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "IC-3",
+          "player": "Jared Ivey",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "IC-4",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "IC-5",
+          "player": "Chris Paul Jr.",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "ST-2",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "ST-3",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "ST-4",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "ST-5",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "BL-2",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "BL-3",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "BL-4",
+          "player": "Trey Amos",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "BL-5",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-2",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-3",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-4",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-5",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-6",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-7",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-8",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-9",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-10",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-11",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-12",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-13",
+          "player": "JJ Pegues",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-14",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-15",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-16",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-17",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-18",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-19",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-20",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-21",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-22",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-23",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-24",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-25",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "S-26",
+          "player": "JJ Pegues",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-2",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-3",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-4",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-5",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-6",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-7",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-8",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-9",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-10",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-11",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-12",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-13",
+          "player": "JJ Pegues",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-14",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-15",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-16",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-17",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-18",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-19",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-20",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-21",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-22",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-23",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-24",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-25",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-26",
+          "player": "JJ Pegues",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-27",
+          "player": "Tre Harris",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-28",
+          "player": "Walter Nolen",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-29",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-30",
+          "player": "Antwane Wells Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-31",
+          "player": "Ulysses Bentley IV",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-32",
+          "player": "Khari Coleman",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-33",
+          "player": "Trey Washington",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-34",
+          "player": "John Saunders Jr.",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-35",
+          "player": "Caden Prieskorn",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-36",
+          "player": "Jordan Watkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-37",
+          "player": "Ayden Williams",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-38",
+          "player": "Suntarine Perkins",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "O-39",
+          "player": "JJ Pegues",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-2",
+          "player": "Dt",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-3",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-4",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-5",
+          "player": "Rb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-6",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-7",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-8",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-9",
+          "player": "Te",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-10",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-11",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-12",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-13",
+          "player": "Dt",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-14",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-15",
+          "player": "Dt",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-16",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-17",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-18",
+          "player": "Rb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-19",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-20",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-21",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-22",
+          "player": "Te",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-23",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-24",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-25",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-26",
+          "player": "Dt",
+          "team": "Ole Miss"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-27",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-28",
+          "player": "Dt",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-29",
+          "player": "Princely Umanmielen DE",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-30",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-31",
+          "player": "Rb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-32",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-33",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-34",
+          "player": "S",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-35",
+          "player": "Te",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-36",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-37",
+          "player": "Wr",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-38",
+          "player": "Lb",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "N-39",
+          "player": "Dt",
+          "team": "Ole Miss"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,651 @@
+{
+  "id": "2025-onit-timeless-texas-a-and-m-football",
+  "name": "2025 ONIT Timeless Texas A&M Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 106,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adam Graham",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-2",
+          "player": "Adonyss Currie",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-3",
+          "player": "Aidan Herrera",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-4",
+          "player": "AJ Dinota",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-5",
+          "player": "Albert Regis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-6",
+          "player": "Alessandro Perez",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-7",
+          "player": "Amari Daniels",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-8",
+          "player": "Amari Niblack",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-9",
+          "player": "Ar'Maj Reed-Adams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-10",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-11",
+          "player": "Ashton Funk",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-12",
+          "player": "Benjamin Bruce",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-13",
+          "player": "Blake Buntyn",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-14",
+          "player": "Blake Ivy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-15",
+          "player": "Brady Stephenson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-16",
+          "player": "Bryce Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-17",
+          "player": "Bryce Barnes",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-18",
+          "player": "Carter Braugh",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-19",
+          "player": "Cashius Howell",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-20",
+          "player": "Chance Jackson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Bisontis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-22",
+          "player": "Collin Strittmatter",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-23",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-24",
+          "player": "Dametrious Crownover",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-25",
+          "player": "Dashawn Fillmore",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-26",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-27",
+          "player": "Dayon Hayes",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-28",
+          "player": "Dealyn Evans",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-29",
+          "player": "Deondrae \"Tiger\" Riden Jr.",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-30",
+          "player": "Deyjhon Pettaway",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-31",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-32",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-33",
+          "player": "EJ Smith",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-34",
+          "player": "Isendre Ahfua",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-35",
+          "player": "Izaiah Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-36",
+          "player": "Jackson Graham",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-37",
+          "player": "Jacob Graham",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-38",
+          "player": "Jadon Scarlett",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-39",
+          "player": "Jamar Beal-Goines",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-40",
+          "player": "Jared Zirkel",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-41",
+          "player": "Jarred Kerr",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-42",
+          "player": "Jayvon Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-43",
+          "player": "Jesse Chukwu",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-44",
+          "player": "Johnny Ryder",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-45",
+          "player": "Jordan Lockhart",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-46",
+          "player": "Jordan Pride",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-47",
+          "player": "Jordan Shaw",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-48",
+          "player": "Joshua Moses",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-49",
+          "player": "JR Rosenberg",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-50",
+          "player": "Julian Humphrey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-51",
+          "player": "Kade Stewart",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-52",
+          "player": "KC Concepcion",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-53",
+          "player": "Kelvion Riggins",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-54",
+          "player": "Kendall Jackson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-55",
+          "player": "Kiotti Armstrong",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-56",
+          "player": "Kyle Garvis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-57",
+          "player": "Lamont Rogers",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-58",
+          "player": "Landon Rink",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-59",
+          "player": "Layne Gerke",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-60",
+          "player": "Le'Veon Moss",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-61",
+          "player": "Levi Hancock",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-62",
+          "player": "Liam Padron",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-63",
+          "player": "Luke Braden",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-64",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-65",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-66",
+          "player": "Marcus Garcia",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-67",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-68",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-69",
+          "player": "Mark Nabou Jr.",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-70",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-71",
+          "player": "Myles Davis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-72",
+          "player": "Nana Boadi-Owusu",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-73",
+          "player": "Nathan Jackson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-74",
+          "player": "Nelson Mcguire",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-75",
+          "player": "Noah Mikhail",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-76",
+          "player": "Paxton Land",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-77",
+          "player": "Peyton Gay",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-78",
+          "player": "Preston Landis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-79",
+          "player": "Ramarian Tillman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-80",
+          "player": "Randy Bond",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-81",
+          "player": "Rashad \"Tom Tom\" Johnson Jr. DB",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-82",
+          "player": "Reuben Fatheree II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-83",
+          "player": "Robert Bourdon",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-84",
+          "player": "Ronnie Crosby III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-85",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-86",
+          "player": "Rylan Kennedy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-87",
+          "player": "Samuel M'Pemba",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-88",
+          "player": "Scooby Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-89",
+          "player": "Solomon Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-90",
+          "player": "T.J. Searcy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-91",
+          "player": "Taurean York",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-92",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-93",
+          "player": "Theo Melin Öhrström",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-94",
+          "player": "Tristan Norman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-95",
+          "player": "Tommy Colligan",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-96",
+          "player": "Trey Zuhn III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-97",
+          "player": "Tristan Jernigan",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-98",
+          "player": "Ty Banco",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-99",
+          "player": "Tyler Onyedim",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-100",
+          "player": "Tyler Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-101",
+          "player": "Tyler White",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-102",
+          "player": "Tyreek Chappell",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-103",
+          "player": "Wesley Watson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-104",
+          "player": "Will Lee III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-105",
+          "player": "William Huntsinger",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-106",
+          "player": "Zachary Clay",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Amari Daniels",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-2",
+          "player": "Julian Humphrey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-3",
+          "player": "KC Concepcion",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-4",
+          "player": "Le'Veon Moss",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-5",
+          "player": "Paxton Land",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-6",
+          "player": "Taurean York",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "C-7",
+          "player": "Trey Zuhn III",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Adonyss Currie",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-2",
+          "player": "Amari Niblack",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-3",
+          "player": "Cashius Howell",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-4",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-5",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-6",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "SG-7",
+          "player": "Will Lee III",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-signature-150",
+      "name": "Stained Glass Signature /150",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SGS-1",
+          "player": "KC Concepcion",
+          "team": "Texas A&M"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1781 @@
+{
+  "id": "2026-onit-athlete-nebraska-football",
+  "name": "2026 ONIT Athlete Nebraska Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 94,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-2",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-4",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-5",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-6",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-7",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-8",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-9",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-10",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-11",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-12",
+          "player": "Owen Stoudmire",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-13",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-14",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-15",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-16",
+          "player": "Andrew Marshall",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-17",
+          "player": "Anthony Jones Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-18",
+          "player": "Ashton Murphy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-19",
+          "player": "Blye Hill",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-20",
+          "player": "Bode Soukup",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-21",
+          "player": "Braylen Prude",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-22",
+          "player": "Brendan Black",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-23",
+          "player": "Caleb Benning",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-24",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-25",
+          "player": "Cayden Echternach",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-26",
+          "player": "Christian Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-27",
+          "player": "Conor Booth",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-28",
+          "player": "Conor Connealy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-29",
+          "player": "Cortez Mills Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-30",
+          "player": "Daniel Kaelin",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-31",
+          "player": "Danny King",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-32",
+          "player": "Danny Odem III",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-33",
+          "player": "Dexter Foster",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-34",
+          "player": "Dwayne Mcdougle III DB",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-35",
+          "player": "Dylan Berymon",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-36",
+          "player": "Dylan Rogers",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-37",
+          "player": "Elijah Pritchett",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-38",
+          "player": "Eric Ingwerson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-39",
+          "player": "Ethan Duda",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-40",
+          "player": "Gabe Moore",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-41",
+          "player": "Gage Stenger",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-42",
+          "player": "Gibson Pyle",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-43",
+          "player": "Grant Brix",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-44",
+          "player": "Gunnar Gottula",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-45",
+          "player": "Hayden Ainsworth",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-46",
+          "player": "Hayes Miller",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-47",
+          "player": "Jack Wills",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-48",
+          "player": "Jackson Carpenter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-49",
+          "player": "Jacob Bower",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-50",
+          "player": "Jacob Brandl",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-51",
+          "player": "Jahsear Whittington",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-52",
+          "player": "Jake Peters",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-53",
+          "player": "Jamal Rule",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-54",
+          "player": "Jamari Brown",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-55",
+          "player": "Jamir Conn",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-56",
+          "player": "Jase Reynolds",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-57",
+          "player": "Jasin Shiggs",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-58",
+          "player": "Jeremiah Charles",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-59",
+          "player": "John Hohl",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-60",
+          "player": "Justyn Rhett",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-61",
+          "player": "Kade Pietrzak",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-62",
+          "player": "Kamdyn Koch",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-63",
+          "player": "Keelan Smith",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-64",
+          "player": "Kyle Cunanan",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-65",
+          "player": "Kyson Gana",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-66",
+          "player": "Landen Davidson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-67",
+          "player": "Larry Miles",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-68",
+          "player": "Larry Tarver Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-69",
+          "player": "Luke Sorensen",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-70",
+          "player": "Mac Markway",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-71",
+          "player": "Mario Buford",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-72",
+          "player": "Mason Goldman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-73",
+          "player": "Maurice Purify II",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-74",
+          "player": "Nalin Scott",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-75",
+          "player": "Nolan Fennessy",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-76",
+          "player": "Paul Mubenga",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-77",
+          "player": "Pierce Mooberry",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-78",
+          "player": "Preston Taumua",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-79",
+          "player": "Quinn Clark",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-80",
+          "player": "Rex Waterman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-81",
+          "player": "Roman Mangini",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-82",
+          "player": "Rowdy Bauer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-83",
+          "player": "Sam Sledge",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-84",
+          "player": "Shawn Hammerbeck OL",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-85",
+          "player": "Tanner Terch",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-86",
+          "player": "Tree Babalade",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-87",
+          "player": "Trent Uhlir",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-88",
+          "player": "Tyler Knaak",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-89",
+          "player": "Tyson Terry",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-90",
+          "player": "Victor Evans III",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-91",
+          "player": "Vincent Genatone",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-92",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-93",
+          "player": "Will Hawthorne",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-94",
+          "player": "Willis Mcgahee IV",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-2",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-4",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-5",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-6",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-7",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-8",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-9",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-10",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-11",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-12",
+          "player": "Owen Stoudmire",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-13",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-14",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-15",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-2",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-4",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-5",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-7",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-8",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-9",
+          "player": "Daniel Kaelin",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-10",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-2",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-4",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-5",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-7",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-8",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-9",
+          "player": "Daniel Kaelin",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-10",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CL-2",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CL-3",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CL-2",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CL-3",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-2",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-3",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-4",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-2",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-3",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-4",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "DS-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-2",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-4",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-5",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-7",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-8",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-9",
+          "player": "Daniel Kaelin",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-10",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-2",
+          "player": "TJ Lateef",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-3",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-4",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-5",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-7",
+          "player": "Donovan Jones",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-8",
+          "player": "Cameron Lenhardt",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-9",
+          "player": "Daniel Kaelin",
+          "team": "Nebraska"
+        },
+        {
+          "number": "F-10",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GD-2",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GD-3",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-2",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-3",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-4",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-2",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-3",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-4",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-6",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-2",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-3",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-4",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-2",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-3",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-4",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "H-5",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-3",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-5",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-6",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-3",
+          "player": "Kwazi Gilmer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-5",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "NH-6",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-RVP",
+          "player": "Riley Van Poppel",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-IM",
+          "player": "Isaiah Mozee",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-JB",
+          "player": "Janiran Bonner",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-OC",
+          "player": "Owen Chambliss",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "GA-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-AC",
+          "player": "Anthony Colandrea",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-DM",
+          "player": "Dwayne Mcdougle III S",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-JBJ",
+          "player": "Jacory Barney Jr.",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-JE",
+          "player": "Justin Evans",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-LL",
+          "player": "Luke Lindenmeyer",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-MN",
+          "player": "Mekhi Nelson",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-NH",
+          "player": "Nyziah Hunter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-RG",
+          "player": "Rex Guthrie",
+          "team": "Nebraska"
+        },
+        {
+          "number": "FS-VSJ",
+          "player": "Vincent Shavers Jr.",
+          "team": "Nebraska"
+        }
+      ]
+    }
+  ]
+}

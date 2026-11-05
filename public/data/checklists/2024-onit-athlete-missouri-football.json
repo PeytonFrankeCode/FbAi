@@ -1,0 +1,1175 @@
+{
+  "id": "2024-onit-athlete-missouri-football",
+  "name": "2024 ONIT Athlete Missouri Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 104,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abu Sama Iii",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-2",
+          "player": "Aidan Gilmore",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-3",
+          "player": "Aj Burton",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-4",
+          "player": "Alec Cook",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-5",
+          "player": "Andrew Keller",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-6",
+          "player": "Angelo Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-7",
+          "player": "Asle Thorson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-8",
+          "player": "Augustine Sleh",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-9",
+          "player": "Beau Freyler",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-10",
+          "player": "Beni Ngoyi",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-11",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-12",
+          "player": "Blaine Sandquist",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-13",
+          "player": "Braden Simonsen",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-14",
+          "player": "Brett Eskildsen",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-15",
+          "player": "Caden Kock",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-16",
+          "player": "Caden Matson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-17",
+          "player": "Cael Brezina",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-18",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-19",
+          "player": "Cam Smith",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-20",
+          "player": "Carson Brown",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-21",
+          "player": "Carson Hansen",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-22",
+          "player": "Carson Rhodes",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-23",
+          "player": "Carson Robbins",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-24",
+          "player": "Carson Van Dinter",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-25",
+          "player": "Carson Willich",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-26",
+          "player": "Charlie Whelpley",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-27",
+          "player": "Chet Andrews",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-28",
+          "player": "Connor Moberly",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-29",
+          "player": "Connor Welsch",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-30",
+          "player": "Cooper Alexander",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-31",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-32",
+          "player": "Danny Inglis",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-33",
+          "player": "Darien Porter",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-34",
+          "player": "Deylin Hasert",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-35",
+          "player": "Dillon Ranck",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-36",
+          "player": "Dominic Overby",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-37",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-38",
+          "player": "Drake Knobloch",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-39",
+          "player": "Drew Clausen",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-40",
+          "player": "Drew Doyle",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-41",
+          "player": "Drew Surges",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-42",
+          "player": "Dylan Barrett",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-43",
+          "player": "Easton Eledge",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-44",
+          "player": "Easton Miller",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-45",
+          "player": "Eddie Lemos",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-46",
+          "player": "Eli Green",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-47",
+          "player": "Evan Ladwig",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-48",
+          "player": "Gabe Burkle",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-49",
+          "player": "Gabe Greenlee",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-50",
+          "player": "Ikenna Ezeogu",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-51",
+          "player": "Isaiah Alston",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-52",
+          "player": "J.R. Singleton",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-53",
+          "player": "Jace J. Gilbert",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-54",
+          "player": "Pk/p",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-55",
+          "player": "Jack Bjorn",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-56",
+          "player": "Jack Sadowsky V",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-57",
+          "player": "Jacob Ellis",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-58",
+          "player": "Jacob Imming",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-59",
+          "player": "James Neal",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-60",
+          "player": "Jamison Patton",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-61",
+          "player": "Jarrod Hufford",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-62",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-63",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-64",
+          "player": "Jaylon Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-65",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-66",
+          "player": "Jim Bonifas",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-67",
+          "player": "Jj Kohl",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-68",
+          "player": "John Klosterman",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-69",
+          "player": "Jonathan Vande Walle",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-70",
+          "player": "Jontez Williams",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-71",
+          "player": "Kai Black",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-72",
+          "player": "Keaton Roskop",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-73",
+          "player": "Kenard Snyder",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-74",
+          "player": "Khijohnn Cummings-Coleman",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-75",
+          "player": "Kooper Ebel",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-76",
+          "player": "Kyle Konrardy",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-77",
+          "player": "Lance Mcshane",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-78",
+          "player": "Logan Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-79",
+          "player": "Major Cantrell",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-80",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-81",
+          "player": "Mason Doubrava",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-82",
+          "player": "Matthew Bess",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-83",
+          "player": "Michael Parkes",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-84",
+          "player": "Myles Mendeszoon",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-85",
+          "player": "Myles Purchase",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-86",
+          "player": "Nick Reinicke",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-87",
+          "player": "Obald Niyonkuru",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-88",
+          "player": "Owen Westemeyer",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-89",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-90",
+          "player": "Ryan Robinson Jr.",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-91",
+          "player": "Rylan Barnes",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-92",
+          "player": "Stevo Klotz",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-93",
+          "player": "Tanner Hughes",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-94",
+          "player": "Trent Jones Ii",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-95",
+          "player": "Trevon Howard",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-96",
+          "player": "Trevor Buhr",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-97",
+          "player": "Tyler Claiborne",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-98",
+          "player": "Tyler Maro",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-99",
+          "player": "Tyler Moore",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-100",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-101",
+          "player": "Tyler Perkins",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-102",
+          "player": "Will Mclaughlin",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-103",
+          "player": "Zachary Lovett",
+          "team": "Missouri"
+        },
+        {
+          "number": "B-104",
+          "player": "Zaimir Hawk",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-2",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-3",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-4",
+          "player": "Beau Freyler",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-5",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-6",
+          "player": "Abu Sama Iii",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-7",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-8",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-9",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "P-10",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "IC-2",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "IC-3",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "IC-4",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "IC-5",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "CC-2",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "CC-3",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "CC-4",
+          "player": "Beau Freyler",
+          "team": "Missouri"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "ST-2",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "ST-3",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "ST-4",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "ST-5",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Beau Freyler",
+          "team": "Missouri"
+        },
+        {
+          "number": "BL-2",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "BL-3",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "BL-4",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "BL-5",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "CL-2",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-2",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-3",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-4",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-5",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-6",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-7",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-8",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-9",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-10",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-11",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-12",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-13",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-14",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-15",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-16",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-17",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-18",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-19",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-20",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-21",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "S-22",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-2",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-3",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-4",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-5",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-6",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-7",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-8",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-9",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-10",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke-3-rocco-becht-qb",
+      "name": "ONE Series Smoke 3 Rocco Becht QB",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-11",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-12",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-13",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-14",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-15",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-16",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-17",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-18",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-19",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-20",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-21",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-22",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "O-24",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-2",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-3",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-4",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-5",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-6",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-7",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-8",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-9",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-10",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-11",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-12",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-13",
+          "player": "Caleb Bacon",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-14",
+          "player": "Benjamin Brahmer",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-15",
+          "player": "Tyler Onyedim",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-16",
+          "player": "Domonique Orange",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-17",
+          "player": "Daniel Jackson",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-18",
+          "player": "Abu Sama III",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-19",
+          "player": "Malik Verdon",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-20",
+          "player": "Jeremiah Cooper",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-21",
+          "player": "Jaylin Noel",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-22",
+          "player": "Rocco Becht",
+          "team": "Missouri"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        },
+        {
+          "number": "N-24",
+          "player": "Jayden Higgins",
+          "team": "Missouri"
+        }
+      ]
+    }
+  ]
+}

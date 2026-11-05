@@ -1,0 +1,992 @@
+{
+  "id": "2024-onit-athlete-liberty-football",
+  "name": "2024 ONIT Athlete Liberty Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 87,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A Khori Jones",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-2",
+          "player": "Aaron Fenimore",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-3",
+          "player": "Aidan Vaughan",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-4",
+          "player": "Amarian Williams",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-5",
+          "player": "Austin Henderson",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-6",
+          "player": "Barrett Newman",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-7",
+          "player": "Bentley Hanshaw",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-8",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-9",
+          "player": "Bo Burklow",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-10",
+          "player": "Brayden Beck",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-11",
+          "player": "Brenton Williams",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-12",
+          "player": "Bryce Dixon",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-13",
+          "player": "Brylan Green",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-14",
+          "player": "Caden Williams",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-15",
+          "player": "Caeden Callahan",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-16",
+          "player": "Cal Grubbs",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-17",
+          "player": "Caleb Ryan",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-18",
+          "player": "K/p",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-19",
+          "player": "Carson Vines",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-20",
+          "player": "Charles Yates Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-21",
+          "player": "Chris Boti",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-22",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-23",
+          "player": "Clayton Shepler",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-24",
+          "player": "Coleman Baker",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-25",
+          "player": "K/p",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-26",
+          "player": "Connie Hewitt Ii",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-27",
+          "player": "Darius Copeland",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-28",
+          "player": "Devin Henderson",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-29",
+          "player": "Dexter Ricks Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-30",
+          "player": "Dylan Mullins",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-31",
+          "player": "Eldric Griffin",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-32",
+          "player": "Eli Sisson",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-33",
+          "player": "Elijah Auguste",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-34",
+          "player": "Elijah Hopkins",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-35",
+          "player": "Eliyt Nairne",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-36",
+          "player": "Eric Smith",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-37",
+          "player": "Grey Carroll",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-38",
+          "player": "Harrison Hayes",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-39",
+          "player": "Hunter Porterfield",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-40",
+          "player": "Jabin Ford",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-41",
+          "player": "Jack Tucker",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-42",
+          "player": "Jacob Jenkins",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-43",
+          "player": "Jacob Lecates",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-44",
+          "player": "Jahmar Brown",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-45",
+          "player": "Jamal Miles",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-46",
+          "player": "James Jointer Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-47",
+          "player": "Jay Hardy",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-48",
+          "player": "Jayden Sweeney",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-49",
+          "player": "Jaylin Belford",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-50",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-51",
+          "player": "Jordan Hall",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-52",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-53",
+          "player": "Joseph Carter",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-54",
+          "player": "Julian Gray",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-55",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-56",
+          "player": "Kaidon Whidby",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-57",
+          "player": "Kristyane Gregory",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-58",
+          "player": "Kyle Hanks",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-59",
+          "player": "Kylen Austin",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-60",
+          "player": "Markel Fortenberry WR",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-61",
+          "player": "Marquis Bell",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-62",
+          "player": "Mike Jarvis",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-63",
+          "player": "Nate Hampton",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-64",
+          "player": "Nathan Pirolli",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-65",
+          "player": "Nick Brown",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-66",
+          "player": "Phillip Doss",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-67",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-68",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-69",
+          "player": "Reese Smith",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-70",
+          "player": "Rex Lahr",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-71",
+          "player": "Ronald Moore Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-72",
+          "player": "Ryan Burger",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-73",
+          "player": "Ryan Manis",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-74",
+          "player": "Ryan Wilkins",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-75",
+          "player": "K/p",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-76",
+          "player": "Seneca Moore",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-77",
+          "player": "Seth Ellsmore",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-78",
+          "player": "Teylor Jackson",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-79",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-80",
+          "player": "Tre Lawing",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-81",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-82",
+          "player": "Tromontez Booker",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-83",
+          "player": "Vaughn Blue",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-84",
+          "player": "Victor Jones Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-85",
+          "player": "Victor Venn",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-86",
+          "player": "Weston Woodard",
+          "team": "Liberty"
+        },
+        {
+          "number": "B-87",
+          "player": "Xavior Gray",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-2",
+          "player": "Brylan Green",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-3",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-4",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-5",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-6",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-7",
+          "player": "Xavior Gray",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-8",
+          "player": "Bryce Dixon",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-9",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "P-10",
+          "player": "Bentley Hanshaw",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "IC-2",
+          "player": "Brylan Green",
+          "team": "Liberty"
+        },
+        {
+          "number": "IC-3",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "IC-4",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "IC-5",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "CC-2",
+          "player": "Brylan Green",
+          "team": "Liberty"
+        },
+        {
+          "number": "CC-3",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "CC-4",
+          "player": "Tj Bush, Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "CC-5",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "ST-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "ST-3",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "ST-4",
+          "player": "Xavior Gray",
+          "team": "Liberty"
+        },
+        {
+          "number": "ST-5",
+          "player": "Bentley Hanshaw",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Brylan Green",
+          "team": "Liberty"
+        },
+        {
+          "number": "BL-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "BL-3",
+          "player": "Tj Bush, Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "BL-4",
+          "player": "Xavior Gray",
+          "team": "Liberty"
+        },
+        {
+          "number": "BL-5",
+          "player": "Bryce Dixon",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "CL-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-3",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-4",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-5",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-6",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-7",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-8",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-9",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-10",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-11",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-12",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-13",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-14",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-15",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-16",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-17",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "S-18",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-3",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-4",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-5",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-6",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-7",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-8",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-9",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-10",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-11",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-12",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-13",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-14",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-15",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-16",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-17",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "O-18",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-2",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-3",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-4",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-5",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-6",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-7",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-8",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-9",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-10",
+          "player": "Kaidon Salter",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-11",
+          "player": "Quinton Cooley",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-12",
+          "player": "Billy Lucas",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-13",
+          "player": "Treon Sibley",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-14",
+          "player": "Cj Bazile Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-15",
+          "player": "Quinton Reese",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-16",
+          "player": "Jerome Jolly Jr.",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-17",
+          "player": "Jordan White",
+          "team": "Liberty"
+        },
+        {
+          "number": "N-18",
+          "player": "Tj Bush Jr.",
+          "team": "Liberty"
+        }
+      ]
+    }
+  ]
+}

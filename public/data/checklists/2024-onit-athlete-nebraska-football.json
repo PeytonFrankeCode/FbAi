@@ -1,0 +1,1769 @@
+{
+  "id": "2024-onit-athlete-nebraska-football",
+  "name": "2024 ONIT Athlete Nebraska Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base-series",
+      "name": "Base Series",
+      "category": "base",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-2",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-3",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-4",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-5",
+          "player": "A6--\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-6",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "b-7-04-4-7",
+      "name": "B-7 -!,% >-04.!/ ?% %/4 7% !#,",
+      "category": "insert",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-8",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-9",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-10",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-11",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-12",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-13",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-14",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "b-15-4-7",
+      "name": "B-15 >!-%\" %// / ?% %/4 7% !#,",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-16",
+          "player": "N/!11%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-17",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-18",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-19",
+          "player": "<5 -%5%",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-20",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-21",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-22",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-23",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-24",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-25",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-26",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "b-27-3-3-4-7",
+      "name": "B-27 ?%3%, 3!/# ?% %/4 7% !#,",
+      "category": "insert",
+      "totalCards": 86,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-29",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-30",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-31",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-32",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-33",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-34",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-35",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-36",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-37",
+          "player": "E!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-38",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-39",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-40",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-41",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-42",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-43",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-44",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-45",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-46",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-47",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-48",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-49",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-50",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-51",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-52",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-53",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-54",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-55",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-56",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-57",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-58",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-59",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-60",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-61",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-62",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-63",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-64",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-65",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-66",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-67",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-68",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-69",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-70",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-71",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-72",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-73",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-74",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-75",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-76",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-77",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-78",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-79",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-80",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-81",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-82",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-83",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-84",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-85",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-86",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-87",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-88",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-89",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-90",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-91",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-92",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-93",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-94",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-95",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-96",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-97",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-98",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-99",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-100",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-101",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-102",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-103",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-104",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-105",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-106",
+          "player": "A6--\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-107",
+          "player": "K-!#% F #,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-108",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-109",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-110",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-111",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-112",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-113",
+          "player": "E!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "B-114",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "parallel-series",
+      "name": "Parallel Series",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-2",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-3",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-4",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-5",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-6",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-7",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-8",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-9",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "P-10",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "icon-series",
+      "name": "ICON Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "IC-2",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "IC-3",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "IC-4",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "IC-5",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "college-color-series",
+      "name": "College Color Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-2",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-3",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-4",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CC-5",
+          "player": "!#,",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "ST-2",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "ST-3",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "ST-4",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "ST-5",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "blackout-series",
+      "name": "Blackout Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BO-1",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "BO-2",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "BO-3",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "BO-4",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "BO-5",
+          "player": "!#,",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-series",
+      "name": "City Limits Series",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "CL-2",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "midas-touch-series",
+      "name": "Midas Touch Series",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "MT-1",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "MT-2",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-2",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-3",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-4",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-5",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-6",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-7",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-8",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-9",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-10",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-11",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-12",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-13",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-14",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-29",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-30",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-31",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-15",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-16",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-17",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-18",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-19",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-20",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-21",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-22",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-23",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-24",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-25",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-26",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-27",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-28",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-32",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-33",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "S-34",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-2",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-3",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-4",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-5",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-6",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-7",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-8",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-9",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-10",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-11",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-12",
+          "player": "Linebacker",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-13",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-14",
+          "player": "Punter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-57",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-58",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-59",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-15",
+          "player": "Quarterback",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-16",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-17",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-18",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-19",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-20",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-21",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-22",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-23",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-24",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-25",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-26",
+          "player": "Linebacker",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-27",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-28",
+          "player": "Punter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-60",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-61",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-62",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-29",
+          "player": "Quarterback",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-30",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-31",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-32",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-33",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-34",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-35",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-36",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-37",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-38",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-39",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-40",
+          "player": "Linebacker",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-41",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-42",
+          "player": "Punter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-63",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-64",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-65",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "one-series-water",
+      "name": "ONE Series Water",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-43",
+          "player": "Quarterback",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-44",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-45",
+          "player": "Offensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-46",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-47",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-48",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-49",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-50",
+          "player": "Running Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-51",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-52",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-53",
+          "player": "Defensive Lineman",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-54",
+          "player": "Linebacker",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-55",
+          "player": "Defensive Back",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-56",
+          "player": "Punter",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-66",
+          "player": "Tight End",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-67",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        },
+        {
+          "number": "O-68",
+          "player": "Wide Receiver",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-2",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-3",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-4",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-5",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-6",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-7",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-8",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-9",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-10",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-11",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-12",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-13",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-14",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-57",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-58",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-59",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-15",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-16",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-17",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-18",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-19",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-20",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-21",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-22",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-23",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-24",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-25",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-26",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-27",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-28",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-60",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-61",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-62",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-29",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-30",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-31",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-32",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-33",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-34",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-35",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-36",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-37",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-38",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-39",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-40",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-41",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-42",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-63",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-64",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-65",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-water",
+      "name": "NINE Series Water",
+      "category": "insert",
+      "totalCards": 17,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-43",
+          "player": "L6!35%3\"!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-44",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-45",
+          "player": "J %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-46",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-47",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-48",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-49",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-50",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-51",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-52",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-53",
+          "player": "?% %/4 7% G /%.!/",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-54",
+          "player": "G /%\"!#,%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-55",
+          "player": "!#,",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-56",
+          "player": "K6/5%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-66",
+          "player": "@/$",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-67",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        },
+        {
+          "number": "N-68",
+          "player": "R $% M%#% 7%3",
+          "team": "Nebraska"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1060 @@
+{
+  "id": "2024-onit-athlete-pittsburgh-football",
+  "name": "2024 ONIT Athlete Pittsburgh Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 88,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ben Sauls",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-2",
+          "player": "Bj Williams",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-3",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-4",
+          "player": "Branson Taylor",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-5",
+          "player": "Cam Guess",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-6",
+          "player": "Che Nwabuko",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-7",
+          "player": "Daejon Reynolds",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-8",
+          "player": "Daniel Carter",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-9",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-10",
+          "player": "Dylan Bennett",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-11",
+          "player": "Eli Holstein",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-12",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-13",
+          "player": "Jake Frantl",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-14",
+          "player": "Jake Mcconnachie",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-15",
+          "player": "Jake Renda",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-16",
+          "player": "Jason Collier Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-17",
+          "player": "Javon Mcintyre",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-18",
+          "player": "Jimmy Scott",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-19",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-20",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-21",
+          "player": "Noah Biglow",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-22",
+          "player": "Peter Vardzel",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-23",
+          "player": "Phillip O Brien Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-24",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-25",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-26",
+          "player": "Ryan Baer",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-27",
+          "player": "Sean Fitzsimmons",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-28",
+          "player": "Terrence Enos Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-29",
+          "player": "Terrence Moore",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-30",
+          "player": "Thomas Aden",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-31",
+          "player": "Ty Dieffenbach",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-32",
+          "player": "Abe Ibrahim",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-33",
+          "player": "Adam Howanitz",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-34",
+          "player": "Allen Bryant",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-35",
+          "player": "Benny Haselrig",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-36",
+          "player": "Braylan Lovelace",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-37",
+          "player": "Brody Riffe",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-38",
+          "player": "Cade Dowd",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-39",
+          "player": "Caden Smith",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-40",
+          "player": "Caleb Junko",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-41",
+          "player": "Caleb Williams",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-42",
+          "player": "Cameron Monteiro",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-43",
+          "player": "Censere Lee",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-44",
+          "player": "Cruce Brookins",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-45",
+          "player": "David Lynch",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-46",
+          "player": "Davion Pritchard",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-47",
+          "player": "Derrick Davis Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-48",
+          "player": "Desmond Reid",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-49",
+          "player": "Drew Foster",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-50",
+          "player": "Francis Brewu",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-51",
+          "player": "Franco Fernandez-Enjo",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-52",
+          "player": "Graysen Riffe",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-53",
+          "player": "Isaiah Montgomery",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-54",
+          "player": "Isaiah Neal",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-55",
+          "player": "Jackson Brown",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-56",
+          "player": "Jahsear Whittington",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-57",
+          "player": "Jake Overman",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-58",
+          "player": "Jesse Anderson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-59",
+          "player": "John Glenn",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-60",
+          "player": "Josh Mccarty",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-61",
+          "player": "Juelz Goff",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-62",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-63",
+          "player": "Luke Delgaudio",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-64",
+          "player": "Lyndon Cooper",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-65",
+          "player": "Malachi Thomas",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-66",
+          "player": "Matt Altsman",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-67",
+          "player": "Matt Metrosky",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-68",
+          "player": "Matthew Amofa",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-69",
+          "player": "Maverick Gracio",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-70",
+          "player": "Montravius Lloyd",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-71",
+          "player": "Moritz Schmoranzer",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-72",
+          "player": "Nate Matlack",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-73",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-74",
+          "player": "Nick Lapi",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-75",
+          "player": "Nico Crawford",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-76",
+          "player": "Nigel Maynard",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-77",
+          "player": "Nilay Upadhyayula",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-78",
+          "player": "Raphael \"Poppi\" Williams Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-79",
+          "player": "Rasheem Biles",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-80",
+          "player": "Ryan Carretta",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-81",
+          "player": "Ryland Gandy",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-82",
+          "player": "Sam Carpenter",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-83",
+          "player": "Tai Ray",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-84",
+          "player": "Tamarion Crumpley",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-85",
+          "player": "Thaddeus Shaw",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-86",
+          "player": "Ty Yuhas",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-87",
+          "player": "Tyreek Robinson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "B-88",
+          "player": "Zach Crothers",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-2",
+          "player": "Javon Mcintyre",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-3",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-4",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-5",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-6",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-7",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-8",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-9",
+          "player": "Terrence Moore",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "P-10",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "IC-2",
+          "player": "Javon Mcintyre",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "IC-3",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "IC-4",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "IC-5",
+          "player": "Terrence Moore",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-2",
+          "player": "Javon Mcintyre",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-3",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-4",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "CC-5",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "ST-2",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "ST-3",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "ST-4",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "ST-5",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "BL-2",
+          "player": "Javon Mcintyre",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "BL-3",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "BL-4",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "BL-5",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-2",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-3",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-4",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-5",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-6",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-7",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-8",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-9",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-10",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-11",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-12",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-13",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-14",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-15",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-16",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-17",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-18",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-19",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "S-20",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-2",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-3",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-4",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-5",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-6",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-7",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-8",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-9",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-10",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-11",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-12",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-13",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-14",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-15",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-16",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-17",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-18",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-19",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-20",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-21",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "O-22",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-2",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-3",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-4",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-5",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-6",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-7",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-8",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-9",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-10",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-11",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-12",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-13",
+          "player": "Nate Yarnell",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-14",
+          "player": "Donovan Mcmillon",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-15",
+          "player": "Rodney Hammond Jr.",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-16",
+          "player": "Kenny Johnson",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-17",
+          "player": "Brandon George",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-18",
+          "player": "Nate Temple",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-19",
+          "player": "Rashad Battle",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-20",
+          "player": "Kyle Louis",
+          "team": "Pittsburgh"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-21",
+          "player": "Gavin Bartholomew",
+          "team": "Pittsburgh"
+        },
+        {
+          "number": "N-22",
+          "player": "Konata Mumpfield",
+          "team": "Pittsburgh"
+        }
+      ]
+    }
+  ]
+}

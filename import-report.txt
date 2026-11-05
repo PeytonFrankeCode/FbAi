@@ -1,0 +1,284 @@
+new    2026-onit-athlete-alabama-football: 26 sets, 328 cards
+new    2026-onit-athlete-arizona-state-football: 26 sets, 252 cards
+new    2026-onit-athlete-arkansas-football: 26 sets, 225 cards
+new    2026-onit-athlete-auburn-football: 26 sets, 232 cards
+new    2026-onit-athlete-boise-state-football: 21 sets, 284 cards
+new    2026-onit-athlete-florida-football: 26 sets, 244 cards
+new    2026-onit-athlete-florida-state-football: 26 sets, 223 cards
+new    2026-onit-athlete-georgia-tech-football: 26 sets, 207 cards
+new    2026-onit-athlete-illinois-football: 26 sets, 233 cards
+new    2026-onit-gravity-football: 20 sets, 2279 cards
+new    2026-onit-athlete-iowa-state-football: 26 sets, 255 cards
+new    2026-onit-athlete-kansas-state-football: 25 sets, 227 cards
+new    2026-onit-athlete-louisville-football: 26 sets, 206 cards
+new    2026-onit-athlete-michigan-football: 26 sets, 364 cards
+new    2026-onit-athlete-missouri-football: 26 sets, 298 cards
+new    2026-onit-athlete-nebraska-football: 26 sets, 300 cards
+new    2026-onit-athlete-oklahoma-football: 26 sets, 319 cards
+new    2026-onit-athlete-oklahoma-state-football: 26 sets, 261 cards
+new    2026-onit-athlete-ole-miss-football: 26 sets, 269 cards
+new    2026-onit-athlete-penn-state-football: 26 sets, 310 cards
+new    2026-onit-athlete-pittsburgh-football: 26 sets, 221 cards
+new    2026-onit-athlete-tennessee-football: 26 sets, 303 cards
+new    2026-onit-athlete-texas-football: 26 sets, 272 cards
+new    2026-onit-athlete-texas-a-and-m-football: 25 sets, 307 cards
+new    2026-onit-athlete-texas-tech-football: 26 sets, 243 cards
+new    2026-onit-athlete-ucla-football: 26 sets, 269 cards
+new    2026-onit-athlete-usc-football: 26 sets, 258 cards
+new    2026-onit-athlete-west-virginia-football: 26 sets, 247 cards
+new    2025-onit-timeless-arizona-state-football: 3 sets, 81 cards
+new    2025-onit-timeless-arkansas-football: 3 sets, 96 cards
+new    2025-onit-timeless-auburn-football: 3 sets, 103 cards
+new    2025-onit-timeless-florida-football: 3 sets, 100 cards
+new    2025-onit-timeless-kansas-football: 3 sets, 88 cards
+new    2025-onit-timeless-lsu-football: 4 sets, 96 cards
+new    2025-onit-timeless-michigan-football: 4 sets, 101 cards
+new    2025-onit-timeless-nebraska-football: 4 sets, 90 cards
+new    2025-onit-timeless-ohio-state-football: 3 sets, 104 cards
+new    2025-onit-timeless-penn-state-football: 4 sets, 111 cards
+new    2025-onit-timeless-tennessee-football: 3 sets, 88 cards
+new    2025-onit-timeless-texas-football: 3 sets, 91 cards
+new    2025-onit-timeless-texas-a-and-m-football: 4 sets, 121 cards
+new    2025-onit-timeless-washington-football: 3 sets, 91 cards
+new    2025-onit-timeless-west-virginia-football: 3 sets, 78 cards
+new    2025-onit-gravity-alabama-football: 10 sets, 144 cards
+new    2025-onit-athlete-alabama-football: 12 sets, 192 cards
+new    2025-onit-gravity-arizona-state-football: 10 sets, 110 cards
+new    2025-onit-athlete-arizona-state-football: 12 sets, 121 cards
+new    2025-onit-gravity-arkansas-football: 15 sets, 150 cards
+new    2025-onit-athlete-arkansas-football: 11 sets, 133 cards
+new    2025-onit-athlete-boise-state-football: 9 sets, 184 cards
+new    2025-onit-gravity-florida-football: 10 sets, 115 cards
+new    2025-onit-athlete-florida-football: 12 sets, 161 cards
+new    2025-onit-gravity-florida-state-football: 10 sets, 116 cards
+new    2025-onit-athlete-florida-state-football: 12 sets, 128 cards
+new    2025-onit-black-indiana-football: 18 sets, 163 cards
+new    2025-onit-athlete-indiana-football: 10 sets, 108 cards
+new    2025-onit-athlete-indiana-football-commemorative-box: 5 sets, 84 cards
+new    2025-onit-gravity-iowa-state-football: 10 sets, 132 cards
+new    2025-onit-athlete-iowa-state-football: 12 sets, 164 cards
+new    2025-onit-gravity-kansas-football: 15 sets, 136 cards
+new    2025-onit-athlete-kansas-football: 12 sets, 128 cards
+new    2025-onit-gravity-kansas-state-football: 10 sets, 118 cards
+new    2025-onit-athlete-kansas-state-football: 11 sets, 133 cards
+new    2025-onit-black-lsu-football: 18 sets, 172 cards
+new    2025-onit-gravity-lsu-football: 15 sets, 165 cards
+new    2025-onit-athlete-lsu-football: 13 sets, 161 cards
+new    2025-onit-black-michigan-football: 18 sets, 194 cards
+new    2025-onit-gravity-michigan-football: 18 sets, 215 cards
+new    2025-onit-athlete-michigan-football: 12 sets, 196 cards
+new    2025-onit-gravity-missouri-football: 10 sets, 110 cards
+new    2025-onit-athlete-missouri-football: 12 sets, 117 cards
+new    2025-onit-black-nebraska-football: 18 sets, 173 cards
+new    2025-onit-gravity-nebraska-football: 10 sets, 126 cards
+new    2025-onit-athlete-nebraska-football: 12 sets, 168 cards
+new    2025-onit-black-ohio-state-football: 19 sets, 252 cards
+new    2025-onit-gravity-ohio-state-football: 13 sets, 231 cards
+new    2025-onit-athlete-ohio-state-football: 12 sets, 247 cards
+new    2025-onit-black-oklahoma-football: 16 sets, 161 cards
+new    2025-onit-gravity-oklahoma-football: 10 sets, 130 cards
+new    2025-onit-athlete-oklahoma-football: 10 sets, 150 cards
+new    2025-onit-gravity-oklahoma-state-football: 10 sets, 116 cards
+new    2025-onit-athlete-oklahoma-state-football: 11 sets, 145 cards
+new    2025-onit-black-penn-state-football: 18 sets, 183 cards
+new    2025-onit-gravity-penn-state-football: 10 sets, 143 cards
+new    2025-onit-athlete-penn-state-football: 12 sets, 204 cards
+new    2025-onit-black-south-carolina-football: 18 sets, 175 cards
+new    2025-onit-gravity-south-carolina-football: 12 sets, 125 cards
+new    2025-onit-athlete-south-carolina-football: 12 sets, 138 cards
+new    2025-onit-gravity-tennessee-football: 18 sets, 286 cards
+new    2025-onit-athlete-tennessee-football: 12 sets, 243 cards
+new    2025-onit-black-texas-football: 15 sets, 158 cards
+new    2025-onit-gravity-texas-football: 16 sets, 183 cards
+new    2025-onit-athlete-texas-football: 11 sets, 137 cards
+new    2025-onit-gravity-texas-a-and-m-football: 10 sets, 128 cards
+new    2025-onit-athlete-texas-a-and-m-football: 12 sets, 178 cards
+new    2025-onit-black-usc-football: 18 sets, 158 cards
+new    2025-onit-gravity-usc-football: 10 sets, 113 cards
+new    2025-onit-athlete-usc-football: 11 sets, 125 cards
+new    2025-onit-athlete-washington-football: 11 sets, 125 cards
+new    2025-onit-gravity-west-virginia-football: 10 sets, 114 cards
+new    2025-onit-athlete-west-virginia-football: 11 sets, 125 cards
+new    2024-onit-athlete-alabama-football: 19 sets, 244 cards
+new    2024-onit-athlete-app-state-football: 15 sets, 127 cards
+new    2024-onit-athlete-arizona-state-football: 16 sets, 164 cards
+new    2024-onit-athlete-arkansas-football: 15 sets, 219 cards
+new    2024-onit-athlete-auburn-football: 15 sets, 195 cards
+new    2024-onit-athlete-baylor-football: 15 sets, 193 cards
+new    2024-onit-athlete-boise-state-football: 2 sets, 67 cards
+new    2024-onit-athlete-boston-college-football: 15 sets, 172 cards
+new    2024-onit-athlete-cincinnati-football: 15 sets, 185 cards
+new    2024-onit-athlete-clemson-football: 17 sets, 257 cards
+new    2024-onit-athlete-florida-football: 15 sets, 256 cards
+new    2024-onit-athlete-florida-state-football: 19 sets, 270 cards
+new    2024-onit-athlete-fresno-state-football: 14 sets, 196 cards
+----- DUMP Team Set | Georgia | 2024
+&$5'180%(5 1R              1DPH     3RV
+7&6        %PM,EPP              (&
+7&6           %RXLSR])ZERW---   ;6
+7&6        %VMER7QMXL           ;6
+7&6        &IR=YVSWIO           8)
+7&6        &S,YKLPI]            30
+7&6        &VERWSR6SFMRWSR      6&
+7&6        'LEYRGI]&S[IRW       6&
+7&6        'LE^'LEQFPMWW        30&
+7&6        'LVMW'SPI            -0&
+7&6       'LVMW4IEP            (&
+7&6       'LVMWXIR1MPPIV       (0
+7&6          'N%PPIR            -0&
+7&6       'SPI7TIIV            ;6
+7&6       'SPXSR,IMRVMGL       8)
+7&6       (EQSR;MPWSR--       30&
+7&6       (ER.EGOWSR           (&
+7&6       (ERMIP'EPLSYR        30
+7&6          (ERMIP,EVVMW       (&
+7&6          (E]PIR)ZIVIXXI     (&
+7&6       (IQIPPS.SRIW         (&
+7&6       (MPPSR&IPP           ;6
+7&6          (SQMRMG0SZIXX      ;6
+7&6       (VI[&SFS             30
+7&6       (VI[1MPPIV           4
+7&6       ([MKLX4LMPPMTW.V   6&
+7&6       (]PER*EMVGLMPH       30
+7&6       )EVRIWX+VIIRI---    30
+7&6          )PPMW6SFMRWSR-:   (&
+7&6       +EFI,EVVMW.V       30&
+7&6       +YRRIV7XSGOXSR       5&
+7&6       .EGSVI]8LSQEW        (&
+7&6       .EHIR6EWLEHE         5&
+7&6       .EHIR6IHHIPP         8)
+7&6       .EL^EVI.EGOWSR       30
+7&6       .EOI4STI             (&
+7&6       .EPSR;EPOIV          -0&
+7&6       .EQEEP.EVVIXX        (0
+7&6       .EQEP1IVM[IEXLIV     30
+7&6       .EVIH;MPWSR          30
+7&6          .SIRIP%KYIVS       (&
+7&6    .SVHER,EPP             (0
+7&6    .SVHER8LSQEW           (0
+7&6    .YPMER,YQTLVI]         (&
+7&6    .YWXMR+VIIRI           ()
+7&6    .YWXMR;MPPMEQW         -0&
+7&6      .YWX]R6LIXX           (&
+7&6    /EZSR8S[RWIRH          ;6
+7&6      /N&SPHIR              (&
+7&6    /VMW.SRIW              -0&
+7&6    /]VSR.SRIW             (&
+7&6      0E[WSR0YGOMI          8)
+7&6    0SRHSR,YQTLVI]W        ;6
+7&6    1EPEGLM8SPMZIV         30
+7&6    1EPEOM7XEVOW           (&
+7&6    1EVGYW,EVVMWSR         30
+7&6    1EVUYIW)EWPI]          30
+7&6    1EYVMGI,E]IW           '&
+7&6    1MGEL1SVVMW            30
+7&6    1MGLEIP.EGOWSR---     ;6
+7&6    1MGLEIP9MRM            30
+7&6    1SRVSI*VIIPMRK         30
+7&6    1]OIP;MPPMEQW          (0
+7&6    2EWMV.SLRWSR           (0
+7&6      2EXI*VE^MIV           6&
+7&6    2E^MV7XEGOLSYWI        (0
+7&6      2MXVS8YKKPI           ;6
+7&6    2REQHM3KFSOS           (0
+7&6    2]MIV(ERMIPW           30
+7&6    3RHVI)ZERW             (&
+7&6      3WGEV(IPT             8)
+7&6      6E]PIR;MPWSR          -0&
+7&6      6SHIVMGO6SFMRWSR--   6&
+7&6    6]ER4YKPMWM            5&
+7&6    7EGSZMI;LMXI           ;6
+7&6    7EQ1 4IQFE             30&
+7&6      7QEIP1SRHSR.V       -0&
+7&6    8EXI6EXPIHKI           30
+7&6      8VIZSV)XMIRRI         6&
+7&6    ;EVVIR&VMRWSR          (0
+7&6    <EZMIV8VYWW            30
+7&6    <^EZMIV1GPISH          (0
+7&6      8VS]&S[PIW         -0&
+7&6    5YMRXEZMYW.SLRWSR   30&
+7&6    &IEY+EVHRIV         72
+7&6    4I]XSR;SSHVMRK      4/
+7&6    8]VMSR-RKVEQ(E[OMRW (0
+
+----- SETS
+----- END
+EMPTY  Team Set | Georgia | 2024
+new    2024-onit-athlete-georgia-tech-football: 15 sets, 170 cards
+new    2024-onit-athlete-hawaii-football: 15 sets, 191 cards
+new    2024-onit-athlete-illinois-football: 15 sets, 199 cards
+new    2024-onit-athlete-iowa-state-football: 15 sets, 208 cards
+new    2024-onit-athlete-kansas-football: 15 sets, 218 cards
+new    2024-onit-athlete-kansas-state-football: 15 sets, 219 cards
+new    2024-onit-athlete-liberty-football: 13 sets, 173 cards
+new    2024-onit-athlete-lsu-football: 17 sets, 226 cards
+new    2024-onit-athlete-maryland-football: 15 sets, 177 cards
+new    2024-onit-athlete-michigan-football: 17 sets, 335 cards
+new    2024-onit-athlete-michigan-state-football: 15 sets, 176 cards
+new    2024-onit-athlete-minnesota-football: 15 sets, 234 cards
+new    2024-onit-athlete-mississippi-state-football: 15 sets, 182 cards
+new    2024-onit-athlete-missouri-football: 15 sets, 206 cards
+new    2024-onit-athlete-nc-state-football: 15 sets, 210 cards
+new    2024-onit-athlete-nebraska-football: 21 sets, 314 cards
+new    2024-onit-athlete-northwestern-football: 19 sets, 153 cards
+new    2024-onit-athlete-ohio-state-football: 17 sets, 297 cards
+new    2024-onit-athlete-oklahoma-state-football: 15 sets, 236 cards
+new    2024-onit-athlete-ole-miss-football: 14 sets, 202 cards
+new    2024-onit-athlete-oregon-state-football: 15 sets, 207 cards
+new    2024-onit-athlete-penn-state-football: 13 sets, 206 cards
+new    2024-onit-athlete-pittsburgh-football: 15 sets, 183 cards
+new    2024-onit-athlete-purdue-football: 15 sets, 208 cards
+new    2024-onit-athlete-san-diego-state-football: 15 sets, 187 cards
+new    2024-onit-athlete-south-carolina-football: 15 sets, 204 cards
+new    2024-onit-athlete-tcu-football: 15 sets, 189 cards
+new    2024-onit-athlete-tennessee-football: 17 sets, 364 cards
+new    2024-onit-athlete-texas-football: 17 sets, 191 cards
+new    2024-onit-athlete-texas-a-and-m-football: 16 sets, 204 cards
+new    2024-onit-athlete-texas-tech-football: 15 sets, 170 cards
+new    2024-onit-athlete-ucla-football: 15 sets, 197 cards
+new    2024-onit-athlete-utah-football: 15 sets, 199 cards
+new    2024-onit-athlete-virginia-tech-football: 15 sets, 218 cards
+new    2024-onit-athlete-wake-forest-football: 13 sets, 206 cards
+new    2024-onit-athlete-washington-football: 15 sets, 204 cards
+new    2024-onit-athlete-washington-state-football: 15 sets, 162 cards
+new    2024-onit-athlete-west-virginia-football: 15 sets, 193 cards
+new    2024-onit-athlete-wyoming-football: 15 sets, 193 cards
+----- DUMP Team Set | Alabama | 2023
+
+----- SETS
+----- END
+EMPTY  Team Set | Alabama | 2023
+EMPTY  Team Set | Auburn | 2023
+EMPTY  Team Set | Baylor | 2023
+EMPTY  Team Set | Boise State | 2023
+EMPTY  Team Set | BYU | 2023
+EMPTY  Team Set | Cal | 2023
+EMPTY  Team Set | Colorado | 2023
+EMPTY  Team Set | Florida | 2023
+EMPTY  Team Set | Florida State | 2023
+EMPTY  Team Set | Michigan State | 2023
+EMPTY  Team Set | Mississippi State | 2023
+EMPTY  Team Set | Missouri | 2023
+EMPTY  Team Set | NC State | 2023
+EMPTY  Team Set | Nebraska | 2023
+EMPTY  Team Set | Ohio State | 2023
+EMPTY  Team Set | Oklahoma | 2023
+EMPTY  Team Set | Oregon State | 2023
+EMPTY  Team Set | TCU | 2023
+EMPTY  Team Set | Tennessee | 2023
+EMPTY  Team Set | Texas | 2023
+EMPTY  Team Set | Texas Tech | 2023
+EMPTY  Team Set | Utah | 2023
+EMPTY  Team Set | Washington | 2023
+EMPTY  Team Set | West Virginia | 2023
+new    2022-onit-athlete-boise-state-football: 3 sets, 114 cards
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+new    2022-onit-athlete-oregon-football: 1 sets, 57 cards
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+new    2022-onit-athlete-washington-football: 1 sets, 64 cards
+
+196 football checklists: 156 written, 0 already here, 25 failed

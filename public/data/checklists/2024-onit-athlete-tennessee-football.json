@@ -1,0 +1,1983 @@
+{
+  "id": "2024-onit-athlete-tennessee-football",
+  "name": "2024 ONIT Athlete Tennessee Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 80,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Andre Turrentine",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-2",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-3",
+          "player": "Ben Bolton",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-4",
+          "player": "Bennett Brady",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-5",
+          "player": "Bennett Warren",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-6",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-7",
+          "player": "Braylon Staley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-8",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-9",
+          "player": "Bryson Eason",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Herring",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-11",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-12",
+          "player": "Carson Whitehead",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-13",
+          "player": "Charlie Browder",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-14",
+          "player": "Chas Nimrod",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-15",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-16",
+          "player": "Christian Charles",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-17",
+          "player": "Cole Harrison",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-18",
+          "player": "Colin Brazzell",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-19",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-20",
+          "player": "Daevin Hobbs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-21",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-22",
+          "player": "Dayton Sneed",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-23",
+          "player": "DeSean Bishop",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-24",
+          "player": "Dominic Bailey",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-25",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-26",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-27",
+          "player": "Edrees Farooq",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-28",
+          "player": "Edwin Spillman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-29",
+          "player": "Elijah Simmons",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-30",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-31",
+          "player": "Gage Ginther",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-32",
+          "player": "Gaston Moore",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-33",
+          "player": "Gus Hill",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-34",
+          "player": "Holden Staes",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-35",
+          "player": "Jackson Lampley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-36",
+          "player": "Jackson Mathews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-37",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-38",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-39",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-40",
+          "player": "Jalen McMurray",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-41",
+          "player": "Jamal Wallace",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-42",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-43",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-44",
+          "player": "Jaxson Moi",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-45",
+          "player": "Jayson Jenkins",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-46",
+          "player": "Jeremiah Telander",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-47",
+          "player": "Jermod McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-48",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-49",
+          "player": "John Slaughter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-50",
+          "player": "Jordan Burns",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-51",
+          "player": "Jordan Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-52",
+          "player": "Jordan Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-53",
+          "player": "P/pk",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-54",
+          "player": "Joshua Helsdon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-55",
+          "player": "Joshua Josephs",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-56",
+          "player": "Jourdan Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-57",
+          "player": "Kaleb Beasley",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-58",
+          "player": "Kaleb Webb",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-59",
+          "player": "Keenan Pili",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-60",
+          "player": "Khalifa Keith",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-61",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-62",
+          "player": "Marcus Goree Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-63",
+          "player": "Matthew Salansky",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-64",
+          "player": "Max Anderson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-65",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-66",
+          "player": "Miles Kitselman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-67",
+          "player": "Nate Spillman",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-68",
+          "player": "Nathan Leacock",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-69",
+          "player": "Nathan Robinson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-70",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-71",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-72",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-73",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-74",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-75",
+          "player": "Shamurad Umarov",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-76",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-77",
+          "player": "Tyre West",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-78",
+          "player": "Tyree Weathersby",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-79",
+          "player": "Vysen Lang",
+          "team": "Tennessee"
+        },
+        {
+          "number": "B-80",
+          "player": "Will Brooks",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-2",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-3",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-4",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-5",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-6",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-7",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-8",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-9",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "P-10",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "IC-2",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "IC-3",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "IC-4",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "IC-5",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-2",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-3",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-4",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CC-5",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "ST-2",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "ST-3",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "ST-4",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "ST-5",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "BL-2",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "BL-3",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "BL-4",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "BL-5",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "CL-2",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 26,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-2",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-3",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-4",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-5",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-6",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-7",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-8",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-9",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-10",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-12",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-13",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-14",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-15",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-16",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-17",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-18",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-19",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-20",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-21",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-22",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-45",
+          "player": "Coach Josh Heupel",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-47",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-49",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-51",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 26,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-23",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-24",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-25",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-26",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-27",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-28",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-29",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-30",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-31",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-32",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-33",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-34",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-35",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-36",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-37",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-38",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-39",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-40",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-41",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-42",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-43",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-44",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-46",
+          "player": "Coach Josh Heupel",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-48",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-50",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "S-52",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-2",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-3",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-4",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-5",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-6",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-7",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-8",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-9",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-10",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-12",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-13",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-14",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-15",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-16",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-17",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-18",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-19",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-20",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-21",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-22",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-89",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-93",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-97",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-24",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-25",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-26",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-27",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-28",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-29",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-30",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-31",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-32",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-33",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-34",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-35",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-36",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-37",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-38",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-39",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-40",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-41",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-42",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-43",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-44",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-90",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-94",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-98",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-45",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-46",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-47",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-48",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-49",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-50",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-51",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-52",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-53",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-54",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-55",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-56",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-57",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-58",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-59",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-60",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-61",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-62",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-63",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-64",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-65",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-66",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-91",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-95",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-99",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "one-series-water",
+      "name": "ONE Series Water",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-67",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-68",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-69",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-70",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-71",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-72",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-73",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-74",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-75",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-76",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-77",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-78",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-79",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-80",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-81",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-82",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-83",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-84",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-85",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-86",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-87",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-88",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-92",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-96",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "O-100",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-2",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-3",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-4",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-5",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-6",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-7",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-8",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-9",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-10",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-11",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-12",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-13",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-14",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-15",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-16",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-17",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-18",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-19",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-20",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-21",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-22",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-89",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-93",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-97",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-24",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-25",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-26",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-27",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-28",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-29",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-30",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-31",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-32",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-33",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-34",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-35",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-36",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-37",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-38",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-39",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-40",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-41",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-42",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-43",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-44",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-90",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-94",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-98",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-45",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-46",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-47",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-48",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-49",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-50",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-51",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-52",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-53",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-54",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-55",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-56",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-57",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-58",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-59",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-60",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-61",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-62",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-63",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-64",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-65",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-66",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-91",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-95",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-99",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-water",
+      "name": "NINE Series Water",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-67",
+          "player": "Arion Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-68",
+          "player": "Boo Carter",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-69",
+          "player": "Bru McCoy",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-70",
+          "player": "Cameron Seldon",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-71",
+          "player": "Chris Brazzell II",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-72",
+          "player": "Cooper Mays",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-73",
+          "player": "Dont e Thornton Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-74",
+          "player": "Dylan Sampson",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-75",
+          "player": "Ethan Davis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-76",
+          "player": "Jackson Ross",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-77",
+          "player": "Jake Merklinger",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-78",
+          "player": "Jakobe Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-79",
+          "player": "James Pearce Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-80",
+          "player": "Javontez Spraggins OL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-81",
+          "player": "John Campbell Jr.",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-82",
+          "player": "Lance Heard",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-83",
+          "player": "Mike Matthews",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-84",
+          "player": "Nico Iamaleava",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-85",
+          "player": "Omari Thomas",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-86",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-87",
+          "player": "Rickey Gibson III",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-88",
+          "player": "Squirrel White",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-92",
+          "player": "Omarr Norman-Lott DL",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-96",
+          "player": "Peyton Lewis",
+          "team": "Tennessee"
+        },
+        {
+          "number": "N-100",
+          "player": "Dayne Davis",
+          "team": "Tennessee"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1165 @@
+{
+  "id": "2024-onit-athlete-south-carolina-football",
+  "name": "2024 ONIT Athlete South Carolina Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 102,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Morton",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Herrera",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-3",
+          "player": "Alex Huntley",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-4",
+          "player": "Andrew Colasurdo",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-5",
+          "player": "Bam Martin-Scott",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-6",
+          "player": "Blake Franks",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-7",
+          "player": "Bradley Dunn",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-8",
+          "player": "Brady Hunt",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-9",
+          "player": "Bryan Thomas Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-10",
+          "player": "Buddy Mack Iii",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-11",
+          "player": "Campbell Vandiver",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-12",
+          "player": "Cason Henry",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-13",
+          "player": "Chase Kibble",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-14",
+          "player": "Chase Sweigart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-15",
+          "player": "Colin Bryant",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-16",
+          "player": "Connor Cox",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-17",
+          "player": "Daniel Lester",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-18",
+          "player": "David Spaulding",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-19",
+          "player": "Davis Beville",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-20",
+          "player": "Deandre Jules",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-21",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-22",
+          "player": "Debron Gatling",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-23",
+          "player": "Demetrius Knight Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-24",
+          "player": "Desmond Umeozulu",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-25",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-26",
+          "player": "Dylan Stewart",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-27",
+          "player": "Elijah Davis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-28",
+          "player": "Emazon Littlejohn",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-29",
+          "player": "Emory Floyd",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-30",
+          "player": "Eriq Rice",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-31",
+          "player": "Fred \"Jayr\" Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-32",
+          "player": "Gage Larvadain",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-33",
+          "player": "Gerald Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-34",
+          "player": "Gilber Edmond",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-35",
+          "player": "Gunnar Yocum",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-36",
+          "player": "Hunter Rogers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-37",
+          "player": "Isaiah Mcclary",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-38",
+          "player": "Jace Blackshear",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-39",
+          "player": "Jackson Burger",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-40",
+          "player": "Jakai Moore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-41",
+          "player": "Jake Recker",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-42",
+          "player": "Jalewis Solomon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-43",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-44",
+          "player": "Jamaal Whyce",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-45",
+          "player": "Jamian Risher Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-46",
+          "player": "Jared Brown",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-47",
+          "player": "Jaron Willis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-48",
+          "player": "Jatavius Shivers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-49",
+          "player": "Jatius Geer",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-50",
+          "player": "Jawarn Howell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-51",
+          "player": "Jimmy Francis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-52",
+          "player": "Jordan Franke",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-53",
+          "player": "Joseph Byrnes",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-54",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-55",
+          "player": "Josiah Thompson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-56",
+          "player": "Judge Collier",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-57",
+          "player": "Juju Mcdowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-58",
+          "player": "Kai Kroeger",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-59",
+          "player": "Kam Pringle",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-60",
+          "player": "Kamaar Bell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-61",
+          "player": "Kelvin Hunter",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-62",
+          "player": "King-Demenian Ford",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-63",
+          "player": "Kyle Kennard",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-64",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-65",
+          "player": "Larry Scott",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-66",
+          "player": "Lukas Vozeh",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-67",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-68",
+          "player": "Mac Walters",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-69",
+          "player": "Markee Anderson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-70",
+          "player": "Pk/p",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-71",
+          "player": "Maurice Brown Ii",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-72",
+          "player": "Mazeo Bennett Jr.",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-73",
+          "player": "Michael Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-74",
+          "player": "Mohamed Kaba",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-75",
+          "player": "Monkell Goodwine",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-76",
+          "player": "Nathan Harris-Waynick",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-77",
+          "player": "Neil Salvage Iii",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-78",
+          "player": "Ni Mansell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-79",
+          "player": "Nick Barrett",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-80",
+          "player": "Nick Elksnis",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-81",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-82",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-83",
+          "player": "O Donnell Fortune",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-84",
+          "player": "Oscar Adaway Iii",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-85",
+          "player": "Parker Lawson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-86",
+          "player": "Payton Mangrum",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-87",
+          "player": "Peyton Argent",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-88",
+          "player": "Peyton Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-89",
+          "player": "Reid Mikeska",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-90",
+          "player": "Robby Ashford",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-91",
+          "player": "Rondarius Porter",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-92",
+          "player": "Ronnie Porter",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-93",
+          "player": "Ryan Brubaker",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-94",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-95",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-96",
+          "player": "Torricelli Simpkins Iii",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-97",
+          "player": "Tree Babalade",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-98",
+          "player": "Trovon Baugh",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-99",
+          "player": "Vershon Lee",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-100",
+          "player": "Vicari Swain",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-101",
+          "player": "William Joyce",
+          "team": "South Carolina"
+        },
+        {
+          "number": "B-102",
+          "player": "Zahbari Sandy",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-2",
+          "player": "Lanorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-3",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-4",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-5",
+          "player": "Alex Huntley",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-6",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-7",
+          "player": "Dq Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-8",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-9",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "P-10",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "IC-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "IC-3",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        },
+        {
+          "number": "IC-4",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "IC-5",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CC-2",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CC-4",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CC-5",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "ST-2",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "ST-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "ST-4",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "ST-5",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-2",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-3",
+          "player": "Raheim Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-4",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "BL-5",
+          "player": "Alex Huntley",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "CL-2",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-2",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-4",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-5",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-6",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-7",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-8",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-9",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-10",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-11",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-12",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-13",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-14",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-15",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-16",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-17",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-18",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-19",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-20",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-21",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "S-22",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-2",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-4",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-5",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-6",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-7",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-8",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-9",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-10",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-11",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-12",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-13",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-14",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-15",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-16",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-17",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-18",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-19",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-20",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-21",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-22",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "O-24",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-2",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-3",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-4",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-5",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-6",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-7",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-8",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-9",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-10",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-11",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-12",
+          "player": "Debo Williams",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-13",
+          "player": "DQ Smith",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-14",
+          "player": "Jalon Kilgore",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-15",
+          "player": "Joshua Simon",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-16",
+          "player": "Juju McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-17",
+          "player": "LaNorris Sellers",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-18",
+          "player": "Luke Doty",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-19",
+          "player": "Nick Emmanwori",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-20",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-21",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-22",
+          "player": "Tonka Hemingway",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Nyck Harbor",
+          "team": "South Carolina"
+        },
+        {
+          "number": "N-24",
+          "player": "T.J. Sanders",
+          "team": "South Carolina"
+        }
+      ]
+    }
+  ]
+}

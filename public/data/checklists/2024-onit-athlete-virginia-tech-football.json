@@ -1,0 +1,1235 @@
+{
+  "id": "2024-onit-athlete-virginia-tech-football",
+  "name": "2024 ONIT Athlete Virginia Tech Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 116,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aeneas Peebles",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Ayden Greene",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "Benji Gosnell",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Bob Schick",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "Braelin Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "C.J. Mccray",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Woodson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Collin Schlee",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Dante Lovett",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Devin Alves",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-16",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-17",
+          "player": "Harrison Saint Germain",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-18",
+          "player": "Jaden Keller",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-19",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-20",
+          "player": "James Jennette",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-21",
+          "player": "Jason Abbey",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-22",
+          "player": "Jayden Mcdonald",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-23",
+          "player": "Jaylen Jones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-24",
+          "player": "Jaylin Lane",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-25",
+          "player": "John Love",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-26",
+          "player": "Jorden Mcdonald",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-27",
+          "player": "Josh Fuga",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-28",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-29",
+          "player": "Keli Lawson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-30",
+          "player": "Kelvin Gilliam Jr.",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-31",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-32",
+          "player": "Keyshawn Burgos",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-33",
+          "player": "Kyle Lowe",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-34",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-35",
+          "player": "Layth Ghannam",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-36",
+          "player": "Malachi Thomas",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-37",
+          "player": "Mansoor Delane",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-38",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-39",
+          "player": "P.J. Prioleau",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-40",
+          "player": "Parker Clements",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-41",
+          "player": "Peter Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-42",
+          "player": "Stephen Gosnell",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-43",
+          "player": "Tucker Holloway",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-44",
+          "player": "Tyler Childress",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-45",
+          "player": "Xavier Chaplin",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-46",
+          "player": "Xayvion Turner-Bradshaw WR",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-47",
+          "player": "Aidan Lynch",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-48",
+          "player": "Aiden Daugherty",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-49",
+          "player": "Andrew Hanchuk",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-50",
+          "player": "Aycen Stevens",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-51",
+          "player": "Braylon Johnson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-52",
+          "player": "Brody Jones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-53",
+          "player": "Brody Meadows",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-54",
+          "player": "Caleb Nitta",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-55",
+          "player": "Cameren Fleming",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-56",
+          "player": "Chance Fitzgerald",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-57",
+          "player": "Chanz Wiggins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-58",
+          "player": "Charlie O Connor",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-59",
+          "player": "Christian Epling",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-60",
+          "player": "Cole Pickett",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-61",
+          "player": "Cole Reemsnyder",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-62",
+          "player": "Connor Mclaughlin",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-63",
+          "player": "Darius Taylor",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-64",
+          "player": "Deric Dandy",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-65",
+          "player": "Elijah Haughawout",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-66",
+          "player": "Elijah Klock",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-67",
+          "player": "Emmett Laws",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-68",
+          "player": "Star",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-69",
+          "player": "George Ballance",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-70",
+          "player": "Gerard Johnson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-71",
+          "player": "Grant Karczewski",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-72",
+          "player": "Griffin Armstrong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-73",
+          "player": "Griffin Duggan",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-74",
+          "player": "Gunner Givens",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-75",
+          "player": "Hannes Hammer",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-76",
+          "player": "Ishmael Findlayter",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-77",
+          "player": "Israel Hairston",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-78",
+          "player": "Ja Ricous Hairston",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-79",
+          "player": "Jackson Sigler",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-80",
+          "player": "Jaelyn Allen",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-81",
+          "player": "Jeremiah Coney",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-82",
+          "player": "John Buetow",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-83",
+          "player": "Johnny Garrett",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-84",
+          "player": "Jonathan Pennix",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-85",
+          "player": "Jordan Tapscott",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-86",
+          "player": "Josh Gholston",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-87",
+          "player": "Josh Hand",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-88",
+          "player": "Josh Jones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-89",
+          "player": "Joshua Clarke",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-90",
+          "player": "Kaleb Spencer",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-91",
+          "player": "Kemari Copeland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-92",
+          "player": "Keylen \"Brodie\" Adams",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-93",
+          "player": "Khurtiss Perry",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-94",
+          "player": "Krystian Williams",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-95",
+          "player": "L.J. Booker",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-96",
+          "player": "Lance Williams",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-97",
+          "player": "Malachi Madison",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-98",
+          "player": "Miles Ellis",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-99",
+          "player": "Montavious Cunningham",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-100",
+          "player": "Mose Phillips Iii",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-101",
+          "player": "Nick Veltsistas",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-102",
+          "player": "Noah Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-103",
+          "player": "Quentin Reddish",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-104",
+          "player": "Sam Brumfield",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-105",
+          "player": "Star",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-106",
+          "player": "Takye Heath",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-107",
+          "player": "Tate Kendall",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-108",
+          "player": "Thomas Williams",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-109",
+          "player": "Tommy Ricard",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-110",
+          "player": "Ty Drez Clements",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-111",
+          "player": "Tyler Mason",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-112",
+          "player": "Tyler Smedley",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-113",
+          "player": "Web Davidson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-114",
+          "player": "Will Johnson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-115",
+          "player": "William \"Pop\" Watson Iii",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "B-116",
+          "player": "Zeke Wimbush",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-3",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-4",
+          "player": "Aeneas Peebles",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-5",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-6",
+          "player": "Keli Lawson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-7",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-8",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-9",
+          "player": "Jaylin Lane",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "P-10",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "IC-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "IC-3",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "IC-4",
+          "player": "Keli Lawson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "IC-5",
+          "player": "Jaylin Lane",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Aeneas Peebles",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "ST-2",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "ST-3",
+          "player": "Keli Lawson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "ST-4",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "ST-5",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "BL-2",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "BL-3",
+          "player": "Aeneas Peebles",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "BL-4",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "BL-5",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-3",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-4",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-5",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-6",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-7",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-8",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-9",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-10",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-11",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-12",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-13",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-14",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-15",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-16",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-17",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-18",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-19",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-20",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-21",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "S-22",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-3",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-4",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-5",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-6",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-7",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-8",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-9",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-10",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-11",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-12",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-13",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-14",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-15",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-16",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-17",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-18",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-19",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-20",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-21",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-22",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-23",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "O-24",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-2",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-3",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-4",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-5",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-6",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-7",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-8",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-9",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-10",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-11",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-12",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-13",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-14",
+          "player": "Kaden Moore",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-15",
+          "player": "Nick Gallo",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-16",
+          "player": "Da Quan Felton",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-17",
+          "player": "Cole Nelson",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-18",
+          "player": "Keonta Jenkins",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-19",
+          "player": "Jalen Stroman",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-20",
+          "player": "Antwaun Powell-Ryland",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-21",
+          "player": "Bhayshul Tuten",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-22",
+          "player": "Ali Jennings",
+          "team": "Virginia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-23",
+          "player": "Dorian Strong",
+          "team": "Virginia Tech"
+        },
+        {
+          "number": "N-24",
+          "player": "Kyron Drones",
+          "team": "Virginia Tech"
+        }
+      ]
+    }
+  ]
+}

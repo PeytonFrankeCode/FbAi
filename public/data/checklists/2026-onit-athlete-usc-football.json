@@ -1,0 +1,1571 @@
+{
+  "id": "2026-onit-athlete-usc-football",
+  "name": "2026 ONIT Athlete USC Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 77,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "B-2",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "B-3",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "B-4",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "B-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "B-6",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-7",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "B-8",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "B-9",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-10",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "B-11",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "B-12",
+          "player": "Trent Mosley",
+          "team": "USC"
+        },
+        {
+          "number": "B-13",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "B-14",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "B-15",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-16",
+          "player": "Alani Noa",
+          "team": "USC"
+        },
+        {
+          "number": "B-17",
+          "player": "Alex Vansumeren",
+          "team": "USC"
+        },
+        {
+          "number": "B-18",
+          "player": "Andrew Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-19",
+          "player": "Brandon Lockhart",
+          "team": "USC"
+        },
+        {
+          "number": "B-20",
+          "player": "Breck Kolojay",
+          "team": "USC"
+        },
+        {
+          "number": "B-21",
+          "player": "Brendan Cho",
+          "team": "USC"
+        },
+        {
+          "number": "B-22",
+          "player": "Caden Chittenden",
+          "team": "USC"
+        },
+        {
+          "number": "B-23",
+          "player": "Carrington Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "B-24",
+          "player": "Carson Tabaracci",
+          "team": "USC"
+        },
+        {
+          "number": "B-25",
+          "player": "Cash Jacobsen",
+          "team": "USC"
+        },
+        {
+          "number": "B-26",
+          "player": "Chase Deniz",
+          "team": "USC"
+        },
+        {
+          "number": "B-27",
+          "player": "Chasen Johnson",
+          "team": "USC"
+        },
+        {
+          "number": "B-28",
+          "player": "Cian Mckelvey",
+          "team": "USC"
+        },
+        {
+          "number": "B-29",
+          "player": "Desman Stephens II",
+          "team": "USC"
+        },
+        {
+          "number": "B-30",
+          "player": "Dylan Black",
+          "team": "USC"
+        },
+        {
+          "number": "B-31",
+          "player": "Elbert \"Rock\" Hill IV",
+          "team": "USC"
+        },
+        {
+          "number": "B-32",
+          "player": "Elijah Newby",
+          "team": "USC"
+        },
+        {
+          "number": "B-33",
+          "player": "Elijah Paige",
+          "team": "USC"
+        },
+        {
+          "number": "B-34",
+          "player": "Elijah Vaikona",
+          "team": "USC"
+        },
+        {
+          "number": "B-35",
+          "player": "Erwin Taomi",
+          "team": "USC"
+        },
+        {
+          "number": "B-36",
+          "player": "Esun Tafa",
+          "team": "USC"
+        },
+        {
+          "number": "B-37",
+          "player": "Hayden Treter",
+          "team": "USC"
+        },
+        {
+          "number": "B-38",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "B-39",
+          "player": "Jadyn Walker",
+          "team": "USC"
+        },
+        {
+          "number": "B-40",
+          "player": "Jaimeon Winfield",
+          "team": "USC"
+        },
+        {
+          "number": "B-41",
+          "player": "Jake Johnson",
+          "team": "USC"
+        },
+        {
+          "number": "B-42",
+          "player": "Jamaal Jarrett",
+          "team": "USC"
+        },
+        {
+          "number": "B-43",
+          "player": "Jayden Crowder",
+          "team": "USC"
+        },
+        {
+          "number": "B-44",
+          "player": "Jide Abasiri",
+          "team": "USC"
+        },
+        {
+          "number": "B-45",
+          "player": "Jonas Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-46",
+          "player": "Joshua Holland II",
+          "team": "USC"
+        },
+        {
+          "number": "B-47",
+          "player": "Josiah Jefferson",
+          "team": "USC"
+        },
+        {
+          "number": "B-48",
+          "player": "Justin Tauanuu",
+          "team": "USC"
+        },
+        {
+          "number": "B-49",
+          "player": "Kannon Smith",
+          "team": "USC"
+        },
+        {
+          "number": "B-50",
+          "player": "Kaylon Miller",
+          "team": "USC"
+        },
+        {
+          "number": "B-51",
+          "player": "Kendarius Reddick",
+          "team": "USC"
+        },
+        {
+          "number": "B-52",
+          "player": "Kilian O'Connor",
+          "team": "USC"
+        },
+        {
+          "number": "B-53",
+          "player": "Luc Weaver",
+          "team": "USC"
+        },
+        {
+          "number": "B-54",
+          "player": "Madden Riordan",
+          "team": "USC"
+        },
+        {
+          "number": "B-55",
+          "player": "Marquis Gallegos",
+          "team": "USC"
+        },
+        {
+          "number": "B-56",
+          "player": "Peyton \"Man Man\" Dyer S",
+          "team": "USC"
+        },
+        {
+          "number": "B-57",
+          "player": "Prophet Brown",
+          "team": "USC"
+        },
+        {
+          "number": "B-58",
+          "player": "Rey Sanchez",
+          "team": "USC"
+        },
+        {
+          "number": "B-59",
+          "player": "Riley Wormley",
+          "team": "USC"
+        },
+        {
+          "number": "B-60",
+          "player": "RJ Sermons",
+          "team": "USC"
+        },
+        {
+          "number": "B-61",
+          "player": "Roman Marchetti",
+          "team": "USC"
+        },
+        {
+          "number": "B-62",
+          "player": "Romero Ison",
+          "team": "USC"
+        },
+        {
+          "number": "B-63",
+          "player": "P/k",
+          "team": "USC"
+        },
+        {
+          "number": "B-64",
+          "player": "Sam Huard",
+          "team": "USC"
+        },
+        {
+          "number": "B-65",
+          "player": "Shahn Alston",
+          "team": "USC"
+        },
+        {
+          "number": "B-66",
+          "player": "Shaun Scott",
+          "team": "USC"
+        },
+        {
+          "number": "B-67",
+          "player": "Simote Katoanga",
+          "team": "USC"
+        },
+        {
+          "number": "B-68",
+          "player": "Ta'Mere Robinson",
+          "team": "USC"
+        },
+        {
+          "number": "B-69",
+          "player": "Talanoa IlI",
+          "team": "USC"
+        },
+        {
+          "number": "B-70",
+          "player": "Taniela Tupou",
+          "team": "USC"
+        },
+        {
+          "number": "B-71",
+          "player": "Taylor \"Taybo\" Johnson",
+          "team": "USC"
+        },
+        {
+          "number": "B-72",
+          "player": "Tobias Raymond",
+          "team": "USC"
+        },
+        {
+          "number": "B-73",
+          "player": "Tron Baker",
+          "team": "USC"
+        },
+        {
+          "number": "B-74",
+          "player": "Tucker Ashcraft",
+          "team": "USC"
+        },
+        {
+          "number": "B-75",
+          "player": "Vlad Dyakonov",
+          "team": "USC"
+        },
+        {
+          "number": "B-76",
+          "player": "Willi Wascher",
+          "team": "USC"
+        },
+        {
+          "number": "B-77",
+          "player": "William Weisberg",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "B-2",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "B-3",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "B-4",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "B-5",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "B-6",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-7",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "B-8",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "B-9",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "B-10",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "B-11",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "B-12",
+          "player": "Trent Mosley",
+          "team": "USC"
+        },
+        {
+          "number": "B-13",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "B-14",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "B-15",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "CC-2",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "CC-3",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "CC-4",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "CC-6",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "CC-7",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "CC-9",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "CC-2",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "CC-3",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "CC-4",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "CC-6",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "CC-7",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "CC-8",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "CC-9",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "CC-10",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "CL-2",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "CL-3",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "CL-2",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "CL-3",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift",
+      "name": "Dynamic Shift",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "DS-2",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "DS-3",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "DS-4",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "DS-5",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "DS-2",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "DS-3",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "DS-4",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "DS-5",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        },
+        {
+          "number": "F-2",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "F-3",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "F-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "F-5",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "F-6",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "F-7",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "F-8",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "F-9",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "F-10",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        },
+        {
+          "number": "F-2",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "F-3",
+          "player": "Isaiah Rubin",
+          "team": "USC"
+        },
+        {
+          "number": "F-4",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "F-5",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "F-6",
+          "player": "Deven Bryant",
+          "team": "USC"
+        },
+        {
+          "number": "F-7",
+          "player": "Trestin Castro",
+          "team": "USC"
+        },
+        {
+          "number": "F-8",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "F-9",
+          "player": "Marcelles Williams",
+          "team": "USC"
+        },
+        {
+          "number": "F-10",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "GD-2",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "GD-3",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "GA-2",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "GA-3",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "GA-4",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "GA-6",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson-vip-parallel",
+      "name": "General Admisson VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "GA-2",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "GA-3",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "GA-4",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "GA-6",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "H-2",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "H-3",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "H-4",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "H-5",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "H-2",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "H-3",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "H-4",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "H-5",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "NH-3",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "NH-5",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "NH-6",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium",
+      "name": "New Horizons Premium",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Braylan Shelby",
+          "team": "USC"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "NH-3",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "NH-4",
+          "player": "Mark Bowman",
+          "team": "USC"
+        },
+        {
+          "number": "NH-5",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "NH-6",
+          "player": "Zacharyus Williams",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "S-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "S-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "S-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "S-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "S-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "S-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "S-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "GA-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "GA-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "GA-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "GA-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "GA-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "GA-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "GA-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "GA-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-JM",
+          "player": "Jayden Maiava",
+          "team": "USC"
+        },
+        {
+          "number": "FS-WJ",
+          "player": "Waymond Jordan",
+          "team": "USC"
+        },
+        {
+          "number": "FS-TA",
+          "player": "Terrell Anderson",
+          "team": "USC"
+        },
+        {
+          "number": "FS-KM",
+          "player": "King Miller",
+          "team": "USC"
+        },
+        {
+          "number": "FS-CS",
+          "player": "Corey Simms",
+          "team": "USC"
+        },
+        {
+          "number": "FS-KC",
+          "player": "Kameryn Crawford",
+          "team": "USC"
+        },
+        {
+          "number": "FS-CP",
+          "player": "Christian Pierce",
+          "team": "USC"
+        },
+        {
+          "number": "FS-JW",
+          "player": "Jontez Williams",
+          "team": "USC"
+        },
+        {
+          "number": "FS-MB",
+          "player": "Mark Bowman",
+          "team": "USC"
+        }
+      ]
+    }
+  ]
+}

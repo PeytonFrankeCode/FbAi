@@ -1,0 +1,1110 @@
+{
+  "id": "2024-onit-athlete-wyoming-football",
+  "name": "2024 ONIT Athlete Wyoming Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 85,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Abraham Bangoura",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-3",
+          "player": "Andrew Johnson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-4",
+          "player": "Ben Florentine",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-5",
+          "player": "Braden Siders",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-6",
+          "player": "Caden Barnett",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-7",
+          "player": "Caleb Driskill",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-8",
+          "player": "Cb/wr",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-9",
+          "player": "Caleb Robinson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-10",
+          "player": "Carson York",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-11",
+          "player": "Charlie Coenen",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-12",
+          "player": "Chris Durr Jr.",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-13",
+          "player": "Cole Demarzo",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-14",
+          "player": "Dante Drake",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-15",
+          "player": "Dawaiian Mcneely",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-16",
+          "player": "Devin Boddie Jr.",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-17",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-18",
+          "player": "Erik Sandvik",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-19",
+          "player": "Ethan Day",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-20",
+          "player": "Evan Eller",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-21",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-22",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-23",
+          "player": "Isaac Sell",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-24",
+          "player": "Isaac White",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-25",
+          "player": "Jack Walsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-26",
+          "player": "Jaden Williams",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-27",
+          "player": "Jake Davies",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-28",
+          "player": "Jayden Clemons",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-29",
+          "player": "Jayden Williams",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-30",
+          "player": "Jaylen Sargent",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-31",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-32",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-33",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-34",
+          "player": "Justin Stevenson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-35",
+          "player": "Keany Parks",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-36",
+          "player": "Kevin Sjogren",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-37",
+          "player": "Koa Mcintyre",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-38",
+          "player": "Markie Grant",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-39",
+          "player": "Mitchell Anderson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-40",
+          "player": "Nic Talich",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-41",
+          "player": "Nick Miles",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-42",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-43",
+          "player": "Lb/ls",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-44",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-45",
+          "player": "Sam Scott",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-46",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-47",
+          "player": "Tyce Westland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-48",
+          "player": "Tyler King",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-49",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-50",
+          "player": "Will Pelissier",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-51",
+          "player": "Wrook Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-52",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-53",
+          "player": "Charles Williams",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-54",
+          "player": "Cody Crawford",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-55",
+          "player": "Isaac Schoenfeld",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-56",
+          "player": "Justin Erb",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-57",
+          "player": "Nathan Geiger",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-58",
+          "player": "Rex Johnsen",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-59",
+          "player": "Adrian Onyiego",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-60",
+          "player": "Alex Conn",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-61",
+          "player": "Alex Haswell",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-62",
+          "player": "Braylon Jenkins",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-63",
+          "player": "Brycen Lotz",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-64",
+          "player": "Caleb Cooley",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-65",
+          "player": "Caleb Hall",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-66",
+          "player": "Connor Shay",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-67",
+          "player": "Fb/te",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-68",
+          "player": "Dash Bauman",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-69",
+          "player": "David Leonard",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-70",
+          "player": "Drew Jackson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-71",
+          "player": "Gavyn Helm",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-72",
+          "player": "Jack Culbreath",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-73",
+          "player": "Jack Harvey",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-74",
+          "player": "Jake Wilson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-75",
+          "player": "Joaquin Sandoval",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-76",
+          "player": "Jordan Turnbull",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-77",
+          "player": "Keelan Anderson",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-78",
+          "player": "Lafai Purcell",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-79",
+          "player": "Lucas Samsula",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-80",
+          "player": "Nikos Varelas",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-81",
+          "player": "Quinn Grovesteen-Matchey OT",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-82",
+          "player": "Spencer Rathbun",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-83",
+          "player": "Tell Wade",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-84",
+          "player": "Tyler Nystrom",
+          "team": "Wyoming"
+        },
+        {
+          "number": "B-85",
+          "player": "Tyrese Boss",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-2",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-3",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-4",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-5",
+          "player": "Isaac White",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-6",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-7",
+          "player": "Wrook Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-8",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-9",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "P-10",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "IC-2",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "IC-3",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "IC-4",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        },
+        {
+          "number": "IC-5",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "CC-2",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "CC-4",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "CC-5",
+          "player": "Isaac White",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "ST-2",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "ST-3",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        },
+        {
+          "number": "ST-4",
+          "player": "Wrook Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "ST-5",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "BL-2",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "BL-3",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "BL-4",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "BL-5",
+          "player": "Wrook Brown",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "CL-2",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-2",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-3",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-4",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-5",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-6",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-7",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-8",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-9",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-10",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-11",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-12",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-13",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-14",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-15",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-16",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-17",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-18",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-19",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-20",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-21",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-22",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-23",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "S-24",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-2",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-3",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-4",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-5",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-6",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-7",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-8",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-9",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-10",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-11",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-12",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-13",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-14",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-15",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-16",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-17",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-18",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-19",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-20",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-21",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-22",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-23",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-24",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-25",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "O-26",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-2",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-3",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-4",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-5",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-6",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-7",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-8",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-9",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-10",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-11",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-12",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-13",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-14",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-15",
+          "player": "Devonne Harris",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-16",
+          "player": "John Michael Gyllenborg",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-17",
+          "player": "Sabastian Harsh",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-18",
+          "player": "Harrison Waylee",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-19",
+          "player": "Nofoafia Tulafono",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-20",
+          "player": "Alex Brown",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-21",
+          "player": "John Hoyland",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-22",
+          "player": "Wyett Ekeler",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-23",
+          "player": "Tyrecus Davis",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-24",
+          "player": "Shae Suiaunoa",
+          "team": "Wyoming"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-25",
+          "player": "Evan Svoboda",
+          "team": "Wyoming"
+        },
+        {
+          "number": "N-26",
+          "player": "Jordan Bertagnole",
+          "team": "Wyoming"
+        }
+      ]
+    }
+  ]
+}

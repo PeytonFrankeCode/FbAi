@@ -1,0 +1,1069 @@
+{
+  "id": "2025-onit-gravity-texas-football",
+  "name": "2025 ONIT Gravity Texas Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Butler",
+          "team": "Texas"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex January",
+          "team": "Texas"
+        },
+        {
+          "number": "B-3",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-4",
+          "player": "Brad Spence",
+          "team": "Texas"
+        },
+        {
+          "number": "B-5",
+          "player": "Brady Sarkisian",
+          "team": "Texas"
+        },
+        {
+          "number": "B-6",
+          "player": "Bryce Chambers",
+          "team": "Texas"
+        },
+        {
+          "number": "B-7",
+          "player": "Carson Marshall",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Christian Clark",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-10",
+          "player": "Cole Brevard",
+          "team": "Texas"
+        },
+        {
+          "number": "B-11",
+          "player": "Cole Hutson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Colin Page",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-14",
+          "player": "Colton Vasek",
+          "team": "Texas"
+        },
+        {
+          "number": "B-15",
+          "player": "Connor Stroh",
+          "team": "Texas"
+        },
+        {
+          "number": "B-16",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-17",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-18",
+          "player": "Derek Williams Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-19",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-20",
+          "player": "Emaree Winston",
+          "team": "Texas"
+        },
+        {
+          "number": "B-21",
+          "player": "Emmett Mosely V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-22",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "B-23",
+          "player": "Graham Gillespie",
+          "team": "Texas"
+        },
+        {
+          "number": "B-24",
+          "player": "Hamilton Mcmartin",
+          "team": "Texas"
+        },
+        {
+          "number": "B-25",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "B-26",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-27",
+          "player": "Jaylon Guilbeau",
+          "team": "Texas"
+        },
+        {
+          "number": "B-28",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "B-29",
+          "player": "Jerrick Gibson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-30",
+          "player": "Joe Tatum",
+          "team": "Texas"
+        },
+        {
+          "number": "B-31",
+          "player": "Jordan Washington",
+          "team": "Texas"
+        },
+        {
+          "number": "B-32",
+          "player": "Jordon Johnson-Rubell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-33",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "B-34",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-35",
+          "player": "Lance St. Louis",
+          "team": "Texas"
+        },
+        {
+          "number": "B-36",
+          "player": "Lavon Johnson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-37",
+          "player": "Liona Lefau",
+          "team": "Texas"
+        },
+        {
+          "number": "B-38",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        },
+        {
+          "number": "B-39",
+          "player": "Marshall Landwehr",
+          "team": "Texas"
+        },
+        {
+          "number": "B-40",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-41",
+          "player": "Michael Terry III",
+          "team": "Texas"
+        },
+        {
+          "number": "B-42",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "B-43",
+          "player": "Quinn Merritt",
+          "team": "Texas"
+        },
+        {
+          "number": "B-44",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "B-45",
+          "player": "Remy Patson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-46",
+          "player": "Rett Andersen",
+          "team": "Texas"
+        },
+        {
+          "number": "B-47",
+          "player": "Ridge Barker",
+          "team": "Texas"
+        },
+        {
+          "number": "B-48",
+          "player": "Ryan Niblett",
+          "team": "Texas"
+        },
+        {
+          "number": "B-49",
+          "player": "Smith Orogbo",
+          "team": "Texas"
+        },
+        {
+          "number": "B-50",
+          "player": "Spencer Shannon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-51",
+          "player": "Tate Haver",
+          "team": "Texas"
+        },
+        {
+          "number": "B-52",
+          "player": "Travis Shaw",
+          "team": "Texas"
+        },
+        {
+          "number": "B-53",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "B-54",
+          "player": "Trey Moore",
+          "team": "Texas"
+        },
+        {
+          "number": "B-55",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "B-56",
+          "player": "Ty Boatright",
+          "team": "Texas"
+        },
+        {
+          "number": "B-57",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        },
+        {
+          "number": "B-58",
+          "player": "Warren Roberson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-59",
+          "player": "Will Randle",
+          "team": "Texas"
+        },
+        {
+          "number": "B-60",
+          "player": "Xavier Filsaime",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 18,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-3",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Christian Clark",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Colin Page",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-17",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-21",
+          "player": "Emmett Mosely V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-24",
+          "player": "Hamilton Mcmartin",
+          "team": "Texas"
+        },
+        {
+          "number": "B-25",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "B-26",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-29",
+          "player": "Jerrick Gibson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-38",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        },
+        {
+          "number": "B-40",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-42",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "B-43",
+          "player": "Quinn Merritt",
+          "team": "Texas"
+        },
+        {
+          "number": "B-44",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "B-45",
+          "player": "Remy Patson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-55",
+          "player": "Trey Owens",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "color-parallel-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Color Parallel (Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "insert",
+      "totalCards": 18,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-3",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Christian Clark",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Colin Page",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-17",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-21",
+          "player": "Emmett Mosely V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-24",
+          "player": "Hamilton Mcmartin",
+          "team": "Texas"
+        },
+        {
+          "number": "B-25",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "B-26",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-29",
+          "player": "Jerrick Gibson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-38",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        },
+        {
+          "number": "B-40",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-42",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "B-43",
+          "player": "Quinn Merritt",
+          "team": "Texas"
+        },
+        {
+          "number": "B-44",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "B-45",
+          "player": "Remy Patson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-55",
+          "player": "Trey Owens",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-standard",
+      "name": "Hyperdrive Standard",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-1",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-2",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-3",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-4",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-6",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-7",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "HD-8",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-2",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-3",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-4",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-2",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-3",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "SD-4",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Texas"
+        },
+        {
+          "number": "W-1",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-2",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-3",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-4",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-5",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-6",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "W-7",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-base-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Galaxy (Base; Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "base",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "G-1",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "G-2",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "G-3",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "G-4",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "G-5",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "G-6",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "G-7",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "G-8",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "G-9",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "G-10",
+          "player": "Jerrick Gibson",
+          "team": "Texas"
+        },
+        {
+          "number": "G-11",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "G-12",
+          "player": "Rett Andersen",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-base",
+      "name": "Gravity Signature Base",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-orange-49",
+      "name": "Gravity Signature Orange /49",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-purple-25",
+      "name": "Gravity Signature Purple /25",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-silver-15",
+      "name": "Gravity Signature Silver /15",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-red-9",
+      "name": "Gravity Signature Red /9",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-green-5",
+      "name": "Gravity Signature Green /5",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-gold-1",
+      "name": "Gravity Signature Gold /1",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "S-3",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "S-4",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "S-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "S-6",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "S-7",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "S-8",
+          "player": "Justus Terry",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GS-2",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-3",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "GS-4",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        }
+      ]
+    }
+  ]
+}

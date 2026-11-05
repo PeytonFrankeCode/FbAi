@@ -1,0 +1,551 @@
+{
+  "id": "2025-onit-timeless-michigan-football",
+  "name": "2025 ONIT Timeless Michigan Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 79,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Andrew Babalola",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-2",
+          "player": "Andrew Sprague",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-3",
+          "player": "Avery Gach",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-4",
+          "player": "Blake Frazier",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-5",
+          "player": "Bobby Kanka",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-6",
+          "player": "Brady Prieskorn",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-7",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-8",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-9",
+          "player": "Bryson Kuzdzal",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-10",
+          "player": "C.J. Charleston",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-11",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-12",
+          "player": "Channing Goodwin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-13",
+          "player": "Chase Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-14",
+          "player": "Chibi Anwunah",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-15",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-16",
+          "player": "Connor Jones",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-17",
+          "player": "Dan Taraboi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-18",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-19",
+          "player": "Deakon Tonielli",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-20",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-21",
+          "player": "Devon Baxter",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-22",
+          "player": "Deyvid Palepale",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-23",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-24",
+          "player": "Donaven Mcculley",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-25",
+          "player": "Eli Owens",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-26",
+          "player": "Enow Etta",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-27",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-28",
+          "player": "Evan Link",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-29",
+          "player": "Fredrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-30",
+          "player": "Giovanni El-Hadi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-31",
+          "player": "Greg Crippen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-32",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-33",
+          "player": "Hudson Hollenbeck P",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-34",
+          "player": "I'Marion Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-35",
+          "player": "Ike Iwunnah",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-36",
+          "player": "Ja'Den Mcburrows",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-37",
+          "player": "Jacob Oden",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-38",
+          "player": "Jadyn Davis",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-39",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-40",
+          "player": "Jake Guarnera",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-41",
+          "player": "Jalen Hoffman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-42",
+          "player": "Jamar Browder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-43",
+          "player": "Ol/ls",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-44",
+          "player": "Jaydon Hood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-45",
+          "player": "Jeremiah Lowe",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-46",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-47",
+          "player": "Jo'Ziah Edmond",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-48",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-49",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-50",
+          "player": "Jordan Young",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-51",
+          "player": "Julius Holly",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-52",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-53",
+          "player": "Jyaire Hill",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-54",
+          "player": "Kaden Strayhorn",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-55",
+          "player": "Kechaun Bennett",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-56",
+          "player": "Kendrick Bell",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-57",
+          "player": "Logan Forbes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-58",
+          "player": "Lugard Edokpayi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-59",
+          "player": "Luke Hamilton",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-60",
+          "player": "Manuel Beigel",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-61",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-62",
+          "player": "Mason Curtis",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-63",
+          "player": "Te/fb",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-64",
+          "player": "Micah Ka'Apana",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-65",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-66",
+          "player": "Nathan Efobi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-67",
+          "player": "Nico Andrighetto",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-68",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-69",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-70",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-71",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-72",
+          "player": "Shamari Earls",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-73",
+          "player": "Tevis Metcalf",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-74",
+          "player": "TJ Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-75",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-76",
+          "player": "Tyler Mclaurin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-77",
+          "player": "Zack Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-78",
+          "player": "Zeke Berry",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-79",
+          "player": "Sherrone Moore",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-2",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-3",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-4",
+          "player": "Donaven Mcculley",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-5",
+          "player": "Giovanni El-Hadi",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-6",
+          "player": "Kendrick Bell",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-7",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-8",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-9",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "C-10",
+          "player": "TJ Guy",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-2",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-3",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-4",
+          "player": "Jyaire Hill",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-5",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-6",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-7",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-8",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "SG-9",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-signature",
+      "name": "Stained Glass Signature",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SGS-1",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "SGS-2",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "SGS-3",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,995 @@
+{
+  "id": "2024-onit-athlete-georgia-tech-football",
+  "name": "2024 ONIT Athlete Georgia Tech Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 80,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A.J. Cheeks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-2",
+          "player": "Aaron Philo",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-3",
+          "player": "Abdul Janneh Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-4",
+          "player": "Aidan Birr",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-5",
+          "player": "Pk/p",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-6",
+          "player": "Anthony Carrie",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-7",
+          "player": "Austin Dean",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-8",
+          "player": "Avery Boyd",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-9",
+          "player": "Bayler Duncan",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-10",
+          "player": "Ben Hollerbach",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-11",
+          "player": "Benjamin Galloway",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-12",
+          "player": "Blake Ragsdale",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-13",
+          "player": "Bobby Campbell",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-14",
+          "player": "Brandon Best",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-15",
+          "player": "Brett Seither",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-16",
+          "player": "Brody Rhodes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-17",
+          "player": "Cade Adams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-18",
+          "player": "Caleb Dozier",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-19",
+          "player": "Cedric Franklin Ii",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-20",
+          "player": "Chad Alexander",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-21",
+          "player": "Chase Lane",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-22",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-23",
+          "player": "Christian Pritchett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-24",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-25",
+          "player": "Corey Robinson Ii",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-26",
+          "player": "D.J. Moore",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-27",
+          "player": "David Prince",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-28",
+          "player": "David Shanahan",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-29",
+          "player": "Daylon Gordon",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-30",
+          "player": "Drew Cohen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-31",
+          "player": "Eric Singleton Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-32",
+          "player": "Ethan Mackenny",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-33",
+          "player": "Graham Knowles",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-34",
+          "player": "Harrison Moore",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-35",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-36",
+          "player": "Henry Freer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-37",
+          "player": "Horace Lockett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-38",
+          "player": "Jaaymen Rochell",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-39",
+          "player": "Jack Collins",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-40",
+          "player": "Jackson Long",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-41",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-42",
+          "player": "P/pk",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-43",
+          "player": "Jameson Riggs",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-44",
+          "player": "Joe Fusile",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-45",
+          "player": "Jordan Boyd",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-46",
+          "player": "Jordan Brown",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-47",
+          "player": "Jordan Floyd",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-48",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-49",
+          "player": "Joseph Moseley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-50",
+          "player": "Joseph Stoever",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-51",
+          "player": "Joshua Robinson",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-52",
+          "player": "Joshua Ruder",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-53",
+          "player": "Joshua Taylor",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-54",
+          "player": "Db/ls",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-55",
+          "player": "Kai Greer",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-56",
+          "player": "Kevin Harris Ii",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-57",
+          "player": "Keylan Rutledge",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-58",
+          "player": "Kyle Efford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-59",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-60",
+          "player": "Lawson Pritchett",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-61",
+          "player": "Leo Blackburn",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-62",
+          "player": "Luke Harpring",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-63",
+          "player": "Luke Laughter",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-64",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-65",
+          "player": "Nehemiah Chandler DB",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-66",
+          "player": "Omar Daniels",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-67",
+          "player": "Patrick Screws Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-68",
+          "player": "Ryan Purves",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-69",
+          "player": "Syeed Gibbs",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-70",
+          "player": "Sylvain Yondjouen",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-71",
+          "player": "Tana Alo-Tupuola",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-72",
+          "player": "Trey Cooley",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-73",
+          "player": "Trey Horne",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-74",
+          "player": "Troy Stevenson Iv",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-75",
+          "player": "Uche Iloh",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-76",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-77",
+          "player": "Will Scissum",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-78",
+          "player": "Zach Pyron",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-79",
+          "player": "Zachary Tobe",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "B-80",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-3",
+          "player": "Eric Singleton Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-4",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-5",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-6",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-7",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-8",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-9",
+          "player": "Joe Fusile",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "P-10",
+          "player": "Brett Seither",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "IC-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "IC-3",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "IC-4",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "IC-5",
+          "player": "Joe Fusile",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-3",
+          "player": "Eric Singleton, Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-4",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CC-5",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "ST-2",
+          "player": "Eric Singleton, Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "ST-3",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "ST-4",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "ST-5",
+          "player": "Brett Seither",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "BL-2",
+          "player": "Eric Singleton, Jr.",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "BL-3",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "BL-4",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "BL-5",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "CL-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-3",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-4",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-5",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-6",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-7",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-8",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-9",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-10",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-11",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-12",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-13",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-14",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-15",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-16",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-17",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "S-18",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire-one-series-fire",
+      "name": "ONE Series Fire One Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-3",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-4",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-5",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-6",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-7",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-8",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-9",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-10",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-11",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-12",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-13",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-14",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-15",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-16",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-17",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-18",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-19",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "O-20",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-2",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-3",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-4",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-5",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-6",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-7",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-8",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-9",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 9,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-10",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-11",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-12",
+          "player": "Malik Rutherford",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-13",
+          "player": "Christian Leary",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-14",
+          "player": "Jordan Williams",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-15",
+          "player": "Weston Franklin",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-16",
+          "player": "Lamiles Brooks",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-17",
+          "player": "Clayton Powell-Lee",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-18",
+          "player": "Zeek Biggers",
+          "team": "Georgia Tech"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-19",
+          "player": "Haynes King",
+          "team": "Georgia Tech"
+        },
+        {
+          "number": "N-20",
+          "player": "Jamal Haynes",
+          "team": "Georgia Tech"
+        }
+      ]
+    }
+  ]
+}
