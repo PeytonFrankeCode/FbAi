@@ -84,8 +84,21 @@ const groupName = (s) => {
   return t.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
 };
 
+// The 2023 and 2024 team set PDFs embed a font whose codes sit 29 below the
+// letters they draw ("%DVH" is "Base", \u0003 a space), so pdftotext reads
+// them shifted. Such a document is shifted back, line by line: a line with a
+// real lower-case letter ("* Series Cards Look for Parallels") is in a normal
+// font and kept; layout spaces are pdftotext's own and kept too.
+function unshift(text) {
+  const t = String(text);
+  if ((t.match(/\u0003/g) || []).length < 5) return t;
+  return t.split('\n').map(line => /[a-z]/.test(line) ? line
+    : line.replace(/[^ \f\t]/g, ch => { const c = ch.charCodeAt(0) + 29; return c <= 0x7e ? String.fromCharCode(c) : ch; })).join('\n');
+}
+
 // The text of one PDF (pdftotext -layout) -> sets.
 function parseChecklistText(text) {
+  text = unshift(text);
   const sets = [];
   let cur = null;
   const anyCards = () => sets.some(s => s.cards.length);
@@ -170,8 +183,10 @@ if (require.main === module) (async () => {
       const pdf = path.join(tmp, 'c.pdf');
       fs.writeFileSync(pdf, await get(item.pdf, 'buffer'));
       const text = execFileSync('pdftotext', ['-layout', pdf, '-'], { encoding: 'utf8' });
-      if (process.env.ONIT_DUMP && `${item.year} ${item.brand} ${item.school}`.toLowerCase().includes(process.env.ONIT_DUMP)) {
-        console.log(`----- DUMP ${label}\n${text.slice(0, 3000)}\n----- END`);
+      if (process.env.ONIT_DUMP && process.env.ONIT_DUMP.split('|').some(d => `${item.year} ${item.brand} ${item.school}`.toLowerCase() === d)) {
+        console.log(`----- DUMP ${label}\n${unshift(text).slice(0, 7000)}\n----- SETS`);
+        for (const s of parseChecklistText(text)) console.log(`  ${s.name}: ${s.cards.length} [${s.cards.slice(0, 3).map(c => c.number + ' ' + c.player).join(' | ')}]${s.parallels ? ' par ' + s.parallels.length : ''}`);
+        console.log('----- END');
       }
       const sets = parseChecklistText(text);
       const doc = toProduct(item, sets);
@@ -191,4 +206,4 @@ if (require.main === module) (async () => {
   console.log(`\n${items.length} football checklists: ${added} ${WRITE ? 'written' : 'to write'}, ${skipped} already here, ${failed} failed`);
 })();
 
-module.exports = { readParallels, parseChecklistText, toProduct, listFromPage, nameCase, firstYear };
+module.exports = { unshift, readParallels, parseChecklistText, toProduct, listFromPage, nameCase, firstYear };
