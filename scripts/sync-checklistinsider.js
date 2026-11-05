@@ -136,7 +136,18 @@ function parseLoose(html) {
 }
 
 if (require.main === module) (async () => {
-  const sm = (await get(`${SITE}/post-sitemap.xml`, 'post-sitemap.xml')) + (await get(`${SITE}/post-sitemap2.xml`, 'post-sitemap2.xml'));
+  // Every post sitemap the site lists (Nov 2026: a third appeared, and its
+  // pages were never read while this asked for post-sitemap and -2 by name).
+  let names = [];
+  try {
+    const idx = await get(`${SITE}/sitemap_index.xml`, 'sitemap_index.xml');
+    names = [...idx.matchAll(/<loc>[^<]*\/(post-sitemap\d*\.xml)<\/loc>/g)].map(m => m[1]);
+  } catch (_) { /* fall back to the two we knew */ }
+  if (!names.length) names = ['post-sitemap.xml', 'post-sitemap2.xml', 'post-sitemap3.xml'];
+  let sm = '';
+  for (const n of [...new Set(names)]) {
+    try { sm += await get(`${SITE}/${n}`, n); } catch (err) { console.error(`${n}: ${err.message}`); }
+  }
   const posts = sm.split('<url>').slice(1).map(b => ({
     slug: ((b.match(/<loc>([^<]*)<\/loc>/) || [])[1] || '').replace(SITE + '/', '').replace(/\/$/, ''),
     mod: (b.match(/<lastmod>([^<]*)<\/lastmod>/) || [])[1] || '',
