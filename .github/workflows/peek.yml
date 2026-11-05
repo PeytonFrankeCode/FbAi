@@ -7,15 +7,20 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Onit checklist sources
+      - name: Onit checklist page structure
         shell: bash {0}
         run: |
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36'
-          for u in https://onitathlete.com https://www.onitathlete.com/checklists https://onitathlete.com/pages/checklists https://www.cardboardconnection.com/?s=onit https://www.beckett.com/news/?s=onit https://www.tradingcarddb.com/Search?SearchText=onit+athlete https://www.sportscardchecklist.com/search.php?search=onit; do
-            code=$(curl -sS -L -m 30 -A "$UA" -o p.html -w '%{http_code}' "$u" || echo ERR)
-            echo "=== $code $u ($(wc -c < p.html 2>/dev/null) bytes) title: $(grep -o '<title>[^<]*' p.html | head -1)"
-            grep -oiE 'href="[^"]*onit[^"]*"' p.html | sort -u | head -25
-          done
-          echo "=== checklistinsider sitemap3 sample"
-          curl -sS -m 30 -A "$UA" https://www.checklistinsider.com/post-sitemap3.xml | grep -o '<loc>[^<]*</loc>' | sed 's#<loc>##; s#</loc>##' | grep -E 'football|basketball|baseball' | head -30
-          curl -sS -m 30 -A "$UA" https://www.checklistinsider.com/post-sitemap3.xml | grep -o '<loc>[^<]*</loc>' | grep -cE 'football|basketball|baseball'
+          curl -sS -L -m 30 -A "$UA" -o c.html https://onitathlete.com/pages/checklists
+          echo "bytes $(wc -c < c.html)"
+          echo "== links (non-asset)"
+          grep -oE 'href="[^"]+"' c.html | grep -viE 'cdn/|fonts|\.css|facebook|twitter|instagram|tiktok|youtube|/collections/|/products/' | sort -u | head -80
+          echo "== file links"
+          grep -oiE '(https?:)?//[^"'"'"' ]+\.(pdf|xlsx|xls|csv)[^"'"'"' ]*' c.html | sort -u | head -40
+          grep -oiE 'docs\.google\.com/[^"'"'"' ]+' c.html | sort -u | head -20
+          echo "== headings"
+          grep -oE '<h[1-4][^>]*>[^<]{2,120}</h[1-4]>' c.html | head -60
+          echo "== checklist markup sample"
+          grep -n -i 'checklist' c.html | cut -c1-300 | head -60
+          echo "== json blobs"
+          grep -oE '"(title|name|url|file|pdf)":"[^"]{2,150}"' c.html | sort -u | head -80
