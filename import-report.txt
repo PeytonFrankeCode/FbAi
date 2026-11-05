@@ -1,0 +1,631 @@
+new    2026-onit-athlete-alabama-football: 25 sets, 313 cards
+new    2026-onit-athlete-arizona-state-football: 25 sets, 237 cards
+new    2026-onit-athlete-arkansas-football: 25 sets, 213 cards
+new    2026-onit-athlete-auburn-football: 25 sets, 217 cards
+new    2026-onit-athlete-boise-state-football: 20 sets, 269 cards
+new    2026-onit-athlete-florida-football: 25 sets, 229 cards
+new    2026-onit-athlete-florida-state-football: 25 sets, 208 cards
+new    2026-onit-athlete-georgia-tech-football: 25 sets, 192 cards
+new    2026-onit-athlete-illinois-football: 25 sets, 221 cards
+new    2026-onit-gravity-indiana-football: 20 sets, 2279 cards
+new    2026-onit-gravity-iowa-state-football: 20 sets, 2279 cards
+new    2026-onit-athlete-iowa-state-football: 25 sets, 240 cards
+new    2026-onit-gravity-kansas-state-football: 20 sets, 2279 cards
+new    2026-onit-athlete-kansas-state-football: 24 sets, 215 cards
+new    2026-onit-athlete-louisville-football: 25 sets, 191 cards
+new    2026-onit-gravity-michigan-football: 20 sets, 2279 cards
+new    2026-onit-athlete-michigan-football: 25 sets, 344 cards
+new    2026-onit-gravity-mississippi-state-football: 20 sets, 2279 cards
+new    2026-onit-gravity-missouri-football: 20 sets, 2279 cards
+new    2026-onit-athlete-missouri-football: 25 sets, 284 cards
+new    2026-onit-gravity-nebraska-football: 20 sets, 2279 cards
+new    2026-onit-athlete-nebraska-football: 25 sets, 285 cards
+new    2026-onit-gravity-ohio-state-football: 20 sets, 2279 cards
+new    2026-onit-gravity-oklahoma-football: 20 sets, 2279 cards
+new    2026-onit-athlete-oklahoma-football: 25 sets, 304 cards
+new    2026-onit-gravity-oklahoma-state-football: 20 sets, 2279 cards
+new    2026-onit-athlete-oklahoma-state-football: 25 sets, 246 cards
+new    2026-onit-gravity-ole-miss-football: 20 sets, 2279 cards
+new    2026-onit-athlete-ole-miss-football: 25 sets, 254 cards
+new    2026-onit-athlete-penn-state-football: 25 sets, 290 cards
+new    2026-onit-athlete-pittsburgh-football: 25 sets, 211 cards
+new    2026-onit-athlete-tennessee-football: 25 sets, 283 cards
+new    2026-onit-gravity-texas-football: 20 sets, 2279 cards
+new    2026-onit-athlete-texas-football: 25 sets, 256 cards
+new    2026-onit-athlete-texas-a-and-m-football: 24 sets, 292 cards
+new    2026-onit-gravity-texas-tech-football: 20 sets, 2279 cards
+new    2026-onit-athlete-texas-tech-football: 25 sets, 228 cards
+----- DUMP Gravity | UCLA | 2026
+                               2026 ONIT Gravity Football Checklist
+BASE SET            CARD NUMBER            SCHOOL                   PLAYER                           SEQ
+Base Set (Parallels: Orange, Silver, Green Mojo, Mojo, Lunar Shift, Solar Shift, Eclipse, Teal /250, Blue /200,
+Pulsar /175, Pink /125, Purple /99, Black /25, Purple Pulsar /15, Red /9, Red Pulsar /7, Green /5, Green Pulsar /3,
+Black Pulsar /1, Ultra Gold /1)
+                                        1 Ohio State                Jeremiah Smith
+                                        2 Ohio State                Brandon Inniss
+                                        3 Ohio State                James Smith
+                                        4 Ohio State                Payton Pierce
+                                        5 Ohio State                Kenyatta Jackson Jr
+                                        6 Ohio State                Isaiah West
+                                        7 Ohio State                Devin Sanchez
+                                        8 Ohio State                Jermaine Mathews Jr
+                                        9 Ohio State                Kyle Parker
+                                       10 Ohio State                Bo Jackson
+                                       11 Ohio State                Devin McCuin
+                                       12 Ohio State                Nate Roberts
+                                       13 Iowa State                Jaylen Raynor
+                                       14 Iowa State                Salahadin Allah
+                                       15 Iowa State                Cody Jackson
+                                       16 Iowa State                Omari Hayes
+                                       17 Iowa State                Keyon Washington
+                                       18 Iowa State                Carter Pabst
+                                       19 Iowa State                Evan Boyd
+                                       20 Iowa State                Cameron Pettaway
+                                       21 Iowa State                Dominic Overby
+                                       22 Iowa State                Drew Surges
+                                       23 Iowa State                Zane Flores
+                                       24 Iowa State                Braden Awls
+                                       25 Kansas State              Avery Johnson
+                                       26 Kansas State              Joe Jackson
+                                       27 Kansas State              Joshua Manning
+                                       28 Kansas State              Izaiah Williams
+                                       29 Kansas State              Jay Harris
+                                       30 Kansas State              Zashon Rich
+                                       31 Kansas State              Jaron Tibbs
+                                       32 Kansas State              Donovan McIntosh
+                                       33 Kansas State              Wendell Gregory
+                                       34 Kansas State              Garrett Oakley
+                                       35 Kansas State              Linkon Cure
+                                       36 Kansas State              Elijah Hill
+                                       37 Mississippi State         Marquis Johnson
+                                       38 Mississippi State         Anthony Evans III
+39 Mississippi State   Fluff Bothwell
+40 Mississippi State   Zion Ragins
+41 Mississippi State   Sam West
+42 Mississippi State   Xavier Gayten
+43 Mississippi State   Zakari Tillman
+44 Mississippi State   Dealyn Evans
+45 Mississippi State   Quentin Taylor
+46 Mississippi State   Sanfrisco Magee
+47 Mississippi State   Tyler Lockhart
+48 Mississippi State   Kelley Jones
+49 Missouri            Ahmad Hardy
+50 Missouri            Robert Woodyard Jr.
+51 Missouri            Cayden Lee
+52 Missouri            Caleb Goodie
+53 Missouri            Nick Evers
+54 Missouri            Donovan Olugbode
+55 Missouri            Cayden Green
+56 Missouri            Austin Simmons
+57 Missouri            Kenric Lanier II
+58 Missouri            Nicholas Rodriguez
+59 Missouri            Jahlil Florence
+60 Missouri            Brett Norfleet
+61 Nebraska            Anthony Colandrea
+62 Nebraska            Mekhi Nelson
+63 Nebraska            Nyziah Hunter
+64 Nebraska            Kwazi Gilmer
+65 Nebraska            Tony "TJ" Lateef
+66 Nebraska            Isaiah Mozee
+67 Nebraska            Janiran Bonner
+68 Nebraska            Luke Lindenmeyer
+69 Nebraska            Owen Chambliss
+70 Nebraska            Jacory Barney Jr.
+71 Nebraska            Justin Evans
+72 Nebraska            Riley Van Poppel
+73 Oklahoma            John Mateer
+74 Oklahoma            David Stone
+75 Oklahoma            Xavier Robinson
+76 Oklahoma            Trell Harris
+77 Oklahoma            Isaiah Sategna III
+78 Oklahoma            Tory Blaylock
+79 Oklahoma            Elijah Thomas
+80 Oklahoma            Courtland Guillory
+81 Oklahoma            Parker Livingstone
+82 Oklahoma            Reggie Powers III
+ 83 Oklahoma         Jadyen Jackson
+ 84 Oklahoma         Kip Lewis
+ 85 Oklahoma State   Drew Mestemaker
+ 86 Oklahoma State   Caleb Hawkins
+ 87 Oklahoma State   Wyatt Young
+ 88 Oklahoma State   Chris Barnes
+ 89 Oklahoma State   LaDainian Fields
+ 90 Oklahoma State   Justin Bowick
+ 91 Oklahoma State   Miles Coleman
+ 92 Oklahoma State   Evan Jackson
+ 93 Oklahoma State   Isaiah Chisom
+ 94 Oklahoma State   James Williams
+ 95 Oklahoma State   Jaleel Johnson
+ 96 Oklahoma State   Israel Polk
+ 97 Ole Miss         Trinidad Chambliss
+ 98 Ole Miss         Kewan Lacy
+ 99 Ole Miss         Darrell Gill Jr
+100 Ole Miss         Horatio Fields
+101 Ole Miss         Johntay Cook II
+102 Ole Miss         Luke Hasz
+103 Ole Miss         Makhi Frazier
+104 Ole Miss         Antonio Kite
+105 Ole Miss         Caleb Odom
+106 Ole Miss         Luke Ferrelli
+107 Ole Miss         Jalyn Crawford
+108 Ole Miss         Carius Curne
+109 Texas            Colin Simmons
+110 Texas            Hollywood Smothers
+111 Texas            Emmett Mosley
+112 Texas            Raleek Brown
+113 Texas            Michael Terry
+114 Texas            Jermaine Bishop Jr
+115 Texas            Ty'Anthony Smith
+116 Texas            Daylan McCutcheon
+117 Texas            Hero Kanu
+118 Texas            Trevor Goosby
+119 Texas            Lance Jackson
+120 Texas            Justus Terry
+121 Texas Tech       Cameron Dickey
+122 Texas Tech       Coy Eakin
+123 Texas Tech       Micah Hudson
+124 Texas Tech       Will Hammond
+125 Texas Tech       Kirk Francis
+126 Texas Tech       Terrance Carter Jr
+127 Texas Tech      J'Koby Williams
+128 Texas Tech      Kenny Johnson
+129 Texas Tech      Brice Pollock
+130 Texas Tech      Bryson Jones
+131 Texas Tech      Sheridan Wilson
+132 Texas Tech      Howard Sampson
+133 UCLA            Nico I
+----- SETS
+  Black Pulsar /1, Ultra Gold /1): 200 [1 Ohio State | 2 Ohio State | 3 Ohio State]
+  Galaxy (Parallels: Blue /200, Purple /99, Green Mojo /65, Black /25, Red /9, Green /5, Ultra Gold /1): 48 [G-KMA Indiana | G-CBE Indiana | G-TR Indiana]
+  Solar Storm (Parallels: Blue /200, Purple /99, Green Mojo /65, Black /25, Red /9, Green /5, Ultra Gold /1): 48 [SS-SP Indiana | SS-IJ Indiana | SS-BSC Indiana]
+  HyperDrive: 48 [HD-NM Indiana | HD-JH Indiana | HD-KMA Indiana]
+  HyperDrive Ultimate: 48 [HD-NM Indiana | HD-JH Indiana | HD-KMA Indiana]
+  Stardust: 48 [SD-CBE Indiana | SD-JH Indiana | SD-IJ Indiana]
+  Stardust Ultimate: 49 [SD-CBE Indiana | SD-JH Indiana | SD-IJ Indiana]
+  Holoform: 16 [HF-JH Indiana | HF-JR Iowa State | HF-AJ Kansas State]
+  Gravitational Pull: 48 [GP-NM Indiana | GP-JH Indiana | GP-KM Indiana]
+  Base Signatures: 179 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Base Signature Silver Parallel: 175 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Base Signature Purple Parallel: 177 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Base Signature Red Parallel: 177 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Base Signature Green Parallel: 178 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Base Signature Gold Parallel: 178 [S-BI Ohio State | S-BB Ohio State | S-DJ Ohio State]
+  Galaxy Base Signature: 136 [GS-BI Ohio State | GS-BB Ohio State | GS-CJ Ohio State]
+  Galaxy Signature Red Parallel: 131 [GS-BI Ohio State | GS-BB Ohio State | GS-CJ Ohio State]
+  Galaxy Signature Green Parallel: 133 [GS-BI Ohio State | GS-BB Ohio State | GS-CJ Ohio State]
+  Galaxy Signature Gold Parallel: 131 [GS-BI Ohio State | GS-BB Ohio State | GS-CJ Ohio State]
+  Intergalactic Signature: 131 [IG-BI Ohio State | IG-BB Ohio State | IG-DJ Ohio State]
+----- END
+new    2026-onit-gravity-ucla-football: 20 sets, 2279 cards
+new    2026-onit-athlete-ucla-football: 25 sets, 257 cards
+new    2026-onit-gravity-usc-football: 20 sets, 2279 cards
+new    2026-onit-athlete-usc-football: 25 sets, 243 cards
+new    2026-onit-gravity-west-virginia-football: 20 sets, 2279 cards
+new    2026-onit-athlete-west-virginia-football: 25 sets, 235 cards
+new    2025-onit-timeless-arizona-state-football: 3 sets, 81 cards
+new    2025-onit-timeless-arkansas-football: 3 sets, 96 cards
+new    2025-onit-timeless-auburn-football: 3 sets, 103 cards
+new    2025-onit-timeless-florida-football: 3 sets, 100 cards
+new    2025-onit-timeless-kansas-football: 3 sets, 88 cards
+new    2025-onit-timeless-lsu-football: 4 sets, 96 cards
+new    2025-onit-timeless-michigan-football: 4 sets, 101 cards
+new    2025-onit-timeless-nebraska-football: 4 sets, 90 cards
+new    2025-onit-timeless-ohio-state-football: 3 sets, 104 cards
+new    2025-onit-timeless-penn-state-football: 4 sets, 111 cards
+new    2025-onit-timeless-tennessee-football: 3 sets, 88 cards
+new    2025-onit-timeless-texas-football: 3 sets, 91 cards
+new    2025-onit-timeless-texas-a-and-m-football: 4 sets, 121 cards
+new    2025-onit-timeless-washington-football: 3 sets, 91 cards
+new    2025-onit-timeless-west-virginia-football: 3 sets, 78 cards
+new    2025-onit-gravity-alabama-football: 10 sets, 144 cards
+new    2025-onit-athlete-alabama-football: 12 sets, 192 cards
+new    2025-onit-gravity-arizona-state-football: 10 sets, 110 cards
+new    2025-onit-athlete-arizona-state-football: 12 sets, 121 cards
+new    2025-onit-gravity-arkansas-football: 15 sets, 150 cards
+new    2025-onit-athlete-arkansas-football: 11 sets, 133 cards
+new    2025-onit-athlete-boise-state-football: 9 sets, 184 cards
+new    2025-onit-gravity-florida-football: 10 sets, 115 cards
+new    2025-onit-athlete-florida-football: 12 sets, 161 cards
+new    2025-onit-gravity-florida-state-football: 10 sets, 116 cards
+new    2025-onit-athlete-florida-state-football: 12 sets, 128 cards
+----- DUMP ONIT Black | Indiana | 2025
+       Indiana Football 2025 ONIT Black Checklist
+ CARD NUMBER       No                         Name        Pos
+Base
+B-1                     72 ADEDAMOLA AJANI           OL
+B-2                     4 AIDEN FISHER               LB
+B-3                     16 ALBERTO MENDOZA           QB
+B-4                     1 AMARE FERRELL              DB
+B-5                     23 AMARIYUN KNIGHTEN         DB
+B-6                     85 ANDREW BARKER             TE
+B-7                     31 ANTHONY CHUNG             DB
+B-8                     61 BAYLOR WILKIN             OL
+B-9                     24 BRYSON BONDS              DB
+B-10                    89 CAMDEN JORDAN             WR
+B-11                    52 CLAYTON ALLEN             LB
+B-12                    5 D'ANGELO PONDS             DB
+B-13                    4 DAVION CHANDLER            WR
+B-14                    20 DONTRAE HENDERSON         DB
+B-15                    62 DREW EVANS                OL
+B-16                    7 E.J. WILLIAMS JR.          WR
+B-17                    13 ELIJAH SARRATT            WR
+B-18                    15 FERNANDO MENDOZA          QB
+B-19                    2 GRANT WILSON               QB
+B-20                    37 HEATH KIZER               DB
+B-21                    19 HOLDEN STAES              TE
+B-22                    0 HOSEA WHEELER              DL
+B-23                    46 ISAIAH JONES              LB
+B-24                    54 JACK GREER                OL
+B-25                    16 JAH JAH BOYD              DB
+B-26                    3 JAYLEN BELL                DB
+B-27                    50 JHREVIOUS HALL            DL
+B-28                    0 JONATHAN BRADY             WR
+B-29                    38 KADEN McCONNELL           LB
+B-30                    8 KAELON BLACK               RB
+B-31                    67 KAHLIL BENSON             OL
+B-32                    14 KAIDEN TURNER             LB
+B-33                    41 KEISHAUN CALHOUN          DL
+B-34                    28 KHOBIE MARTIN             RB
+B-35                    6 LEBRON BOND                WR
+B-36                    45 LINCOLN MURFF             DB
+B-37                    7 LOUIS MOORE                DB
+B-38                    97 MARIO LANDINO             DL
+B-39                    47 MARK LANGSTON             LS
+B-40                    6 MIKAIL KAMARA              DL
+B-41                    63 MITCH VERSTEGEN           OL
+B-42                    82 MYLES KENDRICK            WR
+B-43                    3 OMAR COOPER JR.            WR
+B-44                    30 PJ NELSON                 LB
+B-45                    40 QUENTIN CLARK             LB
+B-46                    37 RILEY NOWAKOWSKI          TE
+B-47                            1 ROMAN HEMBY                                        RB
+B-48                           10 RYLAND GANDY                                       DB
+B-49                           95 TYRIQUE TUCKER                                     DL
+B-50                           75 ZEN MICHALSKI                                      OL
+Parallels (Blue; Pink /150; Purple /100; Orange /75; Silver /20; Red /9; Green /5; Black /1)
+B-2                             4 AIDEN FISHER                                       LB
+B-3                            16 ALBERTO MENDOZA                                    QB
+B-4                             1 AMARE FERRELL                                      DB
+B-12                            5 D'ANGELO PONDS                                     DB
+B-16                            7 E.J. WILLIAMS JR.                                  WR
+B-17                           13 ELIJAH SARRATT                                     WR
+B-18                           15 FERNANDO MENDOZA                                   QB
+B-21                           19 HOLDEN STAES                                       TE
+B-30                            8 KAELON BLACK                                       RB
+B-40                            6 MIKAIL KAMARA                                      DL
+B-43                            3 OMAR COOPER JR.                                    WR
+B-47                            1 ROMAN HEMBY                                        RB
+Blackout (Gold; Purple Ice /120; Blue /25; Red Ice /9; Green Ice /5; Black Ice /1)
+BL-1                            0 JONATHAN BRADY                                     WR
+BL-2                            1 AMARE FERRELL                                      DB
+BL-3                            1 ROMAN HEMBY                                        RB
+BL-4                            3 OMAR COOPER JR.                                    WR
+BL-5                            7 E.J. WILLIAMS JR.                                  WR
+BL-6                            8 KAELON BLACK                                       RB
+BL-7                           13 ELIJAH SARRATT                                     WR
+BL-8                           15 FERNANDO MENDOZA                                   QB
+BL-9                           16 ALBERTO MENDOZA                                    QB
+BL-10                          19 HOLDEN STAES                                       TE
+BL-11                          82 MYLES KENDRICK                                     WR
+BL-12                          89 CAMDEN JORDAN                                      WR
+Access
+A-1                             0 JONATHAN BRADY                                     WR
+A-2                             1 AMARE FERRELL                                      DB
+A-3                             1 ROMAN HEMBY                                        RB
+A-4                             3 OMAR COOPER JR.                                    WR
+A-5                             4 AIDEN FISHER                                       LB
+A-6                             6 MIKAIL KAMARA                                      DL
+A-7                             7 E.J. WILLIAMS JR.                                  WR
+A-8                             8 KAELON BLACK                                       RB
+A-9                            13 ELIJAH SARRATT                                     WR
+A-10                           15 FERNANDO MENDOZA                                   QB
+Access Ultimate Edition (/1)
+A-1                             0 JONATHAN BRADY                                     WR
+A-2                             1 AMARE FERRELL                                      DB
+A-3                             1 ROMAN HEMBY                                        RB
+A-4                             3 OMAR COOPER JR.                                    WR
+A-5                             4 AIDEN FISHER                                       LB
+A-6                             6 MIKAIL KAMARA                                      DL
+A-7                             7 E.J. WILLIAMS JR.                                  WR
+A-8                            8 KAELON BLACK        RB
+A-9                            13 ELIJAH SARRATT     WR
+A-10                 
+----- SETS
+  Base: 50 [B-1 Adedamola Ajani | B-2 Aiden Fisher | B-3 Alberto Mendoza] par 1
+  Blackout (Gold; Purple Ice /120; Blue /25; Red Ice /9; Green Ice /5; Black Ice /1): 12 [BL-1 Jonathan Brady | BL-2 Amare Ferrell | BL-3 Roman Hemby]
+  Access: 10 [A-1 Jonathan Brady | A-2 Amare Ferrell | A-3 Roman Hemby]
+  Access Ultimate Edition (/1): 10 [A-1 Jonathan Brady | A-2 Amare Ferrell | A-3 Roman Hemby]
+  Ascend: 5 [AD-1 Omar Cooper Jr. | AD-2 E.J. Williams Jr. | AD-3 Kaelon Black]
+  Ascend Ultimate Edition (/1): 5 [AD-1 Omar Cooper Jr. | AD-2 E.J. Williams Jr. | AD-3 Kaelon Black]
+  Solaris: 3 [SP-1 Roman Hemby | SP-2 Omar Cooper Jr. | SP-3 Fernando Mendoza]
+  Polaris: 3 [SP-1 Roman Hemby | SP-2 Omar Cooper Jr. | SP-3 Fernando Mendoza]
+  Roar of the Crowd: 3 [RC-1 Fernando Mendoza | RC-2 Omar Cooper Jr. | RC-3 Roman Hemby]
+  Roar of the Crowd Ultimate Edition (/1): 3 [RC-1 Fernando Mendoza | RC-2 Omar Cooper Jr. | RC-3 Roman Hemby]
+  Base Signatures                                           SEQ: 9 [S-1 Fernando Mendoza | S-2 E.J. Williams Jr. | S-3 Roman Hemby]
+  Team Color Signature                                      SEQ: 9 [S-1 Fernando Mendoza | S-2 E.J. Williams Jr. | S-3 Roman Hemby]
+  Silver Signature (/15): 9 [S-1 Fernando Mendoza | S-2 E.J. Williams Jr. | S-3 Roman Hemby]
+  Gold Signature (/1): 9 [S-1 Fernando Mendoza | S-2 E.J. Williams Jr. | S-3 Roman Hemby]
+  Dual Signature Black (/9): 1 [DS-1 / 16 Fernando Mendoza / Alberto Mendoza]
+  Dual Signature Gold (/1): 1 [DS-1 / 16 Fernando Mendoza / Alberto Mendoza]
+  Circuit Signature (/9): 9 [CS-1 Fernando Mendoza | CS-2 E.J. Williams Jr. | CS-3 Roman Hemby]
+----- END
+new    2025-onit-black-indiana-football: 17 sets, 151 cards
+new    2025-onit-athlete-indiana-football: 10 sets, 108 cards
+new    2025-onit-athlete-indiana-football-commemorative-box: 4 sets, 75 cards
+new    2025-onit-gravity-iowa-state-football: 10 sets, 132 cards
+new    2025-onit-athlete-iowa-state-football: 12 sets, 164 cards
+new    2025-onit-gravity-kansas-football: 15 sets, 136 cards
+new    2025-onit-athlete-kansas-football: 12 sets, 128 cards
+new    2025-onit-gravity-kansas-state-football: 10 sets, 118 cards
+new    2025-onit-athlete-kansas-state-football: 11 sets, 133 cards
+new    2025-onit-black-lsu-football: 17 sets, 160 cards
+new    2025-onit-gravity-lsu-football: 15 sets, 165 cards
+new    2025-onit-athlete-lsu-football: 12 sets, 152 cards
+new    2025-onit-black-michigan-football: 17 sets, 182 cards
+new    2025-onit-gravity-michigan-football: 18 sets, 215 cards
+new    2025-onit-athlete-michigan-football: 12 sets, 196 cards
+new    2025-onit-gravity-missouri-football: 10 sets, 110 cards
+new    2025-onit-athlete-missouri-football: 12 sets, 117 cards
+new    2025-onit-black-nebraska-football: 17 sets, 161 cards
+new    2025-onit-gravity-nebraska-football: 10 sets, 126 cards
+new    2025-onit-athlete-nebraska-football: 12 sets, 168 cards
+new    2025-onit-black-ohio-state-football: 18 sets, 240 cards
+new    2025-onit-gravity-ohio-state-football: 13 sets, 231 cards
+new    2025-onit-athlete-ohio-state-football: 12 sets, 247 cards
+new    2025-onit-black-oklahoma-football: 15 sets, 149 cards
+new    2025-onit-gravity-oklahoma-football: 10 sets, 130 cards
+new    2025-onit-athlete-oklahoma-football: 10 sets, 150 cards
+new    2025-onit-gravity-oklahoma-state-football: 10 sets, 116 cards
+new    2025-onit-athlete-oklahoma-state-football: 11 sets, 145 cards
+new    2025-onit-black-penn-state-football: 17 sets, 171 cards
+new    2025-onit-gravity-penn-state-football: 10 sets, 143 cards
+new    2025-onit-athlete-penn-state-football: 12 sets, 204 cards
+new    2025-onit-black-south-carolina-football: 17 sets, 163 cards
+new    2025-onit-gravity-south-carolina-football: 12 sets, 125 cards
+new    2025-onit-athlete-south-carolina-football: 12 sets, 138 cards
+new    2025-onit-gravity-tennessee-football: 18 sets, 286 cards
+new    2025-onit-athlete-tennessee-football: 12 sets, 243 cards
+new    2025-onit-black-texas-football: 14 sets, 146 cards
+new    2025-onit-gravity-texas-football: 16 sets, 183 cards
+new    2025-onit-athlete-texas-football: 11 sets, 137 cards
+new    2025-onit-gravity-texas-a-and-m-football: 10 sets, 128 cards
+new    2025-onit-athlete-texas-a-and-m-football: 12 sets, 178 cards
+new    2025-onit-black-usc-football: 17 sets, 146 cards
+new    2025-onit-gravity-usc-football: 10 sets, 113 cards
+new    2025-onit-athlete-usc-football: 11 sets, 125 cards
+new    2025-onit-athlete-washington-football: 11 sets, 125 cards
+new    2025-onit-gravity-west-virginia-football: 10 sets, 114 cards
+new    2025-onit-athlete-west-virginia-football: 11 sets, 125 cards
+----- DUMP Team Set | Alabama | 2024
+       CARD NUMBER               No                Name    Pos
+Base
+B-1                                17 Amari Jefferson      WR
+B-2                                10 Austin Mack          QB
+B-3                                18 Bray Hubbard         DB
+B-4                                21 Bubba Hampton        WR
+B-5                                18 Caleb Odom           WR
+B-6                                50 Casey Poe            OL
+B-7                                30 Cayden Jones         LB
+B-8                                81 Cj Dippre            TE
+B-9                                 7 Cole Adams           WR
+B-10                               31 Conor Talty          PK
+B-11                               44 Damon Payne Jr.      DL
+B-12                               20 Daniel Hill          RB
+B-13                               87 Danny Lewis Jr.      TE
+B-14                                7 Dashawn Jones        DB
+B-15                                0 Deontae Lawson       LB
+B-16                                8 Devonta Smith        DB
+B-17                                1 Domani Jackson       DB
+B-18                               12 Dylan Lonergan       QB
+B-19                               94 Edric Hill           DL
+B-20                               57 Elijah Pritchett     OL
+B-21                                3 Emmanuel Henderson Jr. WR
+B-22                               56 Geno Vandemark       OL
+B-23                                5 Germie Bernard       WR
+B-24                               14 Graham Nicholson     PK
+B-25                               33 Hunter Osborne       DL
+B-26                               88 Isaia Faga           DL
+B-27                               77 Jaeden Roberts       OL
+B-28                               20 Jah-Marien Latham    DL
+B-29                               25 Jahlil Hurley        DB
+B-30                               14 Jalen Hale           WR
+B-31                               26 Jam Miller           RB
+B-32                               86 James Burnip         P
+B-33                               23 James Smith          DL
+B-34                               16 Jaren Hamilton       WR
+B-35                               88 Jay Lindsey          TE
+B-36                                9 Jaylen Mbakwe        DB
+B-37                               43 Jayshawn Ross        LB
+B-38                               35 Jeremiah Alexander   LB
+B-39                               92 Jeremiah Beaman      DL
+
+
+
+             * Series Cards Look for Parallels
+B-40                             11 Jihaad Campbell     LB
+B-41                             90 Jordan Renaud       DL
+B-42                             69 Joseph Ionata       OL
+B-43                             80 Josh Cuevas         TE
+B-44                             22 Justice Haynes      RB
+B-45                             15 Justin Jefferson    LB
+B-46                             41 Justin Okoronkwo    LB
+B-47                             74 Kadyn Proctor       OL
+B-48                              1 Kendrick Law        WR
+B-49                             31 Keon Keeley         DL
+B-50                              3 Keon Sabb           DB
+B-51                             28 Kevin Riley         RB
+B-52                             48 Kneeland Hibbett    SN
+B-53                              6 Kobe Prentice       WR
+B-54                             22 Lt Overton          DL
+B-55                             13 Malachi Moore       DB
+B-56                             58 Miles Mcvay         OL
+B-57                             24 Noah Carter         LB
+B-58                             73 Olaus Alinen        OL
+B-59                             72 Parker Brailsford   OL
+B-60                             36 Qb Reese            LB
+B-61                              4 Qua Russaw          LB
+B-62                             34 Que Robinson        LB
+B-63                             16 Red Morgan          DB
+B-64                              9 Richard Young       RB
+B-65                             11 Rico Scott          WR
+B-66                             45 Robbie Ouzts        TE
+B-67                             55 Roq Montgomery      OL
+B-68                              2 Ryan Williams       WR
+B-69                             40 Sterling Dixon      LB
+B-70                             96 Tim Keenan Iii      DL
+B-71                             50 Tim Smith           DL
+B-72                             89 Ty Lockwood         TE
+B-73                             15 Ty Simpson          QB
+B-74                             52 Tyler Booker        OL
+B-75                             75 Wilkin Formby       OL
+B-76                             70 William Sanders     OL
+B-77                             42 Yhonzae Pierre      LB
+B-78                              2 Zabien Brown        DB
+B-79                             12 Zavier Mincey       DB
+Parallel
+
+
+
+           * Series Cards Look for Parallels
+P-1                                         2 Ryan Williams       WR
+P-2                                        26 Jam Miller          RB
+P-3                                        22 Justice Haynes      RB
+P-4                                         5 Germie Bernard      WR
+P-5                                        13 Malachi Moore       DB
+P-6                                         3 Keon Sabb           DB
+P-7                                         0 Deontae Lawson      LB
+P-8                                        72 Parker Brailsford   OL
+P-9                                        11 Jihaad Campbell     LB
+P-10                                       34 Que Robinson        LB
+ICON
+IC-1     Additional Signature Edition       2 Ryan Williams       WR
+IC-2                                       26 Jam Miller          RB
+IC-3                                       13 Malachi Moore       DB
+IC-4                                        3 Keon Sabb           DB
+IC-5                                       11 Jihaad Campbell     LB
+College Colors
+CC-1                                        2 Ryan Williams       WR
+CC-2                                       26 Jam Miller          RB
+CC-3                                       22 Justice Haynes      RB
+CC-4                                        5 Germie Bernard      WR
+CC-5                                       13 Malachi Moore       DB
+Sticker Series
+ST-1                                        2 Ryan Williams       WR
+ST-2                                       22 Justice Haynes      RB
+ST-3                                        3 Keon Sabb           DB
+ST-4                                        0 Deontae Lawson      LB
+ST-5                                       34 Que Robinson        LB
+Blackout
+BL-1                                       26 Jam Miller          RB
+BL-2                                       22 Justice Haynes      RB
+BL-3                                        5 Germie Bernard      WR
+BL-4                                        0 Deontae Lawson      LB
+----- SETS
+  Base: 79 [B-1 Amari Jefferson | B-2 Austin Mack | B-3 Bray Hubbard]
+  Parallel: 10 [P-1 Ryan Williams | P-2 Jam Miller | P-3 Justice Haynes]
+  ICON: 5 [IC-1 Additional Signature Edition | IC-2 Jam Miller | IC-3 Malachi Moore]
+  College Colors: 5 [CC-1 Ryan Williams | CC-2 Jam Miller | CC-3 Justice Haynes]
+  Sticker Series: 5 [ST-1 Ryan Williams | ST-2 Justice Haynes | ST-3 Keon Sabb]
+  Blackout: 6 [BL-1 Jam Miller | BL-2 Justice Haynes | BL-3 Germie Bernard]
+  City Limits: 2 [CL-1 Ryan Williams | CL-2 Jam Miller]
+  Signature Series: 20 [S-1 Austin Mack | S-2 Caleb Odom | S-3 CJ Dippre]
+  Signature Series Parallel: 20 [S-21 Austin Mack | S-22 Caleb Odom | S-23 CJ Dippre]
+  ONE Series Swoosh: 20 [O-1 Austin Mack | O-2 Caleb Odom | O-3 CJ Dippre]
+  ONE Series Smoke: 20 [O-21 Austin Mack | O-22 Caleb Odom | O-23 CJ Dippre]
+  ONE Series Fire: 4 [O-41 Tyler Booker | O-42 Deontae Lawson | O-43 Jam Miller]
+  ONE Series Water: 1 [O-45 Ryan Williams]
+  NINE Series Swoosh: 20 [N-1 Austin Mack | N-2 Caleb Odom | N-3 CJ Dippre]
+  NINE Series Smoke: 20 [N-21 Austin Mack | N-22 Caleb Odom | N-23 CJ Dippre]
+  NINE Series Fire: 4 [N-41 Tyler Booker | N-42 Deontae Lawson | N-43 Jam Miller]
+  NINE Series Water: 1 [N-45 Ryan Williams]
+  City Limits Signature Edition: 1 [CLS-1 Ryan Williams]
+  College Colors Signature Edition: 1 [CCS-1 Ryan Williams]
+----- END
+new    2024-onit-athlete-alabama-football: 19 sets, 244 cards
+new    2024-onit-athlete-app-state-football: 15 sets, 127 cards
+new    2024-onit-athlete-arizona-state-football: 16 sets, 164 cards
+new    2024-onit-athlete-arkansas-football: 15 sets, 219 cards
+new    2024-onit-athlete-auburn-football: 15 sets, 195 cards
+new    2024-onit-athlete-baylor-football: 15 sets, 193 cards
+new    2024-onit-athlete-boise-state-football: 1 sets, 67 cards
+new    2024-onit-athlete-boston-college-football: 15 sets, 172 cards
+new    2024-onit-athlete-cincinnati-football: 15 sets, 185 cards
+new    2024-onit-athlete-clemson-football: 17 sets, 257 cards
+new    2024-onit-athlete-florida-football: 15 sets, 256 cards
+new    2024-onit-athlete-florida-state-football: 19 sets, 270 cards
+new    2024-onit-athlete-fresno-state-football: 14 sets, 196 cards
+EMPTY  Team Set | Georgia | 2024
+new    2024-onit-athlete-georgia-tech-football: 15 sets, 170 cards
+new    2024-onit-athlete-hawaii-football: 15 sets, 191 cards
+new    2024-onit-athlete-illinois-football: 15 sets, 199 cards
+new    2024-onit-athlete-iowa-state-football: 15 sets, 208 cards
+new    2024-onit-athlete-kansas-football: 15 sets, 218 cards
+new    2024-onit-athlete-kansas-state-football: 15 sets, 219 cards
+new    2024-onit-athlete-liberty-football: 13 sets, 173 cards
+new    2024-onit-athlete-lsu-football: 17 sets, 226 cards
+new    2024-onit-athlete-maryland-football: 15 sets, 177 cards
+new    2024-onit-athlete-michigan-football: 17 sets, 335 cards
+new    2024-onit-athlete-michigan-state-football: 15 sets, 176 cards
+new    2024-onit-athlete-minnesota-football: 15 sets, 234 cards
+new    2024-onit-athlete-mississippi-state-football: 15 sets, 182 cards
+new    2024-onit-athlete-missouri-football: 15 sets, 206 cards
+new    2024-onit-athlete-nc-state-football: 15 sets, 210 cards
+new    2024-onit-athlete-nebraska-football: 21 sets, 314 cards
+new    2024-onit-athlete-northwestern-football: 19 sets, 153 cards
+new    2024-onit-athlete-ohio-state-football: 17 sets, 297 cards
+new    2024-onit-athlete-oklahoma-state-football: 15 sets, 236 cards
+new    2024-onit-athlete-ole-miss-football: 14 sets, 202 cards
+new    2024-onit-athlete-oregon-state-football: 15 sets, 207 cards
+new    2024-onit-athlete-penn-state-football: 13 sets, 206 cards
+new    2024-onit-athlete-pittsburgh-football: 15 sets, 183 cards
+new    2024-onit-athlete-purdue-football: 15 sets, 208 cards
+new    2024-onit-athlete-san-diego-state-football: 15 sets, 187 cards
+new    2024-onit-athlete-south-carolina-football: 15 sets, 204 cards
+new    2024-onit-athlete-tcu-football: 15 sets, 189 cards
+new    2024-onit-athlete-tennessee-football: 17 sets, 364 cards
+new    2024-onit-athlete-texas-football: 17 sets, 191 cards
+new    2024-onit-athlete-texas-a-and-m-football: 16 sets, 204 cards
+new    2024-onit-athlete-texas-tech-football: 15 sets, 170 cards
+new    2024-onit-athlete-ucla-football: 15 sets, 197 cards
+new    2024-onit-athlete-utah-football: 15 sets, 199 cards
+new    2024-onit-athlete-virginia-tech-football: 15 sets, 218 cards
+new    2024-onit-athlete-wake-forest-football: 13 sets, 206 cards
+new    2024-onit-athlete-washington-football: 15 sets, 204 cards
+new    2024-onit-athlete-washington-state-football: 15 sets, 162 cards
+new    2024-onit-athlete-west-virginia-football: 15 sets, 193 cards
+new    2024-onit-athlete-wyoming-football: 15 sets, 193 cards
+EMPTY  Team Set | Alabama | 2023
+EMPTY  Team Set | Auburn | 2023
+EMPTY  Team Set | Baylor | 2023
+EMPTY  Team Set | Boise State | 2023
+EMPTY  Team Set | BYU | 2023
+EMPTY  Team Set | Cal | 2023
+EMPTY  Team Set | Colorado | 2023
+EMPTY  Team Set | Florida | 2023
+EMPTY  Team Set | Florida State | 2023
+EMPTY  Team Set | Michigan State | 2023
+EMPTY  Team Set | Mississippi State | 2023
+EMPTY  Team Set | Missouri | 2023
+EMPTY  Team Set | NC State | 2023
+EMPTY  Team Set | Nebraska | 2023
+EMPTY  Team Set | Ohio State | 2023
+EMPTY  Team Set | Oklahoma | 2023
+EMPTY  Team Set | Oregon State | 2023
+EMPTY  Team Set | TCU | 2023
+EMPTY  Team Set | Tennessee | 2023
+EMPTY  Team Set | Texas | 2023
+EMPTY  Team Set | Texas Tech | 2023
+EMPTY  Team Set | Utah | 2023
+EMPTY  Team Set | Washington | 2023
+EMPTY  Team Set | West Virginia | 2023
+new    2022-onit-athlete-boise-state-football: 3 sets, 114 cards
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+new    2022-onit-athlete-oregon-football: 1 sets, 57 cards
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+new    2022-onit-athlete-washington-football: 1 sets, 64 cards
+
+196 football checklists: 171 to write, 0 already here, 25 failed
