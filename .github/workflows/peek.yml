@@ -7,17 +7,15 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Onit pages on checklistinsider.com
+      - name: Onit checklist sources
         shell: bash {0}
         run: |
-          for sm in post-sitemap.xml post-sitemap2.xml post-sitemap3.xml page-sitemap.xml; do
-            curl -sS -m 30 -A 'Mozilla/5.0 (TheCardHuddle checklist sync)' "https://www.checklistinsider.com/$sm" -o "$sm" || true
-            echo "== $sm $(wc -c < $sm) bytes"
-            grep -o '<loc>[^<]*</loc>' "$sm" | grep -i 'onit' | sed 's#<loc>##; s#</loc>##' || true
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36'
+          for u in https://onitathlete.com https://www.onitathlete.com/checklists https://onitathlete.com/pages/checklists https://www.cardboardconnection.com/?s=onit https://www.beckett.com/news/?s=onit https://www.tradingcarddb.com/Search?SearchText=onit+athlete https://www.sportscardchecklist.com/search.php?search=onit; do
+            code=$(curl -sS -L -m 30 -A "$UA" -o p.html -w '%{http_code}' "$u" || echo ERR)
+            echo "=== $code $u ($(wc -c < p.html 2>/dev/null) bytes) title: $(grep -o '<title>[^<]*' p.html | head -1)"
+            grep -oiE 'href="[^"]*onit[^"]*"' p.html | sort -u | head -25
           done
-          echo "== sample onit page"
-          u=$(cat post-sitemap*.xml | grep -o '<loc>[^<]*onit[^<]*</loc>' | head -1 | sed 's#<loc>##; s#</loc>##')
-          echo "$u"
-          [ -n "$u" ] && curl -sS -m 30 -A 'Mozilla/5.0 (TheCardHuddle checklist sync)' "$u" | sed 's/<script[^>]*>.*<\/script>//g' | grep -o '<h[23][^>]*>[^<]*</h[23]>' | head -40
-          echo "== search other sources"
-          curl -sS -m 30 -A 'Mozilla/5.0' "https://www.checklistinsider.com/?s=onit" | grep -o 'href="https://www.checklistinsider.com/[^"]*onit[^"]*"' | sort -u | head -40
+          echo "=== checklistinsider sitemap3 sample"
+          curl -sS -m 30 -A "$UA" https://www.checklistinsider.com/post-sitemap3.xml | grep -o '<loc>[^<]*</loc>' | sed 's#<loc>##; s#</loc>##' | grep -E 'football|basketball|baseball' | head -30
+          curl -sS -m 30 -A "$UA" https://www.checklistinsider.com/post-sitemap3.xml | grep -o '<loc>[^<]*</loc>' | grep -cE 'football|basketball|baseball'
