@@ -603,6 +603,21 @@ function buildPlayerIndex(checklists) {
   return players;
 }
 
+// ---- Titles: 70 characters at most (owner, Nov 2026) ----------------------
+// Search results cut a title at about 60-70 characters, and long ones read as
+// spammy to a quality review. Each page offers its title from fullest to
+// shortest; the first that fits is used. The card or set name always leads,
+// so what gets dropped is the brand and the extra words, never the subject.
+// Measured as the reader sees it (& not &amp;).
+const TITLE_MAX = 70;
+function fitTitle(...candidates) {
+  const list = candidates.filter(Boolean).map(t => String(t).replace(/\s+/g, ' ').trim());
+  const hit = list.find(t => t.length <= TITLE_MAX);
+  if (hit) return hit;
+  const last = list[list.length - 1];
+  return last.slice(0, TITLE_MAX - 1).replace(/[\s,&—-]+\S*$/, '').trim() + '…';
+}
+
 // ---- Shared chrome --------------------------------------------------------
 let _landingV = null;
 const LANDING_CSS_V_GET = () => (_landingV || (_landingV = landingCssVersion()));
@@ -698,7 +713,8 @@ function breadcrumbJsonLd(items) {
 function buildSetPage(cl, related, playerSlug, subsets) {
   // name -> slug for the sets of this product that got their own page.
   const subsetSlug = new Map((subsets || []).map(x => [x.set.name, x.slug]));
-  const title = `${cl.name} Checklist & Card Prices | The Card Huddle`;
+  const title = fitTitle(`${cl.name} Checklist & Card Prices | The Card Huddle`, `${cl.name} Checklist & Prices | The Card Huddle`,
+    `${cl.name} Checklist & Card Prices`, `${cl.name} Checklist & Prices`, `${cl.name} Checklist`);
   const canonical = `${SITE}${S.base}/sets/${cl.id}/`;
   const setLabel = cl.name.replace(S.wordRe, '');
   const description =
@@ -844,7 +860,8 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
   const setName = (s.name || 'Set').replace(/\s+/g, ' ').trim();
   const fullLabel = `${productLabel} ${setName}`;
   const canonical = `${SITE}${S.base}/sets/${cl.id}/${slug}/`;
-  const title = `${fullLabel} Checklist & Card Prices | The Card Huddle`;
+  const title = fitTitle(`${fullLabel} Checklist & Card Prices | The Card Huddle`, `${fullLabel} Checklist & Prices | The Card Huddle`,
+    `${fullLabel} Checklist & Card Prices`, `${fullLabel} Checklist & Prices`, `${fullLabel} Checklist`);
   const description =
     `Complete ${fullLabel} checklist — all ${cards.length} cards` +
     (parallels.length ? ` and ${parallels.length} parallels` : '') +
@@ -922,7 +939,8 @@ ${priceSlot('subset', cl.id + '/' + slug)}
 function buildYearHub(year, products, subsetIndex) {
   const canonical = `${SITE}${S.base}/sets/${year}/`;
   const cards = products.reduce((n, p) => n + p.cardCount, 0);
-  const title = `${S.yearLabel(year)} ${S.Word} Card Checklists — Every Set & Prices | The Card Huddle`;
+  const title = fitTitle(`${S.yearLabel(year)} ${S.Word} Card Checklists — Every Set & Prices | The Card Huddle`,
+    `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices | The Card Huddle`, `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices`);
   const description =
     `Every ${S.yearLabel(year)} ${S.word} card checklist — ${products.length} products, ` +
     `${cards.toLocaleString()} cards. Check real eBay sold prices by grade for any card. Free.`;
@@ -993,7 +1011,10 @@ function rookieYearOf(p) {
 }
 
 function buildPlayerPage(p, related, teamSlug, more = {}) {
-  const title = `${p.name} ${S.Word} Cards — Values & Checklist | The Card Huddle`;
+  // Keeps " — Values & Checklist", the phrase the Worker swaps for the median
+  // (price-block-core pricedHead, which fits its own result to 70 too).
+  const title = fitTitle(`${p.name} ${S.Word} Cards — Values & Checklist | The Card Huddle`,
+    `${p.name} ${S.Word} Cards — Values & Checklist`, `${p.name} Cards — Values & Checklist`);
   const canonical = `${SITE}${S.base}/players/${p.slug}/`;
   const years = [...p.years].sort((a, b) => a - b);
   const yearRange = years.length ? (years[0] === years[years.length - 1] ? `${years[0]}` : `${years[0]}–${years[years.length - 1]}`) : '';
@@ -1225,7 +1246,8 @@ function buildTeamIndex(checklists) {
 const TEAM_PLAYER_CAP = 250;
 
 function buildTeamPage(team, playerSlug, relatedTeams) {
-  const title = `${team.name} ${S.Word} Cards — Checklist & Values | The Card Huddle`;
+  const title = fitTitle(`${team.name} ${S.Word} Cards — Checklist & Values | The Card Huddle`,
+    `${team.name} Cards — Checklist & Values | The Card Huddle`, `${team.name} ${S.Word} Cards — Checklist & Values`);
   const canonical = `${SITE}${S.base}/teams/${team.slug}/`;
   const players = [...team.players.entries()].sort((a, b) => b[1] - a[1]); // [name, count]
   const description =

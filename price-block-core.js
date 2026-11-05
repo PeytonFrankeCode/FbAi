@@ -243,7 +243,19 @@ function pricedHead(summary, title, description) {
   if (typeof title === 'string') {
     for (const amp of ['&amp;', '&']) {
       const phrase = ` — Values ${amp} Checklist`;
-      if (title.includes(phrase)) { out.title = title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`); break; }
+      if (title.includes(phrase)) {
+        // At most 70 characters as the reader sees them (owner, Nov 2026):
+        // the price stays, the brand and then "& Checklist" go first.
+        const fits = (t) => t.replace(/&amp;/g, '&').length <= 70;
+        const tries = [
+          title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`),
+          title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`).replace(/ \| The Card Huddle$/, ''),
+          title.replace(phrase, ` — Median Sale ${m}`).replace(/ \| The Card Huddle$/, ''),
+          title.replace(phrase, ` — ${m} Median`).replace(/ \| The Card Huddle$/, ''),
+        ];
+        out.title = tries.find(fits) || tries[tries.length - 1];
+        break;
+      }
     }
   }
   if (typeof description === 'string' && description) {
