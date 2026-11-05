@@ -72,7 +72,7 @@ function categoryOf(name) {
 
 // "Teal, Purple, Green /100, Gold /1" -> [{ name, printRun }].
 function readParallels(list) {
-  return String(list).split(',').map(x => x.trim()).filter(Boolean).map(x => {
+  return String(list).split(/[,;]/).map(x => x.trim()).filter(Boolean).map(x => {
     const m = /^(.*?)\s*\/\s*(\d+)$/.exec(x);
     return m ? { name: m[1].trim(), printRun: Number(m[2]) } : { name: x, printRun: null };
   }).filter(p => p.name);
@@ -96,17 +96,43 @@ function unshift(text) {
     : line.replace(/[^ \f\t]/g, ch => { const c = ch.charCodeAt(0) + 29; return c <= 0x7e ? String.fromCharCode(c) : ch; })).join('\n');
 }
 
-// The text of one PDF (pdftotext -layout) -> sets.
+// The text of one PDF (pdftotext -layout) -> sets. A card may carry its own
+// team: the all-schools Gravity checklist has a SCHOOL column.
 function parseChecklistText(text) {
   text = unshift(text);
   const sets = [];
-  let cur = null;
+  let cur = null, schoolCol = false, open = '';
   const anyCards = () => sets.some(s => s.cards.length);
+  const heading = (h) => {
+    h = h.replace(/\s{2,}SEQ\.?$/i, '').replace(/\s+/g, ' ').trim();
+    // "Galaxy (Parallels: Blue /200, ...)": the set and its parallels.
+    const inl = /^(.*?)\s*\(\s*Parallels?\s*:\s*(.+)\)$/i.exec(h);
+    if (inl) { cur = { name: groupName(inl[1]) === 'Base' ? 'Base' : inl[1], cards: [], parallels: readParallels(inl[2]) }; sets.push(cur); return; }
+    // "Base Parallels (Teal, Purple, Green /100, ...)": the parallels of a set
+    // already read, listed again card by card. When the cards are all of
+    // that set's cards they become its parallels; when they are some of them
+    // (the 2026 team sets list 15 of 71) they are a set of their own, "Base
+    // Parallels", carrying the list.
+    const pm = /^(.*?)\s*Parallels?\s*\((.+)\)$/i.exec(h);
+    if (pm) {
+      const want = (pm[1] || 'Base').trim().toLowerCase();
+      const of = sets.slice().reverse().find(s => s.cards.length && s.name.toLowerCase() === want);
+      if (of) { cur = { name: `${of.name} Parallels`, cards: [], parallelOf: of, parallels: readParallels(pm[2]) }; sets.push(cur); return; }
+    }
+    cur = { name: h, cards: [] }; sets.push(cur);
+  };
   for (let raw of String(text).split('\n')) {
     const line = raw.replace(/\f/g, '').replace(/\s+$/, '');
     if (!line.trim()) continue;
     const t = line.trim();
+    // A heading whose parallels run onto the next lines.
+    if (open) {
+      open += ' ' + t;
+      if ((open.match(/\(/g) || []).length <= (open.match(/\)/g) || []).length || open.length > 600) { heading(open); open = ''; }
+      continue;
+    }
     if (HEADER.test(t)) {
+      if (/\bSCHOOL\b/i.test(t)) schoolCol = true;
       // A group name before the header opens a set of that name; a section
       // heading right after it (INSERTS, then "Campus Colors") replaces it.
       const pre = t.split(/\s{2,}|CARD\s+(?:NUMBER|NO\b)/i)[0].trim();
@@ -116,27 +142,33 @@ function parseChecklistText(text) {
     const m = ROW.exec(t);
     if (m && /\d|-/.test(m[1]) && /[A-Za-z]/.test(m[3]) && !/^(19|20)\d\d$/.test(m[1])) {
       if (!cur) { cur = { name: 'Base', cards: [] }; sets.push(cur); }
-      if (cur.skip) continue;
-      cur.cards.push({ number: m[1], player: nameCase(m[3].replace(/\s{2,}.*$/, '')) });
+      // The columns after the number: [school,] [a note,] [jersey] name.
+      const cols = m[3].split(/\s{2,}/).map(c => c.trim()).filter(c => c && !/^\/?\d+$/.test(c) && !/^\/\s*\d+$/.test(c));
+      const card = { number: m[1], player: nameCase(cols[cols.length - 1].replace(/^\d{1,3}\s+/, '').replace(/\s+\/\d+$/, '')) };
+      if (schoolCol && cols.length >= 2) card.team = cols[0];
+      cur.cards.push(card);
       continue;
     }
     // The title lines ("ONIT Team Trading Cards Checklist", "2026 Texas Tech
     // Football", "Alabama Football Checklist 2025") come before any card.
     if (/checklist/i.test(t) || (!anyCards() && YEAR.test(t))) continue;
-    // "Base Parallels (Teal, Purple, Green /100, ...)": the parallels of a set
-    // already read, listed again card by card. Kept as that set's parallels.
-    const pm = /^(.*?)\s*Parallels?\s*\((.+)\)\s*$/i.exec(t);
-    if (pm) {
-      const of = sets.slice().reverse().find(s => s.cards.length && s.name.toLowerCase() === (pm[1] || 'Base').trim().toLowerCase());
-      if (of) { of.parallels = (of.parallels || []).concat(readParallels(pm[2])); cur = { skip: true, cards: [] }; continue; }
-    }
     // A short line of words with no card number: a section heading. A print
     // run in it ("Green /100") is not a stray number.
-    if (t.length <= 140 && /^[A-Za-z]/.test(t) && !/\d{3,}/.test(t.replace(/\/\s*\d+/g, '')) && !/\.com\b|^page\s+\d/i.test(t)) {
-      cur = { name: t, cards: [] }; sets.push(cur);
+    if (/^[A-Za-z]/.test(t) && !/\.com\b|^page\s+\d/i.test(t)) {
+      if ((t.match(/\(/g) || []).length > (t.match(/\)/g) || []).length) { open = t; continue; }
+      if (t.length <= 160 && !/\d{3,}/.test(t.replace(/\/\s*\d+/g, ''))) heading(t);
     }
   }
-  return sets.filter(s => !s.skip && s.cards.length);
+  if (open) heading(open);
+  for (const s of sets) {
+    if (!s.parallelOf) continue;
+    const base = new Set(s.parallelOf.cards.map(c => c.number));
+    if (s.cards.length === base.size && s.cards.every(c => base.has(c.number))) {
+      s.parallelOf.parallels = (s.parallelOf.parallels || []).concat(s.parallels);
+      s.merged = true;
+    }
+  }
+  return sets.filter(s => !s.merged && s.cards.length).map(({ parallelOf, ...s }) => s);
 }
 
 // One ONIT listing (+ its parsed sets) -> our product document.
@@ -152,7 +184,7 @@ function toProduct(item, sets) {
     note: 'Built from the published checklist at onitathlete.com.',
     sets: sets.map(s => ({
       id: slug(s.name), name: s.name, category: categoryOf(s.name), totalCards: s.cards.length, parallels: s.parallels || [],
-      cards: s.cards.map(c => ({ number: c.number, player: c.player, team })),
+      cards: s.cards.map(c => ({ number: c.number, player: c.player, team: c.team || team })),
     })),
   };
 }
@@ -177,7 +209,17 @@ if (require.main === module) (async () => {
   if (!items.length) { console.error('no football checklists found on the page'); process.exit(1); }
   const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'onit-'));
   let added = 0, skipped = 0, failed = 0;
-  for (const item of items) {
+  // One PDF listed under every school (the 2026 Gravity checklist covers all
+  // of them, with a SCHOOL column) is one product, not one per school.
+  const schoolsOf = new Map();
+  for (const i of items) schoolsOf.set(i.pdf, (schoolsOf.get(i.pdf) || 0) + 1);
+  const seenPdf = new Set();
+  for (let item of items) {
+    if (schoolsOf.get(item.pdf) > 1) {
+      if (seenPdf.has(item.pdf)) continue;
+      seenPdf.add(item.pdf);
+      item = { ...item, school: 'Multi-School' };
+    }
     const label = `${item.brand} | ${item.school} | ${item.year}${item.suffix ? ' | ' + item.suffix : ''}`;
     try {
       const pdf = path.join(tmp, 'c.pdf');
