@@ -1,0 +1,650 @@
+{
+  "id": "2025-onit-gravity-arizona-state-football",
+  "name": "2025 ONIT Gravity Arizona State Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 53,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Adama Fall",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthonie Cooper",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-3",
+          "player": "Ben Coleman",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-4",
+          "player": "Blazen Lono-Wong",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-5",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-6",
+          "player": "Cameron Harpole",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-7",
+          "player": "Carston Kieffer",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-8",
+          "player": "Chance Ables",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-9",
+          "player": "Clayton Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-10",
+          "player": "Coben Bourguet",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-11",
+          "player": "Coleson Arends",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-12",
+          "player": "Derek Eusebio",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-13",
+          "player": "Elijah O'Neal",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-14",
+          "player": "Ian Shewell",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-15",
+          "player": "Jack Bal",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-16",
+          "player": "Jacob Rich Kongaika",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-17",
+          "player": "Jalen Klemm",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-18",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-19",
+          "player": "James Giggey",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-20",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-21",
+          "player": "Javan Robinson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-22",
+          "player": "Jayden Fortier",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-23",
+          "player": "Jesus Gomez",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-24",
+          "player": "Jordan Crook",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-25",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-26",
+          "player": "Justin Wodtly",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-27",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-28",
+          "player": "Kanyon Floyd",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-29",
+          "player": "Keyshaun Elliott",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-30",
+          "player": "Kyan Mcdonald",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-31",
+          "player": "Kyle Scott",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-32",
+          "player": "Kyndrich Breedlove",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-33",
+          "player": "Makua Pule",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-34",
+          "player": "Martell Hughes",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-35",
+          "player": "Max Iheanachor",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-36",
+          "player": "Montana Warren",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-37",
+          "player": "Myles \"Ghost\" Rowser",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-38",
+          "player": "Plas Johnson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-39",
+          "player": "Prince Dorbah",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-40",
+          "player": "Raleek Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-41",
+          "player": "Ramar Williams",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-42",
+          "player": "Rodney Bimage Jr.",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-43",
+          "player": "Roman Pitre",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-44",
+          "player": "Salesi Manu",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-45",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-46",
+          "player": "Sean Na'A",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-47",
+          "player": "Tate Romney",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-48",
+          "player": "Terrell Kim",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-49",
+          "player": "Tony-Louis Nkuba",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-50",
+          "player": "Uriah Neloms",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-51",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-52",
+          "player": "Zechariah Sample",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-53",
+          "player": "Zyrus Fiaseu",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "substrate-parallel-sun-ray-aura",
+      "name": "Substrate Parallel (Sun Ray; Aura)",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-5",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-9",
+          "player": "Clayton Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-18",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-20",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-21",
+          "player": "Javan Robinson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-25",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-27",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-40",
+          "player": "Raleek Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-45",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-51",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "color-parallel-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Color Parallel (Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-5",
+          "player": "C.J. Fite",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-9",
+          "player": "Clayton Smith",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-18",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-20",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-21",
+          "player": "Javan Robinson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-25",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-27",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-40",
+          "player": "Raleek Brown",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-45",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "B-51",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "sta-0-jordyn-tyson-wr",
+      "name": "sta 0 Jordyn Tyson WR",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-2",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "HD-3",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "hyperdrive-ultimate",
+      "name": "Hyperdrive Ultimate",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "HD-4",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "HD-5",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "HD-6",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-standard",
+      "name": "Stardust Standard",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-1",
+          "player": "Myles \"Ghost\" Rowser",
+          "team": "Arizona State"
+        },
+        {
+          "number": "SD-2",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        },
+        {
+          "number": "SD-3",
+          "player": "Javan Robinson",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "stardust-ultimate",
+      "name": "Stardust Ultimate",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SD-4",
+          "player": "Myles \"Ghost\" Rowser",
+          "team": "Arizona State"
+        },
+        {
+          "number": "SD-5",
+          "player": "Jalen Moss",
+          "team": "Arizona State"
+        },
+        {
+          "number": "SD-6",
+          "player": "Javan Robinson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "7",
+          "player": "Wonders",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-1",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-2",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-3",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-4",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-5",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-6",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-7",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "W-8",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-base-pink-65-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Galaxy (Base; Pink /65; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "base",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "G-1",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-2",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-3",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-4",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-5",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-6",
+          "player": "Max Iheanachor",
+          "team": "Arizona State"
+        },
+        {
+          "number": "G-7",
+          "player": "Raleek Brown",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "gravity-signature-base-purple-25-silver-15-red-9-green-5-gold-1",
+      "name": "Gravity Signature (Base; Purple /25; Silver /15; Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-2",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-3",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-4",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-5",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        }
+      ]
+    },
+    {
+      "id": "galaxy-signature-red-9-green-5-gold-1",
+      "name": "Galaxy Signature (Red /9; Green /5; Gold /1)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Sam Leavitt",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-2",
+          "player": "Kanye Udoh",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-3",
+          "player": "Jordyn Tyson",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-4",
+          "player": "Jaren Hamilton",
+          "team": "Arizona State"
+        },
+        {
+          "number": "S-5",
+          "player": "Xavion Alford",
+          "team": "Arizona State"
+        }
+      ]
+    }
+  ]
+}

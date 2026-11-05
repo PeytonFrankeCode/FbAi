@@ -1,0 +1,492 @@
+{
+  "id": "2025-onit-timeless-texas-football",
+  "name": "2025 ONIT Timeless Texas Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 80,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aaron Butler",
+          "team": "Texas"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex January",
+          "team": "Texas"
+        },
+        {
+          "number": "B-3",
+          "player": "Andre Cojoe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-4",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-5",
+          "player": "Brad Spence",
+          "team": "Texas"
+        },
+        {
+          "number": "B-6",
+          "player": "Brady Sarkisian",
+          "team": "Texas"
+        },
+        {
+          "number": "B-7",
+          "player": "Brooks Kieschnick Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-8",
+          "player": "Bryce Chambers",
+          "team": "Texas"
+        },
+        {
+          "number": "B-9",
+          "player": "Carson Marshall",
+          "team": "Texas"
+        },
+        {
+          "number": "B-10",
+          "player": "Christian Clark",
+          "team": "Texas"
+        },
+        {
+          "number": "B-11",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-12",
+          "player": "Cole Brevard",
+          "team": "Texas"
+        },
+        {
+          "number": "B-13",
+          "player": "Cole Hutson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-14",
+          "player": "Colin Page",
+          "team": "Texas"
+        },
+        {
+          "number": "B-15",
+          "player": "Colin Simmons",
+          "team": "Texas"
+        },
+        {
+          "number": "B-16",
+          "player": "Colton Vasek",
+          "team": "Texas"
+        },
+        {
+          "number": "B-17",
+          "player": "Connor Robertson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-18",
+          "player": "Connor Stroh",
+          "team": "Texas"
+        },
+        {
+          "number": "B-19",
+          "player": "Daniel Cruz",
+          "team": "Texas"
+        },
+        {
+          "number": "B-20",
+          "player": "Daylan Mccutcheon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-21",
+          "player": "Deandre Moore Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-22",
+          "player": "Derek Williams Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "B-23",
+          "player": "DJ Campbell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-24",
+          "player": "Emaree Winston",
+          "team": "Texas"
+        },
+        {
+          "number": "B-25",
+          "player": "Emmett Mosely V",
+          "team": "Texas"
+        },
+        {
+          "number": "B-26",
+          "player": "Eric Garza",
+          "team": "Texas"
+        },
+        {
+          "number": "B-27",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "B-28",
+          "player": "Graceson Littleton",
+          "team": "Texas"
+        },
+        {
+          "number": "B-29",
+          "player": "Graham Gillespie",
+          "team": "Texas"
+        },
+        {
+          "number": "B-30",
+          "player": "Hamilton Mcmartin",
+          "team": "Texas"
+        },
+        {
+          "number": "B-31",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "B-32",
+          "player": "Jackson Duffey",
+          "team": "Texas"
+        },
+        {
+          "number": "B-33",
+          "player": "James Simon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-34",
+          "player": "Jaydon Chatman",
+          "team": "Texas"
+        },
+        {
+          "number": "B-35",
+          "player": "Jaylon Guilbeau",
+          "team": "Texas"
+        },
+        {
+          "number": "B-36",
+          "player": "Jelani Mcdonald",
+          "team": "Texas"
+        },
+        {
+          "number": "B-37",
+          "player": "Jerrick Gibson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-38",
+          "player": "Joe Tatum",
+          "team": "Texas"
+        },
+        {
+          "number": "B-39",
+          "player": "Jordan Washington",
+          "team": "Texas"
+        },
+        {
+          "number": "B-40",
+          "player": "Jordon Johnson-Rubell",
+          "team": "Texas"
+        },
+        {
+          "number": "B-41",
+          "player": "Justus Terry",
+          "team": "Texas"
+        },
+        {
+          "number": "B-42",
+          "player": "Kade Phillips",
+          "team": "Texas"
+        },
+        {
+          "number": "B-43",
+          "player": "Lance Jackson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-44",
+          "player": "Lance St. Louis",
+          "team": "Texas"
+        },
+        {
+          "number": "B-45",
+          "player": "Lavon Johnson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-46",
+          "player": "Liona Lefau",
+          "team": "Texas"
+        },
+        {
+          "number": "B-47",
+          "player": "Malik Muhammad",
+          "team": "Texas"
+        },
+        {
+          "number": "B-48",
+          "player": "Marshall Landwehr",
+          "team": "Texas"
+        },
+        {
+          "number": "B-49",
+          "player": "Mccoy Bruce",
+          "team": "Texas"
+        },
+        {
+          "number": "B-50",
+          "player": "Melvin Hills Ill",
+          "team": "Texas"
+        },
+        {
+          "number": "B-51",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "B-52",
+          "player": "Michael Terry Ill",
+          "team": "Texas"
+        },
+        {
+          "number": "B-53",
+          "player": "Nate Kibble",
+          "team": "Texas"
+        },
+        {
+          "number": "B-54",
+          "player": "Neto Umeozulu",
+          "team": "Texas"
+        },
+        {
+          "number": "B-55",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "B-56",
+          "player": "Quinn Merritt",
+          "team": "Texas"
+        },
+        {
+          "number": "B-57",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        },
+        {
+          "number": "B-58",
+          "player": "Remy Patson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-59",
+          "player": "Rett Andersen",
+          "team": "Texas"
+        },
+        {
+          "number": "B-60",
+          "player": "Rick Mcbroom",
+          "team": "Texas"
+        },
+        {
+          "number": "B-61",
+          "player": "Ridge Barker",
+          "team": "Texas"
+        },
+        {
+          "number": "B-62",
+          "player": "Robert Sweeney",
+          "team": "Texas"
+        },
+        {
+          "number": "B-63",
+          "player": "Ryan Niblett",
+          "team": "Texas"
+        },
+        {
+          "number": "B-64",
+          "player": "Santana Wilson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-65",
+          "player": "Smith Orogbo",
+          "team": "Texas"
+        },
+        {
+          "number": "B-66",
+          "player": "Spencer Barnett",
+          "team": "Texas"
+        },
+        {
+          "number": "B-67",
+          "player": "Spencer Shannon",
+          "team": "Texas"
+        },
+        {
+          "number": "B-68",
+          "player": "Tate Haver",
+          "team": "Texas"
+        },
+        {
+          "number": "B-69",
+          "player": "Travis Shaw",
+          "team": "Texas"
+        },
+        {
+          "number": "B-70",
+          "player": "Trevor Goosby",
+          "team": "Texas"
+        },
+        {
+          "number": "B-71",
+          "player": "Trey Moore",
+          "team": "Texas"
+        },
+        {
+          "number": "B-72",
+          "player": "Trey Owens",
+          "team": "Texas"
+        },
+        {
+          "number": "B-73",
+          "player": "Ty Boatright",
+          "team": "Texas"
+        },
+        {
+          "number": "B-74",
+          "player": "Ty'Anthony Smith",
+          "team": "Texas"
+        },
+        {
+          "number": "B-75",
+          "player": "Wardell Mack",
+          "team": "Texas"
+        },
+        {
+          "number": "B-76",
+          "player": "Warren Roberson",
+          "team": "Texas"
+        },
+        {
+          "number": "B-77",
+          "player": "Will Randle",
+          "team": "Texas"
+        },
+        {
+          "number": "B-78",
+          "player": "Will Stone",
+          "team": "Texas"
+        },
+        {
+          "number": "B-79",
+          "player": "Xavier Filsaime",
+          "team": "Texas"
+        },
+        {
+          "number": "B-80",
+          "player": "Zina Umeozulu",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "C-2",
+          "player": "Ethan Burke",
+          "team": "Texas"
+        },
+        {
+          "number": "C-3",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "C-4",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "C-5",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Anthony Hill Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "SG-2",
+          "player": "CJ Baxter Jr.",
+          "team": "Texas"
+        },
+        {
+          "number": "SG-3",
+          "player": "Jack Endries",
+          "team": "Texas"
+        },
+        {
+          "number": "SG-4",
+          "player": "Parker Livingstone",
+          "team": "Texas"
+        },
+        {
+          "number": "SG-5",
+          "player": "Michael Taaffe",
+          "team": "Texas"
+        },
+        {
+          "number": "SG-6",
+          "player": "Quintrevion Wisner",
+          "team": "Texas"
+        }
+      ]
+    }
+  ]
+}

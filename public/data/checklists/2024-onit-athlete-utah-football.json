@@ -1,0 +1,1140 @@
+{
+  "id": "2024-onit-athlete-utah-football",
+  "name": "2024 ONIT Athlete Utah Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 85,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Alaka I Gilman",
+          "team": "Utah"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Cloward",
+          "team": "Utah"
+        },
+        {
+          "number": "B-3",
+          "player": "Alex Harrison",
+          "team": "Utah"
+        },
+        {
+          "number": "B-4",
+          "player": "Aliki Vimahi",
+          "team": "Utah"
+        },
+        {
+          "number": "B-5",
+          "player": "Alma Taleni",
+          "team": "Utah"
+        },
+        {
+          "number": "B-6",
+          "player": "Ben Durham",
+          "team": "Utah"
+        },
+        {
+          "number": "B-7",
+          "player": "Bobby Piland Jr.",
+          "team": "Utah"
+        },
+        {
+          "number": "B-8",
+          "player": "Brandon Rose",
+          "team": "Utah"
+        },
+        {
+          "number": "B-9",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "B-10",
+          "player": "Caleb Lohner",
+          "team": "Utah"
+        },
+        {
+          "number": "B-11",
+          "player": "Caleb Lomu",
+          "team": "Utah"
+        },
+        {
+          "number": "B-12",
+          "player": "Cameron Calhoun",
+          "team": "Utah"
+        },
+        {
+          "number": "B-13",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "B-14",
+          "player": "Carsen Ryan",
+          "team": "Utah"
+        },
+        {
+          "number": "B-15",
+          "player": "Charlie Vincent",
+          "team": "Utah"
+        },
+        {
+          "number": "B-16",
+          "player": "Cj Blocker",
+          "team": "Utah"
+        },
+        {
+          "number": "B-17",
+          "player": "Cj Jacobsen",
+          "team": "Utah"
+        },
+        {
+          "number": "B-18",
+          "player": "Cole Becker",
+          "team": "Utah"
+        },
+        {
+          "number": "B-19",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "B-20",
+          "player": "Dallen Bentley",
+          "team": "Utah"
+        },
+        {
+          "number": "B-21",
+          "player": "Damien Alford",
+          "team": "Utah"
+        },
+        {
+          "number": "B-22",
+          "player": "David Washington",
+          "team": "Utah"
+        },
+        {
+          "number": "B-23",
+          "player": "Diezel Kamoku",
+          "team": "Utah"
+        },
+        {
+          "number": "B-24",
+          "player": "Dijon Stanley",
+          "team": "Utah"
+        },
+        {
+          "number": "B-25",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "B-26",
+          "player": "Elijah Davis",
+          "team": "Utah"
+        },
+        {
+          "number": "B-27",
+          "player": "Elliot Janish",
+          "team": "Utah"
+        },
+        {
+          "number": "B-28",
+          "player": "Falcon Kaumatule",
+          "team": "Utah"
+        },
+        {
+          "number": "B-29",
+          "player": "Frankie Goodson",
+          "team": "Utah"
+        },
+        {
+          "number": "B-30",
+          "player": "Hunter Andrews",
+          "team": "Utah"
+        },
+        {
+          "number": "B-31",
+          "player": "Isaac Wilson",
+          "team": "Utah"
+        },
+        {
+          "number": "B-32",
+          "player": "Jack Bouwmeester",
+          "team": "Utah"
+        },
+        {
+          "number": "B-33",
+          "player": "Jaren Kump",
+          "team": "Utah"
+        },
+        {
+          "number": "B-34",
+          "player": "Jaylon Glover",
+          "team": "Utah"
+        },
+        {
+          "number": "B-35",
+          "player": "Jeilani Davis",
+          "team": "Utah"
+        },
+        {
+          "number": "B-36",
+          "player": "Joey Cheek",
+          "team": "Utah"
+        },
+        {
+          "number": "B-37",
+          "player": "John Randle Jr.",
+          "team": "Utah"
+        },
+        {
+          "number": "B-38",
+          "player": "Johnathan Hall",
+          "team": "Utah"
+        },
+        {
+          "number": "B-39",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "B-40",
+          "player": "Jonah Lea Ea",
+          "team": "Utah"
+        },
+        {
+          "number": "B-41",
+          "player": "Jori Benson",
+          "team": "Utah"
+        },
+        {
+          "number": "B-42",
+          "player": "Jt Greep",
+          "team": "Utah"
+        },
+        {
+          "number": "B-43",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "B-44",
+          "player": "Justice Brusatto",
+          "team": "Utah"
+        },
+        {
+          "number": "B-45",
+          "player": "Ka Eo Akana",
+          "team": "Utah"
+        },
+        {
+          "number": "B-46",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "B-47",
+          "player": "Kash Dillon",
+          "team": "Utah"
+        },
+        {
+          "number": "B-48",
+          "player": "Keanu Tanuvasa",
+          "team": "Utah"
+        },
+        {
+          "number": "B-49",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "B-50",
+          "player": "Landen King",
+          "team": "Utah"
+        },
+        {
+          "number": "B-51",
+          "player": "Lander Barton",
+          "team": "Utah"
+        },
+        {
+          "number": "B-52",
+          "player": "Levani Damuni",
+          "team": "Utah"
+        },
+        {
+          "number": "B-53",
+          "player": "Logan Castor",
+          "team": "Utah"
+        },
+        {
+          "number": "B-54",
+          "player": "Logan Fano",
+          "team": "Utah"
+        },
+        {
+          "number": "B-55",
+          "player": "Luke Bottari",
+          "team": "Utah"
+        },
+        {
+          "number": "B-56",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "B-57",
+          "player": "Mike Mitchell",
+          "team": "Utah"
+        },
+        {
+          "number": "B-58",
+          "player": "Miki Suguturaga",
+          "team": "Utah"
+        },
+        {
+          "number": "B-59",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "B-60",
+          "player": "Munir Mcclain",
+          "team": "Utah"
+        },
+        {
+          "number": "B-61",
+          "player": "Nate Ritchie",
+          "team": "Utah"
+        },
+        {
+          "number": "B-62",
+          "player": "Nick Howe",
+          "team": "Utah"
+        },
+        {
+          "number": "B-63",
+          "player": "Omar Shah",
+          "team": "Utah"
+        },
+        {
+          "number": "B-64",
+          "player": "Paul Fitzgerald",
+          "team": "Utah"
+        },
+        {
+          "number": "B-65",
+          "player": "Quimari Shemwell",
+          "team": "Utah"
+        },
+        {
+          "number": "B-66",
+          "player": "Reece Parmenter",
+          "team": "Utah"
+        },
+        {
+          "number": "B-67",
+          "player": "Roger Alderman",
+          "team": "Utah"
+        },
+        {
+          "number": "B-68",
+          "player": "Sam Huard",
+          "team": "Utah"
+        },
+        {
+          "number": "B-69",
+          "player": "Sammie Hunter",
+          "team": "Utah"
+        },
+        {
+          "number": "B-70",
+          "player": "Shintaro Mann",
+          "team": "Utah"
+        },
+        {
+          "number": "B-71",
+          "player": "Simote Pepa",
+          "team": "Utah"
+        },
+        {
+          "number": "B-72",
+          "player": "Sione Fotu",
+          "team": "Utah"
+        },
+        {
+          "number": "B-73",
+          "player": "Smith Snowden",
+          "team": "Utah"
+        },
+        {
+          "number": "B-74",
+          "player": "Solatoa Moea I",
+          "team": "Utah"
+        },
+        {
+          "number": "B-75",
+          "player": "Spencer Clegg",
+          "team": "Utah"
+        },
+        {
+          "number": "B-76",
+          "player": "Taeshaun Lyons",
+          "team": "Utah"
+        },
+        {
+          "number": "B-77",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "B-78",
+          "player": "Tao Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "B-79",
+          "player": "Tevita Fotu",
+          "team": "Utah"
+        },
+        {
+          "number": "B-80",
+          "player": "Trey Coleman",
+          "team": "Utah"
+        },
+        {
+          "number": "B-81",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "B-82",
+          "player": "Xane Uipi",
+          "team": "Utah"
+        },
+        {
+          "number": "B-83",
+          "player": "Zacharyus Williams",
+          "team": "Utah"
+        },
+        {
+          "number": "B-84",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        },
+        {
+          "number": "B-85",
+          "player": "Zereoue Williams",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "P-2",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "P-3",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "P-4",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "P-5",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "P-6",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        },
+        {
+          "number": "P-7",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "P-8",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "P-9",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "P-10",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "IC-2",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "IC-3",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "IC-4",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        },
+        {
+          "number": "IC-5",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "CC-3",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "CC-4",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "CC-5",
+          "player": "Karene Reid",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "ST-2",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "ST-3",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "ST-4",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "ST-5",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "BL-2",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "BL-3",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "BL-4",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "BL-5",
+          "player": "Money Parks",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "CL-2",
+          "player": "Money Parks",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "S-2",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "S-3",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "S-4",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "S-5",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "S-6",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "S-7",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "S-8",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "S-9",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "S-10",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "S-11",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "S-12",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "S-13",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-14",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "S-15",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "S-16",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "S-17",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "S-18",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "S-19",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "S-20",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "S-21",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "S-22",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "S-23",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "S-24",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "S-25",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "S-26",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "O-2",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "O-3",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "O-4",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "O-5",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "O-6",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "O-7",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "O-8",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "O-9",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "O-10",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "O-11",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "O-12",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "O-13",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-14",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "O-15",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "O-16",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "O-17",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "O-18",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "O-19",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "O-20",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "O-21",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "O-22",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "O-23",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "O-24",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "O-25",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "O-26",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-27",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "O-28",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "N-2",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "N-3",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "N-4",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "N-5",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "N-6",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "N-7",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "N-8",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "N-9",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "N-10",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "N-11",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "N-12",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "N-13",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-14",
+          "player": "Karene Reid",
+          "team": "Utah"
+        },
+        {
+          "number": "N-15",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "N-16",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        },
+        {
+          "number": "N-17",
+          "player": "Connor O Toole",
+          "team": "Utah"
+        },
+        {
+          "number": "N-18",
+          "player": "Dorian Singer",
+          "team": "Utah"
+        },
+        {
+          "number": "N-19",
+          "player": "Johnny Maea",
+          "team": "Utah"
+        },
+        {
+          "number": "N-20",
+          "player": "Junior Tafuna",
+          "team": "Utah"
+        },
+        {
+          "number": "N-21",
+          "player": "Kenan Johnson",
+          "team": "Utah"
+        },
+        {
+          "number": "N-22",
+          "player": "Micah Bernard",
+          "team": "Utah"
+        },
+        {
+          "number": "N-23",
+          "player": "Money Parks",
+          "team": "Utah"
+        },
+        {
+          "number": "N-24",
+          "player": "Tanoa Togiai",
+          "team": "Utah"
+        },
+        {
+          "number": "N-25",
+          "player": "Van Fillinger",
+          "team": "Utah"
+        },
+        {
+          "number": "N-26",
+          "player": "Zemaiah Vaughn",
+          "team": "Utah"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-27",
+          "player": "Brant Kuithe",
+          "team": "Utah"
+        },
+        {
+          "number": "N-28",
+          "player": "Cameron Rising",
+          "team": "Utah"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,552 @@
+{
+  "id": "2025-onit-timeless-auburn-football",
+  "name": "2025 ONIT Timeless Auburn Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 87,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A'Mon Lane-Ganus",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-2",
+          "player": "Alex Mcpherson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-3",
+          "player": "Alvin Henderson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-4",
+          "player": "Amaris Williams",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-5",
+          "player": "Anquon Fegans",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-6",
+          "player": "Antonio Melendez",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-7",
+          "player": "Ashton Daniels",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-8",
+          "player": "Blake Woodby",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-9",
+          "player": "Bobby Jamison-Travis",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-10",
+          "player": "Brandon Frazier",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-11",
+          "player": "Bryce Cain",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-12",
+          "player": "Bryce Deas",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-13",
+          "player": "Cade Carlson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-14",
+          "player": "Caleb Wheatland",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-15",
+          "player": "Cam Coleman",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-16",
+          "player": "Cam'Ron King",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-17",
+          "player": "Camden Etheredge",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-18",
+          "player": "Champ Anthony",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-19",
+          "player": "Charley Schwinger",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-20",
+          "player": "Chris Murray",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-21",
+          "player": "Coleman Granberry",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-22",
+          "player": "Connor Gibbs",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-23",
+          "player": "Connor Lew",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-24",
+          "player": "Darrion Smith",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-25",
+          "player": "Deandre Carter",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-26",
+          "player": "Demarcus Riddick",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-27",
+          "player": "Deuce Knight",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-28",
+          "player": "Dillon Wade",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-29",
+          "player": "Duke Smith",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-30",
+          "player": "Durell Robinson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-31",
+          "player": "Eli Morton",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-32",
+          "player": "Elijah Melendez",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-33",
+          "player": "Eric Singleton Jr.",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-34",
+          "player": "Eric Winters",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-35",
+          "player": "Erick Smith",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-36",
+          "player": "Harrison Clemmer",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-37",
+          "player": "Hollis Davidson III",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-38",
+          "player": "Horatio Fields",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-39",
+          "player": "Hudson Kaak",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-40",
+          "player": "Hunter Ousley",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-41",
+          "player": "Isaac Boulger",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-42",
+          "player": "J.J. Faulk",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-43",
+          "player": "Jackson Arnold",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-44",
+          "player": "Jacobe' Ward",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-45",
+          "player": "Jahquez Robinson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-46",
+          "player": "Jake White",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-47",
+          "player": "Jamonta Waller",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-48",
+          "player": "Jared Smith",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-49",
+          "player": "Jay Crawford",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-50",
+          "player": "Jay Hardy",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-51",
+          "player": "Jeremiah Cobb",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-52",
+          "player": "Jeremiah Wright",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-53",
+          "player": "Joe Phillips",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-54",
+          "player": "John Colvin",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-55",
+          "player": "John Mcguire",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-56",
+          "player": "Jourdin Crawford",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-57",
+          "player": "Justin Jones",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-58",
+          "player": "Kail Ellis",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-59",
+          "player": "Kaleb Harris",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-60",
+          "player": "Kayin Lee",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-61",
+          "player": "Keaton Mcnutt",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-62",
+          "player": "Keldric Faulk",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-63",
+          "player": "Kensley Louidor-Faustin",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-64",
+          "player": "Keyron Crawford",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-65",
+          "player": "Malachi Harris",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-66",
+          "player": "Malcolm Simmons",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-67",
+          "player": "Malik Autry",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-68",
+          "player": "Malik Blocton",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-69",
+          "player": "Omar Mabson II",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-70",
+          "player": "Paul Thompson Jr.",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-71",
+          "player": "Perry Thompson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-72",
+          "player": "Preston Howard",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-73",
+          "player": "Raion Strader",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-74",
+          "player": "Rayshawn Pleasant",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-75",
+          "player": "Reed Hughes",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-76",
+          "player": "Robert Woodyard Jr.",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-77",
+          "player": "Ryan Ghea",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-78",
+          "player": "Sam Turner",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-79",
+          "player": "Tai Buster",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-80",
+          "player": "Taye Seymore",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-81",
+          "player": "K/p",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-82",
+          "player": "Tyler Brown",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-83",
+          "player": "Tyler Johnson",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-84",
+          "player": "Will Myers",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-85",
+          "player": "Will Upton",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-86",
+          "player": "Xavier Atkins",
+          "team": "Auburn"
+        },
+        {
+          "number": "B-87",
+          "player": "Zykeivous Walker",
+          "team": "Auburn"
+        }
+      ]
+    },
+    {
+      "id": "compass-base-raised-uv-20-holo-1-1",
+      "name": "Compass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "C-1",
+          "player": "Cam Coleman",
+          "team": "Auburn"
+        },
+        {
+          "number": "C-2",
+          "player": "Eric Singleton Jr.",
+          "team": "Auburn"
+        },
+        {
+          "number": "C-3",
+          "player": "Jackson Arnold",
+          "team": "Auburn"
+        },
+        {
+          "number": "C-4",
+          "player": "Jeremiah Cobb",
+          "team": "Auburn"
+        },
+        {
+          "number": "C-5",
+          "player": "Kaleb Harris",
+          "team": "Auburn"
+        },
+        {
+          "number": "C-6",
+          "player": "Xavier Atkins",
+          "team": "Auburn"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass-base-raised-uv-20-holo-1-1",
+      "name": "Stained Glass (Base; Raised UV /20; Holo 1/1)",
+      "category": "base",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SG-1",
+          "player": "Cam Coleman",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-2",
+          "player": "Deuce Knight",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-3",
+          "player": "Eric Singleton Jr.",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-4",
+          "player": "Jackson Arnold",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-5",
+          "player": "Jeremiah Cobb",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-6",
+          "player": "Kaleb Harris",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-7",
+          "player": "Kayin Lee",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-8",
+          "player": "Keyron Crawford",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-9",
+          "player": "Preston Howard",
+          "team": "Auburn"
+        },
+        {
+          "number": "SG-10",
+          "player": "Xavier Atkins",
+          "team": "Auburn"
+        }
+      ]
+    }
+  ]
+}

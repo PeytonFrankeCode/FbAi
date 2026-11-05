@@ -1,0 +1,834 @@
+{
+  "id": "2025-onit-athlete-oklahoma-state-football",
+  "name": "2025 ONIT Athlete Oklahoma State Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 87,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-2",
+          "player": "Aidan Davenport",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-3",
+          "player": "Armstrong Nnodim",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-4",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-5",
+          "player": "Austin Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-6",
+          "player": "Ayo Shotomide-King",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-7",
+          "player": "Brandon Rawls",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-8",
+          "player": "Bryan Mccoy Jr.",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-9",
+          "player": "Caleb Hackleman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-10",
+          "player": "Cam Abshire",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-11",
+          "player": "Cameron Epps",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-12",
+          "player": "Cam Smith",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-13",
+          "player": "Camron Heard",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-14",
+          "player": "Carl'Veon Young",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-15",
+          "player": "Carrington Pierce",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-16",
+          "player": "Christian Fitzpatrick",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-17",
+          "player": "Cooper Lai",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-18",
+          "player": "Da'Wain Lofton",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-19",
+          "player": "David Kabongo",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-20",
+          "player": "Davis Dotson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-21",
+          "player": "Desean Brown",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-22",
+          "player": "Dj Dugar Jr.",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-23",
+          "player": "Dylan Smith",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-24",
+          "player": "Gage Stanaland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-25",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-26",
+          "player": "Grayson Brousseau",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-27",
+          "player": "Gunnar Wilson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-28",
+          "player": "Ike Esonwune",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-29",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-30",
+          "player": "Jacobi Oliphant Jr.",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-31",
+          "player": "Jaden Allen-Hendrix",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-32",
+          "player": "Jaden Perez",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-33",
+          "player": "Jakobe Sanders",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-34",
+          "player": "Jaleel Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-35",
+          "player": "Jamison Mejia",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-36",
+          "player": "Jarrett Henry",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-37",
+          "player": "Jaxson Duffield",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-38",
+          "player": "Jaylan Beckley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-39",
+          "player": "Jaylen Lloyd",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-40",
+          "player": "Jaylin Davies",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-41",
+          "player": "Jk Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-42",
+          "player": "Jo Pierce",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-43",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-44",
+          "player": "Kale Smith",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-45",
+          "player": "Kam Powell",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-46",
+          "player": "Kasen Carpenter",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-47",
+          "player": "Kason Shrum",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-48",
+          "player": "Kenneth Harris",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-49",
+          "player": "Kyran Duhon",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-50",
+          "player": "Ladainian Fields",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-51",
+          "player": "Landon Dean",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-52",
+          "player": "Landyn Cleveland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-53",
+          "player": "Logan Ward",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-54",
+          "player": "Louie Canepa",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-55",
+          "player": "Luke Webb",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-56",
+          "player": "Malik Charles",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-57",
+          "player": "Markell Samuel",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-58",
+          "player": "Matrail Lopez",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-59",
+          "player": "Matthew Wade",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-60",
+          "player": "Michael Diatta",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-61",
+          "player": "Michael Riles",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-62",
+          "player": "Miguel Chavez",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-63",
+          "player": "Mordecai Mcdaniel",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-64",
+          "player": "Noah Mckinney",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-65",
+          "player": "Nuku Mafi",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-66",
+          "player": "Oscar Hammond",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-67",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-68",
+          "player": "Poasa Utu",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-69",
+          "player": "Quinton Stewart",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-70",
+          "player": "Rashod Bradley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-71",
+          "player": "Raymond Gay Ii",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-72",
+          "player": "Rodney Fields Jr.",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-73",
+          "player": "Royal Capell",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-74",
+          "player": "Shamar Rigby",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-75",
+          "player": "Shea Freibaum",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-76",
+          "player": "Sitiveni Havili Kaufusi",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-77",
+          "player": "Taje Mccoy",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-78",
+          "player": "Talyn Shettron",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-79",
+          "player": "Temerrick Johnson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-80",
+          "player": "Tre' Griffiths",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-81",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-82",
+          "player": "Trip White",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-83",
+          "player": "Wes Pahl",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-84",
+          "player": "Will Monney",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-85",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-86",
+          "player": "Grant Seagren",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "B-87",
+          "player": "Simona Fuailetolo",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "blackout-silver-team-color-49",
+      "name": "Blackout (Silver; Team Color /49)",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "BL-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "BL-3",
+          "player": "Talyn Shettron",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "BL-4",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "BL-5",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-day-shimmer-nitro-1",
+      "name": "City Limits Day (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-2",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-night-shimmer-nitro-1",
+      "name": "City Limits Night (Shimmer; Nitro /1)",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-3",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "CL-4",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "base-signature",
+      "name": "Base Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-3",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-4",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-5",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-6",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-7",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-8",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-shimmer-25",
+      "name": "Team Color Signature Shimmer (/25)",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-3",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-4",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-5",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-6",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-7",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-8",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-orbs-15",
+      "name": "Team Color Signature Orbs (/15)",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-3",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-4",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-5",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-6",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-7",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-8",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-9",
+      "name": "Silver Signature (/9)",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-3",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-4",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-5",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-6",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-7",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-8",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-2",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-3",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-4",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-5",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-6",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-7",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "S-8",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "film-signature-15",
+      "name": "Film Signature (/15)",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FLS-1",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FLS-2",
+          "player": "Gavin Freeman",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FLS-3",
+          "player": "Iman Oates",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FLS-4",
+          "player": "Trent Howland",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FLS-5",
+          "player": "Zane Flores",
+          "team": "Oklahoma State"
+        }
+      ]
+    },
+    {
+      "id": "fusion-signature-10",
+      "name": "Fusion Signature (/10)",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-1",
+          "player": "Aden Kelley",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-2",
+          "player": "Parker Robertson",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-3",
+          "player": "Josh Ford",
+          "team": "Oklahoma State"
+        },
+        {
+          "number": "FS-4",
+          "player": "Austin Kawecki",
+          "team": "Oklahoma State"
+        }
+      ]
+    }
+  ]
+}

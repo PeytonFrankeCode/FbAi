@@ -1,0 +1,1448 @@
+{
+  "id": "2024-onit-athlete-clemson-football",
+  "name": "2024 ONIT Athlete Clemson Football",
+  "year": 2024,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 105,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "A.J. Hoffler",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-2",
+          "player": "Aidan Swanson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-3",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-4",
+          "player": "Armon Mason",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-5",
+          "player": "Banks Pope",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-6",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-7",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-8",
+          "player": "Boston Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-9",
+          "player": "Branden Strozier",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-10",
+          "player": "Q0mt",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-11",
+          "player": "Bryant Wesco Jr.",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-12",
+          "player": "Bryce Smith",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-13",
+          "player": "Bubba Mcatee",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-14",
+          "player": "C.J. Kubah-Taylor",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-15",
+          "player": "Cade Denhoff",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-16",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-17",
+          "player": "Caden Story",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-18",
+          "player": "Caleb Nix",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-19",
+          "player": "Champ Thompson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-20",
+          "player": "Chandler Mcmaster",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-21",
+          "player": "Chapman Pendergrass",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-22",
+          "player": "Charlie Johnson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-23",
+          "player": "Chase Byrd",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-24",
+          "player": "Christian Bentancur",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-25",
+          "player": "Clay Swinney",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-26",
+          "player": "Colby Shaw",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-27",
+          "player": "Cole Turner",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-28",
+          "player": "Collin Sadler",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-29",
+          "player": "Corian Gipson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-30",
+          "player": "Darien Mayo",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-31",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-32",
+          "player": "Dietrick Pennington",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-33",
+          "player": "Dominic Cardone",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-34",
+          "player": "Drew Woodaz",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-35",
+          "player": "Elyjah Thurmon",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-36",
+          "player": "Fletcher Cothran",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-37",
+          "player": "Griffin Batt",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-38",
+          "player": "Hampton Earle",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-39",
+          "player": "Harris Sewell",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-40",
+          "player": "Hevin Brown-Shuler",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-41",
+          "player": "Hogan Morton",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-42",
+          "player": "Holden Caspersen",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-43",
+          "player": "Jack Smith",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-44",
+          "player": "Jackson Crosby",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-45",
+          "player": "Jackson Hall",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-46",
+          "player": "Jacob Hendricks",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-47",
+          "player": "Jaheim Scott",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-48",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-49",
+          "player": "Jake Norris",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-50",
+          "player": "Jamal Anderson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-51",
+          "player": "Jarvis Green",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-52",
+          "player": "Jay Haynes",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-53",
+          "player": "Jeadyn Lukus",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-54",
+          "player": "Joe Wilkinson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-55",
+          "player": "Josh Sapp",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-56",
+          "player": "Keith Adams Jr.",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-57",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-58",
+          "player": "Kobe Mccloud",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-59",
+          "player": "Kylen Webb",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-60",
+          "player": "Kylon Griffin",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-61",
+          "player": "Levi Matthews",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-62",
+          "player": "Mason Johnstone",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-63",
+          "player": "Mason Wade",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-64",
+          "player": "Michael Mankaka",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-65",
+          "player": "Xs0ec",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-66",
+          "player": "Nathan Brooks",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-67",
+          "player": "Noble Johnson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-68",
+          "player": "Nolan Hauser",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-69",
+          "player": "Olsen Patt-Henry",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-70",
+          "player": "Patrick Swygert",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-71",
+          "player": "Payton Page",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-72",
+          "player": "Peter Nearn",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-73",
+          "player": "Peyton Pitts",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-74",
+          "player": "Peyton Streko",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-75",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-76",
+          "player": "Philip Florenzo",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-77",
+          "player": "Quinn Castner",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-78",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-79",
+          "player": "Reed Morrissey",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-80",
+          "player": "Ricardo Jones",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-81",
+          "player": "Rob Billings",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-82",
+          "player": "Robert Gunn Iii",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-83",
+          "player": "Ronan Hanafin",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-84",
+          "player": "Ryan Linthicum",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-85",
+          "player": "Sammy Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-86",
+          "player": "Shelton Lewis",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-87",
+          "player": "Sherrod Covil Jr.",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-88",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-89",
+          "player": "Tavoy Feagin",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-91",
+          "player": "Trent Howard",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-92",
+          "player": "Trent Pearman",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-93",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-94",
+          "player": "Tristan Martinez",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-95",
+          "player": "Tristen Rigby",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-96",
+          "player": "Troy Stellato",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-97",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-98",
+          "player": "Tyler Venables",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-99",
+          "player": "Wade Woodaz",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-100",
+          "player": "Walker Parks",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-101",
+          "player": "Walt Smith",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-102",
+          "player": "Will Mccune",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-103",
+          "player": "William Bouton",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-104",
+          "player": "Wise Segars Jr.",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-105",
+          "player": "Zach Jackson",
+          "team": "Clemson"
+        },
+        {
+          "number": "B-106",
+          "player": "Zaire Patterson",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "name": "Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "P-1",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-2",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-3",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-4",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-5",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-6",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-7",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-8",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-9",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "P-10",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "IC-1",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "IC-2",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "IC-3",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "IC-4",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        },
+        {
+          "number": "IC-5",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "college-colors",
+      "name": "College Colors",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "CC-2",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "CC-3",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "CC-4",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "CC-5",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "sticker-series",
+      "name": "Sticker Series",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "ST-1",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "ST-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "ST-3",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        },
+        {
+          "number": "ST-4",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "ST-5",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name": "Blackout",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "BL-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "BL-3",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "BL-4",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "BL-5",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "CL-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "signature-series",
+      "name": "Signature Series",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-3",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-4",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-5",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-6",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-7",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-8",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-9",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-10",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-11",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-12",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "signature-series-parallel",
+      "name": "Signature Series Parallel",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-13",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-14",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-15",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-16",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-17",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-18",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-19",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-20",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-21",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-22",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-23",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "S-24",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "one-series-swoosh",
+      "name": "ONE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-1",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-3",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-4",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-5",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-6",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-7",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-8",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-9",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-10",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-11",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-12",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "one-series-smoke",
+      "name": "ONE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-13",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-14",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-15",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-16",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-17",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-18",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-19",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-20",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-21",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-22",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-23",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-24",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "one-series-fire",
+      "name": "ONE Series Fire",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-25",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-26",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-27",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-28",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-29",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-30",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-31",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-32",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-33",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-34",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-35",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-36",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "one-series-water",
+      "name": "ONE Series Water",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "O-37",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-38",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-39",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-40",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-41",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-42",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-43",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-44",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-45",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-46",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-47",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "O-48",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-swoosh",
+      "name": "NINE Series Swoosh",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-1",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-2",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-3",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-4",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-5",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-6",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-7",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-8",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-9",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-10",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-11",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-12",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-smoke",
+      "name": "NINE Series Smoke",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-13",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-14",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-15",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-16",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-17",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-18",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-19",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-20",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-21",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-22",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-23",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-24",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-fire",
+      "name": "NINE Series Fire",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-25",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-26",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-27",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-28",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-29",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-30",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-31",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-32",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-33",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-34",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-35",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-36",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    },
+    {
+      "id": "nine-series-water",
+      "name": "NINE Series Water",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "N-37",
+          "player": "Barrett Carter",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-38",
+          "player": "Phil Mafah",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-39",
+          "player": "Cade Klubnik",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-40",
+          "player": "Antonio Williams",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-41",
+          "player": "Tyler Brown",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-42",
+          "player": "Tristan Leigh",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-43",
+          "player": "Khalil Barnes",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-44",
+          "player": "Demonte Capehart",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-45",
+          "player": "Jake Briningstool",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-46",
+          "player": "R.J. Mickens",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-47",
+          "player": "Blake Miller",
+          "team": "Clemson"
+        },
+        {
+          "number": "N-48",
+          "player": "T.J. Parker",
+          "team": "Clemson"
+        }
+      ]
+    }
+  ]
+}

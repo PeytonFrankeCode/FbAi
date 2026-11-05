@@ -1,0 +1,1626 @@
+{
+  "id": "2026-onit-athlete-ucla-football",
+  "name": "2026 ONIT Athlete UCLA Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 88,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-3",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-4",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-5",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-6",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-7",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-8",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-9",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-10",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-11",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-12",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-13",
+          "player": "A.J. Fuimaono",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-14",
+          "player": "Aaron Williams",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-15",
+          "player": "Aiden Gobaira",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-16",
+          "player": "Amier Washington",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-17",
+          "player": "Anthony Sacca",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-18",
+          "player": "Ashton Sanders",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-19",
+          "player": "Brayden Loftin",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-20",
+          "player": "Brett Barry",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-21",
+          "player": "Brian Rowe Jr.",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-22",
+          "player": "Caleb Walker",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-23",
+          "player": "Carter Sweazie",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-24",
+          "player": "Chase Barry",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-25",
+          "player": "Chase Coleman",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-26",
+          "player": "Cj Lavender",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-27",
+          "player": "Cole Cogshell",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-28",
+          "player": "Colton Gumino",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-29",
+          "player": "Cooper Javorsky",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-30",
+          "player": "Curtis Gerrand",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-31",
+          "player": "Dallin Havea",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-32",
+          "player": "Dante Lovett",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-33",
+          "player": "Darold Dengohe",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-34",
+          "player": "Derek Osman",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-35",
+          "player": "Derrick Barksdale",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-36",
+          "player": "Donavyn Pellot",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-37",
+          "player": "Drew Spinogatti",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-38",
+          "player": "Dylan Lee",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-39",
+          "player": "Dylan Sims",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-40",
+          "player": "Eugene Brooks",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-41",
+          "player": "Giancarlo Cereghino",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-42",
+          "player": "Grant Buckey",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-43",
+          "player": "Hall Schmidt",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-44",
+          "player": "Harry Lodge",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-45",
+          "player": "Jackson Meehan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-46",
+          "player": "Jacob Reis",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-47",
+          "player": "Jalen Saint Paul",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-48",
+          "player": "Jaylan Jeffers",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-49",
+          "player": "Jd Dean",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-50",
+          "player": "Jensen Somerville",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-51",
+          "player": "Jonah Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-52",
+          "player": "Jordan Davis",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-53",
+          "player": "Joshua Dixon",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-54",
+          "player": "Julian Armella",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-55",
+          "player": "Karson Cox",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-56",
+          "player": "Kuron Jabari Jr.",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-57",
+          "player": "Larue Zamorano III",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-58",
+          "player": "Lucien Holland",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-59",
+          "player": "Mack Indestad",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-60",
+          "player": "Major Pride",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-61",
+          "player": "Malik Hartford",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-62",
+          "player": "Marcus Almada",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-63",
+          "player": "Marcus Harris",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-64",
+          "player": "Mateen Bhaghani",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-65",
+          "player": "Mikey Matthews",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-66",
+          "player": "Mone Malafu",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-67",
+          "player": "Nehemiah Johnson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-68",
+          "player": "Nico Davillier",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-69",
+          "player": "Noah Fox-Flores",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-70",
+          "player": "Peter Bario",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-71",
+          "player": "Quinn Buckey",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-72",
+          "player": "Riley Robell",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-73",
+          "player": "Robert James III",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-74",
+          "player": "Rodrick Pleasant",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-75",
+          "player": "Russell Weir",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-76",
+          "player": "Ryan Mcculloch",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-77",
+          "player": "Salem Abdul-Wahab",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-78",
+          "player": "Sam Yoon",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-79",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-80",
+          "player": "Scott Taylor",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-81",
+          "player": "Shane Rosenthal",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-82",
+          "player": "Stevie Amar Jr.",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-83",
+          "player": "Ta'Shawn James",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-84",
+          "player": "Tao Johnson",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-85",
+          "player": "Troy Leigber",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-86",
+          "player": "Ty Dieffenbach",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-87",
+          "player": "Ty Lee",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-88",
+          "player": "Wyatt Mosier",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 12,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Orange",
+          "printRun": 25
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-2",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-3",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-4",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-5",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-6",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-7",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-8",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-9",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-10",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-11",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "B-12",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kenneth Moore Iii",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-6",
+          "player": "Rodrick Pleasant",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-7",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-8",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-9",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-10",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-2",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-3",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-4",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-5",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-6",
+          "player": "Rodrick Pleasant",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-7",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-8",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-9",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "CC-10",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "CL-2",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "CL-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "CL-2",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "CL-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "crowned",
+      "name": "Crowned",
+      "category": "insert",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CR-1",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-2",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-4",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-5",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-2",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-3",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-4",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "DS-5",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-2",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-3",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-4",
+          "player": "Jordan Davis",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-5",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-6",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-7",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-8",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-9",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-10",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-2",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-3",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-4",
+          "player": "Jordan Davis",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-5",
+          "player": "Jaivian Thomas",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-6",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-7",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-8",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-9",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        },
+        {
+          "number": "F-10",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "GD-2",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "GD-3",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-2",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-3",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-4",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-5",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-6",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-2",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-3",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-4",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-5",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-6",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-2",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-4",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-5",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-2",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-4",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "H-5",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-4",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-5",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-6",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-2",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-3",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-4",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-5",
+          "player": "Scooter Jackson",
+          "team": "UCLA"
+        },
+        {
+          "number": "NH-6",
+          "player": "Semaj Morgan",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-KM",
+          "player": "V",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-SO",
+          "player": "Sammy Omosigho",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "S-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 8,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-KM",
+          "player": "Kenneth Moore III",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-LS",
+          "player": "Leland Smith",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "GA-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 7,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-AM",
+          "player": "Aidan Mizell",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-AW",
+          "player": "Anthony Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-CM",
+          "player": "Cole Martin",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-JW",
+          "player": "Jalen Woods",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-LE",
+          "player": "Landon Ellis",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-WK",
+          "player": "Wayne Knight",
+          "team": "UCLA"
+        },
+        {
+          "number": "FS-NI",
+          "player": "Nico Iamaleava",
+          "team": "UCLA"
+        }
+      ]
+    }
+  ]
+}

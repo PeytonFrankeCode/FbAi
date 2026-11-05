@@ -1,0 +1,1175 @@
+{
+  "id": "2025-onit-black-michigan-football",
+  "name": "2025 ONIT Black Michigan Football",
+  "year": 2025,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Andrew Marsh",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-2",
+          "player": "Andrew Sprague",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-3",
+          "player": "Blake Frazier",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-4",
+          "player": "Brady Prieskorn",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-5",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-6",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-7",
+          "player": "Bryson Kuzdzal",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-8",
+          "player": "C.J. Charleston",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-9",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-10",
+          "player": "Channing Goodwin",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-11",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-12",
+          "player": "Damon Payne",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-13",
+          "player": "Davis Warren",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-14",
+          "player": "Deakon Tonielli",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-15",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-16",
+          "player": "Dominic Nichols",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-17",
+          "player": "Dominic Zvada",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-18",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-19",
+          "player": "Donovan Johnson",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-20",
+          "player": "Eli Owens",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-21",
+          "player": "Enow Etta",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-22",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-23",
+          "player": "Evan Link",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-24",
+          "player": "Giovanni El-Hadi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-25",
+          "player": "Greg Crippen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-26",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-27",
+          "player": "I'Marion Stewart",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-28",
+          "player": "Ike Iwunnah",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-29",
+          "player": "Jacob Oden",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-30",
+          "player": "Jaden Mangham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-31",
+          "player": "Jadyn Davis",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-32",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-33",
+          "player": "Jalen Hoffman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-34",
+          "player": "Jamar Browder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-35",
+          "player": "Jaydon Hood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-36",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-37",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-38",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-39",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-40",
+          "player": "Jyaire Hill",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-41",
+          "player": "Kaleb Schlecht",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-42",
+          "player": "Logan Forbes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-43",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-44",
+          "player": "Te/fb",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-45",
+          "player": "Micah Ka'Apana",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-46",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-47",
+          "player": "Nathan Efobi",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-48",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-49",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-50",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-51",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-52",
+          "player": "Tevis Metcalf",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-53",
+          "player": "Tj Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-54",
+          "player": "Tj Metcalf",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-55",
+          "player": "Tomas O'Meara",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-56",
+          "player": "Tré Williams",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-57",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-58",
+          "player": "Troy Bowles",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-59",
+          "player": "Zack Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-60",
+          "player": "Zeke Berry",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 12,
+      "parallels": [
+        {
+          "name": "Blue",
+          "printRun": null
+        },
+        {
+          "name": "Pink",
+          "printRun": 150
+        },
+        {
+          "name": "Purple",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Silver",
+          "printRun": 20
+        },
+        {
+          "name": "Red",
+          "printRun": 9
+        },
+        {
+          "name": "Green",
+          "printRun": 5
+        },
+        {
+          "name": "Black",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-5",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-6",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-15",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-18",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-32",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-36",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-38",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-39",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-43",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-51",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-53",
+          "player": "Tj Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "B-54",
+          "player": "Tj Metcalf",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "blackout-gold-purple-ice-120-blue-25-red-ice-9-green-ice-5-black-ice-1",
+      "name": "Blackout (Gold; Purple Ice /120; Blue /25; Red Ice /9; Green Ice /5; Black Ice /1)",
+      "category": "insert",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "BL-1",
+          "player": "Tj Guy",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-2",
+          "player": "Tj Metcalf",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-3",
+          "player": "Jimmy Rolder",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-4",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-5",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-6",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-7",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-8",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-9",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-10",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-11",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "BL-12",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "access",
+      "name": "Access",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "A-1",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-2",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-3",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-4",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-5",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-6",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-7",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-8",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-9",
+          "player": "Bryson Kuzdzal",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-10",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "access-ultimate-edition-1",
+      "name": "Access Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "A-1",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-2",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-3",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-4",
+          "player": "Jaishawn Barham",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-5",
+          "player": "Brandyn Hillman",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-6",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-7",
+          "player": "Marlin Klein",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-8",
+          "player": "Ernest Hausmann",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-9",
+          "player": "Bryson Kuzdzal",
+          "team": "Michigan"
+        },
+        {
+          "number": "A-10",
+          "player": "Rayshaun Benny",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "ascend",
+      "name": "Ascend",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AD-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-2",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-3",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-4",
+          "player": "Andrew Marsh",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-5",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "ascend-ultimate-edition-1",
+      "name": "Ascend Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "AD-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-2",
+          "player": "Derrick Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-3",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-4",
+          "player": "Andrew Marsh",
+          "team": "Michigan"
+        },
+        {
+          "number": "AD-5",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "solaris",
+      "name": "Solaris",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SP-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "SP-2",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "SP-3",
+          "player": "Andrew Marsh",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "polaris",
+      "name": "Polaris",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SP-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "SP-2",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "SP-3",
+          "player": "Andrew Marsh",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "roar-of-the-crowd",
+      "name": "Roar of the Crowd",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "RC-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "RC-2",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "RC-3",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "roar-of-the-crowd-ultimate-edition-1",
+      "name": "Roar of the Crowd Ultimate Edition (/1)",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "RC-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "RC-2",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        },
+        {
+          "number": "RC-3",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "base-signatures",
+      "name": "Base Signatures",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Qb",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-2",
+          "player": "Qb",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-3",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-4",
+          "player": "Db",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-5",
+          "player": "Lb",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-6",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-7",
+          "player": "Rb",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-8",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-9",
+          "player": "Rb",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-10",
+          "player": "Dl",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-11",
+          "player": "Edge",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-12",
+          "player": "Te",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-13",
+          "player": "Wr",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "team-color-signature-75",
+      "name": "Team Color Signature (/75)",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-2",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-3",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-4",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-5",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-6",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-7",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-8",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-9",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-10",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-11",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-12",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-13",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "silver-signature-15",
+      "name": "Silver Signature (/15)",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-2",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-3",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-4",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-5",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-6",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-7",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-8",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-9",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-10",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-11",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-12",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-13",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "gold-signature-1",
+      "name": "Gold Signature (/1)",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-1",
+          "player": "Bryce Underwood",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-2",
+          "player": "Mikey Keene",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-3",
+          "player": "Semaj Morgan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-4",
+          "player": "Rod Moore",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-5",
+          "player": "Cole Sullivan",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-6",
+          "player": "Joe Taylor",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-7",
+          "player": "Justice Haynes",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-8",
+          "player": "Peyton O'Leary",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-9",
+          "player": "Jordan Marshall",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-10",
+          "player": "Trey Pierce",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-11",
+          "player": "Cameron Brandt",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-12",
+          "player": "Hogan Hansen",
+          "team": "Michigan"
+        },
+        {
+          "number": "S-13",
+          "player": "Donaven McCulley",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "dual-signature-black-9",
+      "name": "Dual Signature Black (/9)",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "/ 22 Bryce Underwood / Justice Haynesqb /",
+          "team": "Michigan"
+        },
+        {
+          "number": "DS-2",
+          "player": "/ 1 Semaj Morgan / Donaven McCulley Wr /",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "dual-signature-gold-1",
+      "name": "Dual Signature Gold (/1)",
+      "category": "autograph",
+      "totalCards": 2,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "/ 22 Bryce Underwood / Justice Haynesqb /",
+          "team": "Michigan"
+        },
+        {
+          "number": "DS-2",
+          "player": "/ 1 Semaj Morgan / Donaven McCulley Wr /",
+          "team": "Michigan"
+        }
+      ]
+    },
+    {
+      "id": "circuit-signature",
+      "name": "Circuit Signature",
+      "category": "autograph",
+      "totalCards": 13,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CS-1",
+          "player": "Qb",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-2",
+          "player": "Qb",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-3",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-4",
+          "player": "Db",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-5",
+          "player": "Lb",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-6",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-7",
+          "player": "Rb",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-8",
+          "player": "Wr",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-9",
+          "player": "Rb",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-10",
+          "player": "Dl",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-11",
+          "player": "Edge",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-12",
+          "player": "Te",
+          "team": "Michigan"
+        },
+        {
+          "number": "CS-13",
+          "player": "Wr",
+          "team": "Michigan"
+        }
+      ]
+    }
+  ]
+}

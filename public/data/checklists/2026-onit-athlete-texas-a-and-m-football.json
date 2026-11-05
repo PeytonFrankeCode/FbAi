@@ -1,0 +1,1807 @@
+{
+  "id": "2026-onit-athlete-texas-a-and-m-football",
+  "name": "2026 ONIT Athlete Texas A&M Football",
+  "year": 2026,
+  "brand": "ONIT Athlete",
+  "sport": "Football",
+  "note": "Built from the published checklist at onitathlete.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 105,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-2",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-3",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-4",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-5",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-6",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-7",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-8",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-9",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-10",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-11",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-12",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-13",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-14",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-15",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-16",
+          "player": "Aaron Gregory",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-17",
+          "player": "Adam Graham",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-18",
+          "player": "Adonyss Currie",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-19",
+          "player": "Angelo Mccullom",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-20",
+          "player": "Anto Saka",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-21",
+          "player": "Asher Murray",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-22",
+          "player": "Ashton Funk",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-23",
+          "player": "Avery Morcho",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-24",
+          "player": "Blake Ivy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-25",
+          "player": "Boomer Graham",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-26",
+          "player": "Brandon Davis-Swain",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-27",
+          "player": "Bryce Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-28",
+          "player": "Bryce Perry-Wright",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-29",
+          "player": "Carsyn Baker",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-30",
+          "player": "Carter Braugh",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-31",
+          "player": "Chance Collins",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-32",
+          "player": "CJ Mims",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-33",
+          "player": "Coen Echols",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-34",
+          "player": "Colton Chmelar",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-35",
+          "player": "David Olano",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-36",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-37",
+          "player": "Deyjhon Pettaway",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-38",
+          "player": "DJ Sanders",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-39",
+          "player": "Eli Morcos",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-40",
+          "player": "Gray Evans",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-41",
+          "player": "Helaman Casuga",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-42",
+          "player": "Hunter Mckinney",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-43",
+          "player": "Isendre \"Papa\" Ahfua",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-44",
+          "player": "Jamar Beal-Goines",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-45",
+          "player": "Jeremiah Searcy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-46",
+          "player": "Jermaine Kinsler",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-47",
+          "player": "Jerome Myles",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-48",
+          "player": "Jesse Chukwu",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-49",
+          "player": "Jonah Wilson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-50",
+          "player": "Jordan Lockhart",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-51",
+          "player": "Jordan Shaw",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-52",
+          "player": "Joshua Moses",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-53",
+          "player": "Julio Humphrey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-54",
+          "player": "Ni",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-55",
+          "player": "Kade Stewart",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-56",
+          "player": "Kelshaun Johnson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-57",
+          "player": "Kelvion Riggins",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-58",
+          "player": "Kendall Jackson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-59",
+          "player": "Kiotti Armstrong",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-60",
+          "player": "KJ Edwards",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-61",
+          "player": "Kk Johnson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-62",
+          "player": "Kyle Garvis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-63",
+          "player": "Lamont Rogers",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-64",
+          "player": "Landon Rink",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-65",
+          "player": "Layne Gerke",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-66",
+          "player": "Luke Braden",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-67",
+          "player": "Marcus Garcia",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-68",
+          "player": "Mark Nabou Jr.",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-69",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-70",
+          "player": "Mike Brown",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-71",
+          "player": "Myles Davis",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-72",
+          "player": "Nana Boadi-Owusu",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-73",
+          "player": "Nelson Mcguire",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-74",
+          "player": "Noah Mikhail",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-75",
+          "player": "Paxton Land",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-76",
+          "player": "Peyton Gay",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-77",
+          "player": "Ramarian Tillman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-78",
+          "player": "Ray Coney",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-79",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-80",
+          "player": "Robert Bourdon",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-81",
+          "player": "Ryan Burtin",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-82",
+          "player": "Ryan Henderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-83",
+          "player": "Sam M'Pemba",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-84",
+          "player": "Sam Roseborough",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-85",
+          "player": "Shea Freibaum",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-86",
+          "player": "Storm Miller",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-87",
+          "player": "T.J. Searcy",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-88",
+          "player": "Tamarion Watkins",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-89",
+          "player": "Tank King",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-90",
+          "player": "Tawfiq Byard",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-91",
+          "player": "Tiger Riden Jr.",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-92",
+          "player": "TJ Smith",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-93",
+          "player": "Tom Tom Johnson Jr.",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-94",
+          "player": "Tommy Colligan",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-95",
+          "player": "Tristian Givens",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-96",
+          "player": "Trovon Baugh",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-97",
+          "player": "Tylan Wilson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-98",
+          "player": "Tyler Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-99",
+          "player": "Tyler White",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-100",
+          "player": "Tyree Adams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-101",
+          "player": "Vic Singleton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-102",
+          "player": "Whitaker Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-103",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-104",
+          "player": "Will Hargett",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-105",
+          "player": "Zaden Krempin",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "base-parallels",
+      "name": "Base Parallels",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Teal",
+          "printRun": null
+        },
+        {
+          "name": "Purple",
+          "printRun": null
+        },
+        {
+          "name": "Black",
+          "printRun": null
+        },
+        {
+          "name": "Green",
+          "printRun": 100
+        },
+        {
+          "name": "Orange",
+          "printRun": 75
+        },
+        {
+          "name": "Platinum",
+          "printRun": 50
+        },
+        {
+          "name": "Checkerboard",
+          "printRun": 10
+        },
+        {
+          "name": "Red",
+          "printRun": 5
+        },
+        {
+          "name": "Gold",
+          "printRun": 1
+        }
+      ],
+      "cards": [
+        {
+          "number": "B-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-2",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-3",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-4",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-5",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-6",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-7",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-8",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-9",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-10",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-11",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-12",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-13",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-14",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "B-15",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-standard",
+      "name": "Campus Colors Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-3",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-4",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-5",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-6",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-7",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-8",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-9",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-10",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "campus-colors-premium-parallel",
+      "name": "Campus Colors Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CC-1",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-2",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-3",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-4",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-5",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-6",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-7",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-8",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-9",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CC-10",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "city-limits",
+      "name": "City Limits",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CL-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CL-3",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "city-limits-gold-parallel",
+      "name": "City Limits Gold Parallel",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CL-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CL-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "CL-3",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-standard",
+      "name": "Dynamic Shift Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-2",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-3",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-4",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-shift-premium-parallel",
+      "name": "Dynamic Shift Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DS-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-2",
+          "player": "Marco Jones",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-3",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-4",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "DS-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "fusion-standard",
+      "name": "Fusion Standard",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-4",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-6",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-7",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-8",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-9",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-10",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "fusion-premium-parallel",
+      "name": "Fusion Premium Parallel",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-4",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-6",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-7",
+          "player": "Houston Thomas",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-8",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-9",
+          "player": "Dalton Brooks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "F-10",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "gameday",
+      "name": "Gameday",
+      "category": "insert",
+      "totalCards": 3,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GD-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GD-2",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GD-3",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "general-admisson",
+      "name": "General Admisson",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-3",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-4",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-6",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-vip-parallel",
+      "name": "General Admission VIP Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-1",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-2",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-3",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-4",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-5",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-6",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "hype-standard",
+      "name": "Hype Standard",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-2",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-4",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-5",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "hype-premium-parallel",
+      "name": "Hype Premium Parallel",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "H-1",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-2",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-4",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "H-5",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-standard",
+      "name": "New Horizons Standard",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-4",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-5",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-6",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "new-horizons-premium-parallel",
+      "name": "New Horizons Premium Parallel",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "NH-1",
+          "player": "DJ Hicks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-2",
+          "player": "Isaiah Horton",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-3",
+          "player": "Mario Craver",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-4",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-5",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "NH-6",
+          "player": "TK Norman",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "black-and-team-color-base-signature",
+      "name": "Black & Team Color Base Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "black-and-white-parallel-signature",
+      "name": "Black & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "white-and-team-color-parallel-signature",
+      "name": "White & Team Color Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "white-and-white-parallel-signature",
+      "name": "White & White Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "black-and-gold-parallel-signature",
+      "name": "Black & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "white-and-gold-parallel-signature",
+      "name": "White & Gold Parallel Signature",
+      "category": "autograph",
+      "totalCards": 12,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "S-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DS",
+          "player": "Daymion Sanford",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "S-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "general-admission-signature",
+      "name": "General Admission Signature",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "GA-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "GA-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    },
+    {
+      "id": "film-signature",
+      "name": "Film Signature",
+      "category": "autograph",
+      "totalCards": 11,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "FS-MRE",
+          "player": "Marcel Reed",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-RO",
+          "player": "Rueben Owens II",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-RG",
+          "player": "Rickey Gibson III",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-ABR",
+          "player": "Ashton Bethel-Roman",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-TB",
+          "player": "Terry Bussey",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-MRI",
+          "player": "Micah Riley",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-WF",
+          "player": "Wilkin Formby",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-MW",
+          "player": "Madden Williams",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-DR",
+          "player": "Dezz Ricks",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-RH",
+          "player": "Richie Anderson",
+          "team": "Texas A&M"
+        },
+        {
+          "number": "FS-MRA",
+          "player": "Marcus Ratcliffe",
+          "team": "Texas A&M"
+        }
+      ]
+    }
+  ]
+}
