@@ -333,8 +333,14 @@ const check = (label, ok, detail) => {
   const d = 'Bo Nix football card price guide — see real eBay sold prices.';
   const s = { sales: 1234, cards: 300, median: 1450, low: 100, high: 240000, top: [] };
   const h = pricedHead(s, t, d);
-  check('a priced player title carries the median the page prints',
-    h.title === 'Bo Nix Football Cards — Median Sale $14.50 &amp; Checklist | The Card Huddle', h.title);
+  // 70 characters at most (owner, Nov 2026): the brand goes before the price.
+  check('a priced player title carries the median the page prints, within 70 characters',
+    h.title === 'Bo Nix Football Cards — Median Sale $14.50 &amp; Checklist', h.title);
+  const long = pricedHead(s, 'Christian McCaffrey Football Cards — Values &amp; Checklist | The Card Huddle', d).title;
+  check('  ...a long name keeps the price and drops "& Checklist" before it would run over',
+    long.replace(/&amp;/g, '&').length <= 70 && /\$14\.50/.test(long), long);
+  const short = pricedHead(s, 'Bo Nix Cards — Values &amp; Checklist | Site', d).title;
+  check('  ...and a title that fits keeps every word', short === 'Bo Nix Cards — Median Sale $14.50 &amp; Checklist | Site', short);
   check('  ...and the description leads with it and the sale count',
     h.description === 'Median sale $14.50 across 1,234 recent eBay sales. ' + d, h.description);
   check('  ...in whichever escaping the attribute was read with',
@@ -349,7 +355,7 @@ const check = (label, ok, detail) => {
   const fs = require('fs');
   const builder = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build-landing-pages.js'), 'utf8');
   check('the player pages are still built with the phrase the rewrite looks for',
-    /const title = `\$\{p\.name\} \$\{S\.Word\} Cards — Values & Checklist \| The Card Huddle`;/.test(builder),
+    /fitTitle\(`\$\{p\.name\} \$\{S\.Word\} Cards — Values & Checklist \| The Card Huddle`,\s*`\$\{p\.name\} \$\{S\.Word\} Cards — Values & Checklist`, `\$\{p\.name\} Cards — Values & Checklist`\);/.test(builder),
     'build-landing-pages.js buildPlayerPage title changed; update pricedHead to match');
 
   const w = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
