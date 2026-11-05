@@ -40,6 +40,36 @@ check('a product per line, school and season, named as the cards are sold', p.id
 check('  ...every card carries the school as its team; sets get categories', p.sets[0].cards.every(c => c.team === 'Alabama') && p.sets[0].category === 'base' && p.sets[1].category === 'autograph');
 check('team sets are "ONIT Athlete"; a two-season year starts the season', toProduct({ brand: 'Team Set', school: 'Texas A&M', year: '2026' }, sets).id === '2026-onit-athlete-texas-a-and-m-football' && firstYear('2025-2026') === 2025);
 
+// The 2026 team sets (2026 Texas Tech, trimmed): a two-line title, group
+// names before each header, a parallels line, lettered autograph numbers.
+const tt = `                      ONIT Team Trading Cards Checklist
+                          2026 Texas Tech Football
+BASE SET   CARD NO.      JERSEY NO.      PLAYER NAME            POS.
+           B-1                        15 Austin Romaine         LB
+           B-2                        13 Ben Roberts            LB
+\f                  B-71                          49 Will Karoll                P
+Base Parallels (Teal, Purple, Black, Green /100, Orange /75, Gold /1)
+                  B-1                           15 Austin Romaine             LB
+                  B-2                           13 Ben Roberts                LB
+INSERTS           CARD NO.       JERSEY NO.      PLAYER NAME           POS.   SEQ
+Campus Colors Standard
+                  CC-1                        15 Austin Romaine        LB
+City Limits Gold Parallel
+                  CL-1                         8 Cameron Dickey        RB     /1
+AUTOGRAPHS         CARD NO.        JERSEY NO.      PLAYER NAME           POS.   SEQ
+Black & Team Color Base Signature
+                   S-CD                          8 Cameron Dickey        RB
+                   GA-WH                       15 Will Hammond      QB   /9
+* Look for Special Parallels in These Series
+`;
+const ts = parseChecklistText(tt);
+check('2026 layout: title lines skipped, group before the header names the base set',
+  JSON.stringify(ts.map(s => [s.name, s.cards.length])) === JSON.stringify([['Base', 3], ['Campus Colors Standard', 1], ['City Limits Gold Parallel', 1], ['Black & Team Color Base Signature', 2]]), JSON.stringify(ts.map(s => [s.name, s.cards.length])));
+check('  ...the parallels line becomes the base set\'s parallels, not a second copy of the cards',
+  JSON.stringify(ts[0].parallels) === JSON.stringify([{ name: 'Teal', printRun: null }, { name: 'Purple', printRun: null }, { name: 'Black', printRun: null }, { name: 'Green', printRun: 100 }, { name: 'Orange', printRun: 75 }, { name: 'Gold', printRun: 1 }]));
+check('  ...lettered numbers and a trailing print run read cleanly', ts[2].cards[0].player === 'Cameron Dickey' && ts[3].cards[0].number === 'S-CD' && ts[3].cards[1].number === 'GA-WH' && ts[3].cards[1].player === 'Will Hammond');
+check('  ...and the product carries them', toProduct({ brand: 'Team Set', school: 'Texas Tech', year: '2026' }, ts).sets[0].parallels.length === 6);
+
 const page = '<script type="application/json" data-ca-part>{"checklists":[{"brand":"Team Set","school":"Alabama","sport":"Football","year":"2026","pdf":"x.pdf"}]}</script>'
   + '<script type="application/json" data-ca-part>{"checklists":[{"brand":"Gravity","school":"Texas","sport":"Football","year":"2025","pdf":"y.pdf"}]}</script>';
 check('the checklist list is read from every part of the page', listFromPage(page).length === 2);

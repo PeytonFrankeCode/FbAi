@@ -56,8 +56,11 @@ function nameCase(s) {
   }).join(' ');
 }
 
-const ROW = /^([A-Z]{0,5}-?\d{1,4}[A-Z]?)\s+(?:(\d{1,3})\s+)?(.+?)(?:\s{2,}([A-Z]{1,4}))?\s*$/;
-const HEADER = /CARD\s+NUMBER|^\s*No\s+Name/i;
+const ROW = /^([A-Z]{0,5}-?\d{1,4}[A-Z]?|[A-Z]{1,3}-[A-Z]{2,3})\s+(?:(\d{1,3})\s+)?(.+?)(?:\s{2,}([A-Z]{1,4}))?(?:\s+\/\d+)?\s*$/;
+// The column header. The 2026 PDFs put a group name in front of it
+// ("BASE SET   CARD NO.   JERSEY NO.   PLAYER NAME   POS.").
+const HEADER = /CARD\s+(?:NUMBER|NO\b)|^\s*No\s+Name/i;
+const YEAR = /\b(19|20)\d\d\b/;
 
 function categoryOf(name) {
   const s = name.toLowerCase();
@@ -67,26 +70,60 @@ function categoryOf(name) {
   return 'insert';
 }
 
+// "Teal, Purple, Green /100, Gold /1" -> [{ name, printRun }].
+function readParallels(list) {
+  return String(list).split(',').map(x => x.trim()).filter(Boolean).map(x => {
+    const m = /^(.*?)\s*\/\s*(\d+)$/.exec(x);
+    return m ? { name: m[1].trim(), printRun: Number(m[2]) } : { name: x, printRun: null };
+  }).filter(p => p.name);
+}
+
+const groupName = (s) => {
+  const t = s.replace(/\s+/g, ' ').trim();
+  if (/^base( set)?$/i.test(t)) return 'Base';
+  return t.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+};
+
 // The text of one PDF (pdftotext -layout) -> sets.
 function parseChecklistText(text) {
   const sets = [];
   let cur = null;
+  const anyCards = () => sets.some(s => s.cards.length);
   for (let raw of String(text).split('\n')) {
     const line = raw.replace(/\f/g, '').replace(/\s+$/, '');
-    if (!line.trim() || HEADER.test(line)) continue;
+    if (!line.trim()) continue;
     const t = line.trim();
+    if (HEADER.test(t)) {
+      // A group name before the header opens a set of that name; a section
+      // heading right after it (INSERTS, then "Campus Colors") replaces it.
+      const pre = t.split(/\s{2,}|CARD\s+(?:NUMBER|NO\b)/i)[0].trim();
+      if (pre && !/^no\b/i.test(pre)) { cur = { name: groupName(pre), cards: [] }; sets.push(cur); }
+      continue;
+    }
     const m = ROW.exec(t);
-    if (m && /\d/.test(m[1]) && /[A-Za-z]/.test(m[3])) {
+    if (m && /\d|-/.test(m[1]) && /[A-Za-z]/.test(m[3]) && !/^(19|20)\d\d$/.test(m[1])) {
       if (!cur) { cur = { name: 'Base', cards: [] }; sets.push(cur); }
+      if (cur.skip) continue;
       cur.cards.push({ number: m[1], player: nameCase(m[3].replace(/\s{2,}.*$/, '')) });
       continue;
     }
-    // A short line of words with no card number: a section heading. The
-    // title ("Alabama Football Checklist 2025") is skipped.
-    if (/checklist/i.test(t) && /\b(19|20)\d\d\b/.test(t)) continue;
-    if (t.length <= 50 && !/\d{3,}/.test(t)) { cur = { name: t, cards: [] }; sets.push(cur); }
+    // The title lines ("ONIT Team Trading Cards Checklist", "2026 Texas Tech
+    // Football", "Alabama Football Checklist 2025") come before any card.
+    if (/checklist/i.test(t) || (!anyCards() && YEAR.test(t))) continue;
+    // "Base Parallels (Teal, Purple, Green /100, ...)": the parallels of a set
+    // already read, listed again card by card. Kept as that set's parallels.
+    const pm = /^(.*?)\s*Parallels?\s*\((.+)\)\s*$/i.exec(t);
+    if (pm) {
+      const of = sets.slice().reverse().find(s => s.cards.length && s.name.toLowerCase() === (pm[1] || 'Base').trim().toLowerCase());
+      if (of) { of.parallels = (of.parallels || []).concat(readParallels(pm[2])); cur = { skip: true, cards: [] }; continue; }
+    }
+    // A short line of words with no card number: a section heading. A print
+    // run in it ("Green /100") is not a stray number.
+    if (t.length <= 140 && /^[A-Za-z]/.test(t) && !/\d{3,}/.test(t.replace(/\/\s*\d+/g, '')) && !/\.com\b|^page\s+\d/i.test(t)) {
+      cur = { name: t, cards: [] }; sets.push(cur);
+    }
   }
-  return sets.filter(s => s.cards.length);
+  return sets.filter(s => !s.skip && s.cards.length);
 }
 
 // One ONIT listing (+ its parsed sets) -> our product document.
@@ -101,7 +138,7 @@ function toProduct(item, sets) {
     id: slug(name), name, year, brand: 'ONIT Athlete', sport: 'Football',
     note: 'Built from the published checklist at onitathlete.com.',
     sets: sets.map(s => ({
-      id: slug(s.name), name: s.name, category: categoryOf(s.name), totalCards: s.cards.length, parallels: [],
+      id: slug(s.name), name: s.name, category: categoryOf(s.name), totalCards: s.cards.length, parallels: s.parallels || [],
       cards: s.cards.map(c => ({ number: c.number, player: c.player, team })),
     })),
   };
@@ -151,4 +188,4 @@ if (require.main === module) (async () => {
   console.log(`\n${items.length} football checklists: ${added} ${WRITE ? 'written' : 'to write'}, ${skipped} already here, ${failed} failed`);
 })();
 
-module.exports = { parseChecklistText, toProduct, listFromPage, nameCase, firstYear };
+module.exports = { readParallels, parseChecklistText, toProduct, listFromPage, nameCase, firstYear };
