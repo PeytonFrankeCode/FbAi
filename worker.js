@@ -808,6 +808,20 @@ export const SEARCH_CONSOLE_REDIRECTS = {
   'aidan-hutchinson-michigan-wolverines': 'aidan-hutchinson',
   'breece-hall-iowa-state-cyclones': 'breece-hall',
   'audric-estim': 'audric-estime',
+  // Nov 2026, from Search Console's Sep-Oct pages: more of the same, still
+  // showing in search for another player's page.
+  'devon-achane-3': 'devon-achane',
+  'john-metchie-i': 'john-metchie-iii',
+  'ahmad-sauce-gardner': 'sauce-gardner',
+  'ahmad-sauce-gardner-2': 'sauce-gardner',
+  'marshall-faulk-st-louis-rams': 'marshall-faulk',
+  'clinton-portis-washington-redskins': 'clinton-portis',
+  'chris-olave-ohio-state-buckeyes': 'chris-olave',
+  'drake-london-usc-trojans': 'drake-london',
+  'kayvon-thibodeaux-oregon-ducks': 'kayvon-thibodeaux',
+  'quentin-johnston-tcu-horned-frogs': 'quentin-johnston',
+  'bryce-young-alabama-crimson-tide': 'bryce-young',
+  'derek-stingley-jr-lsu-tigers': 'derek-stingley-jr',
 };
 
 export function filterSitemap(xml, blocks) {

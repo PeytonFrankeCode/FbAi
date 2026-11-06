@@ -1545,8 +1545,20 @@ function prepareSport() {
   // the one being fixed.
   const canon = new Map();   // norm(name) -> primary player
   const merged = [];         // { from, into } for the redirect map
-  for (const p of [...playerIndex.values()].sort((a, b) => b.cards.length - a.cards.length)) {
-    const k = normName(p.name);
+  // One person under a nickname spelling the punctuation fold cannot see
+  // (Nov 2026, from Search Console: /players/ahmad-sauce-gardner/ and
+  // /players/sauce-gardner/ were two pages for one player). The nickname's
+  // quotes are dropped and the name compared as words.
+  const NAME_FOLD = { 'ahmad sauce gardner': 'sauce gardner' };
+  const foldKey = (name) => {
+    const k = normName(name);
+    const words = k.replace(/[“”"'‘’]/g, '').replace(/\s+/g, ' ').trim();
+    return NAME_FOLD[words] || k;
+  };
+  // The name the fold points at leads, so the page is under it.
+  const leads = new Set(Object.values(NAME_FOLD));
+  for (const p of [...playerIndex.values()].sort((a, b) => (leads.has(normName(b.name)) - leads.has(normName(a.name))) || (b.cards.length - a.cards.length))) {
+    const k = foldKey(p.name);
     const prim = canon.get(k);
     if (!prim) { canon.set(k, p); continue; }
     // Fold the smaller spelling into the larger, which is already the primary
