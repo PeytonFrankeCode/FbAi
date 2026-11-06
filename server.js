@@ -20224,6 +20224,17 @@ const BIZ_AI_TOOLS = [
   { name: 'checklist_prices',
     description: 'Every card one player has in a product (from its checklist), with sold prices where they exist and estimates for the rest, parallels included.',
     input_schema: { type: 'object', properties: { product: { type: 'string', description: 'Product id from find_checklist' }, player: { type: 'string' } }, required: ['product', 'player'] } },
+  { name: 'search_checklists',
+    description: 'Search EVERY football checklist at once for an insert set or parallel (e.g. "Color Blast", "Kaboom", "Downtown", '
+      + '"Gold Vinyl"), narrowed by team, player, year or product. Answers questions like "which Broncos have Color Blasts", '
+      + '"every Kaboom of a Bills player", "what Downtowns came out in 2024". Returns each matching card with its product, set, '
+      + 'number, player and team. Then use search_sold_sales for prices of the cards the collector cares about.',
+    input_schema: { type: 'object', properties: {
+      set: { type: 'string', description: 'Insert or parallel name, e.g. "Color Blast"' },
+      team: { type: 'string', description: 'Optional team, e.g. "Denver Broncos" or "Broncos"' },
+      player: { type: 'string', description: 'Optional player name' },
+      year: { type: 'string', description: 'Optional year or range, e.g. "2024" or "2020-2025"' },
+      product: { type: 'string', description: 'Optional product words, e.g. "Optic" or "Donruss"' } }, required: ['set'] } },
   { name: 'market_top_sales',
     description: 'The football card market over a period: total sold, the most expensive sales and the most sold cards.',
     input_schema: { type: 'object', properties: { days: { type: 'integer', enum: [7, 30, 90, 365] } }, required: ['days'] } },
@@ -20309,6 +20320,7 @@ async function _bizRunTool(name, input) {
       if (!product || !player) return { error: 'Give a product id from find_checklist and a player.' };
       return _routeJson('/api/checklist-prices', { product, player });
     }
+    case 'search_checklists': return _searchChecklists(input);
     case 'market_top_sales': return _routeJson('/api/sold-stats', { days: String([7, 30, 90, 365].includes(Number(input.days)) ? Number(input.days) : 30) });
     case 'price_estimate': return _routeJson('/api/price-estimate', { q });
     case 'market_index': return _routeJson('/api/market-index', { days: String(_bizDays(input.days)) });
@@ -20321,6 +20333,71 @@ async function _bizRunTool(name, input) {
     default: return { error: 'Unknown tool ' + name };
   }
 }
+// Every checklist at once, by insert or parallel (owner, Nov 2026: "What
+// Denver Broncos have colorblasts?" got "I can't search across all players by
+// parallel"). The set index (scripts/build-set-index.js) finds the sets whose
+// name, or one of whose parallels, matches; only those products' checklists
+// are opened, and their cards filtered by team and player.
+let _setIndex = null, _setIndexAt = 0;
+const _ckWords = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+// "colorblast" and "color blast" are the same words to a collector.
+// A plural ("colorblasts", "Kabooms") is the set's name too.
+const _ckHas = (hay, words) => {
+  const h = _ckWords(hay).join(' '), parts = h.split(' '), squashed = h.replace(/ /g, '');
+  const one = (w) => parts.includes(w) || squashed.includes(w);
+  const word = (w) => one(w) || (w.length > 3 && w.endsWith('s') && one(w.slice(0, -1)));
+  const joined = words.join('');
+  return words.every(word) || squashed.includes(joined) || (joined.endsWith('s') && squashed.includes(joined.slice(0, -1)));
+};
+async function _searchChecklists(input) {
+  const setWords = _ckWords(input && input.set);
+  if (!setWords.length) return { error: 'Name the insert or parallel, e.g. "Color Blast".' };
+  const teamWords = _ckWords(input.team), playerWords = _ckWords(input.player), productWords = _ckWords(input.product);
+  const yr = String(input.year || '').match(/(19|20)\d\d/g) || [];
+  const yFrom = yr.length ? Number(yr[0]) : null, yTo = yr.length ? Number(yr[yr.length - 1]) : null;
+  if (!_setIndex || Date.now() - _setIndexAt > 6 * 3600e3) { _setIndex = await _loadJson('set-index.json'); _setIndexAt = Date.now(); }
+  const { products, sets } = _setIndex;
+  // Matching sets, grouped by product: by the set's name, or by a parallel.
+  const byProduct = new Map();
+  for (const [pi, setId, name, category, cards, par] of sets) {
+    const [pid, pname, year] = products[pi];
+    if (yFrom && !(year >= yFrom && year <= yTo)) continue;
+    if (productWords.length && !_ckHas(pname, productWords)) continue;
+    let parallel = null;
+    if (!_ckHas(name, setWords)) {
+      parallel = (par ? par.split('|') : []).find(x => _ckHas(x, setWords)) || null;
+      if (!parallel) continue;
+    }
+    if (!byProduct.has(pid)) byProduct.set(pid, { product: pid, name: pname, year, sets: [] });
+    byProduct.get(pid).sets.push({ setId, name, category, cards, parallel });
+  }
+  const MAX_PRODUCTS = 30, MAX_CARDS = 150;
+  const found = [...byProduct.values()].sort((a, b) => (b.year || 0) - (a.year || 0));
+  const out = [];
+  let total = 0, opened = 0;
+  for (const prod of found.slice(0, MAX_PRODUCTS)) {
+    let doc;
+    try { doc = await _loadJson(`checklists/${prod.product}.json`); } catch (_) { continue; }
+    opened++;
+    for (const want of prod.sets) {
+      const set = (doc.sets || []).find(x => x.id === want.setId && x.name === want.name) || (doc.sets || []).find(x => x.name === want.name);
+      if (!set) continue;
+      for (const c of set.cards || []) {
+        if (teamWords.length && !_ckHas(c.team, teamWords)) continue;
+        if (playerWords.length && !_ckHas(c.player, playerWords)) continue;
+        total++;
+        if (out.length < MAX_CARDS) out.push({ product: prod.name, set: want.name, parallel: want.parallel || undefined,
+          number: c.number || null, player: c.player, team: c.team || null, printRun: c.printRun || null });
+      }
+    }
+  }
+  return { set: input.set, team: input.team || null, player: input.player || null, year: input.year || null,
+    productsWithSet: found.length, productsSearched: opened, matches: total, cards: out,
+    note: found.length > MAX_PRODUCTS ? `Searched the ${MAX_PRODUCTS} newest of ${found.length} products with this set; give a year or product to reach older ones.`
+      : total > out.length ? `Showing ${out.length} of ${total}; narrow by year, product or team.` : undefined };
+}
+
 // Players whose cards sell like one player's (owner, Oct 2026: "what player
 // should I compare to Bo Nix's cards if his card doesn't have a sale"). From
 // the price block map (priceblocks:v1): every priced player's typical card
@@ -21052,7 +21129,7 @@ function _huddleInvRunner(user) {
 // What the page says while a lookup runs.
 const HUDDLE_TOOL_STATUS = {
   search_sold_sales: 'Checking sold prices', current_listings: 'Looking at listings for sale', comparable_players: 'Finding comparable players',
-  grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist',
+  grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist', search_checklists: 'Searching every checklist',
   market_top_sales: 'Reading the market', price_estimate: 'Estimating a price', market_index: 'Reading the market', player_trend: 'Charting the player',
   player_cards: 'Gathering the player\'s cards', my_inventory: 'Reading your inventory', remember: 'Saving a note about you', forget: 'Forgetting a note', add_inventory_card: 'Updating your inventory',
   edit_inventory_card: 'Updating your inventory', remove_inventory_card: 'Updating your inventory',
@@ -22708,7 +22785,7 @@ async function _bountyTellHolders(keys) {
   return told;
 }
 
-module.exports = { _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
