@@ -514,6 +514,11 @@ const PAGES = {
   "/sets/2022-panini-black-football/": [1, 18],
   "/players/tyrann-mathieu/": [1, 17],
   "/players/dat-nguyen/": [1, 17],
+  // Nov 2026: pages Google showed 50+ times in Sep 10-23 (Search Console
+  // export) that the price map hides today. Impressions without a click yet
+  // are still Google asking for the page.
+  "/players/frank-gore/": [0, 62],
+  "/players/chris-johnson/": [0, 50],
 };
 const norm = (p) => { const s = String(p || '').split(/[?#]/)[0]; return s.endsWith('/') ? s : s + '/'; };
 const NEVER = /^\/players\/mystery-rookie(-\d+)?\/$|^\/(basketball|baseball)\//;
