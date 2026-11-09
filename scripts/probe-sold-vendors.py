@@ -28,7 +28,7 @@ import sys
 import time
 import urllib.parse
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -257,10 +257,17 @@ def our_recent_days() -> None:
         out("  (could not read D1)")
     for row in rows:
         out(f"  {row['sold_date']}  {row['n']:>6,}")
+    out("  by sport and graded, last 21 days:")
+    for row in d1("SELECT COALESCE(sport,'?') AS sport, (grader IS NOT NULL) AS graded, COUNT(*) AS n, "
+                  "SUM(price_cents >= 10000) AS over100 FROM sales "
+                  "WHERE sold_date >= date('now','-21 day') GROUP BY 1,2 ORDER BY n DESC LIMIT 15"):
+        out(f"    {row['sport']:<12} graded={row['graded']}  {row['n']:>8,}  ($100+: {row['over100'] or 0:,})")
+    for row in d1("SELECT MAX(sold_date) AS last_day, COUNT(*) AS n FROM sales"):
+        out(f"  newest sale day in D1: {row['last_day']}; rows in total: {row['n']:,}")
 
 
 def main() -> int:
-    out(f"# Sold-data vendor probe, {datetime.utcnow():%Y-%m-%d %H:%M} UTC")
+    out(f"# Sold-data vendor probe, {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     out()
     for step in (our_recent_days, probe_openwebninja, probe_scrapedo):
         try:
