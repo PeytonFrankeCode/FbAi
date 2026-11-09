@@ -197,6 +197,40 @@ def probe_openwebninja() -> None:
     out(f"  VERDICT: sold results yes; page 40 {'yes' if deep else 'no'}; page 150 {'yes' if deeper else 'no'}")
 
 
+def probe_reliability() -> None:
+    """Pages 1-20, up to 5 tries each, spread over ~an hour.
+
+    Failed calls are not billed (checked on the dashboard: 10 calls, 3 used),
+    so the real questions are how many tries a page needs and whether deep
+    pages come back at all.
+    """
+    out("## OpenWeb Ninja reliability, pages 1-20")
+    if not OWN_KEY:
+        out("  OPENWEBNINJA_KEY is not set -- skipped")
+        return
+    tries_needed: list[int | None] = []
+    seen: set[str] = set()
+    started = time.time()
+    for page in range(1, 21):
+        got = None
+        for attempt in range(1, 6):
+            got = own_call(f"page {page}, try {attempt}", page=page)
+            if got:
+                break
+            time.sleep(20)
+        tries_needed.append(attempt if got else None)
+        if got:
+            ids = {own_id(p) for p in got} - {None}
+            out(f"      new item ids on this page: {len(ids - seen)} of {len(ids)}")
+            seen |= ids
+        time.sleep(90)
+    ok = [t for t in tries_needed if t]
+    calls = sum(t or 5 for t in tries_needed)
+    out(f"  pages that came back: {len(ok)} of 20; calls made {calls}, billed {len(ok)}")
+    out(f"  tries per page: {tries_needed}")
+    out(f"  distinct sales collected: {len(seen)}; minutes: {(time.time() - started) / 60:.0f}")
+
+
 # --------------------------------------------------------------------------
 # scrape.do
 # --------------------------------------------------------------------------
@@ -278,7 +312,7 @@ def main() -> int:
     out(f"# Sold-data vendor probe, {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     out()
     # scrape.do answered for good on 2026-11-09: it refuses sold searches outright.
-    for step in (probe_openwebninja,):
+    for step in (probe_reliability,):
         try:
             step()
         except Exception as e:  # one vendor failing must not hide the other's answer
