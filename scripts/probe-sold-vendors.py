@@ -269,7 +269,8 @@ def our_recent_days() -> None:
 def main() -> int:
     out(f"# Sold-data vendor probe, {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     out()
-    for step in (our_recent_days, probe_openwebninja, probe_scrapedo):
+    # scrape.do answered for good on 2026-11-09: it refuses sold searches outright.
+    for step in (probe_openwebninja,):
         try:
             step()
         except Exception as e:  # one vendor failing must not hide the other's answer
