@@ -158,7 +158,7 @@ def own_call(label: str, **params) -> list[dict] | None:
     out(f"      sale dates: {dict(sorted(((k or 'none'), v) for k, v in dates.items()))}")
     for p in products[:3]:
         out(f"      e.g. {p.get('price')} | {p.get('caption')} | {str(p.get('title'))[:70]}")
-    if products and label == "page 1":
+    if products and label.startswith("page 1"):
         out(f"      fields on a result: {sorted(products[0].keys())}")
     return products
 
@@ -168,7 +168,15 @@ def probe_openwebninja() -> None:
     if not OWN_KEY:
         out("  OPENWEBNINJA_KEY is not set -- skipped")
         return
-    p1 = own_call("page 1")
+    own_call("active listings (not sold), control", show_only="")
+    p1 = None
+    for attempt in range(1, 4):
+        p1 = own_call(f"page 1, try {attempt}")
+        if p1:
+            break
+        time.sleep(30)
+    if not p1:
+        p1 = own_call("page 1, sold + completed", show_only="sold_items,completed_items")
     if not p1:
         out("  VERDICT: no sold results came back")
         return
