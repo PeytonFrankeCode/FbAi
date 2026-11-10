@@ -1,0 +1,281 @@
+have   2026-onit-athlete-alabama-football
+have   2026-onit-athlete-arizona-state-football
+have   2026-onit-athlete-arkansas-football
+have   2026-onit-athlete-auburn-football
+have   2026-onit-athlete-boise-state-football
+have   2026-onit-athlete-florida-football
+have   2026-onit-athlete-florida-state-football
+have   2026-onit-athlete-georgia-tech-football
+have   2026-onit-athlete-illinois-football
+have   2026-onit-gravity-football
+have   2026-onit-athlete-iowa-state-football
+have   2026-onit-athlete-kansas-state-football
+have   2026-onit-athlete-louisville-football
+have   2026-onit-athlete-michigan-football
+have   2026-onit-athlete-missouri-football
+have   2026-onit-athlete-nebraska-football
+have   2026-onit-athlete-oklahoma-football
+have   2026-onit-athlete-oklahoma-state-football
+have   2026-onit-athlete-ole-miss-football
+have   2026-onit-athlete-penn-state-football
+have   2026-onit-athlete-pittsburgh-football
+have   2026-onit-athlete-tennessee-football
+have   2026-onit-athlete-texas-football
+have   2026-onit-athlete-texas-a-and-m-football
+have   2026-onit-athlete-texas-tech-football
+have   2026-onit-athlete-ucla-football
+have   2026-onit-athlete-usc-football
+have   2026-onit-athlete-west-virginia-football
+have   2025-onit-timeless-arizona-state-football
+have   2025-onit-timeless-arkansas-football
+have   2025-onit-timeless-auburn-football
+have   2025-onit-timeless-florida-football
+have   2025-onit-timeless-kansas-football
+have   2025-onit-timeless-lsu-football
+have   2025-onit-timeless-michigan-football
+have   2025-onit-timeless-nebraska-football
+have   2025-onit-timeless-ohio-state-football
+have   2025-onit-timeless-penn-state-football
+have   2025-onit-timeless-tennessee-football
+have   2025-onit-timeless-texas-football
+have   2025-onit-timeless-texas-a-and-m-football
+have   2025-onit-timeless-washington-football
+have   2025-onit-timeless-west-virginia-football
+have   2025-onit-gravity-alabama-football
+have   2025-onit-athlete-alabama-football
+have   2025-onit-gravity-arizona-state-football
+have   2025-onit-athlete-arizona-state-football
+have   2025-onit-gravity-arkansas-football
+have   2025-onit-athlete-arkansas-football
+have   2025-onit-athlete-boise-state-football
+have   2025-onit-gravity-florida-football
+have   2025-onit-athlete-florida-football
+have   2025-onit-gravity-florida-state-football
+have   2025-onit-athlete-florida-state-football
+have   2025-onit-black-indiana-football
+have   2025-onit-athlete-indiana-football
+have   2025-onit-athlete-indiana-football-commemorative-box
+have   2025-onit-gravity-iowa-state-football
+have   2025-onit-athlete-iowa-state-football
+have   2025-onit-gravity-kansas-football
+have   2025-onit-athlete-kansas-football
+have   2025-onit-gravity-kansas-state-football
+have   2025-onit-athlete-kansas-state-football
+have   2025-onit-black-lsu-football
+have   2025-onit-gravity-lsu-football
+have   2025-onit-athlete-lsu-football
+have   2025-onit-black-michigan-football
+have   2025-onit-gravity-michigan-football
+have   2025-onit-athlete-michigan-football
+have   2025-onit-gravity-missouri-football
+have   2025-onit-athlete-missouri-football
+have   2025-onit-black-nebraska-football
+have   2025-onit-gravity-nebraska-football
+have   2025-onit-athlete-nebraska-football
+have   2025-onit-black-ohio-state-football
+have   2025-onit-gravity-ohio-state-football
+have   2025-onit-athlete-ohio-state-football
+have   2025-onit-black-oklahoma-football
+have   2025-onit-gravity-oklahoma-football
+have   2025-onit-athlete-oklahoma-football
+have   2025-onit-gravity-oklahoma-state-football
+have   2025-onit-athlete-oklahoma-state-football
+have   2025-onit-black-penn-state-football
+have   2025-onit-gravity-penn-state-football
+have   2025-onit-athlete-penn-state-football
+have   2025-onit-black-south-carolina-football
+have   2025-onit-gravity-south-carolina-football
+have   2025-onit-athlete-south-carolina-football
+have   2025-onit-gravity-tennessee-football
+have   2025-onit-athlete-tennessee-football
+have   2025-onit-black-texas-football
+have   2025-onit-gravity-texas-football
+have   2025-onit-athlete-texas-football
+have   2025-onit-gravity-texas-a-and-m-football
+have   2025-onit-athlete-texas-a-and-m-football
+have   2025-onit-black-usc-football
+have   2025-onit-gravity-usc-football
+have   2025-onit-athlete-usc-football
+have   2025-onit-athlete-washington-football
+have   2025-onit-gravity-west-virginia-football
+have   2025-onit-athlete-west-virginia-football
+have   2024-onit-athlete-alabama-football
+have   2024-onit-athlete-app-state-football
+have   2024-onit-athlete-arizona-state-football
+have   2024-onit-athlete-arkansas-football
+have   2024-onit-athlete-auburn-football
+have   2024-onit-athlete-baylor-football
+have   2024-onit-athlete-boise-state-football
+have   2024-onit-athlete-boston-college-football
+have   2024-onit-athlete-cincinnati-football
+have   2024-onit-athlete-clemson-football
+have   2024-onit-athlete-florida-football
+have   2024-onit-athlete-florida-state-football
+have   2024-onit-athlete-fresno-state-football
+----- DUMP Team Set | Georgia | 2024
+CARD NUMBER No              Name     Pos
+TCS-1       54 Ali Hall              EC
+TCS-2       6    Anthony Evans III   XS
+TCS-3       22 Arian Smith           XS
+TCS-4       95 Ben Yurosek           UF
+TCS-5       59 Bo Hughley            PM
+TCS-6       33 Branson Robinson      SC
+TCS-7       44 Chauncey Bowens       SC
+TCS-8       43 Chaz Chambliss        PMC
+TCS-9       29 Chris Cole            JMC
+TCS-10      38 Chris Peal            EC
+TCS-11      63 Christen Miller       EM
+TCS-12      4    Cj Allen            JMC
+TCS-14      94 Cole Speer            XS
+TCS-16      93 Colton Heinrich       UF
+TCS-17      21 Damon Wilson II       PMC
+TCS-18      28 Dan Jackson           EC
+TCS-19      81 Daniel Calhoun        PM
+TCS-20      8    Daniel Harris       EC
+TCS-21      7    Daylen Everette     EC
+TCS-22      26 Demello Jones         EC
+TCS-23      97 Dillon Bell           XS
+TCS-24      7    Dominic Lovett      XS
+TCS-25      85 Drew Bobo             PM
+TCS-26      90 Drew Miller           Q
+TCS-27      31 Dwight Phillips Jr.   SC
+TCS-28      64 Dylan Fairchild       PM
+TCS-29      82 Earnest Greene III    PM
+TCS-30      2    Ellis Robinson IV   EC
+TCS-31      29 Gabe Harris Jr.       PMC
+TCS-32      25 Gunner Stockton       RC
+TCS-33      31 Jacorey Thomas        EC
+TCS-34      21 Jaden Rashada         RC
+TCS-35      34 Jaden Reddell         UF
+TCS-36      75 Jahzare Jackson       PM
+TCS-37      33 Jake Pope             EC
+TCS-38      22 Jalon Walker          JMC
+TCS-39      66 Jamaal Jarrett        EM
+TCS-40      83 Jamal Meriweather     PM
+TCS-41      66 Jared Wilson          PM
+TCS-42      9    Joenel Aguero       EC
+TCS-43   55 Jordan Hall             EM
+TCS-44   92 Jordan Thomas           EM
+TCS-45   23 Julian Humphrey         EC
+TCS-46   91 Justin Greene           EF
+TCS-47   19 Justin Williams         JMC
+TCS-48   9   Justyn Rhett           EC
+TCS-49   46 Kavon Townsend          XS
+TCS-50   5   Kj Bolden              EC
+TCS-51   39 Kris Jones              JMC
+TCS-52   42 Kyron Jones             EC
+TCS-53   8   Lawson Luckie          UF
+TCS-54   27 London Humphreys        XS
+TCS-55   62 Malachi Toliver         PM
+TCS-56   35 Malaki Starks           EC
+TCS-57   87 Marcus Harrison         PM
+TCS-58   69 Marques Easley          PM
+TCS-59   27 Maurice Hayes           DC
+TCS-60   67 Micah Morris            PM
+TCS-61   24 Michael Jackson III     XS
+TCS-62   63 Michael Uini            PM
+TCS-63   68 Monroe Freeling         PM
+TCS-64   24 Mykel Williams          EM
+TCS-65   67 Nasir Johnson           EM
+TCS-66   4   Nate Frazier           SC
+TCS-67   89 Nazir Stackhouse        EM
+TCS-68   3   Nitro Tuggle           XS
+TCS-69   95 Nnamdi Ogboko           EM
+TCS-70   79 Nyier Daniels           PM
+TCS-71   34 Ondre Evans             EC
+TCS-72   5   Oscar Delp             UF
+TCS-73   6   Raylen Wilson          JMC
+TCS-74   1   Roderick Robinson II   SC
+TCS-75   23 Ryan Puglisi            RC
+TCS-76   29 Sacovie White           XS
+TCS-77   37 Sam M Qfncb             PMC
+TCS-78   3   Smael Mondon Jr.       JMC
+TCS-78   69 Tate Ratledge           PM
+TCS-79   2   Trevor Etienne         SC
+TCS-81   97 Warren Brinson          EM
+TCS-82   84 Xavier Truss            PM
+TCS-83   94 Xzavier Mcleod          EM
+TCS-83   1   Troy Bowles         JMC
+TCS-85   44 Quintavius Johnson   PMC
+TCS-86   71 Beau Gardner         TO
+TCS-87   91 Peyton Woodring      QL
+TCS-88   93 Tyrion Ingram-Dawkins EM
+
+----- SETS
+  Base: 86 [TCS-1 Ali Hall | TCS-2 Anthony Evans III | TCS-3 Arian Smith]
+----- END
+have   2024-onit-athlete-georgia-football
+have   2024-onit-athlete-georgia-tech-football
+have   2024-onit-athlete-hawaii-football
+have   2024-onit-athlete-illinois-football
+have   2024-onit-athlete-iowa-state-football
+have   2024-onit-athlete-kansas-football
+have   2024-onit-athlete-kansas-state-football
+have   2024-onit-athlete-liberty-football
+have   2024-onit-athlete-lsu-football
+have   2024-onit-athlete-maryland-football
+have   2024-onit-athlete-michigan-football
+have   2024-onit-athlete-michigan-state-football
+have   2024-onit-athlete-minnesota-football
+have   2024-onit-athlete-mississippi-state-football
+have   2024-onit-athlete-missouri-football
+have   2024-onit-athlete-nc-state-football
+have   2024-onit-athlete-nebraska-football
+have   2024-onit-athlete-northwestern-football
+have   2024-onit-athlete-ohio-state-football
+have   2024-onit-athlete-oklahoma-state-football
+have   2024-onit-athlete-ole-miss-football
+have   2024-onit-athlete-oregon-state-football
+have   2024-onit-athlete-penn-state-football
+have   2024-onit-athlete-pittsburgh-football
+have   2024-onit-athlete-purdue-football
+have   2024-onit-athlete-san-diego-state-football
+have   2024-onit-athlete-south-carolina-football
+have   2024-onit-athlete-tcu-football
+have   2024-onit-athlete-tennessee-football
+have   2024-onit-athlete-texas-football
+have   2024-onit-athlete-texas-a-and-m-football
+have   2024-onit-athlete-texas-tech-football
+have   2024-onit-athlete-ucla-football
+have   2024-onit-athlete-utah-football
+have   2024-onit-athlete-virginia-tech-football
+have   2024-onit-athlete-wake-forest-football
+have   2024-onit-athlete-washington-football
+have   2024-onit-athlete-washington-state-football
+have   2024-onit-athlete-west-virginia-football
+have   2024-onit-athlete-wyoming-football
+EMPTY  Team Set | Alabama | 2023
+EMPTY  Team Set | Auburn | 2023
+EMPTY  Team Set | Baylor | 2023
+EMPTY  Team Set | Boise State | 2023
+EMPTY  Team Set | BYU | 2023
+EMPTY  Team Set | Cal | 2023
+EMPTY  Team Set | Colorado | 2023
+EMPTY  Team Set | Florida | 2023
+EMPTY  Team Set | Florida State | 2023
+EMPTY  Team Set | Michigan State | 2023
+EMPTY  Team Set | Mississippi State | 2023
+EMPTY  Team Set | Missouri | 2023
+EMPTY  Team Set | NC State | 2023
+EMPTY  Team Set | Nebraska | 2023
+EMPTY  Team Set | Ohio State | 2023
+EMPTY  Team Set | Oklahoma | 2023
+EMPTY  Team Set | Oregon State | 2023
+EMPTY  Team Set | TCU | 2023
+EMPTY  Team Set | Tennessee | 2023
+EMPTY  Team Set | Texas | 2023
+EMPTY  Team Set | Texas Tech | 2023
+EMPTY  Team Set | Utah | 2023
+EMPTY  Team Set | Washington | 2023
+EMPTY  Team Set | West Virginia | 2023
+have   2022-onit-athlete-boise-state-football
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+have   2022-onit-athlete-oregon-football
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+Syntax Warning: Invalid Font Weight
+have   2022-onit-athlete-washington-football
+
+196 football checklists: 0 to write, 157 already here, 24 failed
