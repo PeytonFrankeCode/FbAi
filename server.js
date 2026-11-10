@@ -9833,222 +9833,59 @@ function _d1UsageBody(req, res) {
 // oversight worth naming — the access was here the whole time.
 //
 // Read-only, and cached, because it is a decision aid rather than a page.
-const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's football URLs, checked by test/set-key.test.js so it cannot
 // drift silently away from what build-landing-pages.js emits. Football only:
 // the basketball and baseball pages have no sold data to be priced by.
 // Under the 4,000-page cap (owner, Oct 2026): every football page built is
 // offered to search, plus the home page and four hand-written pages (one is /ai).
 const INDEXABLE_URLS = 3703;
+// Rebuilt on the nightly price map (Nov 2026). The first version scanned the
+// whole sales table three times, grouped on normalised columns, to decide
+// whether price blocks were worth building; they were built, and the table
+// outgrew the scan (every call hit D1's CPU limit). The question left is the
+// one asked of a single page: does it carry prices, and if not, why not. The
+// map answers that for nothing: it is what fills the blocks and decides
+// noindex. ?page=/players/bo-nix/ (or ?player=bo-nix, ?set=2024-panini-prizm-football).
+const { isEarner: _isSearchEarner } = require('./search-earners');
+function _coverageKey(q) {
+  if (q.player) return { key: `player:${String(q.player).toLowerCase()}`, path: `/players/${String(q.player).toLowerCase()}/` };
+  if (q.set) return { key: `set:${String(q.set).toLowerCase()}`, path: `/sets/${String(q.set).toLowerCase()}/` };
+  const m = String(q.page || '').replace(/^https?:\/\/[^/]+/, '').replace(/[?#].*$/, '').replace(/\/+$/, '')
+    .match(/^\/(sets|players)\/([^/]+)(?:\/([^/]+))?$/);
+  if (!m) return null;
+  const [, kind, id, sub] = m;
+  const key = kind === 'players' ? `player:${id}` : sub ? `subset:${id}/${sub}` : `set:${id}`;
+  return { key, path: `/${kind}/${id}/${sub ? sub + '/' : ''}` };
+}
 app.get('/api/debug/price-coverage', async (req, res) => {
-  const db = getNflDb();
-  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
-
-  const cached = await cacheGet('pricecoverage:v3');
-  if (cached && !req.query.fresh) return res.json(_fromCache(cached));
-
-  // A set must clear both bars before a price block is worth rendering on its
-  // page. Reported against rather than enforced — the point is to find out
-  // whether these are the right numbers.
-  const WANT_SALES = 20, WANT_CARDS = 10;
-
-  try {
-    const Y = _normCol('year'), S = _normCol('set_name');
-    const CARD = `${_normCol('player')} || '|' || ${_normCol('card_number')}`;
-    const WHERE = `price_cents IS NOT NULL AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
-
-    const P = _normCol('player');
-    // Three scans of the same table rather than one. Each aggregate groups by
-    // something different, so they cannot be merged, and at ~473k rows this
-    // costs about 1.4M rows read per uncached call — fractions of a cent, and
-    // the result is cached for an hour. Worth stating rather than discovering.
-    const [totals, bySet, byPlayer] = await Promise.all([
-      db.prepare(`SELECT COUNT(*) AS n, MIN(sold_date) AS first, MAX(sold_date) AS last
-                  FROM sales WHERE ${WHERE}`).first(),
-      // One row per set name — a few thousand at most, not one query per page.
-      db.prepare(`SELECT ${Y} AS y, ${S} AS s, COUNT(*) AS n, COUNT(DISTINCT ${CARD}) AS cards
-                  FROM sales WHERE ${WHERE} AND ${S} <> ''
-                  GROUP BY y, s ORDER BY n DESC`).all(),
-      db.prepare(`SELECT ${P} AS p, COUNT(*) AS n, COUNT(DISTINCT ${CARD}) AS cards
-                  FROM sales WHERE ${WHERE} AND ${P} <> ''
-                  GROUP BY p ORDER BY n DESC`).all(),
-    ]);
-
-    // The checklist side. index.json carries id/name/year for all 361 products
-    // in 82 KB — enough to build the key without loading a single checklist.
-    const idx = await _loadJson('checklists/index.json');
-    const products = (idx && idx.products) || [];
-
-    // The join lives in set-key.js, which is where the reasoning and the tests
-    // are. The short version: this used to key on year + brand, which sent 37%
-    // of priced sales to no product at all and gave three different Donruss
-    // sets identical figures. It keys on the product name now.
-    const rows = (bySet && bySet.results) || [];
-    // Same aliases the price build uses, or this report would show orphans the
-    // site has already been told how to resolve.
-    const { index: setIndex, ambiguous } = buildJoinIndex(products, undefined, await setAliases());
-
-    // Several sale groups can reach one product — "prizm" and "panini prizm"
-    // are the same set written two ways — so this accumulates rather than
-    // looks up.
-    const agg = new Map();
-    const orphans = [];
-    for (const r of rows) {
-      const p = matchSale(setIndex, r.y, r.s);
-      if (!p) { orphans.push(r); continue; }
-      let a = agg.get(p.id);
-      if (!a) { a = { p, n: 0, cardsFloor: 0, cardsCeil: 0, groups: 0 }; agg.set(p.id, a); }
-      a.n += Number(r.n || 0);
-      a.groups++;
-      // Sales add up exactly. Distinct cards do not: a card that sold under
-      // both spellings is counted twice by the sum and once by the largest
-      // group, so the true figure sits between them. The threshold is applied
-      // to the floor, because overstating coverage is the failure this whole
-      // endpoint exists to avoid.
-      const c = Number(r.cards || 0);
-      a.cardsCeil += c;
-      if (c > a.cardsFloor) a.cardsFloor = c;
-    }
-
-    const matched = [...agg.values()];
-    const clears = matched.filter(a => a.n >= WANT_SALES && a.cardsFloor >= WANT_CARDS);
-    const orphanSales = orphans.reduce((n, r) => n + Number(r.n || 0), 0);
-
-    const share = products.length ? Math.round((100 * clears.length) / products.length) : 0;
-
-    // ---- the player pages ----
-    //
-    // Product pages are 371 of the 2,173 indexable URLs. Player pages are
-    // 1,228 — more than half the site — so "would a price block fill the
-    // pages" is mostly a question about these, and answering it only for sets
-    // would have answered the smaller half while sounding like the whole.
-    //
-    // Same join discipline: variants on both sides, ambiguity dropped rather
-    // than guessed, orphans reported. The hazard here is the generational
-    // suffix instead of the manufacturer prefix.
-    let playerPages = { available: false, reason: 'players/index.json not built' };
-    try {
-      const pidx = await _loadJson('players/index.json');
-      const pages = (pidx && pidx.players) || [];
-      const { index: playerIndex, ambiguous: pAmbiguous } = buildJoinIndex(pages, playerKeys);
-
-      const pAgg = new Map();
-      const pOrphans = [];
-      for (const r of (byPlayer && byPlayer.results) || []) {
-        const hit = matchPlayer(playerIndex, r.p);
-        if (!hit) { pOrphans.push(r); continue; }
-        let a = pAgg.get(hit.slug);
-        if (!a) { a = { p: hit, n: 0, cardsFloor: 0, cardsCeil: 0, spellings: 0 }; pAgg.set(hit.slug, a); }
-        a.n += Number(r.n || 0);
-        a.spellings++;
-        const c = Number(r.cards || 0);
-        a.cardsCeil += c;
-        if (c > a.cardsFloor) a.cardsFloor = c;
-      }
-
-      // Indexable pages are the ones in the sitemap and so the ones a reviewer
-      // or a crawler actually sees. The rest are built but carry noindex, and
-      // filling them changes nothing anyone looks at.
-      const indexable = pages.filter(p => p.indexable);
-      const pClears = [...pAgg.values()]
-        .filter(a => a.p.indexable && a.n >= WANT_SALES && a.cardsFloor >= WANT_CARDS);
-      const pOrphanSales = pOrphans.reduce((n, r) => n + Number(r.n || 0), 0);
-
-      playerPages = {
-        available: true,
-        pages: pages.length,
-        indexablePages: indexable.length,
-        matchedToSales: pAgg.size,
-        indexableClearingThreshold: pClears.length,
-        shareOfIndexablePagesWithUsablePrices: indexable.length
-          ? Math.round((100 * pClears.length) / indexable.length) + '%' : 'n/a',
-        salesUnderUnmatchedPlayers: {
-          sales: pOrphanSales,
-          share: (totals && totals.n) ? Math.round((100 * pOrphanSales) / totals.n) + '%' : 'n/a',
-          examples: pOrphans.slice(0, 10).map(r => ({ player: r.p, sales: r.n })),
-        },
-        // Two pages answering to one name. Some are real father/son pairs the
-        // suffix strip collapses and the join is right to refuse; some are the
-        // same player catalogued twice under different punctuation, which is a
-        // duplicate page rather than a join problem.
-        ambiguousNames: pAmbiguous.length,
-        ambiguousExamples: pAmbiguous.slice(0, 8),
-      };
-    } catch (err) {
-      playerPages = { available: false, reason: String(err && err.message) };
-    }
-    const payload = {
-      available: true,
-      generatedAt: new Date().toISOString(),
-      dataset: {
-        pricedSales: (totals && totals.n) || 0,
-        from: totals && totals.first, to: totals && totals.last,
-        distinctSetNames: rows.length,
-      },
-      thresholds: { minSales: WANT_SALES, minDistinctCards: WANT_CARDS },
-      products: products.length,
-      matchedToSales: matched.length,
-      clearingThreshold: clears.length,
-      shareOfProductsWithUsablePrices: share + '%',
-      // A large figure here means the join key is wrong rather than the data
-      // being absent, and that is worth knowing before anything is built on it.
-      // It was 37% on the year+brand key; that is what sent it back.
-      salesUnderUnclaimedSetNames: {
-        sales: orphanSales,
-        share: (totals && totals.n) ? Math.round((100 * orphanSales) / totals.n) + '%' : 'n/a',
-        examples: orphans.slice()
-          .sort((a, b) => Number(b.n || 0) - Number(a.n || 0)).slice(0, 10)
-          .map(r => ({ year: r.y, set: r.s, sales: r.n })),
-      },
-      // Expected to be empty. A key two products both answer to is dropped
-      // rather than given to one of them, so anything listed here is a page
-      // that will show no prices until the catalogue names it distinctly.
-      ambiguousKeys: ambiguous.slice(0, 10),
-      playerPages,
-      best: matched.slice().sort((a, b) => b.n - a.n).slice(0, 15)
-        .map(a => ({
-          product: a.p.name, sales: a.n,
-          soldCards: a.cardsFloor, soldCardsUpperBound: a.cardsCeil,
-          spellings: a.groups, catalogued: a.p.totalCards,
-        })),
-      // The decision is about PAGES, not products, and those are not the same
-      // number: 361 product pages sit alongside 1,228 player pages, 538 subset
-      // pages and 32 team pages in a 2,173-URL sitemap. A product-only share
-      // answers a sixth of the site while sounding like the whole of it, which
-      // is how the first version of this endpoint managed to be confidently
-      // wrong. So the verdict counts pages that would actually carry numbers.
-      //
-      // Subset and team pages are NOT counted. They would need their own join
-      // — set name plus subset name — which has not been measured, and
-      // guessing it here would repeat the mistake this endpoint just caught.
-      // The figure is therefore a floor.
-      pagesFilled: (() => {
-        const pp = playerPages.available ? playerPages.indexableClearingThreshold : 0;
-        const filled = clears.length + pp;
-        return {
-          indexableUrls: INDEXABLE_URLS,
-          productPages: clears.length,
-          playerPages: pp,
-          subsetAndTeamPages: 'not measured — needs a subset-level join',
-          atLeast: filled,
-          share: Math.round((100 * filled) / INDEXABLE_URLS) + '%',
-        };
-      })(),
-      verdict: (() => {
-        const pp = playerPages.available ? playerPages.indexableClearingThreshold : 0;
-        const pageShare = (100 * (clears.length + pp)) / INDEXABLE_URLS;
-        if (!playerPages.available) return 'Incomplete — the player side did not load, and it is the larger half.';
-        if (pageShare >= 40) return 'Build it — most indexable pages would carry real numbers.';
-        if (pageShare >= 15) return 'Build it for the qualifying pages only, and leave the rest with no price block rather than an empty one.';
-        return 'Not yet — a price block would render empty on most pages, which is worse than showing none.';
-      })(),
+  let map = null;
+  try { map = await cacheGet(PRICE_BLOCKS_KEY); } catch (_) { /* reported below */ }
+  if (!map || !map.pages) return res.json({ available: false, reason: 'the price map has not been built yet (cron)' });
+  const pages = map.pages;
+  const keys = Object.keys(pages);
+  const count = (pre) => keys.filter(k => k.startsWith(pre)).length;
+  const out = {
+    available: true,
+    map: { built: map.built || null, window: { from: map.from || null, to: map.to || null } },
+    thresholds: { minSales: PRICE_CORE.MIN_SALES, minDistinctCards: PRICE_CORE.MIN_CARDS },
+    pricedPages: { total: keys.length, players: count('player:'), products: count('set:'), subsets: count('subset:') },
+    indexableUrls: INDEXABLE_URLS,
+  };
+  const want = _coverageKey(req.query || {});
+  if (want) {
+    const e = pages[want.key] || null;
+    const earner = _isSearchEarner(want.path);
+    out.page = {
+      path: want.path, key: want.key, priced: !!e,
+      sales: e ? e.sales : null, cards: e ? e.cards : null, median: e ? e.median : null,
+      searchEarner: earner,
+      inSearch: !!e || earner,
+      why: e ? 'Priced: the page carries its price block and is offered to search.'
+        : earner ? 'No price block, but Google already sends it clicks (search-earners.js), so it stays in search.'
+        : `No price block: fewer than ${PRICE_CORE.MIN_SALES} matched sales or ${PRICE_CORE.MIN_CARDS} distinct cards in the window, so it is served noindex until it has them.`,
     };
-    cachePut('pricecoverage:v3', payload, PRICE_COVERAGE_TTL);
-    res.json(payload);
-  } catch (err) {
-    console.error('[price-coverage]', err && err.message);
-    res.json({ available: false, error: String(err && err.message) });
   }
+  res.json(out);
 });
 
 // ---- How accurate is the market? ----
