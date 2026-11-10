@@ -248,6 +248,29 @@ def football_price_cutoffs() -> None:
         out(f"  ${dollars:>3}+ : {n / nd:>8,.0f} a day")
 
 
+def keep_latest_n_cost() -> None:
+    """If every card+grade kept its latest N sales forever, how many rows is that?"""
+    out("## Rows kept forever if each card + grade keeps its latest N sales")
+    r = d1("SELECT COUNT(*) AS groups, SUM(n) AS rows_, "
+           "SUM(MIN(n,5)) AS k5, SUM(MIN(n,10)) AS k10, SUM(MIN(n,15)) AS k15, "
+           "SUM(MIN(n,20)) AS k20, SUM(MIN(n,25)) AS k25, "
+           "SUM(n=1) AS once, SUM(n BETWEEN 2 AND 5) AS few, SUM(n>15) AS over15 FROM "
+           "(SELECT COUNT(*) AS n FROM sales WHERE card_key IS NOT NULL "
+           "GROUP BY card_key, COALESCE(grader,''), COALESCE(grade,''))")
+    if not r:
+        return
+    r = r[0]
+    out(f"  card+grade groups: {r['groups']:,}; sales with a card: {r['rows_']:,}")
+    out(f"  groups sold once: {r['once']:,}; 2-5 times: {r['few']:,}; over 15: {r['over15']:,}")
+    for n in (5, 10, 15, 20, 25):
+        out(f"  keep latest {n:>2}: {r['k'+str(n)]:>10,} rows")
+    nk = d1("SELECT COUNT(*) AS n FROM sales WHERE card_key IS NULL")
+    out(f"  sales with no card match (nothing to group on): {nk[0]['n']:,}" if nk else "")
+    days = d1("SELECT MIN(sold_date) AS a, MAX(sold_date) AS b, COUNT(DISTINCT sold_date) AS d FROM sales")
+    if days:
+        out(f"  span: {days[0]['a']} to {days[0]['b']}, {days[0]['d']} days with sales")
+
+
 # --------------------------------------------------------------------------
 # scrape.do
 # --------------------------------------------------------------------------
@@ -329,7 +352,7 @@ def main() -> int:
     out(f"# Sold-data vendor probe, {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     out()
     # scrape.do answered for good on 2026-11-09: it refuses sold searches outright.
-    for step in (football_price_cutoffs,):
+    for step in (keep_latest_n_cost,):
         try:
             step()
         except Exception as e:  # one vendor failing must not hide the other's answer
