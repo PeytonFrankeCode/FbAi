@@ -20072,6 +20072,20 @@ const BIZ_AI_TOOLS = [
       player: { type: 'string', description: 'Optional player name' },
       year: { type: 'string', description: 'Optional year or range, e.g. "2024" or "2020-2025"' },
       product: { type: 'string', description: 'Optional product words, e.g. "Optic" or "Donruss"' } }, required: ['set'] } },
+  { name: 'product_overview',
+    description: 'Everything in one product: its base set, inserts, autographs and memorabilia sets with card counts, and each set\'s '
+      + 'parallels with print runs. Answers "what parallels does 2025 Prizm have", "how many inserts are in Optic", "what is numbered '
+      + 'in Select". Use find_checklist first for the product id.',
+    input_schema: { type: 'object', properties: { product: { type: 'string', description: 'Product id from find_checklist' },
+      set: { type: 'string', description: 'Optional words to show only matching sets, e.g. "Base" or "Autographs"' } }, required: ['product'] } },
+  { name: 'top_players',
+    description: 'The players whose cards are selling most right now (Card Huddle sales over the last weeks), with each one\'s sales, '
+      + 'typical card price and best-selling cards. Narrow by NFL team ("hottest Bills cards", "most traded Broncos") or by a '
+      + 'year and set in the card names ("2025 Prizm" for the rookie class in Prizm). Sort by sales (default) or by price.',
+    input_schema: { type: 'object', properties: {
+      team: { type: 'string', description: 'Optional NFL team, e.g. "Buffalo Bills" or "Bills"' },
+      set: { type: 'string', description: 'Optional year and set words the cards must carry, e.g. "2025 Prizm"' },
+      sort: { type: 'string', enum: ['sales', 'price'] } }, required: [] } },
   { name: 'market_top_sales',
     description: 'The football card market over a period: total sold, the most expensive sales and the most sold cards.',
     input_schema: { type: 'object', properties: { days: { type: 'integer', enum: [7, 30, 90, 365] } }, required: ['days'] } },
@@ -20158,6 +20172,8 @@ async function _bizRunTool(name, input) {
       return _routeJson('/api/checklist-prices', { product, player });
     }
     case 'search_checklists': return _searchChecklists(input);
+    case 'product_overview': return _productOverview(input);
+    case 'top_players': return _topPlayers(input);
     case 'market_top_sales': return _routeJson('/api/sold-stats', { days: String([7, 30, 90, 365].includes(Number(input.days)) ? Number(input.days) : 30) });
     case 'price_estimate': return _routeJson('/api/price-estimate', { q });
     case 'market_index': return _routeJson('/api/market-index', { days: String(_bizDays(input.days)) });
@@ -20233,6 +20249,58 @@ async function _searchChecklists(input) {
     productsWithSet: found.length, productsSearched: opened, matches: total, cards: out,
     note: found.length > MAX_PRODUCTS ? `Searched the ${MAX_PRODUCTS} newest of ${found.length} products with this set; give a year or product to reach older ones.`
       : total > out.length ? `Showing ${out.length} of ${total}; narrow by year, product or team.` : undefined };
+}
+
+// One product's sets and parallels (Nov 2026): "what parallels does 2025
+// Prizm have" had no lookup; checklist_prices answers for one player only.
+async function _productOverview(input) {
+  const id = String((input && input.product) || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120);
+  if (!id) return { error: 'Give a product id from find_checklist.' };
+  let doc;
+  try { doc = await _loadJson(`checklists/${id}.json`); } catch (_) { return { error: `No checklist "${id}"; use find_checklist.` }; }
+  const want = _ckWords(input.set);
+  const sets = (doc.sets || []).filter(x => !want.length || _ckHas(x.name, want)).map(x => ({
+    set: x.name, category: x.category || null, cards: (x.cards || []).length || x.totalCards || 0,
+    parallels: (x.parallels || []).map(p => p.printRun ? `${p.name} /${p.printRun}` : p.name),
+  }));
+  return { product: doc.name, year: doc.year, sets: sets.length, totalCards: sets.reduce((n, x) => n + x.cards, 0), list: sets };
+}
+
+// Who is selling most right now (Nov 2026), from the nightly price map, by
+// team (the set index's player teams) or by the set in the card names.
+let _playerNames = null, _playerNamesAt = 0;
+async function _topPlayers(input) {
+  const map = await cacheGet(PRICE_BLOCKS_KEY).catch(() => null);
+  if (!map || !map.pages) return { error: 'The sales map is not built yet; try again later.' };
+  if (!_setIndex || Date.now() - _setIndexAt > 6 * 3600e3) { _setIndex = await _loadJson('set-index.json'); _setIndexAt = Date.now(); }
+  if (!_playerNames || Date.now() - _playerNamesAt > 6 * 3600e3) {
+    const pidx = await _loadJson('players/index.json').catch(() => null);
+    _playerNames = new Map(((pidx && pidx.players) || []).map(p => [p.slug, p.name]));
+    _playerNamesAt = Date.now();
+  }
+  const teamWords = _ckWords(input && input.team), setWords = _ckWords(input && input.set);
+  const teams = (_setIndex && _setIndex.teams) || {};
+  const rows = [];
+  for (const [key, e] of Object.entries(map.pages)) {
+    if (!key.startsWith('player:') || !e) continue;
+    const slug = key.slice(7), team = teams[slug] || null;
+    if (teamWords.length && !(team && _ckHas(team, teamWords))) continue;
+    let top = e.top || [], sales = Number(e.sales) || 0, median = e.median;
+    if (setWords.length) {
+      top = top.filter(t => _ckHas(t.label, setWords));
+      if (!top.length) continue;
+      sales = top.reduce((n, t) => n + (Number(t.sales) || 0), 0);
+      const meds = top.map(t => Number(t.median)).filter(Number.isFinite).sort((a, b) => a - b);
+      median = meds.length ? meds[Math.floor(meds.length / 2)] : null;
+    }
+    rows.push({ player: _playerNames.get(slug) || slug, team, sales, typicalPrice: median,
+      bestSellers: top.slice(0, 3).map(t => ({ card: t.label, sales: t.sales, median: t.median })) });
+  }
+  const byPrice = input && input.sort === 'price';
+  rows.sort((a, b) => byPrice ? (Number(b.typicalPrice) || 0) - (Number(a.typicalPrice) || 0) : b.sales - a.sales);
+  return { window: { from: map.from || null, to: map.to || null }, team: input.team || null, set: input.set || null,
+    sortedBy: byPrice ? 'typical price' : 'sales', players: rows.length, top: rows.slice(0, 15),
+    note: setWords.length ? 'Counts only each player\'s best-selling cards that name this set, so it is a floor.' : undefined };
 }
 
 // Players whose cards sell like one player's (owner, Oct 2026: "what player
@@ -20966,7 +21034,7 @@ function _huddleInvRunner(user) {
 // What the page says while a lookup runs.
 const HUDDLE_TOOL_STATUS = {
   search_sold_sales: 'Checking sold prices', current_listings: 'Looking at listings for sale', comparable_players: 'Finding comparable players',
-  grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist', search_checklists: 'Searching every checklist',
+  grading_advice: 'Working out grading', find_checklist: 'Finding the checklist', checklist_prices: 'Pricing the checklist', search_checklists: 'Searching every checklist', product_overview: 'Reading the product', top_players: 'Finding the hottest players',
   market_top_sales: 'Reading the market', price_estimate: 'Estimating a price', market_index: 'Reading the market', player_trend: 'Charting the player',
   player_cards: 'Gathering the player\'s cards', my_inventory: 'Reading your inventory', remember: 'Saving a note about you', forget: 'Forgetting a note', add_inventory_card: 'Updating your inventory',
   edit_inventory_card: 'Updating your inventory', remove_inventory_card: 'Updating your inventory',
@@ -22622,7 +22690,7 @@ async function _bountyTellHolders(keys) {
   return told;
 }
 
-module.exports = { _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
