@@ -265,7 +265,7 @@ if (require.main === module) (async () => {
       fs.writeFileSync(pdf, await get(item.pdf, 'buffer'));
       const text = execFileSync('pdftotext', ['-layout', pdf, '-'], { encoding: 'utf8' });
       if (process.env.ONIT_DUMP && process.env.ONIT_DUMP.split('|').some(d => `${item.year} ${item.brand} ${item.school}`.toLowerCase() === d)) {
-        console.log(`----- DUMP ${label}\n${unshift(text).slice(0, 7000)}\n----- SETS`);
+        console.log(`----- DUMP ${label}\n${unshift(text).slice(0, 60000)}\n----- SETS`);
         for (const s of parseChecklistText(text)) console.log(`  ${s.name}: ${s.cards.length} [${s.cards.slice(0, 3).map(c => c.number + ' ' + c.player).join(' | ')}]${s.parallels ? ' par ' + s.parallels.length : ''}`);
         console.log('----- END');
       }
