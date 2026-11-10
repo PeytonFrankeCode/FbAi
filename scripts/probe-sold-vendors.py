@@ -231,6 +231,23 @@ def probe_reliability() -> None:
     out(f"  distinct sales collected: {len(seen)}; minutes: {(time.time() - started) / 60:.0f}")
 
 
+def football_price_cutoffs() -> None:
+    """Where would a 10,000-a-day cap land if it took the priciest sales first?"""
+    out("## Football sales per day by price (days with a full collection)")
+    days = d1("SELECT sold_date, COUNT(*) AS n FROM sales WHERE sport='football' "
+              "AND sold_date BETWEEN '2026-10-01' AND '2026-10-30' AND price_cents IS NOT NULL "
+              "GROUP BY sold_date HAVING n > 10000")
+    nd = len(days)
+    out(f"  full days used: {nd}")
+    if not nd:
+        return
+    q = ("SELECT SUM(price_cents >= {c}) AS n FROM sales WHERE sport='football' "
+         "AND sold_date IN (%s) AND price_cents IS NOT NULL") % ",".join(f"'{d['sold_date']}'" for d in days)
+    for dollars in (100, 50, 25, 15, 10, 7, 5, 3, 2, 1, 0):
+        n = d1(q.format(c=dollars * 100))[0]["n"] or 0
+        out(f"  ${dollars:>3}+ : {n / nd:>8,.0f} a day")
+
+
 # --------------------------------------------------------------------------
 # scrape.do
 # --------------------------------------------------------------------------
@@ -312,7 +329,7 @@ def main() -> int:
     out(f"# Sold-data vendor probe, {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     out()
     # scrape.do answered for good on 2026-11-09: it refuses sold searches outright.
-    for step in (probe_reliability,):
+    for step in (football_price_cutoffs,):
         try:
             step()
         except Exception as e:  # one vendor failing must not hide the other's answer
