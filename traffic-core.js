@@ -33,7 +33,20 @@ const DATACENTER_ASNS = new Map([
   [36352, 'ColoCrossing'], [53667, 'FranTech/BuyVM'], [46844, 'Sharktech'], [62567, 'DigitalOcean'],
   [396356, 'Latitude.sh'], [212238, 'Datacamp/CDN77'], [60068, 'Datacamp/CDN77'], [40021, 'Contabo US'],
   [174, 'Cogent'], [3223, 'Voxility'], [49981, 'WorldStream'], [202425, 'IP Volume'],
+  // Nov 11 2026: a wave of browser-looking page views, ads shown, 1.4k views
+  // at $0.04 RPM. Every one of these hosting and proxy networks was counted as
+  // a person. (The audit read the visitor tallies straight from KV.)
+  [203466, 'INTROSERV'], [207990, 'HostRoyale'], [203020, 'HostRoyale'], [30058, 'FDCservers/code200'],
+  [10557, 'UAB code200'], [214483, 'RapidSeedbox'], [11798, 'Ace Data Centers'], [46261, 'Aventice'],
 ]);
+
+// A network the list has not met yet, known by its own name: people browse
+// from ISPs and phone carriers, not from a "hosting" or "server" company. The
+// words are the ones hosting companies name themselves with; an ISP's name
+// carries none of them. Cloudflare (13335) is left out on purpose: iCloud
+// Private Relay and WARP put real iPhone users on it.
+const HOSTING_ORG = /\b(hosting|hostroyale|host(ers?)?|servers?|data ?cent(er|re)s?|dedicated|vps|colo(cation)?|seedbox|proxy|proxies|cloud)\b|code200|introserv|datacamp|leaseweb|hetzner|contabo|ovh|linode|vultr|choopa/i;
+const isHostingOrg = (org) => !!org && HOSTING_ORG.test(String(org));
 
 const BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|python-urllib|aiohttp|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|node-fetch|undici|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity|amazonbot|applebot|yandex|baiduspider|sogou/i;
 
@@ -65,12 +78,13 @@ function newTally(day) {
 }
 
 // What kind of visitor this is, in order of how sure we are.
-function classify({ ua = '', asn = null, verifiedBot = false }) {
+function classify({ ua = '', asn = null, asOrg = '', verifiedBot = false }) {
   if (isBlockedBot(ua)) return 'blockedBot';
   if (verifiedBot) return 'verifiedBot';
   if (!ua) return 'noUa';
   if (BOT_UA.test(ua)) return 'declaredBot';
   if (asn != null && DATACENTER_ASNS.has(Number(asn))) return 'datacenter';
+  if (Number(asn) !== 13335 && isHostingOrg(asOrg)) return 'datacenter';
   return 'human';
 }
 
@@ -124,4 +138,4 @@ function mergeTallies(tallies) {
   };
 }
 
-module.exports = { TALLY_COUNTS, BLOCKED_BOTS, isBlockedBot, DATACENTER_ASNS, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
+module.exports = { TALLY_COUNTS, BLOCKED_BOTS, isBlockedBot, DATACENTER_ASNS, isHostingOrg, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
