@@ -15127,6 +15127,8 @@ function syncCommunityComposerState() {
     btn.textContent = user ? 'Post' : 'Sign in to post';
     btn.classList.toggle('community-post-btn-locked', !user);
   }
+  const prompt = document.querySelector('#community-create .community-create-input');
+  if (prompt) prompt.textContent = user ? 'Create a post' : 'Sign in to post';
   const avatar = document.getElementById('community-composer-avatar');
   if (avatar) {
     if (user) {
@@ -15137,6 +15139,35 @@ function syncCommunityComposerState() {
       avatar.style.background = '';
     }
   }
+}
+
+// The composer opens from the "Create a post" bar (Nov 2026: the old one
+// showed five fields at once). Card, price and link sit behind "Card".
+function openCommunityComposer() {
+  if (!getCurrentUser() || !getSessionToken()) { showLogin(); return; }
+  const box = document.getElementById('community-compose');
+  const bar = document.getElementById('community-create');
+  if (!box) return;
+  box.classList.remove('hidden');
+  if (bar) bar.classList.add('open');
+  const ta = document.getElementById('community-message');
+  if (ta) setTimeout(() => ta.focus(), 0);
+}
+function closeCommunityComposer() {
+  const box = document.getElementById('community-compose');
+  const bar = document.getElementById('community-create');
+  if (box) box.classList.add('hidden');
+  if (bar) bar.classList.remove('open');
+  hideCommunityError();
+}
+function toggleCommunityDetails(force) {
+  const d = document.getElementById('community-composer-details');
+  const btn = document.getElementById('community-details-toggle');
+  if (!d) return;
+  const show = typeof force === 'boolean' ? force : d.classList.contains('hidden');
+  d.classList.toggle('hidden', !show);
+  if (btn) btn.classList.toggle('active', show);
+  if (show) { const t = document.getElementById('community-title'); if (t) t.focus(); }
 }
 
 // Populate the hero counters from the loaded feed.
@@ -15228,6 +15259,8 @@ async function submitCommunityPost() {
     document.getElementById('community-price').value = '';
     clearCommunityImage();
     updateCommunityCount();
+    toggleCommunityDetails(false);
+    closeCommunityComposer();
     if (!Array.isArray(_communityPostsCache)) _communityPostsCache = [];
     if (data && data.post) _communityPostsCache.unshift(data.post);
     renderCommunityFeed();
@@ -15320,12 +15353,13 @@ function buildCommunityPost(p, me, i) {
       <div class="community-avatar" style="background:${avatarBg}">${escHtml(initial)}</div>
       <div class="community-post-byline">
         <span class="community-post-author">${author}</span>
+        <span class="community-post-dot">&middot;</span>
         <span class="community-post-time">${escHtml(when)}</span>
       </div>
       <div class="community-post-actions">${report}${del}</div>
     </div>
-    ${msg}
     ${metaRow}
+    ${msg}
     ${media}
     ${linkRow}
     <div class="community-post-footer">
