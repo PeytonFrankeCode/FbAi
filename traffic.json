@@ -1,0 +1,1466 @@
+[
+ {
+  "day": "2026-11-11",
+  "isolates": 6309,
+  "totals": {
+   "total": 25180,
+   "pages": 13590,
+   "api": 7695,
+   "assets": 3895,
+   "verifiedBot": 4820,
+   "declaredBot": 3278,
+   "datacenter": 2810,
+   "human": 14269,
+   "noUa": 0,
+   "blockedBot": 3
+  },
+  "report": {
+   "pages": 1421,
+   "visitors": {
+    "human": 1329,
+    "datacenter": 333,
+    "declaredBot": 358,
+    "noUa": 0,
+    "verifiedBot": 546,
+    "blockedBot": 1
+   },
+   "topNetworks": [
+    {
+     "name": "203466 INTROSERV d.o.o.",
+     "hits": 108
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 107
+    },
+    {
+     "name": "207990 HostRoyale Technologies Pvt Ltd",
+     "hits": 100
+    },
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 93
+    },
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 87
+    },
+    {
+     "name": "20473 truview LLC",
+     "hits": 76
+    },
+    {
+     "name": "14061 DigitalOcean, LLC",
+     "hits": 59
+    },
+    {
+     "name": "30058 UAB code200",
+     "hits": 59
+    },
+    {
+     "name": "14618 Amazon Technologies Inc.",
+     "hits": 58
+    },
+    {
+     "name": "203020 HostRoyale Technologies Pvt Ltd",
+     "hits": 49
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 38
+    },
+    {
+     "name": "30058 Private Customer",
+     "hits": 26
+    },
+    {
+     "name": "203020 truview LLC",
+     "hits": 26
+    },
+    {
+     "name": "7922 Comcast Cable Communications, LLC",
+     "hits": 25
+    },
+    {
+     "name": "21928 T-Mobile USA, Inc.",
+     "hits": 20
+    },
+    {
+     "name": "7922 Comcast Cable Communications, Inc.",
+     "hits": 20
+    },
+    {
+     "name": "20473 OCULUS NETWORKS INC",
+     "hits": 20
+    },
+    {
+     "name": "7922 Comcast IP Services, L.L.C.",
+     "hits": 19
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 18
+    },
+    {
+     "name": "132203 6 COLLYER QUAY",
+     "hits": 18
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 1219
+    },
+    {
+     "name": "DE",
+     "hits": 114
+    },
+    {
+     "name": "GB",
+     "hits": 45
+    },
+    {
+     "name": "CA",
+     "hits": 14
+    },
+    {
+     "name": "RU",
+     "hits": 3
+    },
+    {
+     "name": "PA",
+     "hits": 3
+    },
+    {
+     "name": "VE",
+     "hits": 3
+    },
+    {
+     "name": "VN",
+     "hits": 3
+    },
+    {
+     "name": "BR",
+     "hits": 2
+    },
+    {
+     "name": "TR",
+     "hits": 2
+    },
+    {
+     "name": "EC",
+     "hits": 2
+    },
+    {
+     "name": "AU",
+     "hits": 2
+    },
+    {
+     "name": "CO",
+     "hits": 2
+    },
+    {
+     "name": "NP",
+     "hits": 1
+    },
+    {
+     "name": "DO",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 446
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ElevenlabsCrawler/1.0; +https://elevenlabs.io",
+     "hits": 352
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 147
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 109
+    },
+    {
+     "name": "SofyaBot/1.0 (+https://sofya.co/bot)",
+     "hits": 108
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 80
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 74
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (",
+     "hits": 35
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 25
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 12
+    },
+    {
+     "name": "IAS Crawler (ias_crawler; http://integralads.com/site-indexing-policy/",
+     "hits": 5
+    },
+    {
+     "name": "DuckDuckBot/1.0; (+http://duckduckgo.com/duckduckbot.html)",
+     "hits": 5
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Keenabl",
+     "hits": 4
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+     "hits": 3
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 3
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 1071
+    },
+    {
+     "name": "/index.html",
+     "hits": 15
+    },
+    {
+     "name": "/players/",
+     "hits": 6
+    },
+    {
+     "name": "/sets/2025-panini-mosaic-football/",
+     "hits": 5
+    },
+    {
+     "name": "/sets/2026-bowman-football/",
+     "hits": 5
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 5
+    },
+    {
+     "name": "/sets/2026-bowman-university-football/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2025-panini-select-football/",
+     "hits": 4
+    },
+    {
+     "name": "/teams/denver-broncos/",
+     "hits": 3
+    },
+    {
+     "name": "/players/marvin-harrison-jr/",
+     "hits": 3
+    },
+    {
+     "name": "/players/rob-gronkowski/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-donruss-optic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/kyler-murray/",
+     "hits": 2
+    },
+    {
+     "name": "/teams/green-bay-packers/",
+     "hits": 2
+    },
+    {
+     "name": "/teams/carolina-panthers/",
+     "hits": 2
+    },
+    {
+     "name": "/players/tom-brady/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2026-donruss-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/jaxson-dart/",
+     "hits": 2
+    },
+    {
+     "name": "/players/brig-owens",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2026-topps-football/",
+     "hits": 2
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "verifiedBot US",
+     "hits": 397
+    },
+    {
+     "name": "declaredBot US",
+     "hits": 355
+    },
+    {
+     "name": "human US",
+     "hits": 336
+    },
+    {
+     "name": "datacenter US",
+     "hits": 131
+    },
+    {
+     "name": "verifiedBot DE",
+     "hits": 109
+    },
+    {
+     "name": "human GB",
+     "hits": 42
+    },
+    {
+     "name": "human CA",
+     "hits": 14
+    },
+    {
+     "name": "datacenter DE",
+     "hits": 3
+    },
+    {
+     "name": "verifiedBot RU",
+     "hits": 3
+    },
+    {
+     "name": "datacenter GB",
+     "hits": 3
+    },
+    {
+     "name": "human PA",
+     "hits": 3
+    },
+    {
+     "name": "human VE",
+     "hits": 3
+    },
+    {
+     "name": "human VN",
+     "hits": 3
+    },
+    {
+     "name": "human BR",
+     "hits": 2
+    },
+    {
+     "name": "human TR",
+     "hits": 2
+    },
+    {
+     "name": "human DE",
+     "hits": 2
+    },
+    {
+     "name": "human EC",
+     "hits": 2
+    },
+    {
+     "name": "human AU",
+     "hits": 2
+    },
+    {
+     "name": "human CO",
+     "hits": 2
+    },
+    {
+     "name": "human NP",
+     "hits": 1
+    },
+    {
+     "name": "human DO",
+     "hits": 1
+    },
+    {
+     "name": "human NL",
+     "hits": 1
+    },
+    {
+     "name": "human LA",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot PL",
+     "hits": 1
+    },
+    {
+     "name": "human SV",
+     "hits": 1
+    }
+   ]
+  }
+ },
+ {
+  "day": "2026-11-10",
+  "isolates": 5735,
+  "totals": {
+   "total": 12632,
+   "pages": 10225,
+   "api": 1343,
+   "assets": 1064,
+   "verifiedBot": 5911,
+   "declaredBot": 2347,
+   "datacenter": 694,
+   "human": 3666,
+   "noUa": 0,
+   "blockedBot": 14
+  },
+  "report": {
+   "pages": 947,
+   "visitors": {
+    "human": 288,
+    "datacenter": 58,
+    "declaredBot": 164,
+    "noUa": 0,
+    "verifiedBot": 595,
+    "blockedBot": 3
+   },
+   "topNetworks": [
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 144
+    },
+    {
+     "name": "14618 Amazon Technologies Inc.",
+     "hits": 92
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 85
+    },
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 82
+    },
+    {
+     "name": "30058 Private Customer",
+     "hits": 81
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 65
+    },
+    {
+     "name": "207990 HostRoyale Technologies Pvt Ltd",
+     "hits": 38
+    },
+    {
+     "name": "203020 HostRoyale Technologies Pvt Ltd",
+     "hits": 37
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 33
+    },
+    {
+     "name": "207990 truview LLC",
+     "hits": 30
+    },
+    {
+     "name": "30058 UAB code200",
+     "hits": 23
+    },
+    {
+     "name": "46261 Aventice LLC",
+     "hits": 18
+    },
+    {
+     "name": "14618 Amazon.com, Inc.",
+     "hits": 17
+    },
+    {
+     "name": "13238 Yandex enterprise network",
+     "hits": 16
+    },
+    {
+     "name": "212238 Private Customer",
+     "hits": 15
+    },
+    {
+     "name": "62874 Wookra, LLC",
+     "hits": 11
+    },
+    {
+     "name": "396356 Private Customer",
+     "hits": 10
+    },
+    {
+     "name": "15169 Google LLC",
+     "hits": 9
+    },
+    {
+     "name": "20473 truview LLC",
+     "hits": 7
+    },
+    {
+     "name": "396982 Google LLC",
+     "hits": 7
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 902
+    },
+    {
+     "name": "RU",
+     "hits": 16
+    },
+    {
+     "name": "GB",
+     "hits": 12
+    },
+    {
+     "name": "CZ",
+     "hits": 6
+    },
+    {
+     "name": "DE",
+     "hits": 5
+    },
+    {
+     "name": "CA",
+     "hits": 2
+    },
+    {
+     "name": "BR",
+     "hits": 2
+    },
+    {
+     "name": "CO",
+     "hits": 1
+    },
+    {
+     "name": "AU",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 240
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ElevenlabsCrawler/1.0; +https://elevenlabs.io",
+     "hits": 154
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 149
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 86
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 80
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 77
+    },
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 51
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 35
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+     "hits": 17
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 9
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (",
+     "hits": 9
+    },
+    {
+     "name": "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/web",
+     "hits": 8
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; SeznamBot/4.0; +https://o-seznam.cz/napoveda/",
+     "hits": 6
+    },
+    {
+     "name": "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/",
+     "hits": 5
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaUser/1.0; +https://exauser.crawler.exa.ai)",
+     "hits": 4
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 563
+    },
+    {
+     "name": "/sets/2025-panini-mosaic-football/",
+     "hits": 16
+    },
+    {
+     "name": "/players/",
+     "hits": 11
+    },
+    {
+     "name": "/sets/2026-bowman-football/",
+     "hits": 5
+    },
+    {
+     "name": "/sets/2025-panini-prizm-football/",
+     "hits": 5
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 5
+    },
+    {
+     "name": "/sets/2025-topps-chrome-football/",
+     "hits": 5
+    },
+    {
+     "name": "/players/deion-sanders/",
+     "hits": 5
+    },
+    {
+     "name": "/sets/2026-bowman-university-football/",
+     "hits": 4
+    },
+    {
+     "name": "/players/kirk-cousins/",
+     "hits": 3
+    },
+    {
+     "name": "/players/joe-montana/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-absolute-football/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2026-donruss-football/",
+     "hits": 3
+    },
+    {
+     "name": "/news/market-movers",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-select-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/brett-favre/",
+     "hits": 3
+    },
+    {
+     "name": "/players/jared-verse/",
+     "hits": 3
+    },
+    {
+     "name": "/players/josh-allen/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-donruss-optic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/bryce-young/",
+     "hits": 3
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "verifiedBot US",
+     "hits": 512
+    },
+    {
+     "name": "human US",
+     "hits": 175
+    },
+    {
+     "name": "declaredBot US",
+     "hits": 163
+    },
+    {
+     "name": "datacenter US",
+     "hits": 52
+    },
+    {
+     "name": "verifiedBot RU",
+     "hits": 16
+    },
+    {
+     "name": "human GB",
+     "hits": 6
+    },
+    {
+     "name": "verifiedBot GB",
+     "hits": 6
+    },
+    {
+     "name": "verifiedBot CZ",
+     "hits": 6
+    },
+    {
+     "name": "verifiedBot DE",
+     "hits": 4
+    },
+    {
+     "name": "human BR",
+     "hits": 2
+    },
+    {
+     "name": "datacenter CA",
+     "hits": 1
+    },
+    {
+     "name": "human CO",
+     "hits": 1
+    },
+    {
+     "name": "human CA",
+     "hits": 1
+    },
+    {
+     "name": "human AU",
+     "hits": 1
+    },
+    {
+     "name": "datacenter DE",
+     "hits": 1
+    }
+   ]
+  }
+ },
+ {
+  "day": "2026-11-09",
+  "isolates": 7666,
+  "totals": {
+   "total": 16215,
+   "pages": 15165,
+   "api": 417,
+   "assets": 633,
+   "verifiedBot": 9949,
+   "declaredBot": 1737,
+   "datacenter": 690,
+   "human": 3829,
+   "noUa": 0,
+   "blockedBot": 10
+  },
+  "report": {
+   "pages": 1383,
+   "visitors": {
+    "human": 347,
+    "datacenter": 45,
+    "declaredBot": 165,
+    "noUa": 0,
+    "verifiedBot": 926,
+    "blockedBot": 1
+   },
+   "topNetworks": [
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 250
+    },
+    {
+     "name": "396356 UAB code200",
+     "hits": 193
+    },
+    {
+     "name": "14618 Amazon Technologies Inc.",
+     "hits": 176
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 118
+    },
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 57
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 50
+    },
+    {
+     "name": "203020 RI Networks Pvt. Ltd.",
+     "hits": 43
+    },
+    {
+     "name": "203020 NTT America, Inc.",
+     "hits": 39
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 38
+    },
+    {
+     "name": "214483 RapidSeedbox Ltd",
+     "hits": 31
+    },
+    {
+     "name": "10557 UAB code200",
+     "hits": 31
+    },
+    {
+     "name": "14618 Amazon.com, Inc.",
+     "hits": 28
+    },
+    {
+     "name": "46261 QuickPacket, LLC",
+     "hits": 17
+    },
+    {
+     "name": "30058 Private Customer",
+     "hits": 13
+    },
+    {
+     "name": "30058 UAB code200",
+     "hits": 13
+    },
+    {
+     "name": "62874 Wookra, LLC",
+     "hits": 12
+    },
+    {
+     "name": "207990 HostRoyale Technologies Pvt Ltd",
+     "hits": 12
+    },
+    {
+     "name": "212238 Private Customer",
+     "hits": 11
+    },
+    {
+     "name": "212238 Code200 UAB",
+     "hits": 8
+    },
+    {
+     "name": "5607 Sky UK Limited",
+     "hits": 8
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 1275
+    },
+    {
+     "name": "CA",
+     "hits": 63
+    },
+    {
+     "name": "GB",
+     "hits": 31
+    },
+    {
+     "name": "AU",
+     "hits": 5
+    },
+    {
+     "name": "DE",
+     "hits": 4
+    },
+    {
+     "name": "RU",
+     "hits": 3
+    },
+    {
+     "name": "PL",
+     "hits": 1
+    },
+    {
+     "name": "NL",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 439
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 215
+    },
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 188
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 183
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ElevenlabsCrawler/1.0; +https://elevenlabs.io",
+     "hits": 157
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 67
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 52
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 25
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 10
+    },
+    {
+     "name": "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/web",
+     "hits": 7
+    },
+    {
+     "name": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605",
+     "hits": 6
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (",
+     "hits": 4
+    },
+    {
+     "name": "DuckDuckBot/1.0; (+http://duckduckgo.com/duckduckbot.html)",
+     "hits": 3
+    },
+    {
+     "name": "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, li",
+     "hits": 3
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+     "hits": 3
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 1011
+    },
+    {
+     "name": "/players/",
+     "hits": 9
+    },
+    {
+     "name": "/players/bryce-young/",
+     "hits": 6
+    },
+    {
+     "name": "/sets/2021-panini-prizm-football/",
+     "hits": 5
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 5
+    },
+    {
+     "name": "/players/rob-gronkowski/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2025-donruss-optic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/brett-favre/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-select-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/sam-darnold/",
+     "hits": 3
+    },
+    {
+     "name": "/players/micah-parsons/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2026-bowman-university-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/vinny-testaverde/",
+     "hits": 2
+    },
+    {
+     "name": "/players/joe-flacco/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2025-panini-absolute-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/jack-sawyer/",
+     "hits": 2
+    },
+    {
+     "name": "/players/ladd-mcconkey/",
+     "hits": 2
+    },
+    {
+     "name": "/players/daryle-lamonica/",
+     "hits": 2
+    },
+    {
+     "name": "/players/deion-sanders/",
+     "hits": 2
+    },
+    {
+     "name": "/basketball/players/amen-thompson/",
+     "hits": 2
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "verifiedBot US",
+     "hits": 877
+    },
+    {
+     "name": "human US",
+     "hits": 192
+    },
+    {
+     "name": "declaredBot US",
+     "hits": 163
+    },
+    {
+     "name": "human CA",
+     "hits": 63
+    },
+    {
+     "name": "datacenter US",
+     "hits": 43
+    },
+    {
+     "name": "human GB",
+     "hits": 29
+    },
+    {
+     "name": "human AU",
+     "hits": 5
+    },
+    {
+     "name": "verifiedBot DE",
+     "hits": 4
+    },
+    {
+     "name": "verifiedBot RU",
+     "hits": 3
+    },
+    {
+     "name": "datacenter GB",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot PL",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot GB",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot NL",
+     "hits": 1
+    }
+   ]
+  }
+ },
+ {
+  "day": "2026-11-08",
+  "isolates": 6616,
+  "totals": {
+   "total": 12362,
+   "pages": 11232,
+   "api": 386,
+   "assets": 744,
+   "verifiedBot": 4536,
+   "declaredBot": 1348,
+   "datacenter": 737,
+   "human": 5731,
+   "noUa": 0,
+   "blockedBot": 10
+  },
+  "report": {
+   "pages": 947,
+   "visitors": {
+    "human": 461,
+    "datacenter": 85,
+    "declaredBot": 151,
+    "noUa": 0,
+    "verifiedBot": 371,
+    "blockedBot": 0
+   },
+   "topNetworks": [
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 88
+    },
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 74
+    },
+    {
+     "name": "11798 Ace Data Centers II, LLC",
+     "hits": 67
+    },
+    {
+     "name": "14618 Amazon Technologies Inc.",
+     "hits": 64
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 60
+    },
+    {
+     "name": "207990 HostRoyale Technologies Pvt Ltd",
+     "hits": 52
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 39
+    },
+    {
+     "name": "212238 Private Customer",
+     "hits": 20
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 20
+    },
+    {
+     "name": "203020 HostRoyale Technologies Pvt Ltd",
+     "hits": 20
+    },
+    {
+     "name": "30058 UAB code200",
+     "hits": 20
+    },
+    {
+     "name": "577 Sympatico HSE",
+     "hits": 19
+    },
+    {
+     "name": "62874 Wookra, LLC",
+     "hits": 18
+    },
+    {
+     "name": "5607 Sky UK Limited",
+     "hits": 17
+    },
+    {
+     "name": "5769 Videotron Ltee",
+     "hits": 16
+    },
+    {
+     "name": "14618 Amazon.com, Inc.",
+     "hits": 16
+    },
+    {
+     "name": "212238 Code200 UAB",
+     "hits": 15
+    },
+    {
+     "name": "396356 UAB code200",
+     "hits": 15
+    },
+    {
+     "name": "5089 Virgin Media Limited",
+     "hits": 11
+    },
+    {
+     "name": "18779 Private Customer",
+     "hits": 10
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 759
+    },
+    {
+     "name": "CA",
+     "hits": 79
+    },
+    {
+     "name": "GB",
+     "hits": 69
+    },
+    {
+     "name": "AU",
+     "hits": 23
+    },
+    {
+     "name": "CZ",
+     "hits": 6
+    },
+    {
+     "name": "ES",
+     "hits": 5
+    },
+    {
+     "name": "DE",
+     "hits": 2
+    },
+    {
+     "name": "PL",
+     "hits": 2
+    },
+    {
+     "name": "FR",
+     "hits": 1
+    },
+    {
+     "name": "CO",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 202
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 182
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 151
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ElevenlabsCrawler/1.0; +https://elevenlabs.io",
+     "hits": 147
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 69
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 68
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 30
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 19
+    },
+    {
+     "name": "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/web",
+     "hits": 12
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 7
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; SeznamBot/4.0; +https://o-seznam.cz/napoveda/",
+     "hits": 6
+    },
+    {
+     "name": "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, li",
+     "hits": 6
+    },
+    {
+     "name": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605",
+     "hits": 6
+    },
+    {
+     "name": "IAS Crawler (ias_crawler; http://integralads.com/site-indexing-policy/",
+     "hits": 5
+    },
+    {
+     "name": "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/",
+     "hits": 5
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 617
+    },
+    {
+     "name": "/players/",
+     "hits": 9
+    },
+    {
+     "name": "/players/bryce-young/",
+     "hits": 6
+    },
+    {
+     "name": "/sets/2025-panini-select-football/",
+     "hits": 6
+    },
+    {
+     "name": "/sets/2025-donruss-optic-football/",
+     "hits": 6
+    },
+    {
+     "name": "/sets/2026-bowman-football/",
+     "hits": 5
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2025-topps-chrome-football/",
+     "hits": 4
+    },
+    {
+     "name": "/players/jaxon-smith-njigba/",
+     "hits": 4
+    },
+    {
+     "name": "/players/deion-sanders/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-prizm-football/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-absolute-football/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2026-topps-heritage-football/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-mosaic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-national-treasures-football/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2022-panini-mosaic-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/colston-loveland/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2018-panini-xr-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/jim-kelly/",
+     "hits": 2
+    },
+    {
+     "name": "/players/ray-lewis/",
+     "hits": 2
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "verifiedBot US",
+     "hits": 341
+    },
+    {
+     "name": "human US",
+     "hits": 200
+    },
+    {
+     "name": "declaredBot US",
+     "hits": 147
+    },
+    {
+     "name": "human CA",
+     "hits": 79
+    },
+    {
+     "name": "datacenter US",
+     "hits": 71
+    },
+    {
+     "name": "human GB",
+     "hits": 68
+    },
+    {
+     "name": "human AU",
+     "hits": 23
+    },
+    {
+     "name": "verifiedBot CZ",
+     "hits": 6
+    },
+    {
+     "name": "human ES",
+     "hits": 5
+    },
+    {
+     "name": "verifiedBot DE",
+     "hits": 2
+    },
+    {
+     "name": "verifiedBot PL",
+     "hits": 2
+    },
+    {
+     "name": "verifiedBot GB",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot FR",
+     "hits": 1
+    },
+    {
+     "name": "human CO",
+     "hits": 1
+    }
+   ]
+  }
+ }
+]
