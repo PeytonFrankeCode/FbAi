@@ -1,0 +1,39 @@
+name: Probe sold-data vendors
+
+# A one-off question, not a pipeline: can scrape.do or OpenWeb Ninja deliver
+# eBay sold football sales now that eBay hides them behind a sign-in? Runs when
+# the probe itself changes (GitHub's mobile site has no "Run workflow" button)
+# or on demand. Spends ~6 of OpenWeb Ninja's 100 free monthly requests and at
+# most 4 scrape.do requests.
+
+on:
+  push:
+    paths:
+      - scripts/probe-sold-vendors.py
+      - .github/workflows/probe-sold-vendors.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: PeytonFrankeCode/NflCardDB
+          path: nflcarddb
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q ./nflcarddb requests
+      - name: Probe
+        run: python scripts/probe-sold-vendors.py
+        env:
+          OPENWEBNINJA_KEY: ${{ secrets.OPENWEBNINJA_KEY }}
+          SCRAPEDO_KEY: ${{ secrets.SCRAPEDO_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

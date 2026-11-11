@@ -1,0 +1,55 @@
+name: Collect sold sales (nightly)
+
+# eBay sold sales through OpenWeb Ninja, straight into the nflcarddb D1
+# database -- no PC involved. See scripts/collect-sold-ninja.py for why it
+# works the way it does.
+#
+# Nightly at 04:17 UTC (11:17pm Eastern), when most of the US day's sales
+# have ended. Also runs when the script changes: on main for real, on any
+# other branch as a 3-page dry run that uploads nothing. (GitHub's mobile
+# site has no "Run workflow" button, so a push is the way to start one.)
+#
+# Tuning without a code change -- repo Settings -> Secrets and variables ->
+# Actions -> Variables:
+#   NINJA_PAGES      successful pages per night (default 10; 60 sales each)
+#   NINJA_MIN_PRICE  lowest price in dollars (default 100; 0 for everything)
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  push:
+    paths:
+      - scripts/collect-sold-ninja.py
+      - .github/workflows/collect-sold-ninja.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect-sold-ninja
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: PeytonFrankeCode/NflCardDB
+          path: nflcarddb
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q ./nflcarddb requests
+      - name: Collect and upload
+        run: python scripts/collect-sold-ninja.py
+        env:
+          OPENWEBNINJA_KEY: ${{ secrets.OPENWEBNINJA_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NINJA_PAGES: ${{ github.ref == 'refs/heads/main' && (vars.NINJA_PAGES || '10') || '3' }}
+          NINJA_MIN_PRICE: ${{ vars.NINJA_MIN_PRICE || '100' }}
+          DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}
