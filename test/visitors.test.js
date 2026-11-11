@@ -16,6 +16,22 @@ const check = (label, ok, detail) => {
 
 check('a phone on a home ISP is a person', T.classify({ ua: 'Mozilla/5.0 (iPhone)', asn: 7922 }) === 'human');
 check('a browser-looking visitor from AWS is a datacentre visitor', T.classify({ ua: 'Mozilla/5.0 (Windows NT 10.0)', asn: 16509 }) === 'datacenter');
+// Nov 11 2026: a wave from hosting and proxy networks the list did not have
+// was counted as people and shown ads (1.4k views, $0.04 RPM).
+{
+  const W = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
+  const wave = [[203466, 'INTROSERV d.o.o.'], [207990, 'HostRoyale Technologies Pvt Ltd'], [203020, 'RI Networks Pvt. Ltd.'],
+    [30058, 'Private Customer'], [10557, 'UAB code200'], [214483, 'RapidSeedbox Ltd'], [11798, 'Ace Data Centers II, LLC'], [46261, 'Aventice LLC']];
+  const missed = wave.filter(([asn, org]) => T.classify({ ua: W, asn, asOrg: org }) !== 'datacenter');
+  check('the Nov 11 wave\'s hosting and proxy networks are not people', !missed.length, JSON.stringify(missed));
+  check('  ...and a hosting network the list has never seen is known by its name',
+    T.classify({ ua: W, asn: 999001, asOrg: 'Fast VPS Hosting LLC' }) === 'datacenter' && T.classify({ ua: W, asn: 999002, asOrg: 'Example Cloud Servers' }) === 'datacenter');
+  const isps = [[7922, 'Comcast Cable Communications, LLC'], [21928, 'T-Mobile USA, Inc.'], [701, 'Verizon Business'], [7018, 'AT&T Services, Inc.'],
+    [20115, 'Charter Communications Inc'], [812, 'Rogers Communications Canada Inc.'], [2856, 'British Telecommunications PLC'], [14593, 'Starlink'],
+    [13335, 'Cloudflare, Inc.']];
+  const lost = isps.filter(([asn, org]) => T.classify({ ua: W, asn, asOrg: org }) !== 'human');
+  check('  ...while home ISPs, phone carriers and iCloud Private Relay (Cloudflare) stay people', !lost.length, JSON.stringify(lost));
+}
 check('python-requests says it is a bot', T.classify({ ua: 'python-requests/2.31', asn: 14061 }) === 'declaredBot');
 check('Googlebot verified by Cloudflare is not a datacentre bot, though it comes from Google\'s network',
   T.classify({ ua: 'Mozilla/5.0 (compatible; Googlebot/2.1)', asn: 15169, verifiedBot: true }) === 'verifiedBot');
