@@ -10607,3 +10607,67 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 /* The market boards' room, kept from the first paint (see index.html). */
 .market-pulse.mp-pending #mp-body{min-height:1130px}
 @media (max-width:640px){.market-pulse.mp-pending #mp-body{min-height:1130px}}
+
+/* ---- Community, Reddit-style (Nov 2026: "too much going on") ----
+   One-line header, a "Create a post" bar that opens a plain composer with
+   card details behind a toggle, and flat posts: a small byline, the card as
+   the headline, the text, the photo, then one row of actions. */
+.community-header { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0 0.9rem; }
+.community-header-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem; background: var(--accent-bg); border: 1px solid var(--accent-border); flex-shrink: 0; }
+.community-header-title { font-size: 1.25rem; font-weight: 800; margin: 0; color: var(--text-primary); line-height: 1.15; }
+.community-header-sub { margin: 0.1rem 0 0; font-size: 0.82rem; color: var(--text-muted); }
+.community-composer { padding: 0.55rem; border-radius: 12px; margin-bottom: 1rem; box-shadow: none; }
+.community-composer:focus-within { box-shadow: none; }
+.community-create { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+.community-create .community-composer-avatar { width: 36px; height: 36px; font-size: 0.95rem; margin: 0; }
+.community-create-input { flex: 1; min-width: 0; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 999px;
+  padding: 0.6rem 1rem; color: var(--text-muted); font-size: 0.92rem; transition: border-color 0.15s; }
+.community-create:hover .community-create-input { border-color: var(--accent-border); }
+.community-create.open .community-create-input { display: none; }
+.community-create.open { justify-content: flex-start; }
+.community-create-photo { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%;
+  color: var(--text-secondary); cursor: pointer; flex-shrink: 0; transition: background 0.15s, color 0.15s; }
+.community-create-photo:hover { background: var(--accent-bg); color: var(--accent); }
+.community-create.open .community-create-photo { display: none; }
+.community-compose { margin-top: 0.55rem; }
+.community-compose .community-textarea { width: 100%; box-sizing: border-box; min-height: 96px; border-radius: 10px; font-size: 0.95rem; }
+.community-composer-details { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.5rem; }
+.community-composer-details.hidden { display: none; }
+.community-details-row { display: grid; grid-template-columns: 110px 1fr; gap: 0.45rem; }
+.community-composer-details .community-input { background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.55rem 0.75rem; font-size: 0.88rem; }
+.community-composer-details .community-input:focus { border-color: var(--accent); }
+.community-composer-actions { gap: 0.4rem; margin-top: 0.6rem; }
+.community-tool { display: inline-flex; align-items: center; gap: 0.3rem; background: none; border: none; color: var(--text-secondary); border-radius: 999px;
+  padding: 0.45rem 0.6rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+.community-tool:hover, .community-tool.active { background: var(--accent-bg); color: var(--accent); }
+.community-cancel-btn { background: none; border: none; color: var(--text-secondary); font-weight: 700; font-size: 0.88rem; padding: 0.55rem 0.8rem; border-radius: 999px; cursor: pointer; font-family: inherit; }
+.community-cancel-btn:hover { background: var(--bg-hover); }
+.community-post-btn { border-radius: 999px; padding: 0.55rem 1.3rem; }
+.community-feed { gap: 0.6rem; }
+.community-post { padding: 0.85rem 1rem 0.55rem; border-radius: 12px; box-shadow: none; }
+.community-post:hover { transform: none; box-shadow: none; border-color: var(--accent-border); }
+.community-post-head { gap: 0.5rem; }
+.community-post-head .community-avatar { width: 26px; height: 26px; font-size: 0.75rem; box-shadow: none; }
+.community-post-byline { flex-direction: row; align-items: baseline; gap: 0.35rem; }
+.community-post-author { font-size: 0.82rem; }
+.community-post-dot, .community-post-time { font-size: 0.78rem; color: var(--text-muted); }
+.community-post-report { border: none; padding: 0.25rem 0.4rem; }
+.community-post-cardmeta { margin-top: 0.5rem; gap: 0.45rem; }
+.community-post-title { background: none; border: none; padding: 0; font-size: 1.02rem; font-weight: 800; color: var(--text-primary); }
+.community-post-price { font-size: 0.78rem; padding: 0.15rem 0.55rem; }
+.community-post-message { margin-top: 0.4rem; font-size: 0.93rem; }
+.community-post-media { margin-top: 0.6rem; border-radius: 10px; }
+.community-post-link { margin-top: 0.55rem; padding: 0.35rem 0.75rem; font-size: 0.82rem; }
+.community-post-footer { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.55rem; padding-top: 0; border-top: none; }
+.community-comment-toggle { background: var(--bg-secondary); border-radius: 999px; padding: 0.35rem 0.75rem; }
+.community-comment-toggle:hover { background: var(--accent-bg); }
+.community-empty { padding: 2rem 1rem; }
+.community-composer { box-sizing: border-box; max-width: 100%; min-width: 0; }
+.community-compose, .community-create { min-width: 0; }
+.community-composer-actions { flex-wrap: wrap; }
+.community-composer-actions .community-post-btn { white-space: nowrap; }
+@media (max-width: 480px) {
+  .community-char-count { display: none; }
+  .community-composer-actions .community-cancel-btn { margin-left: auto; }
+}
