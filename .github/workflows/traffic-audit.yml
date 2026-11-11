@@ -1,0 +1,50 @@
+name: Traffic audit (one-off, never merge)
+on:
+  push:
+    branches: ['run/traffic-audit']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Read visitor tallies from KV
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          NS=$(awk '/^\[\[kv_namespaces\]\]/{f=1} f && /^id *=/{gsub(/[" ]/,"",$0); sub(/^id=/,"",$0); print; exit}' wrangler.toml)
+          cat > audit.js <<'JS'
+          const { mergeTallies, TALLY_COUNTS } = require('./traffic-core.js');
+          const base = `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/storage/kv/namespaces/${process.env.NS}`;
+          const H = { Authorization: `Bearer ${process.env.CF_TOKEN}` };
+          (async () => {
+            const out = [];
+            for (let d = 0; d < 4; d++) {
+              const day = new Date(Date.now() - d * 86400e3).toISOString().slice(0, 10);
+              let cursor = '', keys = [];
+              do {
+                const r = await (await fetch(`${base}/keys?prefix=visitors:v1:${day}:&limit=1000${cursor ? '&cursor=' + cursor : ''}`, { headers: H })).json();
+                keys.push(...(r.result || [])); cursor = r.result_info && r.result_info.cursor;
+              } while (cursor);
+              const sum = Object.fromEntries(TALLY_COUNTS.map(k => [k, 0]));
+              for (const k of keys) { const c = (k.metadata && k.metadata.c) || []; TALLY_COUNTS.forEach((n, i) => sum[n] += c[i] || 0); }
+              const tallies = [];
+              for (const k of keys.slice(0, 600)) {
+                try { tallies.push(await (await fetch(`${base}/values/${encodeURIComponent(k.name)}`, { headers: H })).json()); } catch (_) {}
+              }
+              const m = tallies.length ? mergeTallies(tallies) : null;
+              out.push({ day, isolates: keys.length, totals: sum, report: m && { pages: m.pages, visitors: m.visitors, topNetworks: m.topNetworks.slice(0, 20), topCountries: m.topCountries.slice(0, 15), topUserAgents: m.topUserAgents.slice(0, 15), topPaths: m.topPaths.slice(0, 20), byKindAndCountry: m.byKindAndCountry.slice(0, 25) } });
+            }
+            require('fs').writeFileSync('traffic.json', JSON.stringify(out, null, 1));
+            console.log(JSON.stringify(out.map(o => ({ day: o.day, isolates: o.isolates, totals: o.totals }))));
+          })();
+          JS
+          NS=$NS node audit.js
+      - name: Save
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "audit/traffic-${GITHUB_RUN_ID}"; git add -f traffic.json; git commit -qm audit; git push -q origin "audit/traffic-${GITHUB_RUN_ID}"
