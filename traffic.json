@@ -1,0 +1,860 @@
+[
+ {
+  "day": "2026-11-12",
+  "isolates": 815,
+  "totals": {
+   "total": 3336,
+   "pages": 1342,
+   "api": 1337,
+   "assets": 657,
+   "verifiedBot": 566,
+   "declaredBot": 2,
+   "datacenter": 338,
+   "human": 2430,
+   "noUa": 0,
+   "blockedBot": 0
+  },
+  "report": {
+   "pages": 1347,
+   "visitors": {
+    "human": 2437,
+    "datacenter": 338,
+    "declaredBot": 2,
+    "noUa": 0,
+    "verifiedBot": 567,
+    "blockedBot": 0
+   },
+   "topNetworks": [
+    {
+     "name": "396982 Google LLC",
+     "hits": 195
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 77
+    },
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 71
+    },
+    {
+     "name": "30058 Private Customer",
+     "hits": 51
+    },
+    {
+     "name": "14061 DigitalOcean, LLC",
+     "hits": 45
+    },
+    {
+     "name": "7018 AT&T Enterprises, LLC",
+     "hits": 43
+    },
+    {
+     "name": "15169 Google LLC",
+     "hits": 38
+    },
+    {
+     "name": "7922 Comcast Cable Communications, LLC",
+     "hits": 36
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 33
+    },
+    {
+     "name": "7922 Comcast Cable Communications, Inc.",
+     "hits": 30
+    },
+    {
+     "name": "7922 Comcast IP Services, L.L.C.",
+     "hits": 28
+    },
+    {
+     "name": "21928 T-Mobile USA, Inc.",
+     "hits": 25
+    },
+    {
+     "name": "5089 Virgin Media Limited",
+     "hits": 22
+    },
+    {
+     "name": "6128 Optimum Online (Cablevision Systems)",
+     "hits": 22
+    },
+    {
+     "name": "13238 Yandex enterprise network",
+     "hits": 21
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 21
+    },
+    {
+     "name": "20115 Charter Communications LLC",
+     "hits": 18
+    },
+    {
+     "name": "11426 Charter Communications Inc",
+     "hits": 16
+    },
+    {
+     "name": "132203 6 COLLYER QUAY",
+     "hits": 16
+    },
+    {
+     "name": "10796 Charter Communications Inc",
+     "hits": 14
+    },
+    {
+     "name": "5607 Sky UK Limited",
+     "hits": 13
+    },
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 12
+    },
+    {
+     "name": "14593 SpaceX Services, Inc.",
+     "hits": 12
+    },
+    {
+     "name": "212238 Code200 UAB",
+     "hits": 11
+    },
+    {
+     "name": "11427 Charter Communications Inc",
+     "hits": 11
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 1136
+    },
+    {
+     "name": "GB",
+     "hits": 115
+    },
+    {
+     "name": "CA",
+     "hits": 42
+    },
+    {
+     "name": "RU",
+     "hits": 21
+    },
+    {
+     "name": "CO",
+     "hits": 6
+    },
+    {
+     "name": "EC",
+     "hits": 4
+    },
+    {
+     "name": "BR",
+     "hits": 3
+    },
+    {
+     "name": "AU",
+     "hits": 3
+    },
+    {
+     "name": "VE",
+     "hits": 2
+    },
+    {
+     "name": "DE",
+     "hits": 2
+    },
+    {
+     "name": "MX",
+     "hits": 2
+    },
+    {
+     "name": "FR",
+     "hits": 2
+    },
+    {
+     "name": "RS",
+     "hits": 1
+    },
+    {
+     "name": "JP",
+     "hits": 1
+    },
+    {
+     "name": "VN",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 693
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Keenabl",
+     "hits": 194
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 104
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 82
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 70
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 49
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (",
+     "hits": 42
+    },
+    {
+     "name": "Mediapartners-Google",
+     "hits": 29
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+     "hits": 21
+    },
+    {
+     "name": "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/web",
+     "hits": 20
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 16
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 11
+    },
+    {
+     "name": "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/",
+     "hits": 7
+    },
+    {
+     "name": "IAS Crawler (ias_crawler; http://integralads.com/site-indexing-policy/",
+     "hits": 2
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 2
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 913
+    },
+    {
+     "name": "/players/",
+     "hits": 21
+    },
+    {
+     "name": "/index.html",
+     "hits": 16
+    },
+    {
+     "name": "/players/shaun-alexander/",
+     "hits": 11
+    },
+    {
+     "name": "/sets/2025-panini-mosaic-football/",
+     "hits": 7
+    },
+    {
+     "name": "/players/kirk-cousins/",
+     "hits": 5
+    },
+    {
+     "name": "/players/brock-purdy/",
+     "hits": 4
+    },
+    {
+     "name": "/players/eli-manning/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/1969-topps-football/",
+     "hits": 4
+    },
+    {
+     "name": "/players/mark-andrews/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2021-panini-mosaic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/news/market-movers",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2026-bowman-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/jonathan-taylor/",
+     "hits": 3
+    },
+    {
+     "name": "/players/troy-fautanu",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2026-bowman-university-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/micah-parsons/",
+     "hits": 3
+    },
+    {
+     "name": "/players/dandre-swift/",
+     "hits": 2
+    },
+    {
+     "name": "/players/emeka-egbuka/",
+     "hits": 2
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 2
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "human US",
+     "hits": 569
+    },
+    {
+     "name": "verifiedBot US",
+     "hits": 440
+    },
+    {
+     "name": "datacenter US",
+     "hits": 127
+    },
+    {
+     "name": "human GB",
+     "hits": 101
+    },
+    {
+     "name": "human CA",
+     "hits": 38
+    },
+    {
+     "name": "verifiedBot RU",
+     "hits": 21
+    },
+    {
+     "name": "datacenter GB",
+     "hits": 13
+    },
+    {
+     "name": "human CO",
+     "hits": 6
+    },
+    {
+     "name": "human EC",
+     "hits": 4
+    },
+    {
+     "name": "datacenter CA",
+     "hits": 4
+    },
+    {
+     "name": "human BR",
+     "hits": 3
+    },
+    {
+     "name": "human AU",
+     "hits": 3
+    },
+    {
+     "name": "human VE",
+     "hits": 2
+    },
+    {
+     "name": "human MX",
+     "hits": 2
+    },
+    {
+     "name": "human FR",
+     "hits": 2
+    },
+    {
+     "name": "verifiedBot DE",
+     "hits": 1
+    },
+    {
+     "name": "human RS",
+     "hits": 1
+    },
+    {
+     "name": "human JP",
+     "hits": 1
+    },
+    {
+     "name": "human VN",
+     "hits": 1
+    },
+    {
+     "name": "human AR",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot GB",
+     "hits": 1
+    },
+    {
+     "name": "human HK",
+     "hits": 1
+    },
+    {
+     "name": "human TH",
+     "hits": 1
+    },
+    {
+     "name": "human PH",
+     "hits": 1
+    },
+    {
+     "name": "human IT",
+     "hits": 1
+    }
+   ]
+  }
+ },
+ {
+  "day": "2026-11-11",
+  "isolates": 10936,
+  "totals": {
+   "total": 40387,
+   "pages": 20046,
+   "api": 13482,
+   "assets": 6859,
+   "verifiedBot": 7490,
+   "declaredBot": 3378,
+   "datacenter": 4470,
+   "human": 25040,
+   "noUa": 0,
+   "blockedBot": 9
+  },
+  "report": {
+   "pages": 1486,
+   "visitors": {
+    "human": 1786,
+    "datacenter": 430,
+    "declaredBot": 260,
+    "noUa": 0,
+    "verifiedBot": 496,
+    "blockedBot": 1
+   },
+   "topNetworks": [
+    {
+     "name": "8075 Microsoft Corporation",
+     "hits": 101
+    },
+    {
+     "name": "14618 Amazon Data Services Northern Virginia",
+     "hits": 94
+    },
+    {
+     "name": "207990 truview LLC",
+     "hits": 86
+    },
+    {
+     "name": "32934 Meta Platforms Ireland Limited",
+     "hits": 77
+    },
+    {
+     "name": "14618 Amazon Technologies Inc.",
+     "hits": 71
+    },
+    {
+     "name": "14061 DigitalOcean, LLC",
+     "hits": 61
+    },
+    {
+     "name": "13335 Cloudflare, Inc.",
+     "hits": 59
+    },
+    {
+     "name": "7018 AT&T Enterprises, LLC",
+     "hits": 55
+    },
+    {
+     "name": "30058 Private Customer",
+     "hits": 27
+    },
+    {
+     "name": "396982 Google LLC",
+     "hits": 27
+    },
+    {
+     "name": "8075 Microsoft Limited",
+     "hits": 27
+    },
+    {
+     "name": "20473 OCULUS NETWORKS INC",
+     "hits": 27
+    },
+    {
+     "name": "203020 NTT America, Inc.",
+     "hits": 27
+    },
+    {
+     "name": "207990 HostRoyale Technologies Pvt Ltd",
+     "hits": 25
+    },
+    {
+     "name": "14061 DigitalOcean London",
+     "hits": 24
+    },
+    {
+     "name": "21928 T-Mobile USA, Inc.",
+     "hits": 24
+    },
+    {
+     "name": "203020 truview LLC",
+     "hits": 24
+    },
+    {
+     "name": "7922 Comcast Cable Communications, LLC",
+     "hits": 23
+    },
+    {
+     "name": "13238 Yandex enterprise network",
+     "hits": 23
+    },
+    {
+     "name": "7922 Comcast IP Services, L.L.C.",
+     "hits": 23
+    },
+    {
+     "name": "203020 HostPapa",
+     "hits": 23
+    },
+    {
+     "name": "132203 6 COLLYER QUAY",
+     "hits": 22
+    },
+    {
+     "name": "7922 Comcast Cable Communications, Inc.",
+     "hits": 22
+    },
+    {
+     "name": "207990 Wirels Connect (PTY) Ltd",
+     "hits": 19
+    },
+    {
+     "name": "20473 truview LLC",
+     "hits": 19
+    }
+   ],
+   "topCountries": [
+    {
+     "name": "US",
+     "hits": 1317
+    },
+    {
+     "name": "GB",
+     "hits": 106
+    },
+    {
+     "name": "RU",
+     "hits": 23
+    },
+    {
+     "name": "CA",
+     "hits": 9
+    },
+    {
+     "name": "CO",
+     "hits": 8
+    },
+    {
+     "name": "AU",
+     "hits": 5
+    },
+    {
+     "name": "BR",
+     "hits": 4
+    },
+    {
+     "name": "EC",
+     "hits": 4
+    },
+    {
+     "name": "MX",
+     "hits": 3
+    },
+    {
+     "name": "VE",
+     "hits": 2
+    },
+    {
+     "name": "BE",
+     "hits": 1
+    },
+    {
+     "name": "FR",
+     "hits": 1
+    },
+    {
+     "name": "KZ",
+     "hits": 1
+    },
+    {
+     "name": "TH",
+     "hits": 1
+    },
+    {
+     "name": "BO",
+     "hits": 1
+    }
+   ],
+   "topUserAgents": [
+    {
+     "name": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l",
+     "hits": 579
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ElevenlabsCrawler/1.0; +https://elevenlabs.io",
+     "hits": 250
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-Se",
+     "hits": 164
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KH",
+     "hits": 126
+    },
+    {
+     "name": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+     "hits": 106
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot",
+     "hits": 87
+    },
+    {
+     "name": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (",
+     "hits": 49
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; ExaSearchBot/1.0; +https://crawler.exa.ai/)",
+     "hits": 23
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Keenabl",
+     "hits": 23
+    },
+    {
+     "name": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+     "hits": 23
+    },
+    {
+     "name": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.p",
+     "hits": 14
+    },
+    {
+     "name": "DuckDuckBot/1.0; (+http://duckduckgo.com/duckduckbot.html)",
+     "hits": 10
+    },
+    {
+     "name": "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/web",
+     "hits": 7
+    },
+    {
+     "name": "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/",
+     "hits": 6
+    },
+    {
+     "name": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGP",
+     "hits": 5
+    }
+   ],
+   "topPaths": [
+    {
+     "name": "/",
+     "hits": 1147
+    },
+    {
+     "name": "/index.html",
+     "hits": 19
+    },
+    {
+     "name": "/players/",
+     "hits": 8
+    },
+    {
+     "name": "/news/market-movers",
+     "hits": 7
+    },
+    {
+     "name": "/sets/2026-bowman-football/",
+     "hits": 6
+    },
+    {
+     "name": "/players/fernando-mendoza/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2021-panini-encased-football/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2025-donruss-optic-football/",
+     "hits": 4
+    },
+    {
+     "name": "/players/kirk-cousins/",
+     "hits": 4
+    },
+    {
+     "name": "/sets/2025-panini-mosaic-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/jim-kelly/",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-panini-prizm-football/",
+     "hits": 3
+    },
+    {
+     "name": "/players/robert-nussbaumer",
+     "hits": 3
+    },
+    {
+     "name": "/sets/2025-topps-resurgence-football/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2023-donruss-optic-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/trent-mcduffie/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2022-panini-prizm-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/fred-biletnikoff/",
+     "hits": 2
+    },
+    {
+     "name": "/sets/2023-panini-select-football/",
+     "hits": 2
+    },
+    {
+     "name": "/players/tom-brady/",
+     "hits": 2
+    }
+   ],
+   "byKindAndCountry": [
+    {
+     "name": "human US",
+     "hits": 486
+    },
+    {
+     "name": "verifiedBot US",
+     "hits": 432
+    },
+    {
+     "name": "declaredBot US",
+     "hits": 258
+    },
+    {
+     "name": "datacenter US",
+     "hits": 141
+    },
+    {
+     "name": "human GB",
+     "hits": 71
+    },
+    {
+     "name": "datacenter GB",
+     "hits": 35
+    },
+    {
+     "name": "verifiedBot RU",
+     "hits": 23
+    },
+    {
+     "name": "human CO",
+     "hits": 8
+    },
+    {
+     "name": "human CA",
+     "hits": 8
+    },
+    {
+     "name": "human BR",
+     "hits": 4
+    },
+    {
+     "name": "human EC",
+     "hits": 4
+    },
+    {
+     "name": "human AU",
+     "hits": 4
+    },
+    {
+     "name": "human MX",
+     "hits": 3
+    },
+    {
+     "name": "human VE",
+     "hits": 2
+    },
+    {
+     "name": "datacenter AU",
+     "hits": 1
+    },
+    {
+     "name": "verifiedBot BE",
+     "hits": 1
+    },
+    {
+     "name": "human FR",
+     "hits": 1
+    },
+    {
+     "name": "datacenter CA",
+     "hits": 1
+    },
+    {
+     "name": "human KZ",
+     "hits": 1
+    },
+    {
+     "name": "human TH",
+     "hits": 1
+    },
+    {
+     "name": "human BO",
+     "hits": 1
+    }
+   ]
+  }
+ }
+]
