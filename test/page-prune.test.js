@@ -37,7 +37,7 @@ const check = (label, ok, detail) => {
   check('  ...but placeholder players and other sports stay hidden even when listed',
     PAGES['/players/mystery-rookie-6/'] && !isEarner('/players/mystery-rookie-6/') && prunedPath('/players/mystery-rookie-6/'));
   check('  ...and an unpriced earner is searchable but still carries no ad tag',
-    /hideFromSearch = unpriced && !isEarner\(url\.pathname\)/.test(w) && /if \(key && !blocks\.pages\[key\]\) \{\s*rw\.on\('script\[src\]', new AdTagRemover\(\)\)/.test(w));
+    /hideFromSearch = unpriced && !isEarner\(url\.pathname\)/.test(w) && /if \(key && !blocks\.pages\[key\]\) \{\s*rw\.on\('script\[src\], script\[data-ad-src\]', new AdTagRemover\(\)\)/.test(w));
   const sm = fs.existsSync(path.join(__dirname, '..', 'public', 'sitemap.xml')) ? fs.readFileSync(path.join(__dirname, '..', 'public', 'sitemap.xml'), 'utf8') : '';
   const listed = Object.keys(PAGES).filter(p => isEarner(p) && fs.existsSync(path.join(__dirname, '..', 'public', p, 'index.html')));
   const missing = listed.filter(p => !sm.includes(`<loc>https://thecardhuddle.com${p}</loc>`));

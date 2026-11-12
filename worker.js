@@ -59,7 +59,7 @@ export class BotTagRemover {
   element(el) {
     // The analytics loader is inline (data-ga): it injects gtag.js itself.
     const isGaLoader = el.getAttribute('data-ga') != null;
-    const src = el.getAttribute('src') || '';
+    const src = el.getAttribute('src') || el.getAttribute('data-ad-src') || '';
     if (!isGaLoader && !/adsbygoogle\.js|googletagmanager\.com/.test(src)) return;
     el.remove();
     this.removed++;
@@ -858,7 +858,7 @@ export function filterSitemap(xml, blocks) {
 export class AdTagRemover {
   constructor() { this.removed = 0; }
   element(el) {
-    const src = el.getAttribute('src') || '';
+    const src = el.getAttribute('src') || el.getAttribute('data-ad-src') || '';
     if (!src.includes('adsbygoogle.js')) return;
     el.remove();
     this.removed++;
@@ -1234,7 +1234,7 @@ export default {
                       // worse outcome than serving a page unpriced.
                       const key = priceKeyForPath(url.pathname);
                       if (key && !blocks.pages[key]) {
-                        rw.on('script[src]', new AdTagRemover());
+                        rw.on('script[src], script[data-ad-src]', new AdTagRemover());
                         rw.on('div.lp-ad', new AdSlotRemover());
                       }
                       out = rw.transform(out);
@@ -1245,7 +1245,7 @@ export default {
                 }
               }
               if (stripsTags(visitorKind, request.headers.get('user-agent'))) {
-                out = new HTMLRewriter().on('script[src], script[data-ga]', new BotTagRemover())
+                out = new HTMLRewriter().on('script[src], script[data-ga], script[data-ad-src]', new BotTagRemover())
                   .on('div.lp-ad', new AdSlotRemover()).transform(out);
               }
               return out;

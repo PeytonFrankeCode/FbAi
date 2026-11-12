@@ -201,10 +201,10 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.name.endsWith('.html')) pages.push(f); } };
   walk(path.join(ROOT, 'public'));
   const tagged = pages.filter(f => fs.readFileSync(f, 'utf8').includes('adsbygoogle.js'));
-  const unguarded = tagged.filter(f => !/<script data-adfree>[^<]*pauseAdRequests=1[^<]*<\/script>\s*<script async src="https:\/\/pagead2\.googlesyndication\.com/.test(fs.readFileSync(f, 'utf8')));
+  const unguarded = tagged.filter(f => !/<script data-adfree>[^<]*pauseAdRequests=1[^<]*<\/script>\s*<script async data-ad-src="https:\/\/pagead2\.googlesyndication\.com/.test(fs.readFileSync(f, 'utf8')));
   check('every page with the ad tag pauses it first for an ad-free device', tagged.length > 0 && unguarded.length === 0,
     unguarded.length ? unguarded.slice(0, 3).map(f => path.relative(ROOT, f)).join(', ') : `${tagged.length} pages`);
-  check('  ...the landing pages and news pages too', /\$\{AD_FREE_GUARD\}\\n  <script async src="https:\/\/pagead2/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8'))
+  check('  ...the landing pages and news pages too', /\$\{AD_FREE_GUARD\}\\n  <script async data-ad-src="https:\/\/pagead2/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8'))
     && /const NEWS_AD_TAG = `(<script data-adgate>[^`]*?<\/script>)?<script data-adfree>/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')));
 }
 

@@ -87,7 +87,7 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
   const app = el('/app.js?v=1');
   [ads, ga, app].forEach(e => r.element(e));
   check('  ...the AdSense and Analytics scripts come off, the app does not', ads.removed && ga.removed && !app.removed && r.removed === 2);
-  check('  ...applied to HTML pages by visitor kind', /if \(stripsTags\(visitorKind, request\.headers\.get\('user-agent'\)\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\], script\[data-ga\]', new BotTagRemover\(\)\)/.test(worker));
+  check('  ...applied to HTML pages by visitor kind', /if \(stripsTags\(visitorKind, request\.headers\.get\('user-agent'\)\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\], script\[data-ga\], script\[data-ad-src\]', new BotTagRemover\(\)\)/.test(worker));
   // Analytics loads on a person's first action, from an inline loader; it
   // comes off for bots too.
   const loader = { removed: false, getAttribute: (k) => (k === 'data-ga' ? '' : null), remove() { this.removed = true; } };
@@ -108,8 +108,16 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
     const ungated = pages.filter(([, h]) => !/<script data-adgate>[^<]*pauseAdRequests=1[^<]*isTrusted===false[^<]*pauseAdRequests=0[^<]*<\/script>\s*<script data-adfree>/.test(h)).map(([n]) => n);
     const lp = fs.readFileSync(path.join(root, 'scripts', 'build-landing-pages.js'), 'utf8');
     const sv = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
-    check('ad requests wait for a real tap, key, wheel or mouse move on every page with ads', !ungated.length
+    check('ad requests wait for a real tap, key or wheel on every page with ads', !ungated.length
       && /const AD_FREE_GUARD = AD_GATE \+/.test(lp) && /const NEWS_AD_TAG = `<script data-adgate>/.test(sv), JSON.stringify(ungated));
+    // Nov 12, again: AdSense counts a page view when its script loads, so the
+    // bots' page loads still showed up (2.76K views, 231 impressions). The
+    // script itself now loads on the interaction, and a mouse move (which
+    // bots fake) is no longer one.
+    const eager = pages.filter(([, h]) => /<script async src="https:\/\/pagead2/.test(h) || !/<script async data-ad-src="https:\/\/pagead2/.test(h)).map(([n]) => n);
+    check('  ...and the AdSense script itself loads only then, never on page load', !eager.length
+      && !/<script async src="https:\/\/pagead2/.test(lp + sv) && /data-ad-src/.test(lp) && /data-ad-src/.test(sv), JSON.stringify(eager));
+    check('  ...and a mouse move alone is not a person', pages.every(([, h]) => { const g = (h.match(/<script data-adgate>[^<]*/) || [''])[0]; return g && !/mousemove/.test(g) && /createElement\('script'\)/.test(g); }));
   }
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);

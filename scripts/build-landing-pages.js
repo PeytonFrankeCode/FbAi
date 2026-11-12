@@ -83,7 +83,7 @@ const SITE = 'https://thecardhuddle.com';
 // are not left on screen as empty "Advertisement" labels.
 // Ads wait for a person (Nov 2026 bot waves): AdSense's pause switch holds ad
 // requests until the first real tap, touch, key, wheel turn or mouse move.
-const AD_GATE = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window;(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel','mousemove'],done=false;function go(e){if(done||(e&&e.isTrusted===false))return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})})})();</script>`;
+const AD_GATE = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window,d=document;(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel'],done=false;function go(e){if(done||(e&&e.isTrusted===false))return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0;var a=d.querySelector('script[data-ad-src]');if(a&&!a.getAttribute('data-loaded')){a.setAttribute('data-loaded','1');var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=a.getAttribute('data-ad-src');d.head.appendChild(s)}}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})})})();</script>`;
 const AD_FREE_GUARD = AD_GATE + `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1;document.documentElement.className+=' ch-adfree'}}catch(e){}</script>`;
 const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
   ? process.env.ADSENSE_CLIENT
@@ -132,7 +132,7 @@ const adsenseTag = (noindex) => {
   const on = !!ADSENSE_CLIENT && !noindex && S.ads;
   if (on) _adsStats.withAds++; else _adsStats.withoutAds++;
   return on
-    ? `  ${AD_FREE_GUARD}\n  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
+    ? `  ${AD_FREE_GUARD}\n  <script async data-ad-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
     : '';
 };
 const TODAY = new Date().toISOString().slice(0, 10);
