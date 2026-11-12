@@ -65,7 +65,7 @@ const check = (label, ok, detail) => {
   {
     const src = fs.readFileSync(path.join(ROOT, 'worker.js'), 'utf8');
     check('an unpriced page loses its ad boxes along with the ad script',
-      /rw\.on\('script\[src\]', new AdTagRemover\(\)\);\s*rw\.on\('div\.lp-ad', new AdSlotRemover\(\)\);/.test(src));
+      /rw\.on\('script\[src\], script\[data-ad-src\]', new AdTagRemover\(\)\);\s*rw\.on\('div\.lp-ad', new AdSlotRemover\(\)\);/.test(src));
     check('  ...and so does a page served to a bot',
       /new BotTagRemover\(\)\)\s*\.on\('div\.lp-ad', new AdSlotRemover\(\)\)/.test(src));
     const lp = fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8');
