@@ -499,10 +499,13 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         subs[username].status = session.metadata?.trial ? 'trialing' : 'active';
         if (session.metadata?.trial) subs[username].trialUsed = new Date().toISOString();
         // Growth: the source the account came from gets the trial or the sale.
-        if (session.metadata?.ref) {
-          subs[username].ref = session.metadata.ref;
-          await _growthBump(session.metadata.ref, session.metadata?.trial ? 'trials' : 'paid');
+        // No link is a source too (Nov 2026: a trial from search or a typed-in
+        // visit was counted nowhere, so the Trials tile missed it).
+        subs[username].ref = session.metadata?.ref || 'org-none';
+        if (session.metadata?.trial) {
+          subs[username].trialEnd = Date.now() + HUDDLE_TRIAL_DAYS * 86400000;
         }
+        await _growthBump(subs[username].ref, session.metadata?.trial ? 'trials' : 'paid');
       }
       saveSubscriptions(subs);
       break;
@@ -541,8 +544,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
           const was = data.status;
           data.status = sub.status === 'active' ? 'active' : sub.status;
           if (sub.metadata && sub.metadata.tier) data.tier = sub.metadata.tier;
+          if (sub.trial_end) data.trialEnd = sub.trial_end * 1000;
+          if (sub.cancel_at_period_end != null) data.cancelAtPeriodEnd = !!sub.cancel_at_period_end;
           // Growth: a trial that became a paid plan, for the source it came from.
-          if (was === 'trialing' && data.status === 'active' && data.ref) await _growthBump(data.ref, 'converted');
+          if (was === 'trialing' && data.status === 'active') await _growthBump(data.ref || 'org-none', 'converted');
           break;
         }
       }
@@ -19142,7 +19147,7 @@ app.get('/api/admin/news/stats', async (req, res) => {
 // trial turns into a paid plan.
 const GROWTH_TABLE = 'growth_stats';
 const GROWTH_COLS = ['visits', 'signups', 'trials', 'paid', 'converted'];
-const GROWTH_ORGANIC = ['org-search', 'org-social', 'org-direct', 'org-other'];
+const GROWTH_ORGANIC = ['org-none', 'org-search', 'org-social', 'org-direct', 'org-other'];
 const GROWTH_CLAIM_MS = 10 * 60 * 1000;
 function _growthSrc(s) {
   const v = String(s || '').toLowerCase().trim().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
@@ -19212,6 +19217,33 @@ function _growthRefOf(username) {
   const u = loadServerUsers()[username];
   return (u && u.ref) || '';
 }
+
+// Who is subscribed (owner, Nov 2026: "is there a way to see if someone has
+// started a free trial?"): every paid plan and trial, newest first, with when
+// a trial ends. The owner's own grant and staff grants are left out.
+app.get('/api/admin/subscribers', (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const subs = loadSubscriptions();
+  const rows = Object.entries(subs)
+    .filter(([, s]) => s && !s.permanent && s.stripeCustomerId)
+    .map(([username, s]) => {
+      const trialEnd = s.trialEnd || (s.status === 'trialing' && s.subscribedAt
+        ? Date.parse(s.subscribedAt) + HUDDLE_TRIAL_DAYS * 86400000 : null);
+      const tier = s.tier && HUDDLE_PLANS[s.tier] ? HUDDLE_PLANS[s.tier].name : null;
+      return {
+        username, plan: s.plan === 'adfree' ? 'Ad-free' : (tier || s.plan || 'Huddle+'),
+        status: s.status || 'active', period: s.period || 'monthly',
+        since: s.subscribedAt || null, trialUsed: s.trialUsed || null,
+        trialEnd: trialEnd ? new Date(trialEnd).toISOString() : null,
+        cancelAtPeriodEnd: !!s.cancelAtPeriodEnd, cancelledAt: s.cancelledAt || null,
+        source: s.ref || null,
+      };
+    })
+    .sort((a, b) => String(b.since || '').localeCompare(String(a.since || '')));
+  const count = (st) => rows.filter(r => r.status === st).length;
+  res.json({ total: rows.length, trialing: count('trialing'), active: count('active'),
+    cancelled: rows.filter(r => r.status === 'cancelled' || r.status === 'canceled').length, rows });
+});
 
 // The owner's table: each source's totals over the last N days.
 app.get('/api/admin/growth', async (req, res) => {
