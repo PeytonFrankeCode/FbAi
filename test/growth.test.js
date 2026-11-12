@@ -54,6 +54,9 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
   const g = read('public/growth.js');
   check('growth.js reads ?ref= and utm_source', /p\.get\('ref'\) \|\| p\.get\('utm_source'\)/.test(g));
   check('growth.js keeps the first named source for 30 days', /DAYS = 30/.test(g) && /if \(src && !stored\(\)\)/.test(g));
+  check('growth.js counts a visit only after a real tap, touch, key or wheel, not on page load (Nov 2026 bots)',
+    /var ON = \['pointerdown', 'touchstart', 'keydown', 'wheel'\]/.test(g) && /e\.isTrusted === false/.test(g)
+    && !/mousemove/.test(g) && /window\.addEventListener\(t, send/.test(g));
   check('growth.js counts once per tab session and skips moves within the site', /sessionStorage\.getItem\('chRefSeen'\)/.test(g) && /h === location\.hostname\) return/.test(g));
   const app = read('public/app.js');
   check('a sign-in claims the source', /if \(token\) _growthClaim\(token\);/.test(app) && /'\/api\/growth\/claim'/.test(app));
