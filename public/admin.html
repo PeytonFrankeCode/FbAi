@@ -408,6 +408,19 @@
   <div class="page-subtitle">This week's market as pictures for Instagram, X, TikTok and Reddit. Download one, paste the caption, post. The link in each caption is tracked in Growth as <code>social-&lt;board&gt;</code>.</div>
   <div class="soc-grid" id="soc-grid"><p style="color:var(--text-muted)">Loading&hellip;</p></div>
 
+  <!-- Subscribers: every paid plan and free trial (/api/admin/subscribers) -->
+  <div class="page-title">Subscribers</div>
+  <div class="page-subtitle">Everyone on Ad-free or Huddle+, newest first. A free trial shows the day it ends; on that day Stripe charges the card unless they cancel.</div>
+  <div class="ap-tiles">
+    <div class="ap-tile"><b id="sub-trialing">&ndash;</b><span>On a free trial now</span></div>
+    <div class="ap-tile"><b id="sub-active">&ndash;</b><span>Paying</span></div>
+    <div class="ap-tile"><b id="sub-cancelled">&ndash;</b><span>Cancelled</span></div>
+  </div>
+  <div class="ap-table"><table>
+    <thead><tr><th>Account</th><th>Plan</th><th>Status</th><th>Started</th><th>Trial ends</th><th>Came from</th></tr></thead>
+    <tbody id="sub-rows"><tr><td colspan="6" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+
   <!-- Growth: where collectors come from, by source (/api/admin/growth) -->
   <div class="page-title">Growth</div>
   <div class="ap-head">
@@ -646,6 +659,7 @@
       loadEstimateAccuracy();
       loadArticles();
       loadArticleStats();
+      loadSubscribers();
       loadGrowth();
       loadBounties();
       loadSocial();
@@ -864,7 +878,7 @@
   }
 
   // Growth (owner, Nov 2026): visits, accounts, trials and paid plans by source.
-  const GR_ORG = { 'org-search': 'Search engines', 'org-social': 'Social sites (no link)', 'org-direct': 'Typed in or bookmarked', 'org-other': 'Other websites' };
+  const GR_ORG = { 'org-none': 'No link (search, typed in, other)', 'org-search': 'Search engines', 'org-social': 'Social sites (no link)', 'org-direct': 'Typed in or bookmarked', 'org-other': 'Other websites' };
   function growthLink() {
     const n = artEl('gr-name').value.toLowerCase().trim().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
     const out = artEl('gr-out');
@@ -874,6 +888,26 @@
     out.querySelectorAll('button[data-copy]').forEach(b => b.onclick = () => {
       navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); });
     });
+  }
+  // Subscribers (owner, Nov 2026): who is on a plan or a free trial.
+  async function loadSubscribers() {
+    const rowsEl = artEl('sub-rows');
+    try {
+      const r = await artApi('/api/admin/subscribers');
+      artEl('sub-trialing').textContent = r.trialing;
+      artEl('sub-active').textContent = r.active;
+      artEl('sub-cancelled').textContent = r.cancelled;
+      const day = (iso) => iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '&ndash;';
+      const STATUS = { trialing: 'Free trial', active: 'Paying', cancelled: 'Cancelled', canceled: 'Cancelled', past_due: 'Payment failed', unpaid: 'Unpaid' };
+      rowsEl.innerHTML = (r.rows || []).length ? r.rows.map(x => {
+        const st = (STATUS[x.status] || x.status) + (x.cancelAtPeriodEnd && x.status !== 'cancelled' ? ' (cancels at period end)' : '');
+        const trialEnds = x.status === 'trialing' ? `<b>${day(x.trialEnd)}</b>` : (x.trialUsed ? 'Trial used' : '&ndash;');
+        return `<tr><td>${escHtml(x.username)}</td><td>${escHtml(x.plan)}${x.period === 'yearly' ? ' (yearly)' : ''}</td>
+          <td>${escHtml(st)}</td><td>${day(x.since)}</td><td>${trialEnds}</td><td>${x.source ? escHtml(GR_ORG[x.source] || x.source) : '&ndash;'}</td></tr>`;
+      }).join('') : '<tr><td colspan="6" style="color:var(--text-muted)">No subscribers yet. Trials and plans appear here the moment Stripe confirms them.</td></tr>';
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="6" style="color:var(--red)">Could not load subscribers: ${escHtml(err.message)}</td></tr>`;
+    }
   }
   async function loadGrowth() {
     const rowsEl = artEl('gr-rows');

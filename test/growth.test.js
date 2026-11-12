@@ -48,8 +48,8 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
   const src = read('server.js');
   check('only an account made in the last ten minutes can claim', /GROWTH_CLAIM_MS = 10 \* 60 \* 1000/.test(src) && /Date\.now\(\) - Date\.parse\(u\.createdAt \|\| 0\) < GROWTH_CLAIM_MS/.test(src));
   check('checkout carries the source to Stripe', /\.\.\.\(_growthRefOf\(username\) \? \{ ref: _growthRefOf\(username\) \} : \{\}\)/.test(src));
-  check('a trial or a sale is counted for the source', /_growthBump\(session\.metadata\.ref, session\.metadata\?\.trial \? 'trials' : 'paid'\)/.test(src));
-  check('a trial that turns paid is counted', /was === 'trialing' && data\.status === 'active' && data\.ref\) await _growthBump\(data\.ref, 'converted'\)/.test(src));
+  check('a trial or a sale is counted for the source (no link counts as "No link")', /_growthBump\(subs\[username\]\.ref, session\.metadata\?\.trial \? 'trials' : 'paid'\)/.test(src));
+  check('a trial that turns paid is counted', /was === 'trialing' && data\.status === 'active'\) await _growthBump\(data\.ref \|\| 'org-none', 'converted'\)/.test(src));
 
   const g = read('public/growth.js');
   check('growth.js reads ?ref= and utm_source', /p\.get\('ref'\) \|\| p\.get\('utm_source'\)/.test(g));
