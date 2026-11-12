@@ -23,7 +23,7 @@ jobs:
           const H = { Authorization: `Bearer ${process.env.CF_TOKEN}` };
           (async () => {
             const out = [];
-            for (let d = 0; d < 4; d++) {
+            for (let d = 0; d < 2; d++) {
               const day = new Date(Date.now() - d * 86400e3).toISOString().slice(0, 10);
               let cursor = '', keys = [];
               do {
@@ -33,11 +33,11 @@ jobs:
               const sum = Object.fromEntries(TALLY_COUNTS.map(k => [k, 0]));
               for (const k of keys) { const c = (k.metadata && k.metadata.c) || []; TALLY_COUNTS.forEach((n, i) => sum[n] += c[i] || 0); }
               const tallies = [];
-              for (const k of keys.slice(0, 600)) {
+              for (const k of keys.slice(-900)) {
                 try { tallies.push(await (await fetch(`${base}/values/${encodeURIComponent(k.name)}`, { headers: H })).json()); } catch (_) {}
               }
               const m = tallies.length ? mergeTallies(tallies) : null;
-              out.push({ day, isolates: keys.length, totals: sum, report: m && { pages: m.pages, visitors: m.visitors, topNetworks: m.topNetworks.slice(0, 20), topCountries: m.topCountries.slice(0, 15), topUserAgents: m.topUserAgents.slice(0, 15), topPaths: m.topPaths.slice(0, 20), byKindAndCountry: m.byKindAndCountry.slice(0, 25) } });
+              out.push({ day, isolates: keys.length, totals: sum, report: m && { pages: m.pages, visitors: m.visitors, topNetworks: m.topNetworks.slice(0, 40), topCountries: m.topCountries.slice(0, 15), topUserAgents: m.topUserAgents.slice(0, 15), topPaths: m.topPaths.slice(0, 20), byKindAndCountry: m.byKindAndCountry.slice(0, 25) } });
             }
             require('fs').writeFileSync('traffic.json', JSON.stringify(out, null, 1));
             console.log(JSON.stringify(out.map(o => ({ day: o.day, isolates: o.isolates, totals: o.totals }))));
