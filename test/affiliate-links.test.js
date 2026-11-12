@@ -205,7 +205,7 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   check('every page with the ad tag pauses it first for an ad-free device', tagged.length > 0 && unguarded.length === 0,
     unguarded.length ? unguarded.slice(0, 3).map(f => path.relative(ROOT, f)).join(', ') : `${tagged.length} pages`);
   check('  ...the landing pages and news pages too', /\$\{AD_FREE_GUARD\}\\n  <script async src="https:\/\/pagead2/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8'))
-    && /const NEWS_AD_TAG = `<script data-adfree>/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')));
+    && /const NEWS_AD_TAG = `(<script data-adgate>[^`]*?<\/script>)?<script data-adfree>/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')));
 }
 
 // ---- where each click came from (Oct 2026) --------------------------------

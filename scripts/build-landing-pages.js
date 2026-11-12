@@ -81,7 +81,10 @@ const SITE = 'https://thecardhuddle.com';
 // requested and nothing is hidden, which its policies forbid.
 // It also marks the page, so the boxes the in-content units sit in (below)
 // are not left on screen as empty "Advertisement" labels.
-const AD_FREE_GUARD = `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1;document.documentElement.className+=' ch-adfree'}}catch(e){}</script>`;
+// Ads wait for a person (Nov 2026 bot waves): AdSense's pause switch holds ad
+// requests until the first real tap, touch, key, wheel turn or mouse move.
+const AD_GATE = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window;(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel','mousemove'],done=false;function go(e){if(done||(e&&e.isTrusted===false))return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})})})();</script>`;
+const AD_FREE_GUARD = AD_GATE + `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1;document.documentElement.className+=' ch-adfree'}}catch(e){}</script>`;
 const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
   ? process.env.ADSENSE_CLIENT
   : 'ca-pub-3644779384068007';

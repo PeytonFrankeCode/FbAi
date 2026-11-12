@@ -99,6 +99,18 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
     !/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js/.test(html) && /<script data-ga>/.test(html)
       && /e\.isTrusted === false/.test(html) && /'pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'\]/.test(html) && !/var ON = \[[^\]]*'scroll'/.test(html)
       && /held\.forEach/.test(html));
+  // Ads wait for a person (Nov 12 2026: US bots on home internet loading the
+  // home page, ads shown, AdSense RPM $0.04). AdSense's pause switch holds ad
+  // requests until a real tap, touch, key, wheel turn or mouse move.
+  {
+    const root = path.join(__dirname, '..');
+    const pages = ['index', 'about', 'contact', 'methodology', 'privacy'].map(n => [n, fs.readFileSync(path.join(root, 'public', n + '.html'), 'utf8')]);
+    const ungated = pages.filter(([, h]) => !/<script data-adgate>[^<]*pauseAdRequests=1[^<]*isTrusted===false[^<]*pauseAdRequests=0[^<]*<\/script>\s*<script data-adfree>/.test(h)).map(([n]) => n);
+    const lp = fs.readFileSync(path.join(root, 'scripts', 'build-landing-pages.js'), 'utf8');
+    const sv = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
+    check('ad requests wait for a real tap, key, wheel or mouse move on every page with ads', !ungated.length
+      && /const AD_FREE_GUARD = AD_GATE \+/.test(lp) && /const NEWS_AD_TAG = `<script data-adgate>/.test(sv), JSON.stringify(ungated));
+  }
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

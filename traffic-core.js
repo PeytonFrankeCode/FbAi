@@ -38,6 +38,9 @@ const DATACENTER_ASNS = new Map([
   // a person. (The audit read the visitor tallies straight from KV.)
   [203466, 'INTROSERV'], [207990, 'HostRoyale'], [203020, 'HostRoyale'], [30058, 'FDCservers/code200'],
   [10557, 'UAB code200'], [214483, 'RapidSeedbox'], [11798, 'Ace Data Centers'], [46261, 'Aventice'],
+  // Nov 12: company networks people do not browse from (Meta's fetchers with a
+  // browser user agent, Yandex's crawlers).
+  [32934, 'Meta Platforms'], [13238, 'Yandex'],
 ]);
 
 // A network the list has not met yet, known by its own name: people browse
@@ -48,7 +51,7 @@ const DATACENTER_ASNS = new Map([
 const HOSTING_ORG = /\b(hosting|hostroyale|host(ers?)?|servers?|data ?cent(er|re)s?|dedicated|vps|colo(cation)?|seedbox|proxy|proxies|cloud)\b|code200|introserv|datacamp|leaseweb|hetzner|contabo|ovh|linode|vultr|choopa/i;
 const isHostingOrg = (org) => !!org && HOSTING_ORG.test(String(org));
 
-const BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|python-urllib|aiohttp|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|node-fetch|undici|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity|amazonbot|applebot|yandex|baiduspider|sogou/i;
+const BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|python-urllib|aiohttp|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|node-fetch|undici|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity|amazonbot|applebot|yandex|baiduspider|sogou|keenable/i;
 
 // SEO-tool and scraper crawlers: they index the site for other people's
 // tools and send no visitors. Live, DotBot (Moz, on Wowrack) loaded the home
