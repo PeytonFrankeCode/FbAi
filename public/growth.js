@@ -33,11 +33,23 @@
       : /(facebook|fb\.|instagram|(^|\.)t\.co$|twitter|(^|\.)x\.com$|reddit|tiktok|youtube|threads|pinterest|discord)/.test(h) ? 'org-social'
       : 'org-other';
   }
-  try { if (sessionStorage.getItem('chRefSeen')) return; sessionStorage.setItem('chRefSeen', src); } catch (_) {}
-  try {
-    var d = JSON.stringify({ src: src });
-    if (!(navigator.sendBeacon && navigator.sendBeacon('/api/growth/visit', new Blob([d], { type: 'application/json' })))) {
-      fetch('/api/growth/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: d, keepalive: true }).catch(function () {});
-    }
-  } catch (_) {}
+  try { if (sessionStorage.getItem('chRefSeen')) return; } catch (_) {}
+  // Counted once a person does something (Nov 2026: 1,654 "typed in" visits
+  // in a day, no accounts, were bots loading the home page). The same gate as
+  // the ads: a real tap, touch, key or wheel turn; a script's dispatched event
+  // and a mouse move (which bots fake) do not count.
+  var ON = ['pointerdown', 'touchstart', 'keydown', 'wheel'], sent = false;
+  function send(e) {
+    if (sent || (e && e.isTrusted === false)) return;
+    sent = true;
+    ON.forEach(function (t) { window.removeEventListener(t, send, true); });
+    try { if (sessionStorage.getItem('chRefSeen')) return; sessionStorage.setItem('chRefSeen', src); } catch (_) {}
+    try {
+      var d = JSON.stringify({ src: src });
+      if (!(navigator.sendBeacon && navigator.sendBeacon('/api/growth/visit', new Blob([d], { type: 'application/json' })))) {
+        fetch('/api/growth/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: d, keepalive: true }).catch(function () {});
+      }
+    } catch (_) {}
+  }
+  ON.forEach(function (t) { window.addEventListener(t, send, { capture: true, passive: true }); });
 })();
