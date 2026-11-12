@@ -167,7 +167,9 @@
       // browser marks as trusted, so a bot only had to scroll the page. A
       // person's scroll always comes with one of these: a touch on a phone,
       // a wheel turn on a mouse, a key, a press on the scrollbar.
-      var ON = ['pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'];
+      // No mousemove (Nov 2026): bots fake one, and 141 two-second "users"
+      // came in that way. The same list as the ads and the Growth count.
+      var ON = ['pointerdown', 'touchstart', 'keydown', 'wheel'];
       function start(e) {
         // A script can dispatch events; only the browser's own count.
         if (done || (e && e.isTrusted === false)) return;
