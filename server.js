@@ -470,6 +470,13 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 
       // Bounty Board payments are their own thing, not a plan.
       if (session.metadata?.kind === 'bounty') { await _bountyPaid(session); break; }
+      // Extra Huddle AI tokens: credited once per paid session (Stripe retries).
+      if (session.metadata?.kind === 'ai_topup') {
+        const who = session.metadata.username || session.client_reference_id;
+        const paid = Number(session.amount_total) / 100 || Number(session.metadata.usd) || 0;
+        if (who && paid > 0 && session.payment_status === 'paid') await _huddleTopupAdd(who, _topupCredit(paid), session.id);
+        break;
+      }
 
       // Donations were removed. Any such event now is a historical webhook
       // replay, so acknowledge and ignore rather than treating it as a plan.
@@ -18016,6 +18023,38 @@ app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
   }
 });
 
+// Extra Huddle AI tokens, a one-off payment (owner, Nov 2026).
+app.post('/api/ai/topup', async (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
+  if (!stripeEnabled) return res.status(503).json({ error: 'Payments are not set up yet.' });
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Log in to buy tokens.' });
+  if (!(_huddleCredits(username) > 0)) return res.status(402).json({ error: 'Extra tokens are for Huddle+ members. Choose a plan first.', needs: 'plus' });
+  const usd = Math.round(Number((req.body || {}).usd) * 100) / 100;
+  if (!(usd >= HUDDLE_TOPUP_MIN && usd <= HUDDLE_TOPUP_MAX)) {
+    return res.status(400).json({ error: `Choose an amount from $${HUDDLE_TOPUP_MIN} to $${HUDDLE_TOPUP_MAX}.` });
+  }
+  const tokens = _toTokens(_topupCredit(usd));
+  try {
+    const rec = loadSubscriptions()[username] || {};
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price_data: { currency: 'usd', unit_amount: Math.round(usd * 100),
+        product_data: { name: `Huddle AI tokens: ${(tokens / 1e6).toLocaleString('en-US', { maximumFractionDigits: 2 })} million`,
+          description: 'Extra Huddle AI tokens. They never expire and are used after your plan\'s monthly tokens.' } }, quantity: 1 }],
+      ...(rec.stripeCustomerId ? { customer: rec.stripeCustomerId } : {}),
+      client_reference_id: username,
+      metadata: { kind: 'ai_topup', username, usd: String(usd) },
+      success_url: `${siteOrigin(req)}/?payment=success&plan=tokens`,
+      cancel_url: `${siteOrigin(req)}/?payment=cancelled`,
+    });
+    res.json({ url: session.url, tokens });
+  } catch (err) {
+    console.error('Stripe token top-up error:', err && err.message);
+    res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+
 // Create checkout session for Pro+ subscription
 app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
   // Pro and Pro+ were retired (owner, Oct 2026): no checkout for a plan that
@@ -20770,6 +20809,36 @@ const _huddleCredits = (user) => {
 const _huddleAiAllowed = (req, user) => isAdminReq(req) || (user && (_huddleAiOwner(user) || _huddleCredits(user) > 0));
 const _huddleAiKey = (user) => `ai:asks:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 10)}`;
 const _huddleSpendKey = (user) => `ai:spend:${String(user).toLowerCase()}:${new Date().toISOString().slice(0, 7)}`;
+// Extra tokens (owner, Nov 2026: "buy a custom amount of credits ... that roll
+// over"): Huddle+ members only, $1.50 per million tokens, $3 to $100. Kept as
+// dollars of credit like the plans (1M tokens per $1), on a key with no
+// expiry, and spent only after the month's plan tokens are gone.
+const HUDDLE_TOPUP_PRICE_PER_M = 1.5;
+const HUDDLE_TOPUP_MIN = 3, HUDDLE_TOPUP_MAX = 100;
+const _huddleTopupKey = (user) => `ai:topup:${String(user).toLowerCase()}`;
+async function _huddleTopup(user) { return user ? (Number(((await archiveGet(_huddleTopupKey(user))) || {}).usd) || 0) : 0; }
+// Credit dollars a top-up of `usd` buys.
+const _topupCredit = (usd) => Math.round((Number(usd) / HUDDLE_TOPUP_PRICE_PER_M) * 1e6) / 1e6;
+// The part of one answer's cost that runs past the plan's tokens, and so comes
+// out of the extra tokens.
+const _topupShare = (spentBefore, cost, credits) =>
+  Math.max(0, spentBefore + cost - credits) - Math.max(0, spentBefore - credits);
+async function _huddleTopupAdd(user, usd, sessionId) {
+  const k = _huddleTopupKey(user);
+  const cur = (await archiveGet(k)) || {};
+  const seen = Array.isArray(cur.sessions) ? cur.sessions : [];
+  if (sessionId && seen.includes(sessionId)) return Number(cur.usd) || 0;   // Stripe retries a webhook
+  const next = { usd: Math.round(((Number(cur.usd) || 0) + usd) * 1e6) / 1e6,
+    sessions: [...seen, sessionId].filter(Boolean).slice(-50), updatedAt: new Date().toISOString() };
+  await archivePut(k, next);
+  return next.usd;
+}
+async function _huddleTopupSpend(user, usd) {
+  if (!(usd > 0)) return;
+  const k = _huddleTopupKey(user);
+  const cur = (await archiveGet(k)) || {};
+  await archivePut(k, { ...cur, usd: Math.max(0, Math.round(((Number(cur.usd) || 0) - usd) * 1e6) / 1e6), updatedAt: new Date().toISOString() });
+}
 const _nextUtcMidnight = () => { const d = new Date(); d.setUTCHours(24, 0, 0, 0); return d.toISOString(); };
 const _nextMonthUtc = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString(); };
 const HUDDLE_AVG_KEY = 'ai:avgcost:v1';
@@ -21197,7 +21266,10 @@ app.get('/api/ai/usage', async (req, res) => {
   const per = await _huddleCostPerAnswer();
   const trialing = !!(user && _huddleTrialing(user));
   const trialEligible = !!user && !tier && _huddleTrialEligible(loadSubscriptions()[user]);
-  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier, tierName: tier ? HUDDLE_PLANS[tier].name + (trialing ? ' (free trial)' : '') : null,
+  const topup = unlimited ? 0 : await _huddleTopup(user);
+  res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier,
+    extraTokens: _toTokens(topup), canTopup: !unlimited && !!credits,
+    topup: { pricePerMillion: HUDDLE_TOPUP_PRICE_PER_M, min: HUDDLE_TOPUP_MIN, max: HUDDLE_TOPUP_MAX }, tierName: tier ? HUDDLE_PLANS[tier].name + (trialing ? ' (free trial)' : '') : null,
     trialing, trialEligible: trialEligible || !user, trialDays: HUDDLE_TRIAL_DAYS, trialTokens: HUDDLE_PLANS.rookie.shown,
     tokens: credits == null ? null : _toTokens(credits), tokensUsed: Math.min(_toTokens(spent), credits == null ? Infinity : _toTokens(credits)),
     pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
@@ -21225,8 +21297,13 @@ app.post('/api/ai/ask', async (req, res) => {
     used = ((await cacheGet(ck)) || {}).n || 0;
     if (used >= HUDDLE_AI_PER_DAY) return res.status(429).json({ error: `That's a lot of questions for one day. More at midnight UTC.`, used, limit: HUDDLE_AI_PER_DAY });
     spent = ((await cacheGet(sk)) || {}).usd || 0;
-    if (spent >= credits) return res.status(402).json({ error: `You've used this month's AI tokens. New ones arrive on the 1st, or a bigger plan gives you more.`, needs: 'credits' });
+    if (spent >= credits && !(credits > 0 && await _huddleTopup(user) > 0)) {
+      return res.status(402).json({ error: credits > 0
+        ? `You've used this month's AI tokens. Buy extra tokens (they never expire), wait for new ones on the 1st, or move to a bigger plan.`
+        : `You've used this month's AI tokens. New ones arrive on the 1st, or a bigger plan gives you more.`, needs: 'credits', canTopup: credits > 0 });
+    }
   }
+  const spentBefore = spent;
   // The conversation so far, so a follow-up ("and in PSA 10?") makes sense:
   // the last few turns as plain text, roles alternating, ending on the user.
   const hist = (Array.isArray(req.body && req.body.history) ? req.body.history : []).slice(-6)
@@ -21274,6 +21351,9 @@ app.post('/api/ai/ask', async (req, res) => {
     if (!unlimited) {
       used += 1; cachePut(ck, { n: used }, 2 * 86400);
       spent += cost; cachePut(sk, { usd: spent }, 40 * 86400);
+      // Past the plan's tokens, the extra tokens pay.
+      const over = _topupShare(spentBefore, cost, credits);
+      if (over > 0) await _huddleTopupSpend(user, over);
     }
     if (cost > 0) {
       const avg = (await cacheGet(HUDDLE_AVG_KEY)) || {};
@@ -23051,7 +23131,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
