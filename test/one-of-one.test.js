@@ -321,6 +321,11 @@ const MS = G.SECONDS * 1000;
   check('play.js is stamped and cached with the rest', /'play\.js',/.test(read('scripts/stamp-sw.js')) && /'index\.html': \['style\.css', 'app\.js', 'bounties\.js', 'play\.js'\]/.test(read('scripts/stamp-sw.js')));
   const play = read('public/play.js');
   check('the page never holds the answers: it only shows what the server sends back', !/answers\s*:\s*\[\[/.test(play) && /x-game-device/.test(play) && /final: !!final/.test(play) && /window\.initPlayView = function/.test(play));
+  check('there is no Skip button: a prompt is answered or runs out', !/data-act="skip"/.test(play) && !/skip/i.test(play.replace(/There is no Skip button[^\n]*/, '')));
+  check('the results screen shows the streak, best score and packs played as tiles, and one line for what was most said',
+    /function statTiles\(\)/.test(play) && /'Day streak'/.test(play) && /'Best score'/.test(play) && /Most said: \$\{top\}/.test(play)
+    && !/Said by one player/.test(play) && /\.oo-tiles\{display:grid;grid-template-columns:repeat\(3,/.test(read('public/style.css')));
+  check('the game\'s buttons keep their colour under the pointer', /\.oo-btn:hover,\.oo-btn:focus-visible\{background:var\(--accent-hover\);color:var\(--accent-on\)\}/.test(read('public/style.css')));
   check('the admin page has the game\'s numbers and the swap', /async function loadGame\(\)/.test(read('public/admin.html')) && /function swapGame\(/.test(read('public/admin.html')) && /loadGame\(\);/.test(read('public/admin.html')));
 
   console.log(failures ? `\n${failures} One of One check(s) failed` : '\nall One of One checks passed');

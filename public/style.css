@@ -10700,9 +10700,11 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-muted{color:var(--text-secondary)}
 .oo-center{text-align:center}
 .oo-btn{background:var(--accent);color:var(--accent-on);border:0;border-radius:10px;padding:.65rem 1rem;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;justify-content:center}
+.oo-btn:hover,.oo-btn:focus-visible{background:var(--accent-hover);color:var(--accent-on)}
 .oo-btn:disabled{opacity:.6;cursor:default}
 .oo-btn.oo-big{padding:.85rem 1rem;font-size:1rem;width:100%;white-space:normal}
 .oo-link{background:none;border:0;padding:0;color:var(--accent);font:inherit;cursor:pointer;text-decoration:underline;align-self:center}
+.oo-link:hover{background:none;color:var(--accent-hover)}
 .oo-stats{margin:0;text-align:center;font-size:.85rem;color:var(--text-secondary)}
 /* The five tiers, as card colours: Base, Green, Blue, Gold and the black 1/1. */
 .oo-t-base{--oo:#cbd5e1;--oo-ink:#0f172a;--oo-edge:#94a3b8}
@@ -10746,10 +10748,22 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-score strong{font-size:3rem;font-weight:800}
 .oo-score span{font-size:1.1rem;color:var(--text-secondary);margin-left:.3rem}
 .oo-countdown{font-variant-numeric:tabular-nums;font-weight:700}
-.oo-recap{display:grid;gap:.6rem}
-.oo-recap-item{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:12px;padding:.8rem .9rem;display:grid;gap:.35rem;font-size:.9rem}
-.oo-recap-q{font-weight:700}
-.oo-recap-line{line-height:1.45}
+.oo-msg:empty{display:none}
+/* The results screen: three tiles for the streak,
+   best score and packs played, then one list of what was said, the prompt
+   with its tier on the right. */
+.oo-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+.oo-tile{background:var(--bg-input);border:1px solid var(--border-primary);border-radius:10px;padding:.6rem .4rem;display:flex;flex-direction:column;align-items:center;gap:.15rem;text-align:center}
+.oo-tile b{font-size:1.3rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.oo-tile span{font-size:.72rem;color:var(--text-secondary)}
+.oo-foot{margin:0;text-align:center;font-size:.82rem;color:var(--text-secondary)}
+.oo-foot .oo-link{font-size:inherit;display:inline}
+.oo-recap{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:14px;padding:.15rem 1rem}
+.oo-recap-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem .75rem;align-items:start;padding:.8rem 0;border-top:1px solid var(--border-primary);font-size:.9rem}
+.oo-recap-item:first-child{border-top:0}
+.oo-recap-q{font-weight:700;line-height:1.35}
+.oo-recap-chip{grid-column:2;grid-row:1}
+.oo-recap-line{grid-column:1 / -1;line-height:1.45;color:var(--text-secondary)}
 .oo-name{color:var(--accent);text-decoration:none;font-weight:600}
 .oo-name:hover{text-decoration:underline}
 @media (max-width:640px){.oo-prompt{font-size:1.15rem;min-height:3rem}.oo-flip{width:150px}.oo-card{padding:1rem .9rem 1.1rem}}

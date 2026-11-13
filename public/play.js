@@ -85,6 +85,13 @@
     if (!s || !s.plays) return '';
     return `<p class="oo-stats">${s.streak ? `${plural(s.streak, 'day')} in a row` : 'Streak: start a new one today'} &middot; Best ${s.best} &middot; Played ${s.plays}</p>`;
   }
+  // The same three numbers on the results screen, as tiles.
+  function statTiles() {
+    const s = stats();
+    if (!s || !s.plays) return '';
+    const tile = (n, label) => `<div class="oo-tile"><b>${n}</b><span>${label}</span></div>`;
+    return `<div class="oo-tiles">${tile(s.streak || 0, 'Day streak')}${tile(s.best || 0, 'Best score')}${tile(s.plays, s.plays === 1 ? 'Pack played' : 'Packs played')}</div>`;
+  }
   const dateWords = (date) => { try { return new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' }); } catch (_) { return date; } };
   const playerLink = (a) => `<a class="oo-name" href="/?q=${encodeURIComponent(a.name)}" data-act="cards" data-name="${esc(a.name)}">${esc(a.name)}</a>`;
   function clockWords(ms) {
@@ -135,7 +142,6 @@
           <button type="submit" class="oo-btn" id="oo-send">Answer</button>
         </form>
         <div class="oo-under"><span id="oo-msg" class="oo-msg" role="status" aria-live="polite"></span><span id="oo-secs" class="oo-secs" aria-label="Seconds left"></span></div>
-        <button type="button" class="oo-link" data-act="skip">Skip this one</button>
       </div>`;
       // On a phone, bring the prompt to the top so it and the answer box stay
       // in view above the keyboard.
@@ -155,7 +161,7 @@
           : a.said <= 1 ? 'You&rsquo;re the first to say that today.'
             : `${a.said} of ${plural(a.of, 'player')} said that.`;
       } else {
-        const why = shown.miss === 'tries' ? 'Out of tries' : shown.miss === 'final' && shown.skipped ? 'Skipped' : 'Out of time';
+        const why = shown.miss === 'tries' ? 'Out of tries' : 'Out of time';
         card = `<div class="oo-flip oo-t-miss"><span class="oo-flip-tier">${why}</span><span class="oo-flip-name">No answer</span><span class="oo-flip-pts">+0</span></div>`;
         line = 'That slot stays empty. The answers show once you finish.';
       }
@@ -170,31 +176,28 @@
       return;
     }
 
-    // Results: the round is done.
+    // Results: the round is done. One card for the score, one list for what
+    // was said: the prompt with its tier on the right, then two short lines.
     const recap = (data.results || []).map((p, i) => {
       const y = p.yours;
-      const you = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span> You said ${playerLink(y)}`
-        : '<span class="oo-chip oo-t-miss">No answer</span>';
+      const chip = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span>` : '<span class="oo-chip oo-t-miss">No answer</span>';
       // With one answer in, "most said" would only repeat the player's own.
       const top = p.n >= 2 ? (p.top || []).map(t => `${playerLink(t)} (${t.n})`).join(', ') : '';
-      const rare = (p.rare || []).filter(r => !y || r.name !== y.name).map(playerLink).join(', ');
       return `<div class="oo-recap-item">
         <div class="oo-recap-q">${i + 1}. ${esc(p.text)}</div>
-        <div class="oo-recap-you">${you}</div>
+        <div class="oo-recap-chip">${chip}</div>
+        ${y ? `<div class="oo-recap-line">You said ${playerLink(y)}</div>` : ''}
         ${top ? `<div class="oo-recap-line">Most said: ${top}</div>` : ''}
-        ${rare ? `<div class="oo-recap-line">Said by one player: ${rare}</div>` : ''}
-        <div class="oo-recap-line oo-muted">${plural(p.pool, 'player')} fit &middot; ${plural(p.n, 'answer')} so far</div>
       </div>`;
     }).join('');
     root.innerHTML = `<div class="oo-card oo-results">
-      <div class="oo-kicker">${kicker}</div>
+      <div class="oo-kicker oo-center">${kicker}</div>
       <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
       ${slots(v, -1)}
-      <div class="oo-actions"><button type="button" class="oo-btn oo-big" data-act="share">Share your pack</button></div>
+      ${statTiles()}
+      <button type="button" class="oo-btn oo-big" data-act="share">Share your pack</button>
       <p id="oo-shared" class="oo-msg oo-center" role="status" aria-live="polite"></p>
-      ${statsLine()}
-      <p class="oo-p oo-center">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span></p>
-      ${signedIn() ? '' : '<p class="oo-small oo-muted oo-center"><button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak on every device.</p>'}
+      <p class="oo-foot">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span>${signedIn() ? '' : ' &middot; <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak'}</p>
     </div>
     <h3 class="oo-h2">What everyone said</h3>
     <div class="oo-recap">${recap}</div>`;
@@ -216,7 +219,7 @@
       bar.style.transform = `scaleX(${Math.max(0, Math.min(1, left / total))})`;
       bar.classList.toggle('low', left < 6000);
       if (secs) secs.textContent = String(Math.max(0, Math.ceil(left / 1000)));
-      if (left <= 0) { send(true, false); return; }
+      if (left <= 0) { send(true); return; }
       raf = requestAnimationFrame(step);
     };
     step();
@@ -256,11 +259,11 @@
   }
 
   // Send what is typed. `final` is the last word on this prompt: the clock
-  // reached zero, or the player skipped.
-  async function send(final, skipped) {
+  // reached zero. There is no Skip button: a prompt is answered or runs out.
+  async function send(final) {
     if (busy || phase !== 'prompt') return;
     const input = $('oo-input'), msg = $('oo-msg'), btn = $('oo-send');
-    const text = skipped ? '' : ((input && input.value) || '').trim();
+    const text = ((input && input.value) || '').trim();
     if (!final && !text) { if (msg) msg.textContent = WHY.empty; return; }
     busy = true;
     cancelAnimationFrame(raf);
@@ -270,7 +273,7 @@
       const d = await api('/api/game/answer', { text, final: !!final, date: data.view.date });
       take(d);
       if (d.ok) { shown = { answer: d.answer }; phase = 'reveal'; }
-      else if (d.timeout) { shown = { miss: d.reason, skipped: !!skipped }; phase = 'reveal'; }
+      else if (d.timeout) { shown = { miss: d.reason }; phase = 'reveal'; }
       else if (d.error || !d.view.active) { busy = false; return load(); }   // the round moved on without this page
       else {
         // Not a match: same prompt, same clock, try again.
@@ -322,13 +325,12 @@
       if (act === 'cards') { if (seeCards(t.dataset.name)) e.preventDefault(); return; }
       e.preventDefault();
       if (act === 'next') next();
-      else if (act === 'skip') send(true, true);
       else if (act === 'results') { phase = 'results'; paint(); }
       else if (act === 'share') share();
       else if (act === 'reload') load();
       else if (act === 'login' && typeof showLogin === 'function') showLogin();
     });
-    root.addEventListener('submit', (e) => { e.preventDefault(); send(false, false); });
+    root.addEventListener('submit', (e) => { e.preventDefault(); send(false); });
   }
 
   // switchView('play') calls this each time the tab is opened.
