@@ -6212,27 +6212,92 @@ function _haiUsageLine(u) {
   if (!metered) { el.textContent = 'Answers from real Card Huddle sales'; return; }
   const pct = Math.min(100, Number(u.pct) || 0);
   const day = new Date(u.resetsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  el.textContent = `${u.tierName || 'Huddle+'} · ${pct < 1 && pct > 0 ? '<1' : Math.round(pct)}% of this month's tokens used · new tokens ${day}`;
+  const extra = Number(u.extraTokens) || 0;
+  el.innerHTML = `${escHtml(u.tierName || 'Huddle+')} · ${pct < 1 && pct > 0 ? '&lt;1' : Math.round(pct)}% of this month's tokens used · new tokens ${escHtml(day)}`
+    + (extra > 0 ? ` · <b>+${escHtml(_tok(extra))} extra</b>` : '')
+    + (u.canTopup ? ` · <button type="button" class="hai-topup-link" onclick="openHaiTopup()">Buy tokens</button>` : '');
   const fill = document.getElementById('hai-meter-fill');
   if (fill) { fill.style.width = pct + '%'; fill.className = pct >= 90 ? 'hai-meter-low' : ''; }
   if (meter) meter.setAttribute('aria-valuenow', String(Math.round(pct)));
 }
 function _haiGate(u) {
   const gate = document.getElementById('hai-gate'), form = document.getElementById('hai-form');
-  const out = !!(u && u.plus && !u.unlimited && u.tokens && u.pct >= 100);
+  const out = !!(u && u.plus && !u.unlimited && u.tokens && u.pct >= 100 && !(Number(u.extraTokens) > 0));
   const locked = !u || !u.plus || out;
   gate.classList.toggle('hidden', !locked); form.classList.toggle('hidden', locked);
   document.getElementById('hai').classList.toggle('hai-locked', locked);
   if (!locked) return;
   const rookie = ((u && u.plans) || PLAN_FALLBACK).find(p => p.id === 'rookie') || PLAN_FALLBACK[1];
   gate.innerHTML = out
-    ? `<p><b>You've used this month's AI tokens.</b> New ones arrive on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
+    ? (u.canTopup
+      ? `<p><b>You've used this month's AI tokens.</b> Buy extra tokens to keep going: they never expire. Or wait for new ones on the 1st, or move to a bigger plan.</p><button type="button" class="hai-cta" onclick="openHaiTopup()">Buy extra tokens</button><button type="button" class="hai-cta hai-cta-ghost" onclick="closeHuddleAI(); openAdFree();">See plans</button>`
+      : `<p><b>You've used this month's AI tokens.</b> New ones arrive on the 1st, or a bigger plan gives you more right away.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans</button>`)
     : !u || !u.signedIn
     ? `<p><b>Huddle AI comes with Huddle+</b>: no ads, plus about ${_num(rookie.answers)} AI answers a month from real sales, from ${_usd(rookie.monthly)} a month.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); showLogin();">Log in to get started</button>`
     : u.trialEligible
     ? `<p><b>Try Huddle AI free for ${u.trialDays || 7} days.</b> Ask what any card is worth, whether to grade it and how a player's market is moving, answered from real Card Huddle sales. No ads either.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">Start your free trial</button><p class="hai-fine">Then from ${_usd(rookie.monthly)}/month. Cancel anytime before the trial ends and you pay nothing.</p>`
     : `<p><b>Huddle AI comes with Huddle+</b>: no ads anywhere, plus about ${_num(rookie.answers)} AI answers a month, answered from real Card Huddle sales.</p><button type="button" class="hai-cta" onclick="closeHuddleAI(); openAdFree();">See plans · from ${_usd(rookie.monthly)}/month</button><p class="hai-fine">Change or cancel anytime.</p>`;
 }
+// Extra tokens (owner, Nov 2026): Huddle+ members buy any amount from $3 to
+// $100 at $1.50 per million tokens; they never expire and are used after the
+// month's plan tokens. Collectors see the price and the tokens it buys.
+function openHaiTopup() {
+  const u = _hai.usage || {};
+  const t = u.topup || { pricePerMillion: 1.5, min: 3, max: 100 };
+  let box = document.getElementById('hai-topup');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'hai-topup';
+    box.className = 'hai-topup';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Buy extra AI tokens');
+    (document.getElementById('hai') || document.body).appendChild(box);
+  }
+  const presets = [3, 5, 10, 25].filter(v => v >= t.min && v <= t.max);
+  const tokensFor = (usd) => Math.floor((usd / t.pricePerMillion) * 1e6);
+  box.innerHTML = `<div class="hai-topup-card">
+    <button type="button" class="hai-topup-x" aria-label="Close" onclick="closeHaiTopup()">&times;</button>
+    <h3>Extra AI tokens</h3>
+    <p class="hai-topup-sub">They never expire, and are used after your plan's monthly tokens run out.</p>
+    <div class="hai-topup-presets">${presets.map(v => `<button type="button" data-usd="${v}">$${v}<small>${escHtml(_tok(tokensFor(v)))}</small></button>`).join('')}</div>
+    <label class="hai-topup-custom">Or any amount, $${t.min} to $${t.max}
+      <span><b>$</b><input id="hai-topup-usd" type="number" inputmode="decimal" min="${t.min}" max="${t.max}" step="1" value="${presets[1] || t.min}"></span>
+    </label>
+    <p class="hai-topup-get" id="hai-topup-get"></p>
+    <button type="button" class="hai-cta" id="hai-topup-buy">Buy tokens</button>
+    <p class="hai-fine" id="hai-topup-err"></p>
+  </div>`;
+  const input = box.querySelector('#hai-topup-usd');
+  const get = box.querySelector('#hai-topup-get');
+  const err = box.querySelector('#hai-topup-err');
+  const paint = () => {
+    const v = Number(input.value);
+    const ok = v >= t.min && v <= t.max;
+    get.textContent = ok ? `You get ${_tok(tokensFor(v))} AI tokens` : `Choose $${t.min} to $${t.max}`;
+    box.querySelectorAll('.hai-topup-presets button').forEach(b => b.classList.toggle('active', Number(b.dataset.usd) === v));
+    box.querySelector('#hai-topup-buy').disabled = !ok;
+  };
+  box.querySelectorAll('.hai-topup-presets button').forEach(b => b.addEventListener('click', () => { input.value = b.dataset.usd; paint(); }));
+  input.addEventListener('input', paint);
+  box.querySelector('#hai-topup-buy').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true; btn.textContent = 'Opening checkout…'; err.textContent = '';
+    try {
+      const r = await authFetch('/api/ai/topup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usd: Number(input.value) }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.url) { location.href = d.url; return; }
+      err.textContent = d.error || 'Could not start checkout. Try again.';
+    } catch (_) { err.textContent = 'Network error. Try again.'; }
+    btn.disabled = false; btn.textContent = 'Buy tokens';
+  });
+  box.classList.remove('hidden');
+  paint();
+}
+function closeHaiTopup() {
+  const box = document.getElementById('hai-topup');
+  if (box) box.classList.add('hidden');
+}
+
 async function _haiLoadUsage() {
   try {
     const r = await authFetch('/api/ai/usage');
@@ -6280,6 +6345,8 @@ async function _haiAsk() {
     _hai.msgs.push({ role: 'assistant', text: d.answer, deep: !!d.deep, id: d.id, followUps: d.followUps || [], steps: Array.isArray(d.steps) ? d.steps : [], visuals: Array.isArray(d.visuals) ? d.visuals : [] });
     if (d.cardsChanged && typeof pullUserData === 'function') pullUserData().catch(() => {});
     if (_hai.usage && !d.unlimited) { _hai.usage.tokensUsed = d.tokensUsed; _hai.usage.pct = d.pct; _haiUsageLine(_hai.usage); _haiGate(_hai.usage); }
+    // Extra tokens may have paid for part of this answer: read the balance again.
+    if (_hai.usage && Number(_hai.usage.extraTokens) > 0) _haiLoadUsage();
   };
   const failed = (status, d) => {
     _hai.msgs.push({ role: 'assistant', text: (d && d.error) || 'Huddle AI did not answer. Try again.', error: true });
@@ -6339,6 +6406,20 @@ async function _haiAsk() {
 (function adFreeReturn() {
   let params;
   try { params = new URLSearchParams(location.search); } catch (_) { return; }
+  // Back from buying extra tokens: open Huddle AI once the tokens land.
+  if (params.get('payment') === 'success' && params.get('plan') === 'tokens') {
+    try { history.replaceState(history.state, '', location.pathname + location.hash); } catch (_) {}
+    let tries = 0;
+    const poll = async () => {
+      try {
+        const u = await (await authFetch('/api/ai/usage')).json();
+        if (Number(u.extraTokens) > 0 || ++tries >= 8) { _hai.usage = u; openHuddleAI(); return; }
+      } catch (_) { if (++tries >= 8) return; }
+      setTimeout(poll, 2000);
+    };
+    setTimeout(poll, 800);
+    return;
+  }
   if (params.get('payment') === 'success' && params.get('plan') === 'adfree') {
     try { history.replaceState(history.state, '', location.pathname + location.hash); } catch (_) {}
     let tries = 0;

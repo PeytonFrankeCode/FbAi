@@ -10776,3 +10776,23 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 @media (max-width:640px){#play-view.oo-live{padding-top:.75rem}#play-view.oo-live .collection-header{display:none}}
 html:has(#play-view.oo-live:not(.hidden)) .hai-fab{display:none}
 .acct-stats .acct-stat:nth-child(3):last-child{grid-column:1/-1}
+
+/* ---- Huddle AI: extra tokens (Nov 2026) ---- */
+.hai-topup-link { background: none; border: none; padding: 0; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }
+.hai-cta-ghost { background: transparent !important; color: var(--text-primary) !important; border: 1px solid var(--border-primary) !important; margin-top: 0.4rem; }
+.hai-topup { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.55); }
+.hai-topup.hidden { display: none; }
+.hai-topup-card { position: relative; width: 100%; max-width: 360px; background: var(--bg-card, var(--bg-secondary)); border: 1px solid var(--border-primary); border-radius: 14px; padding: 1.1rem 1.1rem 0.9rem; box-sizing: border-box; }
+.hai-topup-card h3 { margin: 0 0 0.25rem; font-size: 1.1rem; color: var(--text-primary); }
+.hai-topup-sub { margin: 0 0 0.8rem; font-size: 0.85rem; color: var(--text-secondary); }
+.hai-topup-x { position: absolute; top: 0.4rem; right: 0.5rem; background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+.hai-topup-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin-bottom: 0.75rem; }
+.hai-topup-presets button { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.5rem 0.2rem; border-radius: 10px; border: 1px solid var(--border-primary);
+  background: var(--bg-primary); color: var(--text-primary); font-weight: 800; font-size: 0.95rem; cursor: pointer; font-family: inherit; }
+.hai-topup-presets button small { font-weight: 600; font-size: 0.66rem; color: var(--text-muted); }
+.hai-topup-presets button.active { border-color: var(--accent); background: var(--accent-bg); }
+.hai-topup-custom { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.82rem; color: var(--text-secondary); }
+.hai-topup-custom span { display: flex; align-items: center; gap: 0.25rem; }
+.hai-topup-custom input { width: 84px; padding: 0.45rem 0.55rem; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-primary); color: var(--text-primary); font-size: 0.95rem; font-family: inherit; }
+.hai-topup-get { margin: 0.75rem 0 0.6rem; font-weight: 800; color: var(--accent); }
+.hai-topup-card .hai-cta { width: 100%; }
