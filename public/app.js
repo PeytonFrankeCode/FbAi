@@ -17682,6 +17682,45 @@ function _invWhen(ts) {
   return d.toLocaleDateString();
 }
 
+// The tab row (owner, Nov 2026: "a PC tab ... switch between tabs of PC,
+// Storage etc. and see the value"): All, PC, then each location, each with
+// its card count and what it is worth. A tab is a shortcut for the location
+// and type filters, so the dropdowns stay in step with it.
+function _invTabValue(items) {
+  return items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+}
+function _renderInvTabs(inv) {
+  const el = document.getElementById('inv-tabs');
+  if (!el) return;
+  if (!inv.items.length) { el.innerHTML = ''; return; }
+  const f = _invFilter;
+  const tabs = [
+    { key: 'all', label: 'All', items: inv.items, on: f.location === 'all' && f.type === 'all' },
+    { key: 'pc', label: '\u2764\uFE0F PC', items: inv.items.filter(i => i.pc), on: f.location === 'all' && f.type === 'pc' },
+    ...inv.locations.map(l => ({ key: 'loc', loc: l, label: l, items: inv.items.filter(i => i.location === l), on: f.location === l && f.type === 'all' })),
+  ];
+  el.innerHTML = tabs.map(t => {
+    const n = t.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+    const arg = t.key === 'loc' ? `'loc', ${JSON.stringify(t.loc).replace(/"/g, '&quot;')}` : `'${t.key}'`;
+    return `<button type="button" role="tab" aria-selected="${t.on}" class="inv-tab${t.on ? ' active' : ''}${t.key === 'pc' ? ' inv-tab-pc' : ''}" onclick="setInvTab(${arg})">
+      <span class="inv-tab-name">${escHtml(t.label)}</span>
+      <span class="inv-tab-value">${_invMoney(_invTabValue(t.items))}</span>
+      <span class="inv-tab-count">${n} card${n === 1 ? '' : 's'}</span>
+    </button>`;
+  }).join('');
+}
+function setInvTab(key, loc) {
+  _invFilter.location = key === 'loc' ? loc : 'all';
+  _invFilter.type = key === 'pc' ? 'pc' : 'all';
+  renderInventory();
+}
+// The Add/Edit form: a PC card has no price paid to fill in.
+function _invPcToggle() {
+  const pc = document.getElementById('inv-item-pc');
+  const paid = document.getElementById('inv-item-paid');
+  if (pc && paid) paid.classList.toggle('hidden', !!pc.checked);
+}
+
 function setInvFilter(field, value) {
   _invFilter[field] = field === 'q' ? String(value || '').trim().toLowerCase() : value;
   renderInventory();
@@ -17759,8 +17798,11 @@ function renderInventory() {
   // ---- Stats ----
   const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
   const totalValue = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
-  const totalPaid = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
-  const totalNet = totalValue - totalPaid;
+  // PC cards are kept, not traded (owner, Nov 2026): their value counts, but
+  // what they cost does not, so they stay out of the net.
+  const invOnly = inv.items.filter(i => !i.pc);
+  const totalPaid = invOnly.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
+  const totalNet = invOnly.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0) - totalPaid;
   const hits = inv.items.filter(i => i.auto || i.mem).length;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('inv-stat-items', String(inv.items.length));
@@ -17793,6 +17835,7 @@ function renderInventory() {
     ],
     _invFilter.type);
   if (_invFilter.location !== 'all' && !inv.locations.includes(_invFilter.location)) _invFilter.location = 'all';
+  _renderInvTabs(inv);
 
   // ---- Item list ----
   const q = _invFilter.q;
@@ -17822,7 +17865,10 @@ function renderInventory() {
     const val = Number(i.value) || 0;
     const net = val - paid;
     const netCls = net >= 0 ? 'inv-net-pos' : 'inv-net-neg';
-    const pl = `<div class="inv-item-pl" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
+    // A PC card shows what it is worth, nothing about cost (owner, Nov 2026).
+    const pl = i.pc ? `<div class="inv-item-pl inv-item-pl-pc" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
+      <span class="inv-pl-col"><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></span>
+    </div>` : `<div class="inv-item-pl" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
       <span class="inv-pl-col"><span class="inv-pl-lbl">Paid</span><span class="inv-pl-neg">${paid > 0 ? '−' + _invMoney(paid).replace('-', '') : '—'}</span></span>
       <span class="inv-pl-col"><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></span>
       <span class="inv-pl-col"><span class="inv-pl-lbl">Net</span><span class="${netCls}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></span>
@@ -17907,7 +17953,8 @@ function openInvItemModal(id) {
   document.getElementById('inv-item-notes').value = (item && item.notes) || '';
   document.getElementById('inv-item-auto').checked = !!(item && item.auto);
   document.getElementById('inv-item-mem').checked = !!(item && item.mem);
-  document.getElementById('inv-item-pc').checked = !!(item && item.pc);
+  document.getElementById('inv-item-pc').checked = item ? !!item.pc : _invFilter.type === 'pc';
+  _invPcToggle();
   const defaultLoc = _invFilter.location !== 'all' ? _invFilter.location : inv.locations[0];
   _invFillSelect(document.getElementById('inv-item-location'),
     inv.locations.map(l => ({ value: l, label: l })),
