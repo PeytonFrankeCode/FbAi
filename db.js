@@ -27,6 +27,7 @@ let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
 let nflDb = null;      // NflCardDB Cloudflare D1 binding (set by connectDB)
 let assets = null;     // Cloudflare ASSETS binding (set by connectDB)
 let ai = null;         // Workers AI binding (set by connectDB)
+let gameDays = null;   // One of One: the GameDay Durable Object namespace (set by connectDB)
 let photos = null;     // Cloudflare R2 bucket for archived listing photos
 let kvReady = false;    // true after preload completes
 
@@ -51,6 +52,9 @@ async function connectDB(env) {
   if (env && env.PHOTOS) photos = env.PHOTOS;
   // Workers AI, for Card Huddle for Business answers. Optional like the rest.
   if (env && env.AI) ai = env.AI;
+  // One of One's day counter (worker.js GameDay). Absent on Node and in tests,
+  // where server.js keeps the day in memory instead.
+  if (env && env.GAME_DAY) gameDays = env.GAME_DAY;
 
   // Stash the KV binding if present. env is only available on Workers.
   if (env && env.KV) {
@@ -334,6 +338,7 @@ function getNflDb() { return nflDb; }
 function getAssets() { return assets; }
 function getPhotos() { return photos; }
 function getAI() { return ai; }
+function getGameDays() { return gameDays; }
 
 // Durable records, one KV key each, listable by prefix with their metadata
 // (no TTL). For data many isolates write at once, which the single-blob
@@ -422,4 +427,4 @@ async function deleteSessionRecordsFor(username) {
   return n;
 }
 
-module.exports = { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos, getAI };
+module.exports = { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos, getAI, getGameDays };

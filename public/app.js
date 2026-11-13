@@ -6796,6 +6796,9 @@ function _renderAccount() {
       <button type="button" class="acct-stat" onclick="closeAccount(); switchView('inventory')">
         <span class="acct-stat-num">${cards}</span><span class="acct-stat-label">Cards in collection</span>
       </button>
+      <button type="button" class="acct-stat" onclick="closeAccount(); switchView('play')">
+        <span class="acct-stat-num">${(p.game && p.game.streak) || 0}</span><span class="acct-stat-label">Day streak in One of One${p.game && p.game.best ? ' · best ' + p.game.best : ''}</span>
+      </button>
     </div>
 
     <section class="acct-section">
@@ -7750,6 +7753,7 @@ function switchView(view) {
   const statsView = document.getElementById('stats-view');
   const newsView = document.getElementById('news-view');
   const bountiesView = document.getElementById('bounties-view');
+  const playView = document.getElementById('play-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -7764,6 +7768,7 @@ function switchView(view) {
   if (statsView) statsView.classList.add('hidden');
   if (newsView) newsView.classList.add('hidden');
   if (bountiesView) bountiesView.classList.add('hidden');
+  if (playView) playView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
 
   if (view === 'checklist') {
@@ -7788,6 +7793,9 @@ function switchView(view) {
     if (newsView) { newsView.classList.remove('hidden'); initNewsView(); }
   } else if (view === 'bounties') {
     if (bountiesView) { bountiesView.classList.remove('hidden'); if (typeof initBountyView === 'function') initBountyView(); }
+  } else if (view === 'play') {
+    // One of One, the daily game (public/play.js).
+    if (playView) { playView.classList.remove('hidden'); if (typeof initPlayView === 'function') initPlayView(); }
   } else if (view === 'stats') {
     if (statsView) {
       statsView.classList.remove('hidden');
@@ -7801,9 +7809,9 @@ function switchView(view) {
   }
 
   // Keep the URL in sync with the views that have a real, shareable path
-  // (/inventory and /stats — the SPA fallback serves index.html for both).
-  // Every other view lives at the root path.
-  const PATH_VIEWS = { inventory: '/inventory', stats: '/stats' };
+  // (/inventory, /stats and /play — the SPA fallback serves index.html for
+  // each). Every other view lives at the root path.
+  const PATH_VIEWS = { inventory: '/inventory', stats: '/stats', play: '/play' };
   try {
     const path = window.location.pathname;
     const want = PATH_VIEWS[view] || '/';
@@ -19726,7 +19734,7 @@ document.querySelectorAll('.ca-tab').forEach(btn => {
 // described in switchView as "real, shareable"; this is what makes that true.
 (function bootFromPath() {
   try {
-    const routes = { '/inventory': 'inventory', '/stats': 'stats' };
+    const routes = { '/inventory': 'inventory', '/stats': 'stats', '/play': 'play' };
     // Always route, including at '/'. Routing only when the path named a view
     // left the default view to the markup, and that was two sources of truth:
     // index.html hardcodes <button class="nav-tab active" data-view="search">,

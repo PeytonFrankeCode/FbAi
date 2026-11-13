@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos, getAI } = require('./db');
+const { refreshKeys, cacheOnly, putSessionRecord, getSessionRecord, deleteSessionRecord, deleteSessionRecordsFor, recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos, getAI, getGameDays } = require('./db');
 const digest = require('./market-digest');
 const mreport = require('./market-report');
 const betaSurvey = require('./beta-survey');
@@ -715,6 +715,9 @@ const RL_TIERS = [
   // each is one D1 write, so a script must not be able to post thousands.
   { name: 'beacon', minute: 30, hour: 300, match: (p) => p === '/api/news/beacon' },
   { name: 'diag', minute: 10, hour: 120, match: (p) => p === '/api/diag/stalls' },
+  // One of One: a round is about thirty calls (seven prompts, a few guesses
+  // each). Past this is a script trying names, not a person playing.
+  { name: 'game', minute: 90, hour: 900, match: (p) => p.startsWith('/api/game/') },
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
@@ -16718,6 +16721,8 @@ app.get('/api/account/profile', async (req, res) => {
       giveaways: !!profile.giveaways,
       shipping: profile.shipping || null,
       shippingUpdatedAt: profile.updatedAt || null,
+      // One of One: streak, best score and rounds played.
+      game: await _gameStats(username, null),
     });
   } catch (err) {
     console.error('[account/profile]', err && err.message);
@@ -22722,7 +22727,263 @@ async function _bountyTellHolders(keys) {
   return told;
 }
 
-module.exports = { _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+// ==================== One of One: the daily game ====================
+// (owner, Nov 2026) Seven prompts a day, the same for everyone. Any player the
+// checklists say fits is a valid answer, and the rarer it is among the day's
+// players the more it scores. Free, and no account needed: a browser plays
+// under an id it keeps, an account under its username.
+//
+//   game-core.js   the rules: reading a typed name, rarity, the clock, a day
+//   game-bank.js   the prompts, built from the checklists
+//   scripts/build-daily-game.js   deals the packs into public/data/game on
+//                  every deploy; worker.js will not serve those to browsers
+//   worker.js GameDay   a Durable Object per date holds the day's counts and
+//                  every player's clock. On Node the same rules run in memory.
+const GAME = require('./game-core');
+const GAME_SWAP_KEY = (date) => `game:swap:${date}`;
+const GAME_STATS_KEY = (user) => `game:stats:${user}`;
+const GAME_RECAP_KEY = (date) => `game:recap:${date}`;
+const GAME_TIERS = GAME.TIERS.map(({ id, name, points }) => ({ id, name, points }));
+const _gameMem = new Map();          // Node: date -> the day, in memory
+const _gameReady = new Set();        // dates this isolate knows have their pack
+let _gamePackSource = null;          // tests deal their own pack...
+let _gameNow = () => Date.now();     // ...and move the clock
+function _gameTestHooks({ pack, now } = {}) {
+  _gamePackSource = pack || null;
+  _gameNow = now || (() => Date.now());
+  _gameMem.clear(); _gameReady.clear();
+}
+const _gameDate = () => GAME.gameDate(_gameNow());
+
+// One call into a day (game-core runOp): the Durable Object on the Worker,
+// memory on Node.
+async function _gameCall(date, op, args = {}) {
+  const ns = getGameDays();
+  if (ns) {
+    const r = await ns.get(ns.idFromName(date)).fetch('https://game.local/', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...args }) });
+    return r.json();
+  }
+  let day = _gameMem.get(date);
+  if (!day) {
+    // Looking at a day nobody has opened makes nothing: the admin page asks
+    // after fourteen of them, and must not push today out of memory.
+    if (op === 'summary') return { summary: null };
+    if (op === 'has') return { has: false };
+    const cutoff = GAME.dayIndex(_gameDate()) - 2;
+    for (const d of _gameMem.keys()) if (GAME.dayIndex(d) < cutoff) _gameMem.delete(d);
+    day = new GAME.GameDay(GAME.memoryStore());
+    _gameMem.set(date, day);
+  }
+  return GAME.runOp(day, { op, ...args }, _gameNow());
+}
+
+// Node with no pack files (they are built at deploy, not committed): deal
+// straight from the checklists. Hidden from the bundler like _loadJson's
+// require: the Worker never comes here, and must not carry game-bank.js.
+let _gameLocalBank = null;
+function _gameDealLocal(date) {
+  const nodeRequire = eval('require');
+  const bank = nodeRequire('./game-bank.js');
+  if (!_gameLocalBank) {
+    const b = nodeRequire('./scripts/build-daily-game.js');
+    _gameLocalBank = bank.buildBank({ checklists: b.loadChecklists(), players: b.loadPlayers() });
+  }
+  return bank.buildPacks(_gameLocalBank, { from: date, days: 1 })[0] || null;
+}
+
+// A day's pack as it was dealt.
+async function _gamePackRaw(date) {
+  if (_gamePackSource) return _gamePackSource(date);
+  let pack = null;
+  try { pack = await _loadJson(`game/${date}.json`); } catch (_) { pack = null; }
+  if (!pack) {
+    // Past the last pack dealt (two months without a deploy): an earlier pack
+    // comes round again, under today's date and number.
+    let idx = null;
+    try { idx = await _loadJson('game/index.json'); } catch (_) { idx = null; }
+    const dates = idx && Array.isArray(idx.dates) ? idx.dates : [];
+    if (dates.length && date > dates[dates.length - 1]) {
+      const d = GAME.dayIndex(date);
+      try {
+        const old = await _loadJson(`game/${dates[d % dates.length]}.json`);
+        pack = { ...old, date, number: Math.max(1, d - GAME.dayIndex(idx.epoch || dates[0]) + 1) };
+      } catch (_) { pack = null; }
+    }
+  }
+  if (!pack && !getAssets()) {
+    try { pack = _gameDealLocal(date); } catch (err) { console.error('[game] could not deal a pack:', err && err.message); }
+  }
+  return pack && Array.isArray(pack.prompts) && Array.isArray(pack.spares || []) ? pack : null;
+}
+// ...and as it will be played, with the admin's swaps made.
+async function _gamePack(date) {
+  const pack = await _gamePackRaw(date);
+  if (!pack) return null;
+  const swaps = await recordGet(GAME_SWAP_KEY(date));
+  return swaps ? GAME.applySwaps(pack, swaps) : pack;
+}
+
+// The day keeps the pack it is first given, so a deploy at noon cannot change
+// prompts people are halfway through.
+async function _gameEnsure(date) {
+  if (_gameReady.has(date)) return true;
+  const has = await _gameCall(date, 'has');
+  if (!has || !has.has) {
+    const pack = await _gamePack(date);
+    if (!pack) return false;
+    await _gameCall(date, 'pack', { pack: { date, number: pack.number, prompts: pack.prompts } });
+    // A new day has begun: keep yesterday's numbers (see _gameRecap) while
+    // its Durable Object still has them.
+    try { await _gameRecap(GAME.dateOfDay(GAME.dayIndex(date) - 1), false); } catch (_) { /* the admin page will ask again */ }
+  }
+  if (_gameReady.size >= 8) _gameReady.clear();
+  _gameReady.add(date);
+  return true;
+}
+
+// Who is playing: the account when signed in, else the id the browser made
+// for itself (x-game-device).
+function _gamePlayer(req) {
+  const user = getSessionUser(req);
+  if (user && GAME.validPid('u:' + user)) return { pid: 'u:' + user, user };
+  const d = String(req.headers['x-game-device'] || '').toLowerCase();
+  return /^[a-z0-9-]{16,64}$/.test(d) ? { pid: 'd:' + d, user: null } : { pid: null, user: null };
+}
+// A round begun at 11:59 is finished on that day's pack: for ten minutes past
+// midnight, a request that names yesterday still gets yesterday.
+function _gamePlayDate(req) {
+  const today = _gameDate(), asked = String((req.body && req.body.date) || '');
+  if (GAME.isDate(asked) && asked !== today && GAME.gameDate(_gameNow() - 10 * 60000) === asked) return asked;
+  return today;
+}
+
+// An account's streak and best score, with today's round added once it is
+// finished. (A browser without an account keeps its own, in the page.)
+async function _gameStats(user, view) {
+  let stats = (await recordGet(GAME_STATS_KEY(user))) || null;
+  if (view && view.done) {
+    const next = GAME.nextStats(stats, view.date, view.score);
+    if (next !== stats) { stats = next; await recordPut(GAME_STATS_KEY(user), stats); }
+  }
+  return stats ? { ...stats, streak: GAME.liveStreak(stats, _gameDate()) } : null;
+}
+
+async function _gameSend(res, date, who, out) {
+  const view = (out && out.view) || null;
+  const body = { ...out, tiers: GAME_TIERS, msToNext: GAME.msToNextDay(_gameNow()) };
+  if (view && view.done) {
+    // What everyone said, only once this player has nothing left to answer.
+    const r = await _gameCall(date, 'results', { pid: who.pid });
+    body.results = (r && r.prompts) || [];
+    body.share = GAME.shareText(view);
+  }
+  if (who.user) body.stats = await _gameStats(who.user, view);
+  res.set('Cache-Control', 'no-store').json(body);
+}
+const _gameNotReady = (res) => res.status(503).json({ error: "Today's pack is not ready yet. Check back in a few minutes." });
+const _gameFail = (res, where, err) => { console.error(`[game/${where}]`, err && err.message); res.status(500).json({ error: 'The game hit a problem. Try again.' }); };
+
+// GET /api/game/today — today's round as it stands for this player.
+app.get('/api/game/today', async (req, res) => {
+  try {
+    const date = _gameDate(), who = _gamePlayer(req);
+    if (!(await _gameEnsure(date))) return _gameNotReady(res);
+    const r = await _gameCall(date, 'state', { pid: who.pid });
+    await _gameSend(res, date, who, { view: r.view });
+  } catch (err) { _gameFail(res, 'today', err); }
+});
+
+// POST /api/game/next — show the next prompt and start its clock.
+app.post('/api/game/next', async (req, res) => {
+  try {
+    const date = _gamePlayDate(req), who = _gamePlayer(req);
+    if (!who.pid) return res.status(400).json({ error: 'This browser has no player id yet. Reload the page and try again.' });
+    if (!(await _gameEnsure(date))) return _gameNotReady(res);
+    // worker.js marks a visitor it takes for a program: they can play, and
+    // are left out of the day's counts.
+    const r = await _gameCall(date, 'next', { pid: who.pid, quiet: req.headers['x-game-uncounted'] === '1' });
+    if (r.error) return res.status(400).json({ error: 'That round could not be started.' });
+    await _gameSend(res, date, who, r);
+  } catch (err) { _gameFail(res, 'next', err); }
+});
+
+// POST /api/game/answer { text, final } — an answer to the prompt on the
+// clock. `final` is sent when the page's clock runs out or the player skips:
+// the answer scores if it fits, and the slot stays empty if it does not.
+app.post('/api/game/answer', async (req, res) => {
+  try {
+    const date = _gamePlayDate(req), who = _gamePlayer(req);
+    if (!who.pid) return res.status(400).json({ error: 'This browser has no player id yet. Reload the page and try again.' });
+    if (!(await _gameEnsure(date))) return _gameNotReady(res);
+    const b = req.body || {};
+    const r = await _gameCall(date, 'answer', { pid: who.pid, text: String(b.text || '').slice(0, 80), final: !!b.final });
+    if (r.error && r.error !== 'no-prompt') return res.status(400).json({ error: 'That answer could not be read.' });
+    await _gameSend(res, date, who, r);
+  } catch (err) { _gameFail(res, 'answer', err); }
+});
+
+// ---- Admin: how the days went, and the packs coming up ----
+// A finished day's numbers are kept in KV: the Durable Object that counted
+// them clears itself after a month.
+async function _gameRecap(date, live) {
+  if (!live) {
+    const kept = await recordGet(GAME_RECAP_KEY(date));
+    if (kept) return kept.none ? null : kept;
+  }
+  let s = null;
+  try { s = (await _gameCall(date, 'summary')).summary || null; } catch (_) { return null; }
+  // Only a day that is over is kept: today's numbers are still moving.
+  if (!live && date < _gameDate()) await recordPut(GAME_RECAP_KEY(date), s || { date, none: true });
+  return s;
+}
+
+app.get('/api/admin/game', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const today = _gameDate(), t = GAME.dayIndex(today);
+    const days = [];
+    for (let i = 0; i < 14; i++) {
+      const date = GAME.dateOfDay(t - i);
+      const s = await _gameRecap(date, i === 0);
+      if (s) days.push(s);
+    }
+    const upcoming = [];
+    for (let i = 1; i <= 7; i++) {
+      const date = GAME.dateOfDay(t + i);
+      const raw = await _gamePackRaw(date);
+      if (!raw) continue;
+      const pack = GAME.applySwaps(raw, (await recordGet(GAME_SWAP_KEY(date))) || {});
+      upcoming.push({ date, number: pack.number, sparesLeft: (pack.spares || []).length,
+        prompts: pack.prompts.map((p, slot) => ({ slot, id: p.id, type: p.type, text: p.text, pool: p.answers.length,
+          swapped: raw.prompts[slot].id !== p.id, start: GAME.startingTiers(p) })) });
+    }
+    res.set('Cache-Control', 'no-store').json({ today, days, upcoming, perDay: GAME.PROMPTS_PER_DAY, seconds: GAME.SECONDS, maxScore: GAME.MAX_SCORE });
+  } catch (err) { _gameFail(res, 'admin', err); }
+});
+
+// POST /api/admin/game/swap { date, slot, undo } — put a spare prompt in a
+// slot of a day that has not started, or take the swap back.
+app.post('/api/admin/game/swap', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { date, slot, undo } = req.body || {};
+    if (!GAME.isDate(date) || date <= _gameDate()) return res.status(400).json({ error: 'Only a day that has not started can be changed.' });
+    const raw = await _gamePackRaw(date);
+    const i = Number(slot);
+    if (!raw || !Number.isInteger(i) || !raw.prompts[i]) return res.status(404).json({ error: 'No such prompt.' });
+    const swaps = (await recordGet(GAME_SWAP_KEY(date))) || {};
+    if (undo) delete swaps[i];
+    else {
+      if (Object.keys(swaps).filter(k => Number(k) !== i).length >= (raw.spares || []).length) return res.status(400).json({ error: 'That day has no spare prompts left.' });
+      swaps[i] = raw.prompts[i].id;
+    }
+    await recordPut(GAME_SWAP_KEY(date), swaps);
+    res.json({ ok: true });
+  } catch (err) { _gameFail(res, 'swap', err); }
+});
+
+module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

@@ -446,6 +446,26 @@
   </table></div>
   <p class="ap-note">Grey rows are visitors with no link: search engines, social sites, typed-in or bookmarked, and other sites. Named rows come from <code>?ref=</code> links. Accounts, trials and paid plans count for the first link a browser arrived from in the last 30 days. Counting started Nov 2026.</p>
 
+  <!-- One of One, the daily game: how the days went and the packs coming up (/api/admin/game) -->
+  <div class="page-title">One of One</div>
+  <div class="page-subtitle">The daily game. Today's numbers, the last two weeks, and the next seven days' prompts. A prompt you don't like on a day that hasn't started can be swapped for a spare.</div>
+  <div class="ap-tiles">
+    <div class="ap-tile"><b id="oo-plays">&ndash;</b><span>Rounds started today</span></div>
+    <div class="ap-tile"><b id="oo-finished">&ndash;</b><span>Finished today</span></div>
+    <div class="ap-tile"><b id="oo-average">&ndash;</b><span>Average score today</span></div>
+    <div class="ap-tile"><b id="oo-total">&ndash;</b><span>Rounds in the last 14 days</span></div>
+  </div>
+  <div class="ap-bars" id="oo-bars" aria-label="Rounds by day"></div>
+  <div class="ap-table"><table>
+    <thead><tr><th>Today's prompt</th><th>Players who fit</th><th>Answers</th><th>Most said</th></tr></thead>
+    <tbody id="oo-today"><tr><td colspan="4" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+  <div class="ap-table" style="margin-top:1rem"><table>
+    <thead><tr><th>Coming up</th><th style="text-align:left">Prompt</th><th>Players who fit</th><th></th></tr></thead>
+    <tbody id="oo-upcoming"><tr><td colspan="4" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+  <p class="ap-note" id="oo-note">Rounds played by visitors the site takes for programs are not counted. A day's numbers are kept here after the day ends.</p>
+
   <!-- Article performance: reads counted on each article (/api/admin/news/stats) -->
   <div class="page-title">Article performance</div>
   <div class="ap-head">
@@ -661,6 +681,7 @@
       loadArticleStats();
       loadSubscribers();
       loadGrowth();
+      loadGame();
       loadBounties();
       loadSocial();
       loadWaitlist();
@@ -935,6 +956,43 @@
     } catch (err) {
       rowsEl.innerHTML = `<tr><td colspan="7" style="color:var(--red)">Could not load growth: ${escHtml(err.message)}</td></tr>`;
     }
+  }
+
+  // One of One, the daily game: today, the last two weeks, and the next seven
+  // days' prompts with a swap (/api/admin/game, /api/admin/game/swap).
+  async function loadGame() {
+    const todayEl = artEl('oo-today'), upEl = artEl('oo-upcoming');
+    try {
+      const r = await artApi('/api/admin/game');
+      const days = r.days || [], today = days.find(d => d.date === r.today);
+      artEl('oo-plays').textContent = today ? today.plays.toLocaleString() : '0';
+      artEl('oo-finished').textContent = today ? today.finished.toLocaleString() : '0';
+      artEl('oo-average').textContent = today && today.finished ? `${today.average} / ${r.maxScore}` : '\u2013';
+      artEl('oo-total').textContent = days.reduce((n, d) => n + (d.plays || 0), 0).toLocaleString();
+      const byDay = Object.fromEntries(days.map(d => [d.date, d.plays || 0]));
+      const t = Date.parse(r.today + 'T12:00:00Z');
+      const list = Array.from({ length: 14 }, (_, i) => { const d = new Date(t - (13 - i) * 86400000).toISOString().slice(0, 10); return [d, byDay[d] || 0]; });
+      const max = Math.max(1, ...list.map(d => d[1]));
+      artEl('oo-bars').innerHTML = list.map(([d, n]) => `<i style="height:${Math.max(2, Math.round(60 * n / max))}px" title="${d}: ${n} round${n === 1 ? '' : 's'}"></i>`).join('');
+      todayEl.innerHTML = today ? today.prompts.map(p => `<tr><td>${escHtml(p.text)}</td><td>${p.pool}</td><td>${p.n}</td>
+        <td>${(p.top || []).map(x => `${escHtml(x.name)} (${x.n})`).join(', ') || '&ndash;'}</td></tr>`).join('')
+        : '<tr><td colspan="4" style="color:var(--text-muted)">Nobody has played today yet. The prompts show here once the first round starts.</td></tr>';
+      const day = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+      upEl.innerHTML = (r.upcoming || []).length ? r.upcoming.map(u => u.prompts.map((p, i) => `<tr>
+        <td>${i === 0 ? `<b>${escHtml(day(u.date))}</b> &middot; #${u.number}` : ''}</td>
+        <td style="text-align:left">${escHtml(p.text)}${p.swapped ? ' <span style="color:var(--text-muted)">(swapped in)</span>' : ''}</td><td>${p.pool}</td>
+        <td>${p.swapped ? `<button type="button" onclick="swapGame('${u.date}', ${p.slot}, true)">Undo</button>`
+          : (u.sparesLeft ? `<button type="button" onclick="swapGame('${u.date}', ${p.slot}, false)">Swap</button>` : '')}</td></tr>`).join('')).join('')
+        : '<tr><td colspan="4" style="color:var(--text-muted)">No packs dealt yet. They are built on the next deploy.</td></tr>';
+    } catch (err) {
+      todayEl.innerHTML = `<tr><td colspan="4" style="color:var(--red)">Could not load the game: ${escHtml(err.message)}</td></tr>`;
+      upEl.innerHTML = '';
+    }
+  }
+  async function swapGame(date, slot, undo) {
+    try { await artApi('/api/admin/game/swap', { method: 'POST', body: JSON.stringify({ date, slot, undo }) }); }
+    catch (err) { alert('Could not change that prompt: ' + err.message); }
+    loadGame();
   }
 
   // Social images (owner, Nov 2026): each board drawn as a 1080x1350 picture

@@ -144,7 +144,7 @@ for (const rel of HEAVY) {
   // on ?v=159 after index.html had moved on — and they are two of the pages an
   // AdSense reviewer opens first.
   const PAGES = {
-    'index.html': ['style.css', 'app.js'],
+    'index.html': ['style.css', 'app.js', 'play.js'],
     'privacy.html': ['style.css'],
     'terms.html': ['style.css'],
     'about.html': ['style.css'],
@@ -189,7 +189,7 @@ for (const rel of HEAVY) {
   // script is the same latent bug, so it has to be declared above or it fails
   // here rather than going unnoticed for months.
   {
-    const known = new Set(['style.css', 'app.js', 'bounties.js', 'landing.css']);   // bounties.js: stamped by stamp-sw.js with app.js
+    const known = new Set(['style.css', 'app.js', 'bounties.js', 'play.js', 'landing.css']);   // bounties.js and play.js: stamped by stamp-sw.js with app.js
     const suspicious = [];
     for (const page of Object.keys(PAGES)) {
       const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');

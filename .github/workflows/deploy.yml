@@ -86,6 +86,13 @@ jobs:
       - name: Build card-title typeahead shards
         run: npm run build:suggest
 
+      # One of One, the daily game: deal the next two months of packs from
+      # the checklists (scripts/build-daily-game.js). After build:pages, which
+      # writes the players index this reads. The files hold each prompt's
+      # valid answers; worker.js refuses to serve them to browsers.
+      - name: Deal the One of One packs
+        run: npm run build:game
+
       # After build:pages, which regenerates the checklist index this hashes;
       # BEFORE the tests, which assert index.html's ?v= asset versions match
       # the content they point at. Run it after them and any commit touching
@@ -120,12 +127,12 @@ jobs:
       # that source and still change exactly when it does. Top-level names
       # are kept (a plain script, not a module), so onclick="switchView(...)"
       # and the other inline handlers still find their functions.
-      - name: Minify app.js, bounties.js and style.css
+      - name: Minify app.js, bounties.js, play.js and style.css
         run: |
-          for f in app.js bounties.js; do npx esbuild "public/$f" --minify --target=es2020 --log-level=warning --outfile="public/$f.min" && mv "public/$f.min" "public/$f"; done
+          for f in app.js bounties.js play.js; do npx esbuild "public/$f" --minify --target=es2020 --log-level=warning --outfile="public/$f.min" && mv "public/$f.min" "public/$f"; done
           npx esbuild public/style.css --minify --loader:.css=css --log-level=warning --outfile=public/style.css.min && mv public/style.css.min public/style.css
-          node --check public/app.js && node --check public/bounties.js
-          ls -la public/app.js public/bounties.js public/style.css
+          node --check public/app.js && node --check public/bounties.js && node --check public/play.js
+          ls -la public/app.js public/bounties.js public/play.js public/style.css
 
 
       # Ask Cloudflare what the token can actually do, before wrangler tries.

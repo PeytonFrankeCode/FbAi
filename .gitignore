@@ -22,6 +22,9 @@ public/data/built-pages.json
 # Card-title typeahead shards (scripts/build-card-suggest.js), ~70 MB, built
 # from the checklists before every deploy.
 public/data/suggest/
+# One of One's daily packs (scripts/build-daily-game.js), dealt from the
+# checklists before every deploy. They hold each prompt's valid answers.
+public/data/game/
 
 # Python bytecode
 __pycache__/

@@ -6,6 +6,7 @@ import { moderateText, stripBidi } from './moderation.js';
 import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot, TALLY_COUNTS } from './traffic-core.js';
 import { keyForUrl as photoKeyForUrl } from './photo-archive-core.js';
 import { isEarner } from './search-earners.js';
+import { GameDay as GameDayRules, runOp as gameOp } from './game-core.js';
 
 // This isolate's visitor tally (traffic-core.js), written to its own KV key
 // every FLUSH_MS so the report can sum every isolate that served anyone.
@@ -542,6 +543,43 @@ export class UserInbox {
   }
 }
 
+// ---------------------------------------------------------------------------
+// GameDay — Durable Object for One of One, the daily game (server.js "One of
+// One"; rules in game-core.js). One instance per date (idFromName('2026-11-12')).
+//
+// It holds the three things that have to be exactly right and in one place:
+// the day's prompts as first dealt, how many players gave each answer, and
+// every player's round with the moment each prompt's clock started. A count is
+// read, changed and written back, and here that happens to one request at a
+// time, which KV (last writer wins) and D1 (a write per answer against its
+// daily allowance) could not promise.
+//
+// server.js posts { op, ... } and gets JSON back; the rules run unchanged
+// against this object's storage. A month after a day's pack is set the object
+// clears itself: by then the admin page has copied the day's numbers to KV.
+// ---------------------------------------------------------------------------
+const GAME_KEEP_MS = 30 * 86400000;
+export class GameDay {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.day = new GameDayRules({ get: (k) => state.storage.get(k), put: (k, v) => state.storage.put(k, v) });
+  }
+
+  async fetch(request) {
+    let m = null;
+    try { m = await request.json(); } catch (_) { m = null; }
+    if (!m || typeof m.op !== 'string') return Response.json({ error: 'op' }, { status: 400 });
+    const out = await gameOp(this.day, m, Date.now());
+    if (m.op === 'pack' && out && out.set) {
+      try { await this.state.storage.setAlarm(Date.now() + GAME_KEEP_MS); } catch (_) { /* cleanup is a nicety */ }
+    }
+    return Response.json(out === undefined ? null : out);
+  }
+
+  async alarm() { await this.state.storage.deleteAll(); }
+}
+
 // The price-block map, loaded once per isolate.
 //
 // Written daily by buildPriceBlocks() on the cron. Held in module scope for
@@ -636,7 +674,7 @@ class PriceSlotFiller {
 // expensive. That case is already handled: the ad gate gives it a price key
 // that misses and strips the tag. What this closes is the scan traffic, which
 // is the part that generates impressions.
-const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats']);
+const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats', '/play']);
 const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/,
   // The same pages for the other sports (build-landing-pages.js).
   /^\/(basketball|baseball)\/(sets|players|teams)\//];
@@ -664,6 +702,12 @@ export function isKnownHtmlPath(pathname) {
   // ...and the same pages as Cloudflare actually serves them: /admin, /about.
   if (STATIC_PAGES.has(p.slice(1))) return true;
   return HTML_PREFIXES.some(re => re.test(pathname));
+}
+
+// One of One's pack files (scripts/build-daily-game.js), which the Worker
+// refuses to serve.
+export function isGamePackPath(pathname) {
+  return /^\/data\/game(\/|$)/i.test(String(pathname || ''));
 }
 
 // A real 404, carrying no ad tag.
@@ -1025,6 +1069,11 @@ export default {
         return Response.redirect(url.toString(), permanent);
       }
 
+      // One of One's daily packs hold every prompt's valid answers, and the
+      // prompts of days that have not started. The game reads them through
+      // the assets binding (server.js _gamePackRaw); a browser never gets one.
+      if (isGamePackPath(url.pathname)) return notFoundResponse();
+
       // Saved sold-listing photos. The cron copies each eBay photo into R2
       // before eBay purges it (~90 days after the sale); when a page's eBay
       // image stops loading, app.js asks here for the copy. Answered straight
@@ -1286,7 +1335,19 @@ export default {
       // promise back to Cloudflare, so any rejection from inside Express
       // would surface as Cloudflare's HTML "Worker threw exception" page
       // instead of landing in our JSON outerErr catch below.
-      const apiResp = await expressToFetch(app, request, bodyBuffer);
+      // One of One: a visitor the tally takes for a program can still play,
+      // but the round is left out of the day's counts, so it cannot move
+      // anyone else's rarity (server.js /api/game/next reads the header).
+      // Set here because only the Worker sees what kind of visitor this is;
+      // a header the caller sent themselves is dropped first.
+      let apiRequest = request;
+      if (url.pathname === '/api/game/next') {
+        const h = new Headers(request.headers);
+        h.delete('x-game-uncounted');
+        if (NO_TAGS_FOR.has(visitorKind)) h.set('x-game-uncounted', '1');
+        apiRequest = new Request(request.url, { method: request.method, headers: h });
+      }
+      const apiResp = await expressToFetch(app, apiRequest, bodyBuffer);
 
       // Real-time DM fan-out: after Express persists a DM, push it to the
       // recipient's and sender's UserInbox DOs so their open sockets get it
