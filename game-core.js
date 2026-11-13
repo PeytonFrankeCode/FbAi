@@ -73,7 +73,8 @@ const dateOfDay = (i) => new Date(i * 86400000).toISOString().slice(0, 10);
 const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 function nameWords(s) {
   return String(s == null ? '' : s).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
-    .replace(/['’‘`.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+    .replace(/['’‘`.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean)
+    .map(w => (w === 'saint' ? 'st' : w));   // "Amon-Ra Saint Brown"
 }
 // "Marvin Harrison Jr." without the "Jr.": a suffix is only dropped off the
 // end, and never when it is all there is.
@@ -105,59 +106,133 @@ function editDistance(a, b, max = 2) {
   return Math.min(prev[b.length], max + 1);
 }
 
+// Short first names and nicknames, each with the name it stands for: "Mike
+// Evans" is Michael Evans, "Bill" is William. A short name that is simply the
+// start of the long one (Pat, Matt, Ben, Cam) needs no entry: sameFirst reads
+// those by their letters.
+const NICKNAMES = {
+  mike: 'michael', mikey: 'michael', mick: 'michael', bill: 'william', billy: 'william', will: 'william', willie: 'william', liam: 'william',
+  bob: 'robert', bobby: 'robert', rob: 'robert', robbie: 'robert', jim: 'james', jimmy: 'james', jamie: 'james',
+  tony: 'anthony', drew: 'andrew', andy: 'andrew', dick: 'richard', rich: 'richard', rick: 'richard', ricky: 'richard', richie: 'richard',
+  joe: 'joseph', joey: 'joseph', tom: 'thomas', tommy: 'thomas', dan: 'daniel', danny: 'daniel', dave: 'david', davey: 'david',
+  steve: 'steven', stephen: 'steven', stevie: 'steven', nick: 'nicholas', nicky: 'nicholas', zach: 'zachary', zack: 'zachary', zac: 'zachary', zackary: 'zachary',
+  ken: 'kenneth', kenny: 'kenneth', ron: 'ronald', ronnie: 'ronald', don: 'donald', donnie: 'donald', ed: 'edward', eddie: 'edward', ted: 'theodore', teddy: 'theodore',
+  fred: 'frederick', freddie: 'frederick', jeff: 'jeffrey', jeffery: 'jeffrey', geoff: 'jeffrey', tim: 'timothy', timmy: 'timothy',
+  larry: 'lawrence', terry: 'terrence', terrance: 'terrence', charlie: 'charles', chuck: 'charles', hank: 'henry', harry: 'henry',
+  jack: 'john', johnny: 'john', jon: 'jonathan', jonny: 'jonathan', jake: 'jacob', nate: 'nathan', nathaniel: 'nathan', gabe: 'gabriel',
+  chris: 'christopher', kris: 'christopher', matt: 'matthew', pete: 'peter', phil: 'philip', phillip: 'philip', sam: 'samuel', sammy: 'samuel',
+  alex: 'alexander', ben: 'benjamin', benny: 'benjamin', josh: 'joshua', greg: 'gregory', gregg: 'gregory', manny: 'emmanuel', vinny: 'vincent', vince: 'vincent',
+  al: 'albert', art: 'arthur', gus: 'august', lenny: 'leonard', len: 'leonard', leo: 'leonard', lou: 'louis', louie: 'louis', marty: 'martin', mel: 'melvin',
+  mitch: 'mitchell', mo: 'maurice', ray: 'raymond', russ: 'russell', stan: 'stanley', walt: 'walter', wes: 'wesley', cam: 'cameron',
+};
+const _formal = (w) => NICKNAMES[w] || w;
+// Is a typed first name this player's? An initial ("J Love"), the name
+// itself, the start of it ("Pat" for Patrick), or a nickname ("Mike").
+function sameFirst(typed, first) {
+  if (!typed || !first) return false;
+  if (typed.length === 1) return first.startsWith(typed);
+  if (typed === first || _formal(typed) === _formal(first)) return true;
+  const [short, long] = typed.length <= first.length ? [typed, first] : [first, typed];
+  return short.length >= 3 && long.startsWith(short);
+}
+// How many slips a name of a given length is forgiven: none in a very short
+// one, up to three in a long one.
+const slipsFor = (len) => (len < 5 ? 0 : len < 8 ? 1 : len < 12 ? 2 : 3);
+
 // A prompt's answers are [name, slug, cards]: the player's name, their page,
 // and how many cards they have across the site (the fame measure).
 const _index = new WeakMap();
 function _indexOf(prompt) {
   let ix = _index.get(prompt);
   if (ix) return ix;
-  const full = new Map(), bare = new Map(), sur = new Map(), keys = [];
+  const full = new Map(), bare = new Map(), sur = new Map(), keys = [], first = [], last = [];
   const add = (m, k, i) => { if (!k) return; const a = m.get(k); if (!a) m.set(k, [i]); else if (!a.includes(i)) a.push(i); };
   prompt.answers.forEach((a, i) => {
     const w = nameWords(a[0]), core = dropSuffix(w);
     add(full, w.join(''), i);
     add(bare, core.join(''), i);
     keys.push(core.join(''));
+    first.push(core[0] || '');
+    last.push(core.length >= 2 ? core[core.length - 1] : '');
     // A surname alone counts when only one valid player has it. Two-word
     // surnames too: "St. Brown", "Smith-Schuster".
     if (core.length >= 2) add(sur, core[core.length - 1], i);
     if (core.length >= 3) add(sur, core.slice(-2).join(''), i);
   });
-  ix = { full, bare, sur, keys };
+  ix = { full, bare, sur, keys, first, last };
   _index.set(prompt, ix);
   return ix;
+}
+
+// The nearest of `keys` to what was typed, within `max` slips: { at, tie }.
+// `tie` when a different player is exactly as near, which is never guessed.
+function _nearest(typed, keys, max, same) {
+  let best = max + 1, at = -1, tie = false;
+  for (let i = 0; i < keys.length; i++) {
+    if (!keys[i]) continue;
+    const d = editDistance(typed, keys[i], max);
+    if (d > max) continue;
+    if (d < best) { best = d; at = i; tie = false; }
+    else if (d === best && !same(i, at)) tie = true;
+  }
+  return { at, tie };
 }
 
 // Which valid answer did they mean? { idx } or { reason }:
 //   empty      nothing typed
 //   ambiguous  more than one valid player fits what was typed
+//   other      a real player, who does not fit this prompt (opts.known)
 //   none       no valid player fits
-function matchAnswer(prompt, text) {
+//
+// A name that is close is read as the answer it is close to (owner, Nov
+// 2026: "autocorrect if it's close"). In order: the name as typed; the
+// surname alone; the two words the other way round; an initial, short first
+// name or nickname with the surname; the start of a name; a misspelling of
+// the whole name; a misspelling of the surname. Each needs exactly one player
+// to fit: two as close as each other is "ambiguous", never a guess.
+//
+// opts.known: the server knows what was typed as another player's name. That
+// is a wrong answer, not a slip, and is not bent into a right one ("Marvin
+// Jones" must not score as Marcus Jones).
+function matchAnswer(prompt, text, opts = {}) {
   const w = nameWords(String(text == null ? '' : text).slice(0, 80));
   if (!w.length) return { reason: 'empty' };
   const ix = _indexOf(prompt);
   const core = dropSuffix(w), bareKey = core.join('');
+  const one = (hit, by) => (hit.length === 1 ? (by ? { idx: hit[0], by } : { idx: hit[0] }) : { reason: 'ambiguous' });
   let hit = ix.full.get(w.join(''));
   if (hit && hit.length === 1) return { idx: hit[0] };
   hit = ix.bare.get(bareKey);
-  if (hit) return hit.length === 1 ? { idx: hit[0] } : { reason: 'ambiguous' };
+  if (hit) return one(hit);
   hit = ix.sur.get(bareKey);
-  if (hit) return hit.length === 1 ? { idx: hit[0], by: 'surname' } : { reason: 'ambiguous' };
-  // A small typo, on full names only: one slip in a short name, two in a long
-  // one. Never a guess between two players the same distance away.
-  if (bareKey.length >= 5) {
-    const max = bareKey.length >= 9 ? 2 : 1;
-    let best = max + 1, at = -1, tie = false;
-    for (let i = 0; i < ix.keys.length; i++) {
-      const d = editDistance(bareKey, ix.keys[i], max);
-      if (d > max) continue;
-      if (d < best) { best = d; at = i; tie = false; }
-      else if (d === best && ix.keys[i] !== ix.keys[at]) tie = true;
+  if (hit) return one(hit, 'surname');
+  if (core.length === 2) { hit = ix.bare.get(core[1] + core[0]); if (hit) return one(hit, 'order'); }
+  if (opts && opts.known) return { reason: 'other' };
+  if (core.length >= 2) {
+    const fit = (ix.sur.get(core.slice(1).join('')) || []).filter(i => sameFirst(core[0], ix.first[i]));
+    if (fit.length) return one(fit, 'first');
+  }
+  if (bareKey.length >= 6) {
+    const starts = [];
+    for (let i = 0; i < ix.keys.length; i++) if (ix.keys[i].startsWith(bareKey)) starts.push(i);
+    if (starts.length) return one(starts, 'start');
+  }
+  const max = slipsFor(bareKey.length);
+  if (max) {
+    const whole = _nearest(bareKey, ix.keys, max, (i, j) => ix.keys[i] === ix.keys[j]);
+    if (whole.at >= 0) return whole.tie ? { reason: 'ambiguous' } : { idx: whole.at, by: 'typo' };
+    // One word typed: a misspelt surname. Two players with that surname are
+    // two players, so it is only read when one has it.
+    if (core.length === 1) {
+      const sur = _nearest(bareKey, ix.last, Math.min(max, 2), (i, j) => i === j);
+      if (sur.at >= 0) return sur.tie ? { reason: 'ambiguous' } : { idx: sur.at, by: 'typo' };
     }
-    if (at >= 0) return tie ? { reason: 'ambiguous' } : { idx: at, by: 'typo' };
   }
   return { reason: 'none' };
 }
+// What a name looks like to the matcher: the server keeps every player's, to
+// tell a wrong answer from a slip (opts.known above).
+const nameKey = (name) => dropSuffix(nameWords(name)).join('');
 
 // ---- How rare is an answer ----
 // Fame is the player's card count raised to FAME_POWER, so stars count for
@@ -355,7 +430,7 @@ class GameDay {
       const save = async (out) => { await this.store.put('u:' + pid, play); return { ...out, slot, view: await this._view(play, now) }; };
       if (now > play.startedAt + SECONDS * 1000 + GRACE_MS) { await this._miss(play); return save({ timeout: true, reason: 'clock' }); }
       const prompt = await this._prompt(slot);
-      const m = matchAnswer(prompt, text);
+      const m = matchAnswer(prompt, text, { known: !!(opts && opts.known) });
       if (m.idx == null) {
         if (opts && opts.final) { await this._miss(play); return save({ timeout: true, reason: 'final' }); }
         if (m.reason !== 'empty') play.tries++;
@@ -416,7 +491,7 @@ async function runOp(day, m, now = Date.now()) {
     case 'pack': return { set: await day.setPack(m.pack) };
     case 'state': return { view: await day.state(m.pid, now) };
     case 'next': return day.next(m.pid, now, { quiet: !!m.quiet, again: !!m.again });
-    case 'answer': return day.answer(m.pid, m.text, now, { final: !!m.final });
+    case 'answer': return day.answer(m.pid, m.text, now, { final: !!m.final, known: !!m.known });
     case 'results': return day.results(m.pid, now);
     case 'summary': return { summary: await day.summary() };
     default: return { error: 'op' };
@@ -471,6 +546,6 @@ function liveStreak(stats, today) {
 module.exports = {
   PROMPTS_PER_DAY, SECONDS, GRACE_MS, MAX_TRIES, PRIOR_PLAYERS, FAME_POWER, TIERS, TIER, MAX_SCORE, SQUARES,
   gameDate, msToNextDay, isDate, dayIndex, dateOfDay,
-  nameWords, dropSuffix, editDistance, matchAnswer, fameShares, rarity, startingTiers,
+  nameWords, dropSuffix, nameKey, editDistance, sameFirst, slipsFor, NICKNAMES, matchAnswer, fameShares, rarity, startingTiers,
   validPid, GameDay, runOp, applySwaps, memoryStore, shareText, nextStats, liveStreak,
 };

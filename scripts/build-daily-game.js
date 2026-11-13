@@ -17,8 +17,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { buildBank, buildPacks, buildRounds, EPOCH } = require(path.join(ROOT, 'game-bank.js'));
-const { gameDate, dayIndex, dateOfDay, startingTiers } = require(path.join(ROOT, 'game-core.js'));
+const { buildBank, buildPacks, buildRounds, notAPlayer, EPOCH } = require(path.join(ROOT, 'game-bank.js'));
+const { gameDate, dayIndex, dateOfDay, startingTiers, nameKey } = require(path.join(ROOT, 'game-core.js'));
 
 const DAYS_AHEAD = 60;
 const OUT = path.join(ROOT, 'public', 'data', 'game');
@@ -32,6 +32,11 @@ function loadChecklists(dir = path.join(ROOT, 'public', 'data', 'checklists')) {
   return out;
 }
 const loadPlayers = () => JSON.parse(fs.readFileSync(path.join(ROOT, 'public', 'data', 'players', 'index.json'), 'utf8')).players;
+
+// Every player with a page, as the matcher reads a name. The server uses it
+// to tell a wrong answer (a real player who does not fit the prompt) from a
+// misspelling of a right one, which it corrects.
+const nameKeys = (players) => [...new Set((players || []).filter(p => p && p.name && !notAPlayer(p.name)).map(p => nameKey(p.name)).filter(Boolean))].sort();
 
 function build({ today = gameDate(), days = DAYS_AHEAD } = {}) {
   const bank = buildBank({ checklists: loadChecklists(), players: loadPlayers() });
@@ -51,10 +56,12 @@ if (require.main === module) {
   for (const r of rounds) { const s = JSON.stringify(r); roundBytes += s.length; fs.writeFileSync(path.join(OUT, 'u', `${r.round}.json`), s); }
   const kinds = {};
   for (const p of bank) kinds[p.type] = (kinds[p.type] || 0) + 1;
+  const names = nameKeys(loadPlayers());
+  fs.writeFileSync(path.join(OUT, 'names.json'), JSON.stringify(names));
   fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({ built: new Date().toISOString(), epoch: EPOCH, dates: packs.map(p => p.date), unlimited: rounds.length, bank: kinds }));
   console.log(`One of One: ${bank.length} prompts in the bank (${Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(', ')})`);
   console.log(`  ${packs.length} packs, ${packs[0].date} (#${packs[0].number}) to ${packs[packs.length - 1].date}, ${(bytes / 1024).toFixed(0)} KB`);
-  console.log(`  ${rounds.length} unlimited rounds, ${(roundBytes / 1024).toFixed(0)} KB, ${((Date.now() - t0) / 1000).toFixed(1)}s in all`);
+  console.log(`  ${rounds.length} unlimited rounds, ${(roundBytes / 1024).toFixed(0)} KB; ${names.length} player names; ${((Date.now() - t0) / 1000).toFixed(1)}s in all`);
   if (process.argv.includes('--stats')) {
     const sum = { base: 0, green: 0, blue: 0, gold: 0, one: 0 };
     let noBase = 0;
@@ -66,4 +73,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { build, loadChecklists, loadPlayers };
+module.exports = { build, loadChecklists, loadPlayers, nameKeys };

@@ -34,7 +34,27 @@ check('a surname alone counts when one valid player has it', who(G.matchAnswer(P
 check('...and is refused as ambiguous when two do', G.matchAnswer(P, 'Harrison').reason === 'ambiguous' && G.matchAnswer(P, 'St. Brown').reason === 'ambiguous' && G.matchAnswer(P, 'Evans').idx != null);
 check('a small typo is corrected', who(G.matchAnswer(P, 'Aaron Rogers')) === 'Aaron Rodgers' && who(G.matchAnswer(P, 'Chrisitan Watsen')) === 'Christian Watson' && who(G.matchAnswer(P, 'Jordn Love')) === 'Jordan Love');
 check('...but never a guess between two players as close', G.matchAnswer(P, 'Mike Evxns').reason === 'ambiguous');
-check('a short word is not stretched into a name', G.matchAnswer(P, 'Tim').reason === 'none' && G.matchAnswer(P, 'Bradi').reason === 'none');
+check('a short word is not stretched into a name', G.matchAnswer(P, 'Tim').reason === 'none' && G.matchAnswer(P, 'Brad').reason === 'none' && G.matchAnswer(P, 'Lov').reason === 'none');
+// Autocorrect (owner, Nov 2026): a name that is close is read as the answer it is close to.
+check('a misspelt surname on its own is read', who(G.matchAnswer(P, 'Bradi')) === 'Tom Brady' && who(G.matchAnswer(P, 'Rogers')) === 'Aaron Rodgers' && who(G.matchAnswer(P, 'Metcalfe')) === 'D.K. Metcalf');
+check('...and a longer name is forgiven more slips than a short one', G.slipsFor(4) === 0 && G.slipsFor(6) === 1 && G.slipsFor(10) === 2 && G.slipsFor(14) === 3
+  && who(G.matchAnswer(P, 'Juju Smith Shuster')) === 'JuJu Smith-Schuster' && who(G.matchAnswer(P, 'Donteyvion Wiks')) === 'Dontayvion Wicks' && G.matchAnswer(P, 'Bo Meltxyz').reason === 'none');
+check('an initial and the surname is read', who(G.matchAnswer(P, 'J Love')) === 'Jordan Love' && who(G.matchAnswer(P, 'J. Love')) === 'Jordan Love' && who(G.matchAnswer(P, 'T Brady')) === 'Tom Brady');
+check('...and is ambiguous when two players fit it', G.matchAnswer(P, 'M Evans').idx != null && G.matchAnswer(P, 'M Harrison').reason === 'ambiguous');
+const P2 = prompt('nicknames', ['Patrick Mahomes II', 'Michael Evans', 'William Perry', 'Robert Griffin III', 'Christian Watson', 'Christian McCaffrey', 'Zach Wilson', 'Tom Brady']);
+const who2 = (m) => (m.idx == null ? m.reason : P2.answers[m.idx][0]);
+check('a short first name or a nickname is read', who2(G.matchAnswer(P2, 'Pat Mahomes')) === 'Patrick Mahomes II' && who2(G.matchAnswer(P2, 'Mike Evans')) === 'Michael Evans'
+  && who2(G.matchAnswer(P2, 'Bill Perry')) === 'William Perry' && who2(G.matchAnswer(P2, 'Rob Griffin')) === 'Robert Griffin III' && who2(G.matchAnswer(P2, 'Zack Wilson')) === 'Zach Wilson'
+  && G.sameFirst('mike', 'michael') && G.sameFirst('pat', 'patrick') && G.sameFirst('j', 'jordan') && !G.sameFirst('tom', 'tim') && !G.sameFirst('jo', 'jordan'));
+check('the start of a name is read when only one player has it', who2(G.matchAnswer(P2, 'Christian Wat')) === 'Christian Watson' && G.matchAnswer(P2, 'Christian').reason === 'ambiguous' && G.matchAnswer(P2, 'Chris').reason === 'none');
+check('the two words the other way round are read', who(G.matchAnswer(P, 'Rodgers Aaron')) === 'Aaron Rodgers' && who(G.matchAnswer(P, 'Brady, Tom')) === 'Tom Brady');
+check('"Saint" is "St."', who(G.matchAnswer(P, 'Amon-Ra Saint Brown')) === 'Amon-Ra St. Brown');
+// The server knows the typed name as another player: a wrong answer, not a slip.
+const P3 = prompt('known', ['Marcus Jones', 'Mike Evens', 'Tom Brady']);
+check('a real player who does not fit is told so, never bent into one who does', G.matchAnswer(P3, 'Marcos Jones').idx === 0 && G.matchAnswer(P3, 'Marcos Jones', { known: true }).reason === 'other'
+  && G.matchAnswer(P3, 'Mike Evans').idx === 1 && G.matchAnswer(P3, 'Mike Evans', { known: true }).reason === 'other');
+check('...while a known player who does fit still scores', G.matchAnswer(P3, 'Tom Brady', { known: true }).idx === 2 && G.matchAnswer(P3, 'Brady', { known: true }).idx === 2);
+check('a name is read the same by the matcher and the server\'s list', G.nameKey('Patrick Mahomes II') === 'patrickmahomes' && G.nameKey('D.K. Metcalf') === 'dkmetcalf' && G.nameKey("Ja'Marr Chase") === 'jamarrchase');
 check('a player who does not fit is no match, and nothing typed is empty', G.matchAnswer(P, 'Patrick Mahomes').reason === 'none' && G.matchAnswer(P, '  ').reason === 'empty' && G.matchAnswer(P, null).reason === 'empty');
 check('letter slips are counted, swaps included', G.editDistance('rodgers', 'rogers') === 1 && G.editDistance('watson', 'waston') === 1 && G.editDistance('brady', 'manning', 2) === 3);
 
@@ -208,6 +228,11 @@ const MS = G.SECONDS * 1000;
     check('college and draft products are left out', !bank.some(p => /collegiate|draft picks|university|\bsage\b/i.test(p.text)));
     check('the wording reads right: an Arizona Cardinals player, an Award Winners insert', bank.some(p => p.text.startsWith('Name an Arizona Cardinals player')) && !bank.some(p => /\ba (Arizona|Atlanta|Indianapolis|Oakland)\b/.test(p.text)) && !bank.some(p => /with a (Award|Instant|Inside|Unsung|All-Rookie)/.test(p.text)));
 
+    // What is not a player is not an answer.
+    check('team cards, glued-on team names and checklists are not answers', B.notAPlayer('Green Bay Packers') && B.notAPlayer('Zach Ertz Philadelphia Eagles') && B.notAPlayer('Checklist 1-132')
+      && !B.notAPlayer('Tom Brady') && !B.notAPlayer('Dallas Clark') && !bank.some(p => p.answers.some(a => B.notAPlayer(a[0]))));
+    check('every prompt knows its era, or that it spans them', bank.every(p => p.era === null || B.ERAS.some(e => e[1] === p.era)) && bank.filter(p => p.type === 'insert' || p.type === 'count').every(p => p.era === null)
+      && B.eraOf(1975) === 'before 1980' && B.eraOf(2015) === '2012-16' && B.eraOf(2016) === '2012-16' && B.eraOf(2017) === '2017-21' && B.eraOf(2024) === '2022 on');
     const packs = B.buildPacks(bank, { from: B.EPOCH, days: 40 });
     const again = B.buildPacks(bank, { from: B.EPOCH, days: 40 });
     check('a date deals the same pack every time', packs.length === 40 && JSON.stringify(packs.map(p => p.prompts.map(q => q.id))) === JSON.stringify(again.map(p => p.prompts.map(q => q.id))));
@@ -229,6 +254,21 @@ const MS = G.SECONDS * 1000;
     for (let i = 0; i < rounds.length; i++) for (let j = Math.max(0, i - 10); j < i; j++) if (rounds[i].prompts.some(q => rounds[j].prompts.some(o => o.id === q.id))) roundRepeats++;
     check('...and no prompt comes back within ten rounds', roundRepeats === 0, String(roundRepeats));
     check('a dealt round carries only what play needs', Object.keys(rounds[0]).sort().join() === 'prompts,round' && Object.keys(rounds[0].prompts[0]).sort().join() === 'answers,id,link,text,type');
+    // No era crowds a pack (owner, Nov 2026: "majority of questions seem to be" from 2014 to 2016).
+    const everyPack = B.buildPacks(bank, { from: B.EPOCH, days: 120 }).concat(rounds);
+    const eraCount = {}; let eraTotal = 0, crowded = 0, said1416 = 0;
+    for (const s of everyPack) {
+      const c = {};
+      for (const q of s.prompts) { const e = byId.get(q.id).era; if (!e) continue; c[e] = (c[e] || 0) + 1; eraCount[e] = (eraCount[e] || 0) + 1; }
+      eraTotal += s.prompts.length;
+      if (Object.values(c).some(n => n > 2)) crowded++;
+      if (s.prompts.some(q => /from 2014 to 2016/.test(q.text))) said1416++;
+    }
+    const share = (e) => (eraCount[e] || 0) / eraTotal;
+    check('no pack or round has more than two prompts from one era', crowded === 0, String(crowded));
+    check('...and over time no era is more than a fifth of all prompts, 2012 to 2016 included', B.ERAS.every(e => share(e[1]) <= 0.2) && share('2012-16') <= 0.16 && share('2012-16') >= 0.08,
+      B.ERAS.map(e => `${e[1]} ${(100 * share(e[1])).toFixed(0)}%`).join(', '));
+    check('..."from 2014 to 2016" is said in fewer than a third of packs', said1416 / everyPack.length < 0.33 && said1416 > 0, `${said1416}/${everyPack.length}`);
     const sw = G.applySwaps(packs[1], { 2: packs[1].prompts[2].id });
     check('a swap puts the next spare in the slot', sw.prompts[2].id === packs[1].spares[0].id && sw.spares.length === 2 && sw.prompts[0].id === packs[1].prompts[0].id);
     check('...unless the slot no longer holds the prompt the admin saw', G.applySwaps(packs[1], { 2: 'some:other:prompt' }).prompts[2].id === packs[1].prompts[2].id);
@@ -240,7 +280,7 @@ const MS = G.SECONDS * 1000;
   const S = require(path.join(ROOT, 'server.js'));
   let now = Date.parse('2026-11-12T17:00:00Z');   // noon Eastern
   const dealt = (key) => (/^u-/.test(key) ? { round: Number(key.slice(2)), prompts: pack('round ' + key.slice(2)).prompts } : pack(key, G.dayIndex(key) - G.dayIndex('2026-11-11')));
-  S._gameTestHooks({ pack: dealt, now: () => now, rounds: 5 });
+  S._gameTestHooks({ pack: dealt, now: () => now, rounds: 5, names: NAMES.concat(['Patrick Mahomes', 'Jerry Rice']) });
   const PORT = 3317;
   const server = S.app.listen(PORT);
   const base = `http://127.0.0.1:${PORT}`;
@@ -270,6 +310,8 @@ const MS = G.SECONDS * 1000;
     check('...and sends the prompt without its answers', !NAMES.some(n => leaked.includes(n)) && !('results' in r.body) && !('share' in r.body));
     r = await call('/api/game/answer', { method: 'POST', ...d1, body: { text: 'Not A Player' } });
     check('a wrong name is told so, and can be tried again', r.status === 200 && r.body.ok === false && r.body.reason === 'none' && !NAMES.some(n => JSON.stringify(r.body).includes(n)));
+    r = await call('/api/game/answer', { method: 'POST', ...d1, body: { text: 'Patrick Mahomes' } });
+    check('a real player who does not fit is told so', r.body.ok === false && r.body.reason === 'other' && r.body.view.active.triesLeft === G.MAX_TRIES - 2);
     r = await call('/api/game/answer', { method: 'POST', ...d1, body: { text: 'tom brady' } });
     check('a right one comes back as its card', r.body.ok === true && r.body.answer.name === 'Tom Brady' && r.body.answer.tier === 'base' && !r.body.results);
     r = await round(d1, ['Bo Melton', 'x', 'Tucker Kraft', 'Luke Musgrave', 'Jayden Reed', 'Jordan Love']);
@@ -279,8 +321,8 @@ const MS = G.SECONDS * 1000;
     check('coming back shows the finished round, not a new one', r.body.view.done === true && r.body.results.length === 7 && (await call('/api/game/next', { method: 'POST', ...d1, body: {} })).body.view.active === null);
     r = await call('/api/game/today', d2);
     check('another browser has its own round', r.body.view.started === false && !r.body.results);
-    r = await round(d2, ['Tom Brady', 'Bo Melton']);
-    check('the second to say an unknown name does not get the One of One', r.body.ok === true && r.body.answer.tier !== 'one' && r.body.answer.said === 2);
+    r = await round(d2, ['Tom Brady', 'Bo Meltin']);
+    check('the second to say an unknown name does not get the One of One, and a slip in it is read', r.body.ok === true && r.body.answer.name === 'Bo Melton' && r.body.answer.tier !== 'one' && r.body.answer.said === 2);
 
     // An account: its streak is kept, and shown on My Account.
     const user = 'oo' + Date.now().toString(36);
@@ -401,6 +443,17 @@ const MS = G.SECONDS * 1000;
     && /if \(v\.mode === 'unlimited'\) noteRound\(v\); else noteFinished\(v\);/.test(play));
   check('...the deploy deals its rounds beside the daily packs', /path\.join\(OUT, 'u', `\$\{r\.round\}\.json`\)/.test(read('scripts/build-daily-game.js')) && /unlimited: rounds\.length/.test(read('scripts/build-daily-game.js')));
   check('...and the share text and the streak stay the daily pack\'s', /if \(daily\) body\.share = GAME\.shareText\(view\);/.test(srv) && /if \(who\.user && daily\) body\.stats =/.test(srv));
+  const css = read('public/style.css');
+  check('the deploy writes the list of player names the server checks answers against', /path\.join\(OUT, 'names\.json'\)/.test(read('scripts/build-daily-game.js')) && /_loadJson\('game\/names\.json'\)/.test(srv)
+    && /known: !!\(names && names\.has\(GAME\.nameKey\(text\)\)\)/.test(srv) && /other: 'That player/.test(play));
+  check('the game has a moving backdrop, beside its view and not inside it', html.indexOf('<div class="oo-bg" aria-hidden="true">') > 0 && html.indexOf('<div class="oo-bg" aria-hidden="true">') < html.indexOf('id="play-view"')
+    && (html.match(/class="oo-float /g) || []).length === 10 && (html.match(/class="oo-glow /g) || []).length === 3 && !/id="play-view"[\s\S]{0,400}oo-bg/.test(html));
+  check('...hidden unless the game is on screen, so no other page pays for it', /\.oo-bg\{display:none;position:fixed;inset:0;z-index:-1;/.test(css) && /body\.oo-on > \.oo-bg,body:has\(#play-view:not\(\.hidden\)\) > \.oo-bg\{display:block\}/.test(css)
+    && /document\.body\.classList\.toggle\('oo-on', !v\.classList\.contains\('hidden'\)\)/.test(play));
+  check('...and everything holds still for someone who asked for less motion', /@media \(prefers-reduced-motion:reduce\)\{\s*\.oo-glow,\.oo-float,[^}]*animation:none!important\}/.test(css) && /\.oo-sparks\{display:none\}/.test(css) && /const calm = \(\) =>/.test(play) && /if \(!n \|\| calm\(\)\) return '';/.test(play));
+  check('the cards fan, turn over and throw sparks, and no animation moves the layout', /class="oo-fan"/.test(play) && /@keyframes oo-turn\{/.test(css) && /@keyframes oo-spark\{/.test(css) && /function countUp\(/.test(play)
+    && (css.match(/@keyframes oo-[a-z-]+\{(?:[^{}]*\{[^{}]*\})*\}/g) || []).length >= 12
+    && !(css.match(/@keyframes oo-[a-z-]+\{(?:[^{}]*\{[^{}]*\})*\}/g) || []).some(k => /\b(left|top|right|bottom|width|height|margin|padding)\s*:/.test(k)));
   check('the admin page has the game\'s numbers and the swap', /async function loadGame\(\)/.test(read('public/admin.html')) && /function swapGame\(/.test(read('public/admin.html')) && /loadGame\(\);/.test(read('public/admin.html')));
 
   console.log(failures ? `\n${failures} One of One check(s) failed` : '\nall One of One checks passed');

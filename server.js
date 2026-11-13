@@ -22829,10 +22829,12 @@ const _gameReady = new Set();        // dates this isolate knows have their pack
 let _gamePackSource = null;          // tests deal their own pack...
 let _gameNow = () => Date.now();     // ...and move the clock
 let _gameRoundsHook = null;          // ...and say how many unlimited rounds there are
-function _gameTestHooks({ pack, now, rounds } = {}) {
+let _gameNamesHook = null;           // ...and which names are known players
+function _gameTestHooks({ pack, now, rounds, names } = {}) {
   _gamePackSource = pack || null;
   _gameNow = now || (() => Date.now());
   _gameRoundsHook = Number.isInteger(rounds) ? rounds : null;
+  _gameNamesHook = Array.isArray(names) ? new Set(names.map(GAME.nameKey)) : null;
   _gameMem.clear(); _gameReady.clear(); _gameRoundsKnown = null;
 }
 const _gameDate = () => GAME.gameDate(_gameNow());
@@ -22971,6 +22973,25 @@ async function _gameEnsure(date) {
   return true;
 }
 
+// Every player the site has a page for, as the matcher reads a name
+// (public/data/game/names.json, written at deploy). A typed name that is
+// close to a right answer is read as that answer (game-core.js matchAnswer),
+// unless it is exactly some other player's name: then it is a wrong answer,
+// not a slip, and is told so. Without the list (the file not there yet)
+// nothing is known, and every near miss is read kindly.
+let _gameNamesKnown = null;          // { set, at }
+async function _gameNames() {
+  if (_gameNamesHook) return _gameNamesHook;
+  if (_gameNamesKnown && (_gameNamesKnown.set || Date.now() - _gameNamesKnown.at < 600000)) return _gameNamesKnown.set;
+  let list = null;
+  try { list = await _loadJson('game/names.json'); } catch (_) { list = null; }
+  if (!Array.isArray(list) && !getAssets()) {
+    try { const b = eval('require')('./scripts/build-daily-game.js'); list = b.nameKeys(b.loadPlayers()); } catch (_) { list = null; }
+  }
+  _gameNamesKnown = { set: Array.isArray(list) ? new Set(list) : null, at: Date.now() };
+  return _gameNamesKnown.set;
+}
+
 // Who is playing: the account when signed in, else the id the browser made
 // for itself (x-game-device).
 function _gamePlayer(req) {
@@ -23064,8 +23085,9 @@ app.post('/api/game/answer', async (req, res) => {
     if (date === null) return _gameNoRound(res);
     if (!who.pid) return res.status(400).json({ error: 'This browser has no player id yet. Reload the page and try again.' });
     if (!(await _gameEnsure(date))) return _gameNotReady(res);
-    const b = req.body || {};
-    const r = await _gameCall(date, 'answer', { pid: who.pid, text: String(b.text || '').slice(0, 80), final: !!b.final });
+    const b = req.body || {}, text = String(b.text || '').slice(0, 80);
+    const names = await _gameNames();
+    const r = await _gameCall(date, 'answer', { pid: who.pid, text, final: !!b.final, known: !!(names && names.has(GAME.nameKey(text))) });
     if (r.error && r.error !== 'no-prompt') return res.status(400).json({ error: 'That answer could not be read.' });
     await _gameSend(res, date, who, r);
   } catch (err) { _gameFail(res, 'answer', err); }

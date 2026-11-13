@@ -75,6 +75,11 @@ const notNfl = (c) => /collegiate|college|universit|draft|prospect|press pass|\b
 const lowNumbered = (c) => /national treasures|flawless|immaculate|prizm|select|optic|contenders|chrome|finest|exquisite/i.test(c.name || '');
 // Before 1980 is vintage: asked, but not every day (buildPacks).
 const VINTAGE_BEFORE = 1980;
+// The era a prompt is about, for spreading a pack across the years (dealer,
+// below). The lines fall where the checklists change character: the 1980s and
+// 90s boom, the 2000s, the Panini years in two halves, and now.
+const ERAS = [[1980, 'before 1980'], [2000, '1980-99'], [2012, '2000-11'], [2017, '2012-16'], [2022, '2017-21'], [Infinity, '2022 on']];
+const eraOf = (year) => (Number.isFinite(year) ? ERAS.find(e => year < e[0])[1] : null);
 
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const label = (name) => String(name || '').replace(/\s+Football$/i, '').trim();
@@ -86,9 +91,16 @@ const an = (word) => (/^([aeiou]|mvp)/i.test(String(word)) ? 'an' : 'a');
 //   players     public/data/players/index.json's players: only someone with a
 //               page counts as an answer, which keeps out team cards, dual
 //               cards and names spelled once
+// The players index has pages that are not people: team cards ("Green Bay
+// Packers"), a name with its team run onto it ("Zach Ertz Philadelphia
+// Eagles"), checklists. None of them is an answer.
+const TEAM_IN_NAME = new RegExp(`(${[...TEAMS].map(t => t.replace(/\./g, '\\.')).join('|')})`, 'i');
+const notAPlayer = (name) => TEAM_IN_NAME.test(name) || /\bchecklist\b|mystery rookie|\bteam (card|leaders)\b/i.test(name);
+
 function buildBank({ checklists, players }) {
   const byName = new Map();
-  for (const p of players || []) if (p && p.name && p.slug) byName.set(norm(p.name), p);
+  players = (players || []).filter(p => p && p.name && p.slug && !notAPlayer(p.name));
+  for (const p of players) byName.set(norm(p.name), p);
   const lists = (checklists || []).filter(c => c && c.id && Array.isArray(c.sets) && Number.isFinite(c.year));
 
   // A year the checklists barely cover cannot be asked about as a whole:
@@ -106,7 +118,7 @@ function buildBank({ checklists, players }) {
   for (const c of lists) {
     const name = label(c.name), year = c.year;
     const link = { href: `/sets/${c.id}/`, label: name };
-    const nfl = !notNfl(c), low = nfl && lowNumbered(c), wholeYear = nfl && !thin(year), vintage = year < VINTAGE_BEFORE;
+    const nfl = !notNfl(c), low = nfl && lowNumbered(c), wholeYear = nfl && !thin(year), vintage = year < VINTAGE_BEFORE, era = eraOf(year);
     const win = TEAM_WINDOWS.find(w => year >= w.from && year <= w.to) || null;
     for (const s of c.sets) {
       const ins = s && s.category === 'insert' ? INSERT_NAME.get(insertKey(s.name)) : null;
@@ -115,31 +127,31 @@ function buildBank({ checklists, players }) {
         const p = byName.get(norm(k.player));
         if (!p) continue;
         if (nfl) {
-          pool(`product:${c.id}`, () => ({ type: 'product', group: year >= 2012 ? 'product-modern' : 'product-classic', subject: c.id, link, vintage,
+          pool(`product:${c.id}`, () => ({ type: 'product', group: year >= 2012 ? 'product-modern' : 'product-classic', subject: c.id, link, vintage, era,
             text: `Name a player with a card in ${name}`, min: 40, max: 600 })).add(p);
         }
         if (wholeYear) {
-          pool(`year:${year}`, () => ({ type: 'year', group: 'year', subject: `y${year}`, vintage,
+          pool(`year:${year}`, () => ({ type: 'year', group: 'year', subject: `y${year}`, vintage, era,
             text: `Name a player with a card from ${year}`, min: 60, max: 900 })).add(p);
         }
         if (nfl && auto) {
-          pool(`auto:${c.id}`, () => ({ type: 'auto', group: 'auto', subject: c.id, link, vintage,
+          pool(`auto:${c.id}`, () => ({ type: 'auto', group: 'auto', subject: c.id, link, vintage, era,
             text: `Name a player with an autograph card in ${name}`, min: 40, max: 600 })).add(p);
           if (wholeYear) {
-            pool(`autoyear:${year}`, () => ({ type: 'autoyear', group: 'autoyear', subject: `y${year}`, vintage,
+            pool(`autoyear:${year}`, () => ({ type: 'autoyear', group: 'autoyear', subject: `y${year}`, vintage, era,
               text: `Name a player with a certified autograph from ${year}`, min: 50, max: 700 })).add(p);
           }
         }
         if (low && k.printRun && k.printRun <= 10) {
-          pool(`low:${c.id}`, () => ({ type: 'low', group: 'low', subject: c.id, link, vintage,
+          pool(`low:${c.id}`, () => ({ type: 'low', group: 'low', subject: c.id, link, vintage, era,
             text: `Name a player with a card numbered to 10 or fewer in ${name}`, min: 30, max: 600 })).add(p);
         }
         if (k.rookie && wholeYear) {
-          pool(`rookie:${year}`, () => ({ type: 'rookie', group: 'rookie', subject: `y${year}`, vintage,
+          pool(`rookie:${year}`, () => ({ type: 'rookie', group: 'rookie', subject: `y${year}`, vintage, era,
             text: `Name a player with a rookie card from ${year}`, min: 20, max: 600 })).add(p);
         }
         if (win && k.team && TEAMS.has(k.team)) {
-          pool(`team:${slug(k.team)}:${win.id}`, () => ({ type: 'team', group: 'team', subject: k.team, vintage: win.to < VINTAGE_BEFORE,
+          pool(`team:${slug(k.team)}:${win.id}`, () => ({ type: 'team', group: 'team', subject: k.team, vintage: win.to < VINTAGE_BEFORE, era: eraOf(win.from),
             text: `Name ${an(k.team)} ${k.team} player with a card ${win.words}`, min: 25, max: 600 })).add(p);
         }
         if (ins) {
@@ -160,7 +172,7 @@ function buildBank({ checklists, players }) {
     if (e.set.size < e.min || e.set.size > e.max) continue;
     // Most famous first: a tie in rarity goes to the earlier answer.
     const answers = [...e.set].sort((a, b) => b.cards - a.cards || (a.name < b.name ? -1 : 1)).map(p => [p.name, p.slug, p.cards]);
-    const prompt = { id: e.id, type: e.type, group: e.group, subject: e.subject, vintage: !!e.vintage, text: e.text, link: e.link || null, answers };
+    const prompt = { id: e.id, type: e.type, group: e.group, subject: e.subject, vintage: !!e.vintage, era: e.era || null, text: e.text, link: e.link || null, answers };
     if (fameShares(prompt)[0] > MAX_TOP_SHARE) continue;
     bank.push(prompt);
   }
@@ -184,17 +196,19 @@ function dealer(bank) {
   const groups = new Map();
   for (const p of bank) { if (!groups.has(p.group)) groups.set(p.group, []); groups.get(p.group).push(p); }
   return (label, recent, spareCount = 0) => {
-    const ids = new Set(), subjects = new Set();
+    const ids = new Set(), subjects = new Set(), eras = new Map();
     // One subject once a pack: not two Vikings prompts, not a product and its
-    // own autographs.
-    const pick = (cands, seed, strict) => {
+    // own autographs. And a pack is spread across the years: `perEra` is how
+    // many prompts one era may have.
+    const pick = (cands, seed, strict, perEra) => {
       let best = null, bestH = Infinity;
       for (const p of cands) {
         if (ids.has(p.id) || subjects.has(p.subject) || (strict && recent.has(p.id))) continue;
+        if (p.era && (eras.get(p.era) || 0) >= perEra) continue;
         const h = hash(`${seed}|${p.id}`);
         if (h < bestH) { bestH = h; best = p; }
       }
-      if (best) { ids.add(best.id); subjects.add(best.subject); }
+      if (best) { ids.add(best.id); subjects.add(best.subject); if (best.era) eras.set(best.era, (eras.get(best.era) || 0) + 1); }
       return best;
     };
     const deal = (kinds, seed) => {
@@ -205,13 +219,25 @@ function dealer(bank) {
       // Vintage (before 1980) one time in three: collectors like it, and a
       // pack of 1950s prompts would lose everyone else.
       const vintageToday = hash(`${seed}|vintage`) % 3 === 0;
+      // "From 2014 to 2016" one time in three as well. The checklists carry
+      // teams for those years and for 2022 on, so left alone half of all team
+      // prompts say it, and it is the one phrase a player sees day after day.
+      const mid10sTeams = hash(`${seed}|2014-16`) % 3 === 0;
       const pools = order.map(k => {
         const all = groups.get(k) || [], modern = all.filter(p => !p.vintage);
-        return (vintageToday || !modern.length) ? all : modern;
+        let pool = (vintageToday || !modern.length) ? all : modern;
+        if (k === 'team' && !mid10sTeams) { const rest = pool.filter(p => p.era !== '2012-16'); if (rest.length) pool = rest; }
+        return pool;
       });
-      for (const c of pools) { const p = pick(c, seed, true); if (p) return p; }
-      for (const c of pools) { const p = pick(c, seed, false); if (p) return p; }
-      return pick(bank, seed, true) || pick(bank, seed, false);
+      // One prompt per era if the slot can manage it, then two; a prompt
+      // used lately only after that. (Owner, Nov 2026: "majority of questions
+      // seem to be" from 2014 to 2016. Teams, rookie classes and autograph
+      // years all cluster there, because that is where the checklists carry
+      // them, and a pack could draw four of its seven from those years.)
+      for (const [strict, perEra] of [[true, 1], [true, 2], [false, 1], [false, 2]]) {
+        for (const c of pools) { const p = pick(c, seed, strict, perEra); if (p) return p; }
+      }
+      return pick(bank, seed, true, 2) || pick(bank, seed, false, 2) || pick(bank, seed, false, Infinity);
     };
     const prompts = PLAN.map((kinds, i) => deal(kinds, `${label}|${i}`)).filter(Boolean);
     // The kinds come in a different order each time.
@@ -260,4 +286,4 @@ function buildRounds(bank, { count = UNLIMITED_ROUNDS } = {}) {
   return out;
 }
 
-module.exports = { EPOCH, SPARES, RECENT_DAYS, UNLIMITED_ROUNDS, TEAMS, TEAM_WINDOWS, INSERTS, PLAN, buildBank, buildPacks, buildRounds, hash, label };
+module.exports = { EPOCH, SPARES, RECENT_DAYS, UNLIMITED_ROUNDS, TEAMS, TEAM_WINDOWS, INSERTS, PLAN, ERAS, eraOf, notAPlayer, buildBank, buildPacks, buildRounds, hash, label };
