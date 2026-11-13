@@ -1,0 +1,16 @@
+name: Live sold check (one-off, never merge)
+on:
+  push:
+    branches: ['run/live-check']
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          B=https://the-card-huddle.thecardhuddleoffical.workers.dev
+          for q in "2024 prizm bo nix" "jayden daniels" "patrick mahomes 2017 prizm" "caleb williams"; do
+            echo "== $q"
+            curl -sS -m 40 "$B/api/search?mode=sold&limit=5&q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")" | head -c 600; echo
+          done
+          echo "== build"; curl -sS -m 20 $B/build.json; echo
+          echo "== health"; curl -sS -m 40 "$B/api/health" | head -c 800; echo
