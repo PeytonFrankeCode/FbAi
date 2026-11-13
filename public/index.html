@@ -303,7 +303,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" /></noscript>
 
-  <link rel="stylesheet" href="style.css?v=c91a59901b" />
+  <link rel="stylesheet" href="style.css?v=e80ed4dd46" />
 
 
 </head>
@@ -1084,6 +1084,9 @@
         <button class="portfolio-action-btn inv-reset-btn" onclick="resetInventory()">&#8635; Reset</button>
       </div>
 
+      <!-- Tabs: All, PC and each location, with what it is worth (owner, Nov 2026) -->
+      <div id="inv-tabs" class="inv-tabs" role="tablist" aria-label="Inventory sections"></div>
+
       <div class="inv-filter-row">
         <input type="text" id="inv-search" class="inv-search" placeholder="Search inventory..." oninput="setInvFilter('q', this.value)" />
         <select id="inv-filter-location" class="inv-select" onchange="setInvFilter('location', this.value)"></select>
@@ -1115,7 +1118,7 @@
         <div class="inv-check-row">
           <label class="inv-check"><input type="checkbox" id="inv-item-auto" /> Auto</label>
           <label class="inv-check"><input type="checkbox" id="inv-item-mem" /> Memorabilia</label>
-          <label class="inv-check"><input type="checkbox" id="inv-item-pc" /> PC</label>
+          <label class="inv-check"><input type="checkbox" id="inv-item-pc" onchange="_invPcToggle()" /> PC</label>
         </div>
         <select id="inv-item-location" title="Location"></select>
         <div class="inv-photo-field">
@@ -2075,7 +2078,7 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=44200a2bc1"></script>
+  <script src="app.js?v=992f28fcb5"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
