@@ -13,7 +13,8 @@
   const TIER = { base: 'Base', green: 'Green', blue: 'Blue', gold: 'Gold', one: 'One of One' };
   const WHY = {
     none: 'No match. Check the spelling or try someone else.',
-    ambiguous: 'More than one player fits that. Add a first name.',
+    ambiguous: 'More than one player fits that. Add more of the name.',
+    other: 'That player doesn\u2019t fit this one. Try someone else.',
     empty: 'Type a player’s name.',
   };
 
@@ -110,14 +111,44 @@
 
   // ---- Pieces of a screen ----
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-  function slots(view, current) {
+  // `fresh`: the slot just filled lands with a pop (the reveal screen).
+  function slots(view, current, fresh) {
     let h = '<div class="oo-slots" aria-label="Your pack so far">';
     for (let i = 0; i < view.count; i++) {
-      const a = view.answers[i];
-      if (i < view.answers.length) h += a ? `<span class="oo-slot oo-t-${a.tier}" title="${esc(TIER[a.tier])}"></span>` : '<span class="oo-slot oo-t-miss" title="No answer"></span>';
-      else h += `<span class="oo-slot${i === current ? ' now' : ''}"></span>`;
+      const a = view.answers[i], pop = fresh && i === view.answers.length - 1 ? ' new' : '';
+      if (i < view.answers.length) h += a ? `<span class="oo-slot oo-t-${a.tier}${pop}" style="--i:${i}" title="${esc(TIER[a.tier])}"></span>` : `<span class="oo-slot oo-t-miss${pop}" style="--i:${i}" title="No answer"></span>`;
+      else h += `<span class="oo-slot${i === current ? ' now' : ''}" style="--i:${i}"></span>`;
     }
     return h + '</div>';
+  }
+
+  // ---- Show ----
+  const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // The five tiers as a fan of cards, the 1/1 in front (the start screen).
+  const fan = () => `<div class="oo-fan" aria-hidden="true"><i class="oo-fan-card oo-t-base"></i><i class="oo-fan-card oo-t-green"></i><i class="oo-fan-card oo-t-blue"></i><i class="oo-fan-card oo-t-gold"></i><i class="oo-fan-card oo-t-one oo-shine">1/1</i></div>`;
+  // A One of One throws sparks; a Gold, a few.
+  function sparks(tier) {
+    const n = tier === 'one' ? 22 : tier === 'gold' ? 9 : 0;
+    if (!n || calm()) return '';
+    const colors = tier === 'one' ? ['#fde68a', '#facc15', '#ffffff', '#eab308'] : ['#facc15', '#fde68a'];
+    let h = '<span class="oo-sparks" aria-hidden="true">';
+    for (let i = 0; i < n; i++) {
+      const angle = Math.round((360 / n) * i + Math.random() * 16 - 8), reach = 120 + Math.round(Math.random() * 80);
+      h += `<i style="--a:${angle}deg;--r:${reach}px;--k:${colors[i % colors.length]};--u:${(0.8 + Math.random() * 0.5).toFixed(2)}s;--w:${(0.45 + Math.random() * 0.15).toFixed(2)}s"></i>`;
+    }
+    return h + '</span>';
+  }
+  // The score counts up to where it ends.
+  function countUp(el, to) {
+    if (!el || !(to > 0) || calm()) return;
+    const t0 = performance.now(), ms = 850;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms);
+      el.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k < 1 && el.isConnected) requestAnimationFrame(step);
+    };
+    el.textContent = '0';
+    requestAnimationFrame(step);
   }
   function tierChips() {
     return '<div class="oo-tiers">' + ((data && data.tiers) || []).map(t =>
@@ -163,6 +194,7 @@
     if (phase === 'start') {
       const going = v.started && !v.done;
       root.innerHTML = `<div class="oo-card oo-start">
+        ${fan()}
         <div class="oo-kicker">${kicker}</div>
         <h3 class="oo-h">${v.count} prompts. ${v.seconds} seconds each.</h3>
         <p class="oo-p">Each prompt asks for a player. Any right answer scores, and the rarer it is among today&rsquo;s players, the more it&rsquo;s worth.</p>
@@ -202,18 +234,18 @@
       const a = shown.answer, last = v.done;
       let card, line;
       if (a) {
-        card = `<div class="oo-flip oo-t-${a.tier}"><span class="oo-flip-tier">${esc(TIER[a.tier])}</span><span class="oo-flip-name">${esc(a.name)}</span><span class="oo-flip-pts">+${a.points}</span></div>`;
+        card = `<div class="oo-flip-wrap"><div class="oo-flip oo-t-${a.tier}"><span class="oo-flip-tier">${esc(TIER[a.tier])}</span><span class="oo-flip-name">${esc(a.name)}</span><span class="oo-flip-pts">+${a.points}</span></div>${sparks(a.tier)}</div>`;
         const when = unlimited ? 'in this round' : 'today';
         line = a.tier === 'one' ? `Nobody else has said that ${when}. It&rsquo;s a One of One.`
           : a.said <= 1 ? `You&rsquo;re the first to say that ${when}.`
             : `${a.said} of ${plural(a.of, 'player')} said that.`;
       } else {
         const why = shown.miss === 'tries' ? 'Out of tries' : 'Out of time';
-        card = `<div class="oo-flip oo-t-miss"><span class="oo-flip-tier">${why}</span><span class="oo-flip-name">No answer</span><span class="oo-flip-pts">+0</span></div>`;
+        card = `<div class="oo-flip-wrap"><div class="oo-flip oo-t-miss"><span class="oo-flip-tier">${why}</span><span class="oo-flip-name">No answer</span><span class="oo-flip-pts">+0</span></div></div>`;
         line = 'That slot stays empty. The answers show once you finish.';
       }
       root.innerHTML = `<div class="oo-card oo-reveal">
-        ${slots(v, -1)}
+        ${slots(v, -1, true)}
         ${card}
         <p class="oo-p oo-center">${line}</p>
         <button type="button" class="oo-btn oo-big" id="oo-go" data-act="${last ? 'results' : 'next'}">${last ? 'See your results' : 'Next prompt'}</button>
@@ -248,6 +280,7 @@
       </div>
       <h3 class="oo-h2">What everyone said</h3>
       <div class="oo-recap">${recap}</div>`;
+      countUp(root.querySelector('.oo-score strong'), v.score);
       return;
     }
     root.innerHTML = `<div class="oo-card oo-results">
@@ -262,6 +295,7 @@
     </div>
     <h3 class="oo-h2">What everyone said</h3>
     <div class="oo-recap">${recap}</div>`;
+    countUp(root.querySelector('.oo-score strong'), v.score);
     tick = setInterval(() => {
       const el = $('oo-countdown'), left = nextAt - Date.now();
       if (!el) { clearInterval(tick); return; }
@@ -279,7 +313,7 @@
       const left = deadline - performance.now();
       bar.style.transform = `scaleX(${Math.max(0, Math.min(1, left / total))})`;
       bar.classList.toggle('low', left < 6000);
-      if (secs) secs.textContent = String(Math.max(0, Math.ceil(left / 1000)));
+      if (secs) { secs.textContent = String(Math.max(0, Math.ceil(left / 1000))); secs.classList.toggle('low', left < 6000); }
       if (left <= 0) { send(true); return; }
       raf = requestAnimationFrame(step);
     };
@@ -359,6 +393,8 @@
         busy = false;
         if (input) { input.disabled = false; input.select(); try { input.focus({ preventScroll: true }); } catch (_) { input.focus(); } }
         if (btn) btn.disabled = false;
+        const form = $('oo-form');
+        if (form) { form.classList.remove('oo-shake'); void form.offsetWidth; form.classList.add('oo-shake'); }
         const left = d.view.active.triesLeft;
         if (msg) msg.textContent = (WHY[d.reason] || WHY.none) + (left <= 3 ? ` ${left} ${left === 1 ? 'try' : 'tries'} left.` : '');
         runClock();
@@ -423,6 +459,15 @@
     // else is read again, so a new day or a sign-in shows.
     if (phase !== 'prompt' && phase !== 'reveal' && !busy) load();
   };
+  // The backdrop (index.html, .oo-bg) shows while the game's view does:
+  // switchView hides and shows views by their `hidden` class.
+  (function backdrop() {
+    const v = $('play-view');
+    if (!v) return;
+    const sync = () => document.body.classList.toggle('oo-on', !v.classList.contains('hidden'));
+    sync();
+    if (window.MutationObserver) new MutationObserver(sync).observe(v, { attributes: true, attributeFilter: ['class'] });
+  })();
   // The page can open straight on /play, where app.js shows the view before
   // this file has loaded.
   const view = $('play-view');

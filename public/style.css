@@ -10796,3 +10796,115 @@ html:has(#play-view.oo-live:not(.hidden)) .hai-fab{display:none}
 .hai-topup-custom input { width: 84px; padding: 0.45rem 0.55rem; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-primary); color: var(--text-primary); font-size: 0.95rem; font-family: inherit; }
 .hai-topup-get { margin: 0.75rem 0 0.6rem; font-weight: 800; color: var(--accent); }
 .hai-topup-card .hai-cta { width: 100%; }
+
+/* ---- One of One: the look (owner, Nov 2026: "more visual, not so bland") ----
+   A backdrop of soft lights with cards drifting up through them, glass panels
+   over it, cards that fan, flip and shine, and a burst for a One of One.
+   The backdrop moves by transform and opacity only and no animation changes
+   the layout, so a phone keeps up, and none of it moves for someone who has
+   asked their device for less motion. */
+.oo-bg{display:none;position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
+.oo-glow{position:absolute;width:70vmax;height:70vmax;border-radius:50%;will-change:transform;animation:oo-drift 30s ease-in-out infinite alternate}
+.oo-glow.g1{left:-28vmax;top:-22vmax;background:radial-gradient(circle,rgba(34,197,94,.26),transparent 62%)}
+.oo-glow.g2{right:-30vmax;top:12vh;background:radial-gradient(circle,rgba(59,130,246,.24),transparent 62%);animation-duration:38s;animation-delay:-9s}
+.oo-glow.g3{left:14vw;bottom:-42vmax;background:radial-gradient(circle,rgba(250,204,21,.16),transparent 62%);animation-duration:44s;animation-delay:-17s}
+@keyframes oo-drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(7vw,5vh,0) scale(1.18)}}
+/* A drifting card: an outline in a tier's colour with a corner of foil. */
+.oo-float{position:absolute;bottom:-110px;left:var(--l);width:calc(46px*var(--s,1));height:calc(64px*var(--s,1));border-radius:8px;border:1.5px solid var(--c);
+  background:linear-gradient(135deg,var(--c2),transparent 62%);opacity:0;will-change:transform,opacity;animation:oo-float var(--d) linear infinite;animation-delay:var(--w)}
+@keyframes oo-float{0%{transform:translate3d(0,0,0) rotate(var(--r0));opacity:0}10%{opacity:var(--o)}80%{opacity:var(--o)}100%{transform:translate3d(var(--x),-125vh,0) rotate(var(--r1));opacity:0}}
+.oo-float.cg{--c:rgba(34,197,94,.75);--c2:rgba(34,197,94,.22)}
+.oo-float.cb{--c:rgba(59,130,246,.8);--c2:rgba(59,130,246,.24)}
+.oo-float.cy{--c:rgba(250,204,21,.8);--c2:rgba(250,204,21,.2)}
+.oo-float.cw{--c:rgba(203,213,225,.6);--c2:rgba(203,213,225,.16)}
+.oo-float.ck{--c:rgba(234,179,8,.9);--c2:rgba(0,0,0,.55)}
+.oo-float.f1{--l:4%;--s:1;--d:27s;--w:-2s;--r0:-14deg;--r1:22deg;--x:40px;--o:.5}
+.oo-float.f2{--l:13%;--s:.7;--d:34s;--w:-19s;--r0:10deg;--r1:-16deg;--x:-30px;--o:.38}
+.oo-float.f3{--l:24%;--s:1.25;--d:31s;--w:-11s;--r0:-6deg;--r1:14deg;--x:20px;--o:.42}
+.oo-float.f4{--l:36%;--s:.8;--d:38s;--w:-27s;--r0:18deg;--r1:-8deg;--x:-50px;--o:.3}
+.oo-float.f5{--l:47%;--s:1.1;--d:29s;--w:-6s;--r0:-10deg;--r1:-30deg;--x:35px;--o:.5}
+.oo-float.f6{--l:58%;--s:.9;--d:36s;--w:-23s;--r0:8deg;--r1:26deg;--x:-25px;--o:.4}
+.oo-float.f7{--l:68%;--s:1.3;--d:33s;--w:-14s;--r0:-18deg;--r1:6deg;--x:45px;--o:.36}
+.oo-float.f8{--l:78%;--s:.75;--d:28s;--w:-9s;--r0:12deg;--r1:-20deg;--x:-40px;--o:.46}
+.oo-float.f9{--l:87%;--s:1.05;--d:40s;--w:-31s;--r0:-8deg;--r1:16deg;--x:25px;--o:.32}
+.oo-float.f10{--l:94%;--s:.85;--d:32s;--w:-16s;--r0:16deg;--r1:-12deg;--x:-35px;--o:.48}
+[data-theme="light"] .oo-glow{opacity:.75}
+[data-theme="light"] .oo-float{filter:saturate(1.2) brightness(.85)}
+/* The title, in foil. */
+.oo-title{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+.oo-title-word{background:linear-gradient(100deg,#e5e7eb 0%,#5ece99 28%,#60a5fa 52%,#facc15 76%,#e5e7eb 100%);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:oo-foil 9s linear infinite}
+[data-theme="light"] .oo-title-word{background-image:linear-gradient(100deg,#1a2620 0%,#15803d 28%,#1d4ed8 52%,#b45309 76%,#1a2620 100%)}
+@keyframes oo-foil{from{background-position:0 0}to{background-position:240% 0}}
+.oo-title-badge{font-size:.72rem;font-weight:800;letter-spacing:.04em;color:#fde68a;background:#0b0b0f;border:1px solid #eab308;border-radius:6px;padding:.12rem .4rem;box-shadow:0 0 14px rgba(234,179,8,.35)}
+/* Glass panels, each rising in as its screen arrives. */
+.oo-card,.oo-recap{background:color-mix(in srgb,var(--bg-card) 78%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 18px 50px -24px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
+.oo-card{animation:oo-rise .38s cubic-bezier(.2,.8,.2,1) both}
+.oo-recap{animation:oo-rise .45s .12s cubic-bezier(.2,.8,.2,1) both}
+@keyframes oo-rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.oo-btn{transition:transform .12s ease,box-shadow .2s ease,background .15s ease}
+.oo-btn:active{transform:scale(.98)}
+.oo-btn.oo-big:not(.oo-ghost){box-shadow:0 10px 26px -12px var(--accent)}
+/* A sweep of light across a card: the refractor shine. */
+.oo-shine{position:relative;overflow:hidden}
+.oo-shine::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.38) 50%,transparent 64%);background-size:260% 100%;background-position:130% 0;animation:oo-shine 3.2s ease-in-out infinite}
+@keyframes oo-shine{0%{background-position:130% 0}55%,100%{background-position:-70% 0}}
+/* The start screen: the five tiers as a fan of cards, the 1/1 in front. */
+.oo-fan{position:relative;height:150px;margin:.4rem 0 .5rem}
+.oo-fan-card{position:absolute;left:50%;bottom:34px;width:66px;height:92px;margin-left:-33px;border-radius:9px;background:var(--oo);border:2px solid var(--oo-edge);box-shadow:0 8px 18px rgba(0,0,0,.35);
+  transform-origin:50% 230%;transform:rotate(var(--a));animation:oo-fan .65s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--t);display:grid;place-items:center;color:var(--oo-ink);font-weight:800;font-size:1.05rem;font-style:normal}
+.oo-fan-card:nth-child(1){--a:-32deg;--t:.02s;z-index:1}
+.oo-fan-card:nth-child(2){--a:-16deg;--t:.08s;z-index:2}
+.oo-fan-card:nth-child(3){--a:16deg;--t:.14s;z-index:2}
+.oo-fan-card:nth-child(4){--a:32deg;--t:.2s;z-index:1}
+.oo-fan-card:nth-child(5){--a:0deg;--t:.3s;z-index:3;width:74px;height:104px;margin-left:-37px;background:linear-gradient(145deg,#1c1c26,#000);box-shadow:0 0 0 1px rgba(253,230,138,.35),0 12px 30px rgba(234,179,8,.4)}
+@keyframes oo-fan{from{transform:rotate(0deg) translateY(34px) scale(.9);opacity:0}to{transform:rotate(var(--a));opacity:1}}
+.oo-start .oo-h{font-size:1.45rem}
+.oo-start .oo-kicker,.oo-start .oo-h{text-align:center}
+.oo-start .oo-tiers{justify-content:center}
+.oo-start .oo-p{text-align:center}
+/* The prompt screen: the slot being played breathes, the clock glows and
+   turns as it runs down, a wrong name shakes the box. */
+.oo-slot.now{animation:oo-pulse 1.3s ease-in-out infinite}
+@keyframes oo-pulse{0%,100%{box-shadow:0 0 0 0 rgba(94,206,153,.55)}50%{box-shadow:0 0 0 6px rgba(94,206,153,0)}}
+.oo-slot.new{animation:oo-pop .4s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes oo-pop{from{transform:scale(.3) rotate(-14deg);opacity:0}to{transform:none;opacity:1}}
+.oo-prompt{animation:oo-rise .35s .05s cubic-bezier(.2,.8,.2,1) both}
+.oo-clock{height:10px}
+.oo-clock-bar{background:linear-gradient(90deg,#16a34a,#5ece99);box-shadow:0 0 12px rgba(94,206,153,.6);transition:background .3s}
+.oo-clock-bar.low{background:linear-gradient(90deg,#dc2626,#f97316);box-shadow:0 0 14px rgba(239,68,68,.7)}
+.oo-secs{font-size:1.05rem;min-width:1.6em;text-align:right}
+.oo-secs.low{color:#ef4444;animation:oo-tick 1s ease-in-out infinite}
+@keyframes oo-tick{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.oo-form.oo-shake{animation:oo-shake .32s ease-in-out}
+@keyframes oo-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+/* The reveal: the answer turns over as a card, lit in its tier's colour. */
+.oo-reveal{perspective:900px}
+.oo-t-base{--oo-glow:rgba(203,213,225,.35)}
+.oo-t-green{--oo-glow:rgba(34,197,94,.55)}
+.oo-t-blue{--oo-glow:rgba(59,130,246,.6)}
+.oo-t-gold{--oo-glow:rgba(250,204,21,.6)}
+.oo-t-one{--oo-glow:rgba(234,179,8,.7)}
+.oo-flip-wrap{position:relative;align-self:center;display:grid;place-items:center;padding:.6rem 0}
+.oo-flip{width:190px;position:relative;overflow:hidden;box-shadow:0 0 0 1px var(--oo-edge),0 16px 46px -8px var(--oo-glow,transparent);animation:oo-turn .7s cubic-bezier(.2,.9,.25,1) both;backface-visibility:hidden}
+@keyframes oo-turn{0%{transform:rotateY(-180deg) scale(.7);opacity:0}45%{opacity:1}70%{transform:rotateY(12deg) scale(1.05)}100%{transform:none;opacity:1}}
+.oo-flip.oo-t-gold::after,.oo-flip.oo-t-one::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);background-size:260% 100%;background-position:130% 0;animation:oo-shine 2.6s .6s ease-in-out infinite}
+.oo-flip-pts{animation:oo-pop .45s .55s cubic-bezier(.2,1.5,.4,1) both}
+/* A One of One (and, smaller, a Gold) throws sparks. */
+.oo-sparks{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+.oo-sparks i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:2px;background:var(--k);opacity:0;transform:rotate(var(--a)) translateY(0);animation:oo-spark var(--u) var(--w) cubic-bezier(.1,.7,.3,1) both}
+@keyframes oo-spark{0%{opacity:0;transform:rotate(var(--a)) translateY(-40px) scale(.4)}15%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1*var(--r))) scale(1) rotate(200deg)}}
+/* Results: the score counts up and the seven cards land one after another. */
+.oo-results .oo-slot{animation:oo-pop .4s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(var(--i,0)*70ms + .15s)}
+.oo-score strong{display:inline-block;background:linear-gradient(180deg,var(--text-primary),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+.oo-tile{animation:oo-rise .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:.5s}
+.oo-tile:nth-child(2){animation-delay:.58s}
+.oo-tile:nth-child(3){animation-delay:.66s}
+.oo-recap-item{transition:background .15s}
+.oo-recap-item:hover{background:var(--bg-hover)}
+@media (max-width:640px){.oo-fan{height:130px}.oo-fan-card{width:56px;height:78px;margin-left:-28px;bottom:30px}.oo-fan-card:nth-child(5){width:62px;height:88px;margin-left:-31px}.oo-flip{width:160px}}
+@media (prefers-reduced-motion:reduce){
+  .oo-glow,.oo-float,.oo-title-word,.oo-card,.oo-recap,.oo-shine::after,.oo-fan-card,.oo-slot.now,.oo-slot.new,.oo-prompt,.oo-secs.low,.oo-form.oo-shake,.oo-flip,.oo-flip::after,.oo-flip-pts,.oo-sparks i,.oo-results .oo-slot,.oo-tile{animation:none!important}
+  .oo-float{opacity:var(--o);bottom:auto;top:calc(8% + var(--s,1)*38%)}
+  .oo-sparks{display:none}
+}

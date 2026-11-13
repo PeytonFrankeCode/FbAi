@@ -303,7 +303,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" /></noscript>
 
-  <link rel="stylesheet" href="style.css?v=0b5d40e86f" />
+  <link rel="stylesheet" href="style.css?v=eba3c8cc4c" />
 
 
 </head>
@@ -1011,11 +1011,21 @@
     </div>
   </div>
 
+  <!-- One of One's backdrop: soft lights and cards drifting up behind the page
+       (style.css, .oo-bg). It sits here, beside the view and not inside it,
+       because the view rises in on a transform and a fixed layer inside a
+       transformed box is cut to that box. Shown only while the game is
+       (play.js sets body.oo-on). Decoration only; still under reduced motion. -->
+  <div class="oo-bg" aria-hidden="true">
+    <i class="oo-glow g1"></i><i class="oo-glow g2"></i><i class="oo-glow g3"></i>
+    <i class="oo-float f1 cg"></i><i class="oo-float f2 cb"></i><i class="oo-float f3 cy"></i><i class="oo-float f4 cw"></i><i class="oo-float f5 ck"></i>
+    <i class="oo-float f6 cb"></i><i class="oo-float f7 cg"></i><i class="oo-float f8 cy"></i><i class="oo-float f9 cw"></i><i class="oo-float f10 ck"></i>
+  </div>
   <!-- One of One, the daily game (/play; public/play.js fills #oo-root) -->
   <div id="play-view" class="collection-view hidden">
     <div class="collection-container oo-wrap">
       <div class="collection-header">
-        <h2 class="collection-title">One of One</h2>
+        <h2 class="collection-title oo-title"><span class="oo-title-word">One of One</span><span class="oo-title-badge" aria-hidden="true">1/1</span></h2>
         <p class="collection-subtitle">The daily game. Seven prompts, twenty seconds each: name a player who fits, and the rarer your answer, the more it scores.</p>
       </div>
       <div id="oo-root" class="oo-root"><p class="oo-loading">Loading today&rsquo;s pack&hellip;</p></div>
@@ -2099,7 +2109,7 @@
   <script src="/growth.js" defer></script>
   <script src="app.js?v=a8a2074a37"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
-  <script src="play.js?v=f106251905"></script>
+  <script src="play.js?v=8042330290"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
   {
