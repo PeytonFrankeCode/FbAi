@@ -10672,6 +10672,21 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
   .community-composer-actions .community-cancel-btn { margin-left: auto; }
 }
 
+/* ---- Inventory tabs: All, PC, each location, with their value (Nov 2026) ---- */
+.inv-tabs { display: flex; gap: 0.5rem; overflow-x: auto; margin: 1rem 0 0.25rem; padding-bottom: 0.25rem;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.inv-tabs::-webkit-scrollbar { display: none; }
+.inv-tabs:empty { display: none; }
+.inv-tab { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 104px;
+  padding: 0.55rem 0.85rem; border-radius: 12px; border: 1px solid var(--border-primary); background: var(--bg-secondary);
+  color: var(--text-secondary); cursor: pointer; font-family: inherit; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.inv-tab:hover { border-color: var(--accent-border); }
+.inv-tab.active { border-color: var(--accent); background: var(--accent-bg); color: var(--text-primary); }
+.inv-tab-name { font-size: 0.78rem; font-weight: 700; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-tab-value { font-size: 1.02rem; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.inv-tab.active .inv-tab-value { color: var(--accent); }
+.inv-tab-count { font-size: 0.7rem; color: var(--text-muted); }
+.inv-item-pl-pc { justify-content: flex-end; }
 /* ---- One of One, the daily game (public/play.js; owner, Nov 2026) ---- */
 .oo-home-link{margin-top:.5rem}
 .oo-root{max-width:620px;margin:0 auto;scroll-margin-top:4.5rem}
