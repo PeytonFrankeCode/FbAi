@@ -8,13 +8,16 @@
 // index this reads). The files hold the valid answers, so the Worker refuses
 // to serve them to browsers (worker.js) and reads them itself.
 //
+// Unlimited mode's practice rounds are dealt here too, into
+// public/data/game/u/<number>.json.
+//
 //   node scripts/build-daily-game.js            write the files
 //   node scripts/build-daily-game.js --stats    also print how the bank looks
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { buildBank, buildPacks, EPOCH } = require(path.join(ROOT, 'game-bank.js'));
+const { buildBank, buildPacks, buildRounds, EPOCH } = require(path.join(ROOT, 'game-bank.js'));
 const { gameDate, dayIndex, dateOfDay, startingTiers } = require(path.join(ROOT, 'game-core.js'));
 
 const DAYS_AHEAD = 60;
@@ -34,22 +37,24 @@ function build({ today = gameDate(), days = DAYS_AHEAD } = {}) {
   const bank = buildBank({ checklists: loadChecklists(), players: loadPlayers() });
   const from = dateOfDay(Math.max(dayIndex(EPOCH), dayIndex(today) - 1));
   const packs = buildPacks(bank, { from, days: days + 2 });
-  return { bank, packs };
+  return { bank, packs, rounds: buildRounds(bank) };
 }
 
 if (require.main === module) {
   const t0 = Date.now();
-  const { bank, packs } = build();
+  const { bank, packs, rounds } = build();
   if (!packs.length) { console.error('build-daily-game: no packs dealt; is the bank empty?'); process.exit(1); }
   fs.rmSync(OUT, { recursive: true, force: true });
-  fs.mkdirSync(OUT, { recursive: true });
-  let bytes = 0;
+  fs.mkdirSync(path.join(OUT, 'u'), { recursive: true });
+  let bytes = 0, roundBytes = 0;
   for (const p of packs) { const s = JSON.stringify(p); bytes += s.length; fs.writeFileSync(path.join(OUT, `${p.date}.json`), s); }
+  for (const r of rounds) { const s = JSON.stringify(r); roundBytes += s.length; fs.writeFileSync(path.join(OUT, 'u', `${r.round}.json`), s); }
   const kinds = {};
   for (const p of bank) kinds[p.type] = (kinds[p.type] || 0) + 1;
-  fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({ built: new Date().toISOString(), epoch: EPOCH, dates: packs.map(p => p.date), bank: kinds }));
+  fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({ built: new Date().toISOString(), epoch: EPOCH, dates: packs.map(p => p.date), unlimited: rounds.length, bank: kinds }));
   console.log(`One of One: ${bank.length} prompts in the bank (${Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(', ')})`);
-  console.log(`  ${packs.length} packs, ${packs[0].date} (#${packs[0].number}) to ${packs[packs.length - 1].date}, ${(bytes / 1024).toFixed(0)} KB, ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  console.log(`  ${packs.length} packs, ${packs[0].date} (#${packs[0].number}) to ${packs[packs.length - 1].date}, ${(bytes / 1024).toFixed(0)} KB`);
+  console.log(`  ${rounds.length} unlimited rounds, ${(roundBytes / 1024).toFixed(0)} KB, ${((Date.now() - t0) / 1000).toFixed(1)}s in all`);
   if (process.argv.includes('--stats')) {
     const sum = { base: 0, green: 0, blue: 0, gold: 0, one: 0 };
     let noBase = 0;

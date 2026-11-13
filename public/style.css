@@ -10702,6 +10702,9 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-btn{background:var(--accent);color:var(--accent-on);border:0;border-radius:10px;padding:.65rem 1rem;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;justify-content:center}
 .oo-btn:hover,.oo-btn:focus-visible{background:var(--accent-hover);color:var(--accent-on)}
 .oo-btn:disabled{opacity:.6;cursor:default}
+/* The second button on a screen (Play unlimited): an outline, not a fill. */
+.oo-btn.oo-ghost{background:transparent;color:var(--text-primary);border:1px solid var(--border-primary)}
+.oo-btn.oo-ghost:hover,.oo-btn.oo-ghost:focus-visible{background:var(--bg-hover);color:var(--text-primary);border-color:var(--accent-border)}
 .oo-btn.oo-big{padding:.85rem 1rem;font-size:1rem;width:100%;white-space:normal}
 .oo-link{background:none;border:0;padding:0;color:var(--accent);font:inherit;cursor:pointer;text-decoration:underline;align-self:center}
 .oo-link:hover{background:none;color:var(--accent-hover)}

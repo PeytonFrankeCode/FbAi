@@ -178,19 +178,14 @@ function hash(str) {
 // date picks between them.
 const PLAN = [['product-modern'], ['team'], ['insert'], ['product-classic'], ['rookie', 'autoyear', 'year'], ['team', 'auto', 'low'], ['year', 'count', 'insert', 'team']];
 
-// Packs for `days` days from `from`. Dealt day by day from the epoch, because
-// a pack depends on what the days before it used.
-function buildPacks(bank, { from, days = 1, epoch = EPOCH } = {}) {
-  if (!isDate(from) || !isDate(epoch)) throw new Error('buildPacks needs dates as YYYY-MM-DD');
+// The dealing the daily packs and the unlimited rounds share: seven prompts by
+// PLAN under a label (a date, or "unlimited|12"), given what was used lately.
+function dealer(bank) {
   const groups = new Map();
   for (const p of bank) { if (!groups.has(p.group)) groups.set(p.group, []); groups.get(p.group).push(p); }
-  const first = dayIndex(epoch), start = Math.max(first, dayIndex(from)), last = dayIndex(from) + days - 1;
-  const history = [], out = [];
-  for (let d = first; d <= last; d++) {
-    const date = dateOfDay(d);
-    const recent = new Set(history.slice(-RECENT_DAYS).flat());
+  return (label, recent, spareCount = 0) => {
     const ids = new Set(), subjects = new Set();
-    // One subject once a day: not two Vikings prompts, not a product and its
+    // One subject once a pack: not two Vikings prompts, not a product and its
     // own autographs.
     const pick = (cands, seed, strict) => {
       let best = null, bestH = Infinity;
@@ -203,9 +198,9 @@ function buildPacks(bank, { from, days = 1, epoch = EPOCH } = {}) {
       return best;
     };
     const deal = (kinds, seed) => {
-      // The date puts the slot's kinds in an order. A kind with nothing fresh
-      // (there are only two card-count prompts) passes the slot to the next
-      // kind before anything is repeated.
+      // The label puts the slot's kinds in an order. A kind with nothing
+      // fresh (there are only two card-count prompts) passes the slot to the
+      // next kind before anything is repeated.
       const order = kinds.map(k => [hash(`${seed}|kind|${k}`), k]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
       // Vintage (before 1980) one time in three: collectors like it, and a
       // pack of 1950s prompts would lose everyone else.
@@ -218,18 +213,51 @@ function buildPacks(bank, { from, days = 1, epoch = EPOCH } = {}) {
       for (const c of pools) { const p = pick(c, seed, false); if (p) return p; }
       return pick(bank, seed, true) || pick(bank, seed, false);
     };
-    const prompts = PLAN.map((kinds, i) => deal(kinds, `${date}|${i}`)).filter(Boolean);
-    // The kinds come in a different order each day.
-    prompts.sort((a, b) => hash(`${date}|order|${a.id}`) - hash(`${date}|order|${b.id}`));
+    const prompts = PLAN.map((kinds, i) => deal(kinds, `${label}|${i}`)).filter(Boolean);
+    // The kinds come in a different order each time.
+    prompts.sort((a, b) => hash(`${label}|order|${a.id}`) - hash(`${label}|order|${b.id}`));
     const spares = [];
-    for (let i = 0; i < SPARES; i++) { const s = deal([['product-modern', 'team', 'insert'][i % 3]], `${date}|spare|${i}`); if (s) spares.push(s); }
+    for (let i = 0; i < spareCount; i++) { const s = deal([['product-modern', 'team', 'insert'][i % 3]], `${label}|spare|${i}`); if (s) spares.push(s); }
+    return { prompts, spares };
+  };
+}
+// What play needs of a prompt, and no more.
+const lean = ({ id, type, text, link, answers }) => ({ id, type, text, link, answers });
+
+// Packs for `days` days from `from`. Dealt day by day from the epoch, because
+// a pack depends on what the days before it used.
+function buildPacks(bank, { from, days = 1, epoch = EPOCH } = {}) {
+  if (!isDate(from) || !isDate(epoch)) throw new Error('buildPacks needs dates as YYYY-MM-DD');
+  const dealFor = dealer(bank);
+  const first = dayIndex(epoch), start = Math.max(first, dayIndex(from)), last = dayIndex(from) + days - 1;
+  const history = [], out = [];
+  for (let d = first; d <= last; d++) {
+    const date = dateOfDay(d);
+    const { prompts, spares } = dealFor(date, new Set(history.slice(-RECENT_DAYS).flat()), SPARES);
     history.push(prompts.map(p => p.id));
     if (d >= start && prompts.length === PROMPTS_PER_DAY) {
-      const lean = ({ id, type, text, link, answers }) => ({ id, type, text, link, answers });
       out.push({ date, number: d - first + 1, prompts: prompts.map(lean), spares: spares.map(lean) });
     }
   }
   return out;
 }
 
-module.exports = { EPOCH, SPARES, RECENT_DAYS, TEAMS, TEAM_WINDOWS, INSERTS, PLAN, buildBank, buildPacks, hash, label };
+// Unlimited mode (owner, Nov 2026): practice rounds of seven, as many as a
+// player likes. They are dealt like the daily packs, from the same bank and
+// by the same plan, under their own labels so no round is a day's pack; a
+// player goes through them in order and round again. A prompt does not come
+// back within RECENT_DAYS rounds, the same gap the days keep.
+const UNLIMITED_ROUNDS = 150;
+function buildRounds(bank, { count = UNLIMITED_ROUNDS } = {}) {
+  const dealFor = dealer(bank);
+  const history = [], out = [];
+  for (let n = 0; n < count; n++) {
+    const { prompts } = dealFor(`unlimited|${n}`, new Set(history.slice(-RECENT_DAYS).flat()));
+    history.push(prompts.map(p => p.id));
+    if (prompts.length !== PROMPTS_PER_DAY) throw new Error(`The bank could not deal unlimited round ${n}.`);
+    out.push({ round: n, prompts: prompts.map(lean) });
+  }
+  return out;
+}
+
+module.exports = { EPOCH, SPARES, RECENT_DAYS, UNLIMITED_ROUNDS, TEAMS, TEAM_WINDOWS, INSERTS, PLAN, buildBank, buildPacks, buildRounds, hash, label };
