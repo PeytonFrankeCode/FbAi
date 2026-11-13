@@ -2,6 +2,8 @@
 // seconds each; name a player who fits, and the rarer the answer among the
 // day's players, the more it scores. Server: server.js "One of One"; rules:
 // game-core.js. This file is the screens: start, prompt, reveal, results.
+// Unlimited mode is the same screens over practice rounds of seven, as many
+// as a player likes, apart from the daily pack and its streak.
 // Uses app.js helpers where they exist: authFetch, safeJson, escHtml,
 // showLogin, getSessionToken, switchView, performSearch.
 (function () {
@@ -19,6 +21,7 @@
   let phase = 'loading';  // loading | start | prompt | reveal | results | error
   let shown = null;       // what the reveal screen is showing: { answer } or { miss: reason }
   let deadline = 0, total = 20000, raf = 0, busy = false, loaded = false, nextAt = 0, tick = 0, errorText = '';
+  let mode = 'daily';     // daily | unlimited
 
   // ---- Who is playing ----
   // A browser without an account plays under an id it makes once and keeps.
@@ -65,6 +68,46 @@
     return { ...s, streak: dayIndex(data.view.date) - dayIndex(s.last) <= 1 ? s.streak : 0 };
   }
 
+  // ---- Unlimited mode ----
+  // Practice rounds of seven, dealt on the server and numbered 0 to
+  // data.unlimited - 1. This browser keeps its place: where it started (a
+  // random round, so players are spread over all of them), how many it has
+  // played, and its best and total score. Going past the last round comes
+  // back to the first, which the server lets be played again.
+  //   { start, played, scored, rounds, best, total }
+  // `played` is the round being played (counted from this browser's start);
+  // `scored` is the last one whose score was added, so a finished round is
+  // counted once however often its results are looked at.
+  const unlimitedOn = () => !!(data && data.unlimited > 0);
+  function unl() {
+    let u = null;
+    try { u = JSON.parse(localStorage.getItem('ooUnlimited') || 'null'); } catch (_) { u = null; }
+    if (!u || !Number.isInteger(u.start) || !Number.isInteger(u.played)) u = { start: Math.floor(Math.random() * 100000), played: 0, scored: -1, rounds: 0, best: 0, total: 0 };
+    return u;
+  }
+  function saveUnl(u) { try { localStorage.setItem('ooUnlimited', JSON.stringify(u)); } catch (_) { /* no storage: the place is kept for this visit only */ } _unl = u; }
+  let _unl = null;
+  const place = () => (_unl || (_unl = unl()));
+  const roundNow = () => (place().start + place().played) % Math.max(1, (data && data.unlimited) || 1);
+  function noteRound(view) {
+    const u = place();
+    if (u.scored === u.played) return;
+    saveUnl({ ...u, scored: u.played, rounds: (u.rounds || 0) + 1, best: Math.max(u.best || 0, view.score), total: (u.total || 0) + view.score });
+  }
+  function roundTiles() {
+    const u = place();
+    if (!u.rounds) return '';
+    const tile = (n, label) => `<div class="oo-tile"><b>${n}</b><span>${label}</span></div>`;
+    return `<div class="oo-tiles">${tile(u.rounds, u.rounds === 1 ? 'Round played' : 'Rounds played')}${tile(u.best || 0, 'Best round')}${tile(Math.round((u.total || 0) / u.rounds), 'Average')}</div>`;
+  }
+  // The way into unlimited, on the start and results screens.
+  function unlimitedDoor() {
+    if (!unlimitedOn()) return '';
+    const u = place();
+    return `<button type="button" class="oo-btn oo-ghost oo-big" data-act="unlimited">${u.rounds || u.played ? 'Keep playing unlimited' : 'Play unlimited'}</button>
+      <p class="oo-small oo-muted oo-center">Practice rounds of seven, as many as you like. They don&rsquo;t count toward your streak.</p>`;
+  }
+
   // ---- Pieces of a screen ----
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   function slots(view, current) {
@@ -85,6 +128,13 @@
     if (!s || !s.plays) return '';
     return `<p class="oo-stats">${s.streak ? `${plural(s.streak, 'day')} in a row` : 'Streak: start a new one today'} &middot; Best ${s.best} &middot; Played ${s.plays}</p>`;
   }
+  // The same three numbers on the results screen, as tiles.
+  function statTiles() {
+    const s = stats();
+    if (!s || !s.plays) return '';
+    const tile = (n, label) => `<div class="oo-tile"><b>${n}</b><span>${label}</span></div>`;
+    return `<div class="oo-tiles">${tile(s.streak || 0, 'Day streak')}${tile(s.best || 0, 'Best score')}${tile(s.plays, s.plays === 1 ? 'Pack played' : 'Packs played')}</div>`;
+  }
   const dateWords = (date) => { try { return new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' }); } catch (_) { return date; } };
   const playerLink = (a) => `<a class="oo-name" href="/?q=${encodeURIComponent(a.name)}" data-act="cards" data-name="${esc(a.name)}">${esc(a.name)}</a>`;
   function clockWords(ms) {
@@ -102,11 +152,13 @@
     const view = $('play-view');
     if (view) view.classList.toggle('oo-live', phase === 'prompt' || phase === 'reveal');
     if (phase === 'loading') { root.innerHTML = '<p class="oo-loading">Loading today’s pack&hellip;</p>'; return; }
+    const unlimited = mode === 'unlimited';
     if (phase === 'error' || !v) {
-      root.innerHTML = `<div class="oo-card"><p class="oo-p">${esc(errorText || 'The game could not be loaded.')}</p><button type="button" class="oo-btn" data-act="reload">Try again</button></div>`;
+      root.innerHTML = `<div class="oo-card"><p class="oo-p">${esc(errorText || 'The game could not be loaded.')}</p><button type="button" class="oo-btn" data-act="reload">Try again</button>
+        ${unlimited ? '<button type="button" class="oo-link" data-act="daily">Back to today&rsquo;s pack</button>' : ''}</div>`;
       return;
     }
-    const kicker = `Daily pack #${v.number} &middot; ${esc(dateWords(v.date))}`;
+    const kicker = unlimited ? `Unlimited &middot; Round ${place().played + 1}` : `Daily pack #${v.number} &middot; ${esc(dateWords(v.date))}`;
 
     if (phase === 'start') {
       const going = v.started && !v.done;
@@ -120,6 +172,7 @@
         <button type="button" class="oo-btn oo-big" data-act="next">${going ? `Keep going: prompt ${Math.min(v.slot + 1, v.count)} of ${v.count}` : 'Play today’s pack'}</button>
         ${statsLine()}
         ${signedIn() ? '' : '<p class="oo-small oo-muted">No account needed. <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak on every device.</p>'}
+        ${unlimitedDoor()}
       </div>`;
       return;
     }
@@ -127,7 +180,7 @@
     if (phase === 'prompt' && v.active) {
       root.innerHTML = `<div class="oo-card oo-play">
         ${slots(v, v.active.slot)}
-        <div class="oo-kicker">Prompt ${v.active.slot + 1} of ${v.count}</div>
+        <div class="oo-kicker">${unlimited ? `${kicker} &middot; ` : ''}Prompt ${v.active.slot + 1} of ${v.count}</div>
         <h3 class="oo-prompt">${esc(v.active.text)}</h3>
         <div class="oo-clock" aria-hidden="true"><div class="oo-clock-bar" id="oo-bar"></div></div>
         <form id="oo-form" class="oo-form" autocomplete="off">
@@ -135,7 +188,6 @@
           <button type="submit" class="oo-btn" id="oo-send">Answer</button>
         </form>
         <div class="oo-under"><span id="oo-msg" class="oo-msg" role="status" aria-live="polite"></span><span id="oo-secs" class="oo-secs" aria-label="Seconds left"></span></div>
-        <button type="button" class="oo-link" data-act="skip">Skip this one</button>
       </div>`;
       // On a phone, bring the prompt to the top so it and the answer box stay
       // in view above the keyboard.
@@ -151,11 +203,12 @@
       let card, line;
       if (a) {
         card = `<div class="oo-flip oo-t-${a.tier}"><span class="oo-flip-tier">${esc(TIER[a.tier])}</span><span class="oo-flip-name">${esc(a.name)}</span><span class="oo-flip-pts">+${a.points}</span></div>`;
-        line = a.tier === 'one' ? 'Nobody else has said that today. It&rsquo;s a One of One.'
-          : a.said <= 1 ? 'You&rsquo;re the first to say that today.'
+        const when = unlimited ? 'in this round' : 'today';
+        line = a.tier === 'one' ? `Nobody else has said that ${when}. It&rsquo;s a One of One.`
+          : a.said <= 1 ? `You&rsquo;re the first to say that ${when}.`
             : `${a.said} of ${plural(a.of, 'player')} said that.`;
       } else {
-        const why = shown.miss === 'tries' ? 'Out of tries' : shown.miss === 'final' && shown.skipped ? 'Skipped' : 'Out of time';
+        const why = shown.miss === 'tries' ? 'Out of tries' : 'Out of time';
         card = `<div class="oo-flip oo-t-miss"><span class="oo-flip-tier">${why}</span><span class="oo-flip-name">No answer</span><span class="oo-flip-pts">+0</span></div>`;
         line = 'That slot stays empty. The answers show once you finish.';
       }
@@ -170,31 +223,42 @@
       return;
     }
 
-    // Results: the round is done.
+    // Results: the round is done. One card for the score, one list for what
+    // was said: the prompt with its tier on the right, then two short lines.
     const recap = (data.results || []).map((p, i) => {
       const y = p.yours;
-      const you = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span> You said ${playerLink(y)}`
-        : '<span class="oo-chip oo-t-miss">No answer</span>';
+      const chip = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span>` : '<span class="oo-chip oo-t-miss">No answer</span>';
       // With one answer in, "most said" would only repeat the player's own.
       const top = p.n >= 2 ? (p.top || []).map(t => `${playerLink(t)} (${t.n})`).join(', ') : '';
-      const rare = (p.rare || []).filter(r => !y || r.name !== y.name).map(playerLink).join(', ');
       return `<div class="oo-recap-item">
         <div class="oo-recap-q">${i + 1}. ${esc(p.text)}</div>
-        <div class="oo-recap-you">${you}</div>
+        <div class="oo-recap-chip">${chip}</div>
+        ${y ? `<div class="oo-recap-line">You said ${playerLink(y)}</div>` : ''}
         ${top ? `<div class="oo-recap-line">Most said: ${top}</div>` : ''}
-        ${rare ? `<div class="oo-recap-line">Said by one player: ${rare}</div>` : ''}
-        <div class="oo-recap-line oo-muted">${plural(p.pool, 'player')} fit &middot; ${plural(p.n, 'answer')} so far</div>
       </div>`;
     }).join('');
+    if (unlimited) {
+      root.innerHTML = `<div class="oo-card oo-results">
+        <div class="oo-kicker oo-center">${kicker}</div>
+        <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
+        ${slots(v, -1)}
+        ${roundTiles()}
+        <button type="button" class="oo-btn oo-big" id="oo-go" data-act="another">Next round</button>
+        <p class="oo-foot"><button type="button" class="oo-link" data-act="daily">Back to today&rsquo;s pack</button></p>
+      </div>
+      <h3 class="oo-h2">What everyone said</h3>
+      <div class="oo-recap">${recap}</div>`;
+      return;
+    }
     root.innerHTML = `<div class="oo-card oo-results">
-      <div class="oo-kicker">${kicker}</div>
+      <div class="oo-kicker oo-center">${kicker}</div>
       <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
       ${slots(v, -1)}
-      <div class="oo-actions"><button type="button" class="oo-btn oo-big" data-act="share">Share your pack</button></div>
+      ${statTiles()}
+      <button type="button" class="oo-btn oo-big" data-act="share">Share your pack</button>
       <p id="oo-shared" class="oo-msg oo-center" role="status" aria-live="polite"></p>
-      ${statsLine()}
-      <p class="oo-p oo-center">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span></p>
-      ${signedIn() ? '' : '<p class="oo-small oo-muted oo-center"><button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak on every device.</p>'}
+      <p class="oo-foot">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span>${signedIn() ? '' : ' &middot; <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak'}</p>
+      ${unlimitedDoor()}
     </div>
     <h3 class="oo-h2">What everyone said</h3>
     <div class="oo-recap">${recap}</div>`;
@@ -216,7 +280,7 @@
       bar.style.transform = `scaleX(${Math.max(0, Math.min(1, left / total))})`;
       bar.classList.toggle('low', left < 6000);
       if (secs) secs.textContent = String(Math.max(0, Math.ceil(left / 1000)));
-      if (left <= 0) { send(true, false); return; }
+      if (left <= 0) { send(true); return; }
       raf = requestAnimationFrame(step);
     };
     step();
@@ -227,14 +291,15 @@
     data = d;
     nextAt = Date.now() + (d.msToNext || 0);
     const v = d.view;
-    if (v && v.done) noteFinished(v);
+    // The streak is the daily pack's; an unlimited round has its own count.
+    if (v && v.done) { if (v.mode === 'unlimited') noteRound(v); else noteFinished(v); }
     if (v && v.active) { deadline = performance.now() + v.active.msLeft; total = v.seconds * 1000; }
   }
 
   async function load() {
     phase = 'loading'; paint();
     try {
-      take(await api('/api/game/today'));
+      take(await api(mode === 'unlimited' ? `/api/game/today?round=${roundNow()}` : '/api/game/today'));
       const v = data.view;
       shown = null;
       phase = v.done ? 'results' : v.active ? 'prompt' : 'start';
@@ -242,11 +307,17 @@
     paint();
   }
 
-  async function next() {
+  // What every call says about which pack it is for: the unlimited round, or
+  // the day (so a round begun before midnight is finished on that day's pack).
+  const which = () => (mode === 'unlimited' ? { round: roundNow() } : { date: data && data.view && data.view.date });
+
+  // `again` (unlimited only): begin this round, even if this player has
+  // finished it before. A round under way is carried on, not restarted.
+  async function next(again) {
     if (busy) return;
     busy = true;
     try {
-      take(await api('/api/game/next', { date: data && data.view && data.view.date }));
+      take(await api('/api/game/next', { ...which(), again: !!again }));
       const v = data.view;
       shown = null;
       phase = v.done ? 'results' : v.active ? 'prompt' : 'start';
@@ -255,22 +326,33 @@
     paint();
   }
 
+  // Into unlimited from the daily screens: carry on where this browser was,
+  // or move to the next round if the last one is finished and counted.
+  function playUnlimited(advance) {
+    if (busy || !unlimitedOn()) return;
+    const u = place();
+    if (advance || u.scored === u.played) saveUnl({ ...u, played: u.played + 1 });
+    mode = 'unlimited';
+    next(true);
+  }
+  function backToDaily() { if (busy) return; mode = 'daily'; load(); }
+
   // Send what is typed. `final` is the last word on this prompt: the clock
-  // reached zero, or the player skipped.
-  async function send(final, skipped) {
+  // reached zero. There is no Skip button: a prompt is answered or runs out.
+  async function send(final) {
     if (busy || phase !== 'prompt') return;
     const input = $('oo-input'), msg = $('oo-msg'), btn = $('oo-send');
-    const text = skipped ? '' : ((input && input.value) || '').trim();
+    const text = ((input && input.value) || '').trim();
     if (!final && !text) { if (msg) msg.textContent = WHY.empty; return; }
     busy = true;
     cancelAnimationFrame(raf);
     if (input) input.disabled = true;
     if (btn) btn.disabled = true;
     try {
-      const d = await api('/api/game/answer', { text, final: !!final, date: data.view.date });
+      const d = await api('/api/game/answer', { ...which(), text, final: !!final });
       take(d);
       if (d.ok) { shown = { answer: d.answer }; phase = 'reveal'; }
-      else if (d.timeout) { shown = { miss: d.reason, skipped: !!skipped }; phase = 'reveal'; }
+      else if (d.timeout) { shown = { miss: d.reason }; phase = 'reveal'; }
       else if (d.error || !d.view.active) { busy = false; return load(); }   // the round moved on without this page
       else {
         // Not a match: same prompt, same clock, try again.
@@ -321,14 +403,16 @@
       const act = t.dataset.act;
       if (act === 'cards') { if (seeCards(t.dataset.name)) e.preventDefault(); return; }
       e.preventDefault();
-      if (act === 'next') next();
-      else if (act === 'skip') send(true, true);
+      if (act === 'next') next(false);
+      else if (act === 'unlimited') playUnlimited(false);
+      else if (act === 'another') playUnlimited(true);
+      else if (act === 'daily') backToDaily();
       else if (act === 'results') { phase = 'results'; paint(); }
       else if (act === 'share') share();
       else if (act === 'reload') load();
       else if (act === 'login' && typeof showLogin === 'function') showLogin();
     });
-    root.addEventListener('submit', (e) => { e.preventDefault(); send(false, false); });
+    root.addEventListener('submit', (e) => { e.preventDefault(); send(false); });
   }
 
   // switchView('play') calls this each time the tab is opened.

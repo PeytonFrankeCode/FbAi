@@ -245,12 +245,15 @@ class GameDay {
       if (await this.meta()) return false;
       const prompts = ((pack && pack.prompts) || []).slice(0, PROMPTS_PER_DAY)
         .filter(p => p && p.text && Array.isArray(p.answers) && p.answers.length);
-      if (!isDate(pack && pack.date) || prompts.length !== PROMPTS_PER_DAY) throw new Error('That is not a full pack.');
+      // A daily pack has its date; an unlimited round (below) has its number.
+      const round = pack && Number.isInteger(pack.round) && pack.round >= 0 ? pack.round : null;
+      if ((round === null && !isDate(pack && pack.date)) || prompts.length !== PROMPTS_PER_DAY) throw new Error('That is not a full pack.');
       for (let i = 0; i < prompts.length; i++) {
         const p = prompts[i];
         await this.store.put('p:' + i, { id: String(p.id || ''), type: String(p.type || ''), text: String(p.text), link: p.link || null, answers: p.answers });
       }
-      this._meta = { date: pack.date, number: Number(pack.number) || 1, count: prompts.length };
+      this._meta = round === null ? { date: pack.date, number: Number(pack.number) || 1, count: prompts.length }
+        : { mode: 'unlimited', round, date: null, number: round + 1, count: prompts.length };
       await this.store.put('meta', this._meta);
       return true;
     });
@@ -258,7 +261,7 @@ class GameDay {
 
   async _view(play, now) {
     const meta = await this.meta();
-    const v = { date: meta.date, number: meta.number, count: meta.count, seconds: SECONDS, maxScore: meta.count * TIER.one.points,
+    const v = { mode: meta.mode || 'daily', date: meta.date, number: meta.number, count: meta.count, seconds: SECONDS, maxScore: meta.count * TIER.one.points,
       started: !!play, done: !!(play && play.done), slot: play ? play.slot : 0,
       score: play ? play.answers.reduce((s, a) => s + (a ? a.points : 0), 0) : 0,
       answers: play ? play.answers.map(_pubAnswer) : [], active: null };
@@ -306,11 +309,22 @@ class GameDay {
   // A quiet round (opts.quiet, set when it starts) plays and scores like any
   // other but is left out of the day's counts: it is how a visitor the site
   // takes for a program can play without changing anyone else's rarity.
+  //
+  // Unlimited mode (owner, Nov 2026): practice rounds of seven, as many as a
+  // player likes. A round is a pack like any day's, kept by number instead of
+  // date, and everyone who has played that round shares its counts. Only
+  // there can a finished round be played again (opts.again), and the replay
+  // is quiet: one player going round and round must not make their own
+  // answers look common. The daily pack stays one round a day.
   next(pid, now = Date.now(), opts = {}) {
     return this._lock(async () => {
       if (!validPid(pid)) return { error: 'player' };
-      if (!(await this.meta())) return { error: 'no-pack' };
+      const meta = await this.meta();
+      if (!meta) return { error: 'no-pack' };
       let play = await this.store.get('u:' + pid);
+      if (play && play.done && opts && opts.again && meta.mode === 'unlimited') {
+        play = { slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: true };
+      }
       if (!play) {
         play = { slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: !!(opts && opts.quiet) };
         if (!play.quiet) await this._bump('plays');
@@ -401,7 +415,7 @@ async function runOp(day, m, now = Date.now()) {
     case 'has': return { has: await day.hasPack() };
     case 'pack': return { set: await day.setPack(m.pack) };
     case 'state': return { view: await day.state(m.pid, now) };
-    case 'next': return day.next(m.pid, now, { quiet: !!m.quiet });
+    case 'next': return day.next(m.pid, now, { quiet: !!m.quiet, again: !!m.again });
     case 'answer': return day.answer(m.pid, m.text, now, { final: !!m.final });
     case 'results': return day.results(m.pid, now);
     case 'summary': return { summary: await day.summary() };

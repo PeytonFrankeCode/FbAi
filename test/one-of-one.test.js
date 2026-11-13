@@ -135,6 +135,34 @@ const MS = G.SECONDS * 1000;
     check('a player id is an account or a browser\'s own id, nothing else', G.validPid('u:liam') && G.validPid('d:0123456789abcdef') && !G.validPid('d:short') && !G.validPid('x:0123456789abcdef') && !G.validPid('') && (await day2.next('nope', t)).error === 'player');
   }
 
+  // ---- Unlimited mode: a round kept by number, that can be played again ----
+  {
+    const t = 5000000, a = 'd:aaaaaaaaaaaaaaaa', b = 'd:bbbbbbbbbbbbbbbb';
+    const round = new G.GameDay(G.memoryStore());
+    check('an unlimited round is a pack with a number in place of a date', (await round.setPack({ round: 4, prompts: pack('2026-11-12').prompts })) === true
+      && (await round.state(a, t)).mode === 'unlimited' && (await round.state(a, t)).number === 5 && (await round.state(a, t)).date === null);
+    let bad = null; try { await new G.GameDay(G.memoryStore()).setPack({ round: -1, prompts: pack('2026-11-12').prompts }); } catch (e) { bad = e; }
+    check('...and a pack with neither is refused', !!bad);
+    const playAll = async (pid, name, at, opts) => { let r; for (let i = 0; i < 7; i++) { await round.next(pid, at + i * 10, i === 0 ? opts : {}); r = await round.answer(pid, name, at + i * 10 + 1); } return r; };
+    let r = await playAll(a, 'Bo Melton', t);
+    check('it plays and scores like a day\'s pack', r.view.done === true && r.view.score === 700 && r.view.mode === 'unlimited');
+    check('a finished round stays finished unless asked for again', (await round.next(a, t + 1000)).view.done === true);
+    r = await round.next(a, t + 2000, { again: true });
+    check('asked for again, it starts over', r.view.done === false && r.view.active.slot === 0 && r.view.answers.length === 0);
+    r = await round.next(a, t + 2500, { again: true });
+    check('...but a round under way is carried on, not restarted', r.view.active.slot === 0 && r.view.active.msLeft === MS - 500);
+    const before = await round.summary();
+    r = await round.answer(a, 'Jordan Love', t + 3000);
+    const after = await round.summary();
+    check('the replay scores but is left out of the round\'s counts', r.ok === true && after.plays === before.plays && after.prompts[0].n === before.prompts[0].n && !after.prompts[0].top.some(x => x.name === 'Jordan Love'));
+    r = await playAll(b, 'Bo Melton', t + 9000);
+    check('everyone who plays a round shares its counts', r.answer.said === 2 && r.view.score < 700);
+    const day = new G.GameDay(G.memoryStore());
+    await day.setPack(pack('2026-11-12'));
+    for (let i = 0; i < 7; i++) { await day.next(a, t + i); await day.answer(a, 'Bo Melton', t + i + 1); }
+    check('the daily pack cannot be played again, however it is asked', (await day.next(a, t + 100, { again: true })).view.done === true && (await day.state(a, t)).mode === 'daily');
+  }
+
   // ---- The Durable Object, on a stand-in for its storage ----
   {
     const w = await import(path.join(ROOT, 'worker.js'));
@@ -150,7 +178,7 @@ const MS = G.SECONDS * 1000;
       && (await obj.fetch(new Request('https://game.local/', { method: 'POST', body: 'not json' }))).status === 400);
     await obj.alarm();
     check('...and the alarm clears it', m.size === 0);
-    check('the pack files are never served to a browser', w.isGamePackPath('/data/game/2026-11-12.json') && w.isGamePackPath('/data/game/index.json') && w.isGamePackPath('/DATA/GAME/x.json') && !w.isGamePackPath('/data/checklists/index.json') && !w.isGamePackPath('/data/gamers.json'));
+    check('the pack files are never served to a browser', w.isGamePackPath('/data/game/2026-11-12.json') && w.isGamePackPath('/data/game/u/12.json') && w.isGamePackPath('/data/game/index.json') && w.isGamePackPath('/DATA/GAME/x.json') && !w.isGamePackPath('/data/checklists/index.json') && !w.isGamePackPath('/data/gamers.json'));
     check('/play is a real page, with or without a slash', w.isKnownHtmlPath('/play') && w.isKnownHtmlPath('/play/') && !w.isKnownHtmlPath('/plays'));
   }
 
@@ -192,6 +220,15 @@ const MS = G.SECONDS * 1000;
     for (let i = 0; i < packs.length; i++) for (let j = Math.max(0, i - 7); j < i; j++) if (packs[i].prompts.some(q => packs[j].prompts.some(o => o.id === q.id))) repeats++;
     check('no prompt comes back within a week', repeats === 0, String(repeats));
     check('a dealt pack carries only what play needs', Object.keys(packs[0].prompts[0]).sort().join() === 'answers,id,link,text,type');
+    const rounds = B.buildRounds(bank), roundsAgain = B.buildRounds(bank);
+    check('unlimited mode has its own rounds of seven, dealt the same every time', rounds.length === B.UNLIMITED_ROUNDS && rounds.length >= 100 && rounds.every((r, n) => r.round === n && r.prompts.length === 7)
+      && JSON.stringify(rounds.map(r => r.prompts.map(q => q.id))) === JSON.stringify(roundsAgain.map(r => r.prompts.map(q => q.id))));
+    check('...each on seven subjects, a mix of kinds, and no round is a day\'s pack', rounds.every(r => new Set(r.prompts.map(q => byId.get(q.id).subject)).size === 7 && new Set(r.prompts.map(q => q.type)).size >= 3)
+      && !rounds.some(r => packs.some(p => p.prompts.map(q => q.id).sort().join() === r.prompts.map(q => q.id).sort().join())));
+    let roundRepeats = 0;
+    for (let i = 0; i < rounds.length; i++) for (let j = Math.max(0, i - 10); j < i; j++) if (rounds[i].prompts.some(q => rounds[j].prompts.some(o => o.id === q.id))) roundRepeats++;
+    check('...and no prompt comes back within ten rounds', roundRepeats === 0, String(roundRepeats));
+    check('a dealt round carries only what play needs', Object.keys(rounds[0]).sort().join() === 'prompts,round' && Object.keys(rounds[0].prompts[0]).sort().join() === 'answers,id,link,text,type');
     const sw = G.applySwaps(packs[1], { 2: packs[1].prompts[2].id });
     check('a swap puts the next spare in the slot', sw.prompts[2].id === packs[1].spares[0].id && sw.spares.length === 2 && sw.prompts[0].id === packs[1].prompts[0].id);
     check('...unless the slot no longer holds the prompt the admin saw', G.applySwaps(packs[1], { 2: 'some:other:prompt' }).prompts[2].id === packs[1].prompts[2].id);
@@ -202,7 +239,8 @@ const MS = G.SECONDS * 1000;
   process.env.ADMIN_PASSWORD = 'test-admin';
   const S = require(path.join(ROOT, 'server.js'));
   let now = Date.parse('2026-11-12T17:00:00Z');   // noon Eastern
-  S._gameTestHooks({ pack: (date) => pack(date, G.dayIndex(date) - G.dayIndex('2026-11-11')), now: () => now });
+  const dealt = (key) => (/^u-/.test(key) ? { round: Number(key.slice(2)), prompts: pack('round ' + key.slice(2)).prompts } : pack(key, G.dayIndex(key) - G.dayIndex('2026-11-11')));
+  S._gameTestHooks({ pack: dealt, now: () => now, rounds: 5 });
   const PORT = 3317;
   const server = S.app.listen(PORT);
   const base = `http://127.0.0.1:${PORT}`;
@@ -272,6 +310,38 @@ const MS = G.SECONDS * 1000;
     check('...and can be taken back', up.prompts[1].text === 'Prompt 2 of 2026-11-13' && up.sparesLeft === 3);
     await call('/api/admin/game/swap', { method: 'POST', admin: true, body: { date: '2026-11-13', slot: 6 } });
 
+    // Unlimited mode.
+    const u1 = { dev: 'device-unl-eeeeeeee' };
+    r = await call('/api/game/today', u1);
+    check('the game says how many unlimited rounds there are', r.body.unlimited === 5 && r.body.view.mode === 'daily');
+    r = await call('/api/game/today?round=2', u1);
+    check('an unlimited round is looked at by its number', r.status === 200 && r.body.view.mode === 'unlimited' && r.body.view.number === 3 && r.body.view.started === false);
+    check('...and a round that does not exist is refused', (await call('/api/game/today?round=5', u1)).status === 400 && (await call('/api/game/next', { method: 'POST', ...u1, body: { round: -1 } })).status === 400
+      && (await call('/api/game/next', { method: 'POST', ...u1, body: { round: 'abc' } })).status === 400 && (await call('/api/game/answer', { method: 'POST', ...u1, body: { round: 99, text: 'x' } })).status === 400);
+    const playRound = async (who, n, name, again) => {
+      let last = null;
+      for (let i = 0; i < 7; i++) {
+        await call('/api/game/next', { method: 'POST', ...who, body: { round: n, again: again && i === 0 } });
+        last = await call('/api/game/answer', { method: 'POST', ...who, body: { round: n, text: name, final: true } });
+      }
+      return last;
+    };
+    r = await call('/api/game/next', { method: 'POST', ...u1, body: { round: 2, again: true } });
+    check('Play unlimited starts that round\'s first prompt, without its answers', r.body.view.active.slot === 0 && r.body.view.active.text === 'Prompt 1 of round 2' && !NAMES.some(n => JSON.stringify(r.body).includes(n)));
+    r = await playRound(u1, 2, 'Bo Melton', false);
+    check('a finished round shows its score and what everyone said, with no share text', r.body.view.done === true && r.body.view.score === 700 && r.body.results.length === 7 && !('share' in r.body));
+    check('...and leaves today\'s pack untouched', (await call('/api/game/today', u1)).body.view.started === false);
+    const sumBefore = (await S._gameCall('u-2', 'summary')).summary;
+    r = await call('/api/game/next', { method: 'POST', ...u1, body: { round: 2 } });
+    check('the round stays finished until it is asked for again', r.body.view.done === true);
+    r = await playRound(u1, 2, 'Tucker Kraft', true);
+    const sumAfter = (await S._gameCall('u-2', 'summary')).summary;
+    check('it can be played again, and the replay does not move the round\'s counts', r.body.view.done === true && r.body.answer.name === 'Tucker Kraft' && sumAfter.plays === sumBefore.plays && sumAfter.prompts[0].n === sumBefore.prompts[0].n);
+    r = await playRound({ token }, 3, 'Jordan Love', true);
+    const statsNow = (await call('/api/game/today', { token })).body.stats;
+    check('an unlimited round neither shows nor changes an account\'s streak', r.body.view.done === true && !('stats' in r.body) && statsNow.streak === 1 && statsNow.plays === 1);
+    check('...and is not in the admin page\'s numbers for the day', (await call('/api/admin/game', { admin: true })).body.days[0].plays === 3);
+
     // The next day.
     now = Date.parse('2026-11-13T04:59:55Z');   // five seconds to midnight Eastern, still the 12th
     const late = { dev: 'device-late-dddddddd' };
@@ -321,6 +391,16 @@ const MS = G.SECONDS * 1000;
   check('play.js is stamped and cached with the rest', /'play\.js',/.test(read('scripts/stamp-sw.js')) && /'index\.html': \['style\.css', 'app\.js', 'bounties\.js', 'play\.js'\]/.test(read('scripts/stamp-sw.js')));
   const play = read('public/play.js');
   check('the page never holds the answers: it only shows what the server sends back', !/answers\s*:\s*\[\[/.test(play) && /x-game-device/.test(play) && /final: !!final/.test(play) && /window\.initPlayView = function/.test(play));
+  check('there is no Skip button: a prompt is answered or runs out', !/data-act="skip"/.test(play) && !/skip/i.test(play.replace(/There is no Skip button[^\n]*/, '')));
+  check('the results screen shows the streak, best score and packs played as tiles, and one line for what was most said',
+    /function statTiles\(\)/.test(play) && /'Day streak'/.test(play) && /'Best score'/.test(play) && /Most said: \$\{top\}/.test(play)
+    && !/Said by one player/.test(play) && /\.oo-tiles\{display:grid;grid-template-columns:repeat\(3,/.test(read('public/style.css')));
+  check('the game\'s buttons keep their colour under the pointer', /\.oo-btn:hover,\.oo-btn:focus-visible\{background:var\(--accent-hover\);color:var\(--accent-on\)\}/.test(read('public/style.css')));
+  check('unlimited mode: the page has its way in, its Next round and its way back, and names the round on every call',
+    /data-act="unlimited"/.test(play) && /data-act="another"/.test(play) && /data-act="daily"/.test(play) && /\{ round: roundNow\(\) \}/.test(play)
+    && /if \(v\.mode === 'unlimited'\) noteRound\(v\); else noteFinished\(v\);/.test(play));
+  check('...the deploy deals its rounds beside the daily packs', /path\.join\(OUT, 'u', `\$\{r\.round\}\.json`\)/.test(read('scripts/build-daily-game.js')) && /unlimited: rounds\.length/.test(read('scripts/build-daily-game.js')));
+  check('...and the share text and the streak stay the daily pack\'s', /if \(daily\) body\.share = GAME\.shareText\(view\);/.test(srv) && /if \(who\.user && daily\) body\.stats =/.test(srv));
   check('the admin page has the game\'s numbers and the swap', /async function loadGame\(\)/.test(read('public/admin.html')) && /function swapGame\(/.test(read('public/admin.html')) && /loadGame\(\);/.test(read('public/admin.html')));
 
   console.log(failures ? `\n${failures} One of One check(s) failed` : '\nall One of One checks passed');

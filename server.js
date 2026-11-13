@@ -22748,10 +22748,12 @@ const _gameMem = new Map();          // Node: date -> the day, in memory
 const _gameReady = new Set();        // dates this isolate knows have their pack
 let _gamePackSource = null;          // tests deal their own pack...
 let _gameNow = () => Date.now();     // ...and move the clock
-function _gameTestHooks({ pack, now } = {}) {
+let _gameRoundsHook = null;          // ...and say how many unlimited rounds there are
+function _gameTestHooks({ pack, now, rounds } = {}) {
   _gamePackSource = pack || null;
   _gameNow = now || (() => Date.now());
-  _gameMem.clear(); _gameReady.clear();
+  _gameRoundsHook = Number.isInteger(rounds) ? rounds : null;
+  _gameMem.clear(); _gameReady.clear(); _gameRoundsKnown = null;
 }
 const _gameDate = () => GAME.gameDate(_gameNow());
 
@@ -22771,7 +22773,7 @@ async function _gameCall(date, op, args = {}) {
     if (op === 'summary') return { summary: null };
     if (op === 'has') return { has: false };
     const cutoff = GAME.dayIndex(_gameDate()) - 2;
-    for (const d of _gameMem.keys()) if (GAME.dayIndex(d) < cutoff) _gameMem.delete(d);
+    for (const d of _gameMem.keys()) if (GAME.isDate(d) && GAME.dayIndex(d) < cutoff) _gameMem.delete(d);
     day = new GAME.GameDay(GAME.memoryStore());
     _gameMem.set(date, day);
   }
@@ -22789,7 +22791,42 @@ function _gameDealLocal(date) {
     const b = nodeRequire('./scripts/build-daily-game.js');
     _gameLocalBank = bank.buildBank({ checklists: b.loadChecklists(), players: b.loadPlayers() });
   }
+  if (!GAME.isDate(date)) {
+    if (!_gameLocalRounds) _gameLocalRounds = bank.buildRounds(_gameLocalBank);
+    return date === 'count' ? _gameLocalRounds.length : (_gameLocalRounds[_gameRoundOf(date)] || null);
+  }
   return bank.buildPacks(_gameLocalBank, { from: date, days: 1 })[0] || null;
+}
+
+// ---- Unlimited mode (owner, Nov 2026) ----
+// Practice rounds of seven, as many as a player likes, apart from the daily
+// pack: no streak, no share text, not in the admin's numbers. A round is a
+// pack kept under "u-<number>" instead of a date, so everything below that
+// takes a day's key takes a round's the same way, and everyone who has
+// played a round shares its counts. The rounds are dealt at deploy into
+// public/data/game/u (scripts/build-daily-game.js); a player goes through
+// them in order and round again (the page keeps their place).
+let _gameLocalRounds = null;
+let _gameRoundsKnown = null;         // { n, at }: how many rounds the deploy dealt
+const _gameRoundKey = (n) => `u-${n}`;
+const _gameRoundOf = (key) => { const m = /^u-(\d{1,5})$/.exec(String(key)); return m ? Number(m[1]) : null; };
+async function _gameRoundCount() {
+  if (_gameRoundsHook !== null) return _gameRoundsHook;
+  if (_gameRoundsKnown && Date.now() - _gameRoundsKnown.at < 3600000) return _gameRoundsKnown.n;
+  let n = 0;
+  try { n = Number((await _loadJson('game/index.json')).unlimited) || 0; } catch (_) { n = 0; }
+  if (!n && !getAssets()) { try { n = _gameDealLocal('count'); } catch (_) { n = 0; } }
+  _gameRoundsKnown = { n, at: Date.now() };
+  return n;
+}
+async function _gameRoundRaw(key) {
+  if (_gamePackSource) return _gamePackSource(key);
+  let pack = null;
+  try { pack = await _loadJson(`game/u/${_gameRoundOf(key)}.json`); } catch (_) { pack = null; }
+  if (!pack && !getAssets()) {
+    try { pack = _gameDealLocal(key); } catch (err) { console.error('[game] could not deal a round:', err && err.message); }
+  }
+  return pack && Array.isArray(pack.prompts) ? pack : null;
 }
 
 // A day's pack as it was dealt.
@@ -22828,6 +22865,18 @@ async function _gamePack(date) {
 // prompts people are halfway through.
 async function _gameEnsure(date) {
   if (_gameReady.has(date)) return true;
+  const round = _gameRoundOf(date);
+  if (round !== null) {
+    const has = await _gameCall(date, 'has');
+    if (!has || !has.has) {
+      const pack = await _gameRoundRaw(date);
+      if (!pack) return false;
+      await _gameCall(date, 'pack', { pack: { round, prompts: pack.prompts } });
+    }
+    if (_gameReady.size >= 64) _gameReady.clear();
+    _gameReady.add(date);
+    return true;
+  }
   const has = await _gameCall(date, 'has');
   if (!has || !has.has) {
     const pack = await _gamePack(date);
@@ -22837,7 +22886,7 @@ async function _gameEnsure(date) {
     // its Durable Object still has them.
     try { await _gameRecap(GAME.dateOfDay(GAME.dayIndex(date) - 1), false); } catch (_) { /* the admin page will ask again */ }
   }
-  if (_gameReady.size >= 8) _gameReady.clear();
+  if (_gameReady.size >= 64) _gameReady.clear();
   _gameReady.add(date);
   return true;
 }
@@ -22857,6 +22906,16 @@ function _gamePlayDate(req) {
   if (GAME.isDate(asked) && asked !== today && GAME.gameDate(_gameNow() - 10 * 60000) === asked) return asked;
   return today;
 }
+// Which pack a request is about: an unlimited round when it names one
+// (`round`, in the body or the query), else the day's. null for a round that
+// does not exist.
+async function _gamePlayKey(req) {
+  const asked = (req.body && req.body.round != null) ? req.body.round : (req.query && req.query.round);
+  if (asked == null || asked === '') return req.method === 'GET' ? _gameDate() : _gamePlayDate(req);
+  const n = Number(asked);
+  return Number.isInteger(n) && n >= 0 && n < await _gameRoundCount() ? _gameRoundKey(n) : null;
+}
+const _gameNoRound = (res) => res.status(400).json({ error: 'There is no such round.' });
 
 // An account's streak and best score, with today's round added once it is
 // finished. (A browser without an account keeps its own, in the page.)
@@ -22871,49 +22930,58 @@ async function _gameStats(user, view) {
 
 async function _gameSend(res, date, who, out) {
   const view = (out && out.view) || null;
-  const body = { ...out, tiers: GAME_TIERS, msToNext: GAME.msToNextDay(_gameNow()) };
+  const daily = _gameRoundOf(date) === null;
+  const body = { ...out, tiers: GAME_TIERS, msToNext: GAME.msToNextDay(_gameNow()), unlimited: await _gameRoundCount() };
   if (view && view.done) {
     // What everyone said, only once this player has nothing left to answer.
     const r = await _gameCall(date, 'results', { pid: who.pid });
     body.results = (r && r.prompts) || [];
-    body.share = GAME.shareText(view);
+    if (daily) body.share = GAME.shareText(view);
   }
-  if (who.user) body.stats = await _gameStats(who.user, view);
+  // The streak and best score are the daily pack's: an unlimited round
+  // neither shows nor changes them.
+  if (who.user && daily) body.stats = await _gameStats(who.user, view);
   res.set('Cache-Control', 'no-store').json(body);
 }
 const _gameNotReady = (res) => res.status(503).json({ error: "Today's pack is not ready yet. Check back in a few minutes." });
 const _gameFail = (res, where, err) => { console.error(`[game/${where}]`, err && err.message); res.status(500).json({ error: 'The game hit a problem. Try again.' }); };
 
 // GET /api/game/today — today's round as it stands for this player.
+// With ?round=<number>, that unlimited round instead.
 app.get('/api/game/today', async (req, res) => {
   try {
-    const date = _gameDate(), who = _gamePlayer(req);
+    const date = await _gamePlayKey(req), who = _gamePlayer(req);
+    if (date === null) return _gameNoRound(res);
     if (!(await _gameEnsure(date))) return _gameNotReady(res);
     const r = await _gameCall(date, 'state', { pid: who.pid });
     await _gameSend(res, date, who, { view: r.view });
   } catch (err) { _gameFail(res, 'today', err); }
 });
 
-// POST /api/game/next — show the next prompt and start its clock.
+// POST /api/game/next { round, again } — show the next prompt and start its
+// clock. `round` names an unlimited round; `again` starts a finished one over
+// (unlimited only: game-core.js ignores it for the daily pack).
 app.post('/api/game/next', async (req, res) => {
   try {
-    const date = _gamePlayDate(req), who = _gamePlayer(req);
+    const date = await _gamePlayKey(req), who = _gamePlayer(req);
+    if (date === null) return _gameNoRound(res);
     if (!who.pid) return res.status(400).json({ error: 'This browser has no player id yet. Reload the page and try again.' });
     if (!(await _gameEnsure(date))) return _gameNotReady(res);
     // worker.js marks a visitor it takes for a program: they can play, and
     // are left out of the day's counts.
-    const r = await _gameCall(date, 'next', { pid: who.pid, quiet: req.headers['x-game-uncounted'] === '1' });
+    const r = await _gameCall(date, 'next', { pid: who.pid, quiet: req.headers['x-game-uncounted'] === '1', again: !!(req.body || {}).again });
     if (r.error) return res.status(400).json({ error: 'That round could not be started.' });
     await _gameSend(res, date, who, r);
   } catch (err) { _gameFail(res, 'next', err); }
 });
 
 // POST /api/game/answer { text, final } — an answer to the prompt on the
-// clock. `final` is sent when the page's clock runs out or the player skips:
-// the answer scores if it fits, and the slot stays empty if it does not.
+// clock. `final` is sent when the page's clock runs out: the answer scores if
+// it fits, and the slot stays empty if it does not.
 app.post('/api/game/answer', async (req, res) => {
   try {
-    const date = _gamePlayDate(req), who = _gamePlayer(req);
+    const date = await _gamePlayKey(req), who = _gamePlayer(req);
+    if (date === null) return _gameNoRound(res);
     if (!who.pid) return res.status(400).json({ error: 'This browser has no player id yet. Reload the page and try again.' });
     if (!(await _gameEnsure(date))) return _gameNotReady(res);
     const b = req.body || {};
