@@ -1873,6 +1873,20 @@ const _TITLE_WORDS_SQL = (() => {
   return `(' ' || ${e} || ' ')`;
 })();
 
+// D1 resets a database that runs past its CPU limit ("D1 DB exceeded its CPU
+// time limit and was reset") and answers again a moment later. A search that
+// lands in that moment is tried once more before it counts as a failure
+// (owner, Nov 2026: "why does it say the sold search is unavailable").
+const D1_TRANSIENT = /CPU time|was reset|overloaded|network connection lost|internal error|timed? ?out|D1_ERROR/i;
+async function _d1Retry(fn, waitMs = 500) {
+  try { return await fn(); }
+  catch (err) {
+    if (!D1_TRANSIENT.test(String(err && err.message))) throw err;
+    await new Promise(r => setTimeout(r, waitMs));
+    return fn();
+  }
+}
+
 async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const db = getNflDb();
   if (!db) return { results: [], total: 0, unavailable: true, reason: 'no-d1-binding' };
@@ -1970,7 +1984,7 @@ async function _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cac
        ORDER BY sold_date DESC LIMIT ?`
     ).bind(...binds, Math.min(limit, 500));
     const t0 = Date.now();
-    const out = await stmt.all();
+    const out = await _d1Retry(() => stmt.all());
     const elapsed = Date.now() - t0;
     _noteSoldTiming(elapsed);
     const rows = (out && Array.isArray(out.results)) ? out.results : [];
@@ -2666,6 +2680,13 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
       // paid provider's quota on the miss.
       if (SOLD_PROVIDER === 'nflcarddb') {
         if (own.unavailable) {
+          // The database is down for a moment: the sales this search found
+          // before are kept (the archive), and are better than an error.
+          const kept = filterJunkListings(await getArchivedSales(keywords, opts));
+          if (kept.length) {
+            console.warn(`[NflCardDB] ${own.reason || 'unavailable'}; answering "${keywords}" from the archive (${kept.length})`);
+            return { results: kept.slice(0, limit), total: kept.length, provider: 'archive', fromArchive: true };
+          }
           return { results: [], total: 0, soldUnavailable: true, reason: own.reason || 'd1-unavailable',
                    error: 'The football sold-price database is not connected yet.' };
         }
@@ -23153,7 +23174,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
