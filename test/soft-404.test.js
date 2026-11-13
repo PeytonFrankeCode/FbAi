@@ -37,6 +37,7 @@ const check = (label, ok, detail) => {
     ['the inventory view', '/inventory'],
     ['  ...with a trailing slash', '/inventory/'],
     ['the stats view', '/stats'],
+    ['One of One, the daily game', '/play'],
     ['a product page', '/sets/2024-panini-prizm-football/'],
     ['a subset page', '/sets/2024-panini-prizm-football/downtown/'],
     ['a year hub', '/sets/2024/'],

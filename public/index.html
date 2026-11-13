@@ -303,7 +303,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" /></noscript>
 
-  <link rel="stylesheet" href="style.css?v=c91a59901b" />
+  <link rel="stylesheet" href="style.css?v=85b3a5dadd" />
 
 
 </head>
@@ -377,6 +377,7 @@
       <button class="nav-tab" data-view="market" onclick="switchView('market')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg><span class="nav-label">Market</span></button>
       <button class="nav-tab" data-view="bounties" onclick="switchView('bounties')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span class="nav-label">Bounties</span></button>
       <button class="nav-tab" data-view="news" onclick="switchView('news')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h13a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2z"/><path d="M19 9h1a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0"/><path d="M8 9h7M8 13h7M8 17h4"/></svg><span class="nav-label">News</span></button>
+      <button class="nav-tab" data-view="play" onclick="switchView('play')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10.5 10L12 8.5V15.5"/></svg><span class="nav-label">One of One</span></button>
       <button class="nav-tab nav-ai" type="button" onclick="toggleNavMenu(false); openHuddleAI()"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9z"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg><span class="nav-label">Ask AI</span><span class="nav-plus">Plus</span></button>
       <button class="nav-tab" data-view="community" onclick="switchView('community')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5a3 3 0 0 1 0 6M18 19a6 6 0 0 0-3-5.2"/></svg><span class="nav-label">Community</span></button>
       <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg><span class="nav-label">Inventory</span></button>
@@ -624,6 +625,13 @@
         <a class="mm-report-link" href="/news/market-movers?utm_source=app&amp;utm_medium=home">
           <span class="mm-report-title">&#128200; This week&rsquo;s Market Movers report</span>
           <span class="mm-report-sub">Risers, fallers, most sold and the biggest sales, from real sold prices</span>
+          <span class="mm-report-go" aria-hidden="true">&rsaquo;</span>
+        </a>
+        <!-- One of One, the daily game (/play). In the markup from the first
+             paint, like the report link above, so nothing shifts. -->
+        <a class="mm-report-link oo-home-link" href="/play" onclick="if (typeof switchView === 'function') { event.preventDefault(); switchView('play'); window.scrollTo(0, 0); }">
+          <span class="mm-report-title">&#127183; One of One: today&rsquo;s daily game</span>
+          <span class="mm-report-sub">Seven prompts, two minutes. The rarest right answer scores the most</span>
           <span class="mm-report-go" aria-hidden="true">&rsaquo;</span>
         </a>
         <form id="digest-form" class="digest-signup hidden" novalidate>
@@ -1000,6 +1008,17 @@
       <div id="bty-mine"></div>
       <h2 class="bty-h2">Open bounties</h2>
       <div id="bty-list" class="bty-list"><p class="bty-empty">Loading&hellip;</p></div>
+    </div>
+  </div>
+
+  <!-- One of One, the daily game (/play; public/play.js fills #oo-root) -->
+  <div id="play-view" class="collection-view hidden">
+    <div class="collection-container oo-wrap">
+      <div class="collection-header">
+        <h2 class="collection-title">One of One</h2>
+        <p class="collection-subtitle">The daily game. Seven prompts, twenty seconds each: name a player who fits, and the rarer your answer, the more it scores.</p>
+      </div>
+      <div id="oo-root" class="oo-root"><p class="oo-loading">Loading today&rsquo;s pack&hellip;</p></div>
     </div>
   </div>
 
@@ -2075,8 +2094,9 @@
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <!-- Chart.js loads from app.js once the page is idle (_loadChart). -->
   <script src="/growth.js" defer></script>
-  <script src="app.js?v=44200a2bc1"></script>
+  <script src="app.js?v=a856e89dd6"></script>
   <script src="bounties.js?v=cb5dc152a8"></script>
+  <script src="play.js?v=19e99750d6"></script>
   <script>window.__appSplashDone && window.__appSplashDone();</script>
   <script type="importmap">
   {
