@@ -10908,3 +10908,14 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
   .oo-float{opacity:var(--o);bottom:auto;top:calc(8% + var(--s,1)*38%)}
   .oo-sparks{display:none}
 }
+
+/* ---- Checklists: a year opens onto its companies (Nov 2026) ---- */
+.checklist-year-body.open { max-height: 70vh; }
+.checklist-maker { border-top: 1px solid var(--border-primary); }
+.checklist-maker-header { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.8rem 1.25rem 0.8rem 1.6rem;
+  background: var(--bg-secondary); border: none; cursor: pointer; font-family: inherit; text-align: left; transition: background 0.15s; }
+.checklist-maker-header:hover { background: var(--bg-tertiary); }
+.checklist-maker-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.checklist-maker-header.open .checklist-year-toggle { transform: rotate(180deg); }
+.checklist-maker-grid { display: none; }
+.checklist-maker-grid.open { display: grid; }

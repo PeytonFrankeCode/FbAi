@@ -10622,6 +10622,40 @@ function _buildPriceShareImage(query, stats) {
 
 var _checklistListSport = null;   // the sport the product list on screen is for
 
+// The company that made a product (owner, Nov 2026: "when you click on a year
+// it drops down into the different companies ... Panini, Topps, Onit"), from
+// its brand and year. Brands changed hands: Donruss, Playoff and Score are
+// Panini's from 2009/2010, Pinnacle's or Playoff's before; Bowman is Topps's
+// from 1956; Stadium Club is Topps's.
+function checklistMaker(p) {
+  const b = String((p && (p.brand || p.name)) || '');
+  const y = Number(p && p.year) || 0;
+  if (/\bonit\b/i.test(b) || /\bonit\b/i.test(String(p && p.name))) return 'ONIT';
+  if (/^bowman/i.test(b)) return y && y < 1956 ? 'Bowman Gum' : 'Topps';
+  if (/^(topps|stadium club)/i.test(b)) return 'Topps';
+  if (/^(upper deck|sp\b|spx)/i.test(b)) return 'Upper Deck';
+  if (/^(fleer|flair|skybox|metal universe)/i.test(b)) return 'Fleer / SkyBox';
+  if (/^pacific/i.test(b)) return 'Pacific';
+  if (/^(pinnacle|score (select|summit|showcase))/i.test(b) || (/^score/i.test(b) && y < 1999)) return 'Score / Pinnacle';
+  if (/^leaf/i.test(b)) return y >= 1999 && y <= 2008 ? 'Donruss / Playoff' : 'Leaf';
+  if (/^(sage|press pass|classic\b|classic images|classic nfl|collector'?s edge|pro set|pro line|wild card|action packed|national chicle|kellogg|post\b|philadelphia)/i.test(b)) return 'Other makers';
+  if (/^(donruss|playoff|score)/i.test(b)) return y && y < 2009 ? 'Donruss / Playoff' : 'Panini';
+  return y >= 2009 || /^panini/i.test(b) ? 'Panini' : 'Other makers';
+}
+// The order companies are listed in a year: the biggest first, "Other" last.
+function _checklistMakers(products) {
+  const by = new Map();
+  for (const p of products) {
+    const m = checklistMaker(p);
+    if (!by.has(m)) by.set(m, []);
+    by.get(m).push(p);
+  }
+  // The owner's order: Panini, Topps, ONIT first, then the rest by size.
+  const FIRST = ['Panini', 'Topps', 'ONIT', 'Upper Deck', 'Leaf'];
+  const rank = (m) => (FIRST.includes(m) ? FIRST.indexOf(m) : m === 'Other makers' ? 99 : 50);
+  return [...by.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+
 async function loadChecklistProducts() {
   checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
   const sport = activeSport();
@@ -10663,10 +10697,10 @@ async function loadChecklistProducts() {
       body.className = 'checklist-year-body';
       if (idx === 0) body.classList.add('open');
 
-      const grid = document.createElement('div');
-      grid.className = 'checklist-year-grid';
-
-      byYear[year].forEach(p => {
+      // A year opens onto its companies (Panini, Topps, ONIT...), each with its
+      // own products. A year with one company shows its products at once.
+      const makers = _checklistMakers(byYear[year]);
+      const makeCard = (p) => {
         const card = document.createElement('div');
         card.className = 'checklist-product-card';
         // An unreleased product has no sets and no cards, so "0 sets / 0 cards"
@@ -10687,10 +10721,27 @@ async function loadChecklistProducts() {
           <span class="checklist-product-arrow">&rarr;</span>
         `;
         card.addEventListener('click', () => loadProduct(p.id));
-        grid.appendChild(card);
+        return card;
+      };
+      makers.forEach(([maker, list]) => {
+        const grid = document.createElement('div');
+        grid.className = 'checklist-year-grid';
+        list.forEach(p => grid.appendChild(makeCard(p)));
+        if (makers.length === 1) { body.appendChild(grid); return; }
+        const sec = document.createElement('div');
+        sec.className = 'checklist-maker';
+        const mh = document.createElement('button');
+        mh.type = 'button';
+        mh.className = 'checklist-maker-header';
+        mh.innerHTML = `<span class="checklist-maker-name">${escHtml(maker)}</span>
+          <span class="checklist-year-count">${list.length} product${list.length !== 1 ? 's' : ''}</span>
+          <span class="checklist-year-toggle">&#9662;</span>`;
+        grid.classList.add('checklist-maker-grid');
+        mh.addEventListener('click', () => { mh.classList.toggle('open'); grid.classList.toggle('open'); });
+        sec.appendChild(mh);
+        sec.appendChild(grid);
+        body.appendChild(sec);
       });
-
-      body.appendChild(grid);
       header.addEventListener('click', () => {
         header.classList.toggle('open');
         body.classList.toggle('open');
