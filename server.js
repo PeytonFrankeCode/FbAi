@@ -22844,7 +22844,9 @@ const GAME = require('./game-core');
 const GAME_SWAP_KEY = (date) => `game:swap:${date}`;
 const GAME_STATS_KEY = (user) => `game:stats:${user}`;
 const GAME_RECAP_KEY = (date) => `game:recap:${date}`;
-const GAME_TIERS = GAME.TIERS.map(({ id, name, points }) => ({ id, name, points }));
+// `from`: where the tier starts on the rarity line, out of 100 (the page's
+// rarity meter and its "how scoring works" read it).
+const GAME_TIERS = GAME.TIERS.map(({ id, name, points }, i) => ({ id, name, points, from: i ? Math.round(GAME.TIERS[i - 1].upTo * 100) : 0 }));
 const _gameMem = new Map();          // Node: date -> the day, in memory
 const _gameReady = new Set();        // dates this isolate knows have their pack
 let _gamePackSource = null;          // tests deal their own pack...
@@ -23058,6 +23060,8 @@ async function _gameSend(res, date, who, out) {
     // What everyone said, only once this player has nothing left to answer.
     const r = await _gameCall(date, 'results', { pid: who.pid });
     body.results = (r && r.prompts) || [];
+    // Where the score stands among the others who finished (game-core.js _rank).
+    body.rank = (r && r.rank) || null;
     if (daily) body.share = GAME.shareText(view);
   }
   // The streak and best score are the daily pack's: an unlimited round

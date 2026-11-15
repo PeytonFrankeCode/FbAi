@@ -10721,11 +10721,16 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-chip b{font-weight:800}
 /* The pack so far: one small card per prompt. */
 .oo-slots{display:flex;gap:.4rem;justify-content:center}
-.oo-slot{width:26px;height:36px;border-radius:5px;border:1.5px dashed var(--text-muted);background:var(--oo,transparent);box-sizing:border-box}
+.oo-slot{width:26px;height:36px;border-radius:5px;border:1.5px dashed var(--text-muted);background:var(--oo,transparent);box-sizing:border-box;position:relative;display:grid;place-items:center;font-size:.6rem;font-weight:800;line-height:1;color:var(--oo-ink);font-variant-numeric:tabular-nums}
+/* A filled slot is a small card: a frame inside its edge, the 1/1 in black. */
+.oo-slot[class*="oo-t-"]::after{content:"";position:absolute;inset:2px;border-radius:3px;border:1px solid color-mix(in srgb,var(--oo-ink) 32%,transparent);pointer-events:none}
+.oo-slot.oo-t-miss::after{display:none}
+.oo-slot.oo-t-one{background:linear-gradient(145deg,#1c1c26,#000)}
 .oo-slot[class*="oo-t-"]{border:1.5px solid var(--oo-edge)}
 .oo-slot.oo-t-miss{background:repeating-linear-gradient(135deg,transparent 0 5px,var(--border-primary) 5px 6px)}
 .oo-slot.now{border:2px solid var(--accent)}
-.oo-results .oo-slot{width:34px;height:48px;border-radius:6px}
+/* On the results the seven show what each scored, and shrink to fit a narrow phone. */
+.oo-results .oo-slot{width:auto;height:auto;flex:0 1 40px;aspect-ratio:5/7;border-radius:6px;font-size:.72rem}
 .oo-prompt{font-size:1.35rem;line-height:1.3;margin:0;min-height:3.5rem}
 .oo-clock{height:8px;border-radius:999px;background:var(--bg-input);overflow:hidden;border:1px solid var(--border-primary)}
 .oo-clock-bar{height:100%;background:var(--accent);transform-origin:left center;will-change:transform}
@@ -10738,15 +10743,34 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-msg{color:#f59e0b;margin:0}
 [data-theme="light"] .oo-msg{color:#b45309}
 .oo-secs{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-secondary)}
-/* The reveal: the answer comes back as a card in its tier's colour. */
-.oo-flip{align-self:center;width:170px;aspect-ratio:5/7;border-radius:12px;background:var(--oo);color:var(--oo-ink);border:3px solid var(--oo-edge);display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;padding:.8rem .6rem;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:oo-in .35s ease-out}
-.oo-flip-tier{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.oo-flip-name{font-size:1.15rem;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
-.oo-flip-pts{font-size:1.5rem;font-weight:800}
-.oo-flip.oo-t-one{background:linear-gradient(145deg,#1c1c26,#000);box-shadow:0 0 0 1px rgba(253,230,138,.35),0 10px 30px rgba(234,179,8,.35)}
-.oo-flip.oo-t-miss{border-style:dashed;background:var(--bg-input);box-shadow:none}
-@keyframes oo-in{from{transform:rotateY(80deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){.oo-flip{animation:none}}
+/* The reveal: the answer comes back as a trading card, front and back
+   (play.js cardFace). The back is what shows first; .oo-flip turns it over. */
+.oo-flip{width:210px;aspect-ratio:5/7;position:relative;transform-style:preserve-3d}
+.oo-face{position:absolute;inset:0;border-radius:14px;box-sizing:border-box;overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.oo-back{transform:rotateY(180deg);display:grid;place-items:center;border:3px solid #334155;box-shadow:0 12px 30px rgba(0,0,0,.35);
+  background:radial-gradient(circle at 50% 50%,rgba(94,206,153,.24),transparent 62%),repeating-linear-gradient(45deg,rgba(255,255,255,.055) 0 2px,transparent 2px 9px),repeating-linear-gradient(-45deg,rgba(255,255,255,.055) 0 2px,transparent 2px 9px),linear-gradient(160deg,#16202b,#0b1016)}
+.oo-back::before{content:"";position:absolute;inset:8px;border-radius:8px;border:1px solid rgba(253,230,138,.35)}
+.oo-back-mark{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:1.45rem;font-weight:800;color:#fde68a;background:#0b0b0f;border:2px solid #eab308;box-shadow:0 0 0 6px rgba(234,179,8,.14)}
+.oo-front{background:var(--oo);color:var(--oo-ink);border:3px solid var(--oo-edge);display:flex;flex-direction:column;gap:.4rem;padding:.55rem;text-align:center;box-shadow:0 0 0 1px var(--oo-edge),0 16px 46px -8px var(--oo-glow,transparent)}
+.oo-front > *{position:relative;z-index:2}
+.oo-cf-top{display:flex;justify-content:space-between;align-items:center;gap:.4rem;min-height:1.25rem}
+.oo-flip-tier{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left}
+/* The serial: how many said it, out of everyone who answered. */
+.oo-cf-serial{font:700 .66rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;border:1px solid currentColor;border-radius:4px;padding:.16rem .32rem;opacity:.85;white-space:nowrap}
+/* Where the photo would be: the player's initials over a burst of rays. */
+.oo-cf-art{flex:1;min-height:0;display:grid;place-items:center;border-radius:8px;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--oo-ink) 40%,transparent);
+  background:repeating-conic-gradient(from 0deg at 50% 52%,color-mix(in srgb,var(--oo-ink) 10%,transparent) 0 7.5deg,transparent 7.5deg 15deg),radial-gradient(circle at 50% 52%,transparent 28%,color-mix(in srgb,var(--oo-ink) 24%,transparent))}
+.oo-cf-mono{width:54%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:1.85rem;font-weight:800;letter-spacing:.02em;line-height:1;background:var(--oo-ink);color:var(--oo);box-shadow:0 0 0 4px color-mix(in srgb,var(--oo-ink) 22%,transparent),0 6px 14px rgba(0,0,0,.25)}
+.oo-cf-plate{background:var(--oo-ink);color:var(--oo);border-radius:6px;padding:.32rem .4rem;min-height:2.5em;display:grid;place-items:center}
+.oo-flip-name{font-size:.98rem;font-weight:800;line-height:1.15;overflow-wrap:anywhere}
+.oo-cf-foot{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem;min-height:1.4rem}
+.oo-cf-kind{font-size:.6rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.75}
+.oo-flip-pts{font-size:1.35rem;font-weight:800;line-height:1;margin-left:auto}
+.oo-flip.oo-t-one .oo-front{background:linear-gradient(145deg,#1c1c26,#000);box-shadow:0 0 0 1px rgba(253,230,138,.35),0 12px 34px rgba(234,179,8,.4)}
+.oo-flip.oo-t-miss .oo-front{border-style:dashed;background:var(--bg-input);box-shadow:none}
+.oo-flip.oo-t-miss .oo-cf-art{background:none;border:1.5px dashed var(--border-primary)}
+.oo-flip.oo-t-miss .oo-cf-mono{background:transparent;color:var(--text-secondary);border:2px dashed var(--border-primary);box-shadow:none}
+.oo-flip.oo-t-miss .oo-cf-plate{background:transparent;color:var(--text-secondary);border:1px dashed var(--border-primary)}
 .oo-score{text-align:center;line-height:1}
 .oo-score strong{font-size:3rem;font-weight:800}
 .oo-score span{font-size:1.1rem;color:var(--text-secondary);margin-left:.3rem}
@@ -10769,7 +10793,7 @@ body:has(#hai:not(.hidden)) .hai-fab { opacity: 0; pointer-events: none; transfo
 .oo-recap-line{grid-column:1 / -1;line-height:1.45;color:var(--text-secondary)}
 .oo-name{color:var(--accent);text-decoration:none;font-weight:600}
 .oo-name:hover{text-decoration:underline}
-@media (max-width:640px){.oo-prompt{font-size:1.15rem;min-height:3rem}.oo-flip{width:150px}.oo-card{padding:1rem .9rem 1.1rem}}
+@media (max-width:640px){.oo-prompt{font-size:1.15rem;min-height:3rem}.oo-flip{width:184px}.oo-card{padding:1rem .9rem 1.1rem}}
 /* A round on the clock (#play-view.oo-live): on a phone the prompt and the
    answer box have to fit above the keyboard, so the page title steps aside,
    and the floating Ask AI button does not sit over the game. */
@@ -10873,23 +10897,33 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-clock{height:10px}
 .oo-clock-bar{background:linear-gradient(90deg,#16a34a,#5ece99);box-shadow:0 0 12px rgba(94,206,153,.6);transition:background .3s}
 .oo-clock-bar.low{background:linear-gradient(90deg,#dc2626,#f97316);box-shadow:0 0 14px rgba(239,68,68,.7)}
-.oo-secs{font-size:1.05rem;min-width:1.6em;text-align:right}
+.oo-secs{font-size:1.05rem;min-width:1.6em;text-align:right;margin-left:auto}
 .oo-secs.low{color:#ef4444;animation:oo-tick 1s ease-in-out infinite}
 @keyframes oo-tick{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 .oo-form.oo-shake{animation:oo-shake .32s ease-in-out}
 @keyframes oo-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 /* The reveal: the answer turns over as a card, lit in its tier's colour. */
-.oo-reveal{perspective:900px}
 .oo-t-base{--oo-glow:rgba(203,213,225,.35)}
 .oo-t-green{--oo-glow:rgba(34,197,94,.55)}
 .oo-t-blue{--oo-glow:rgba(59,130,246,.6)}
 .oo-t-gold{--oo-glow:rgba(250,204,21,.6)}
 .oo-t-one{--oo-glow:rgba(234,179,8,.7)}
-.oo-flip-wrap{position:relative;align-self:center;display:grid;place-items:center;padding:.6rem 0}
-.oo-flip{width:190px;position:relative;overflow:hidden;box-shadow:0 0 0 1px var(--oo-edge),0 16px 46px -8px var(--oo-glow,transparent);animation:oo-turn .7s cubic-bezier(.2,.9,.25,1) both;backface-visibility:hidden}
-@keyframes oo-turn{0%{transform:rotateY(-180deg) scale(.7);opacity:0}45%{opacity:1}70%{transform:rotateY(12deg) scale(1.05)}100%{transform:none;opacity:1}}
-.oo-flip.oo-t-gold::after,.oo-flip.oo-t-one::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);background-size:260% 100%;background-position:130% 0;animation:oo-shine 2.6s .6s ease-in-out infinite}
-.oo-flip-pts{animation:oo-pop .45s .55s cubic-bezier(.2,1.5,.4,1) both}
+.oo-flip-wrap{position:relative;align-self:center;display:grid;place-items:center;padding:.6rem 0;perspective:900px}
+/* The card leans toward the pointer (play.js tilt sets --rx, --ry and --fx). */
+.oo-tilt{transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out}
+/* It lands face down, waits a beat, and turns over. The turn is transform
+   only: fading .oo-flip itself would flatten it, and the back would never
+   show. The back does the fading in. */
+.oo-flip{animation:oo-turn 1.05s cubic-bezier(.2,.9,.25,1) both}
+@keyframes oo-turn{0%{transform:rotateY(180deg) scale(.6)}16%{transform:rotateY(180deg) scale(1)}36%{transform:rotateY(180deg) scale(1)}82%{transform:rotateY(-12deg) scale(1.05)}100%{transform:none}}
+.oo-back{animation:oo-fade .18s ease-out both}
+@keyframes oo-fade{from{opacity:0}to{opacity:1}}
+/* Gold and the 1/1 are foil: a band of colour that moves as the card leans,
+   and a sweep of light over it. */
+.oo-flip.oo-t-gold .oo-front::before,.oo-flip.oo-t-one .oo-front::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:screen;opacity:.6;
+  background:linear-gradient(115deg,transparent 14%,rgba(255,80,160,.34) 32%,rgba(80,200,255,.34) 46%,rgba(120,255,170,.3) 58%,rgba(255,230,90,.34) 70%,transparent 86%);background-size:220% 100%;background-position:var(--fx,50%) 0;transition:background-position .18s ease-out}
+.oo-flip.oo-t-gold .oo-front::after,.oo-flip.oo-t-one .oo-front::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);background-size:260% 100%;background-position:130% 0;animation:oo-shine 2.6s 1.1s ease-in-out infinite}
+.oo-flip-pts{animation:oo-pop .45s .9s cubic-bezier(.2,1.5,.4,1) both}
 /* A One of One (and, smaller, a Gold) throws sparks. */
 .oo-sparks{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
 .oo-sparks i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:2px;background:var(--k);opacity:0;transform:rotate(var(--a)) translateY(0);animation:oo-spark var(--u) var(--w) cubic-bezier(.1,.7,.3,1) both}
@@ -10902,9 +10936,68 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-tile:nth-child(3){animation-delay:.66s}
 .oo-recap-item{transition:background .15s}
 .oo-recap-item:hover{background:var(--bg-hover)}
-@media (max-width:640px){.oo-fan{height:130px}.oo-fan-card{width:56px;height:78px;margin-left:-28px;bottom:30px}.oo-fan-card:nth-child(5){width:62px;height:88px;margin-left:-31px}.oo-flip{width:160px}}
+/* ---- One of One: the detail (owner, Nov 2026: "a little bit more detail") ---- */
+/* The fan's cards have a frame and carry their points; the drifting ones a frame too. */
+.oo-fan-card::before{content:"";position:absolute;inset:4px;border-radius:5px;border:1px solid color-mix(in srgb,var(--oo-ink) 35%,transparent);pointer-events:none}
+.oo-float::after{content:"";position:absolute;inset:12%;border-radius:4px;border:1px solid var(--c);opacity:.45}
+/* Start: how many have played, and how the scoring works, folded away. */
+.oo-count{margin:0;display:flex;align-items:center;justify-content:center;gap:.45rem;font-size:.82rem;color:var(--text-secondary)}
+.oo-dot{flex:none;width:8px;height:8px;border-radius:50%;background:#22c55e;animation:oo-pulse 1.8s ease-in-out infinite}
+.oo-how{border:1px solid var(--border-primary);border-radius:10px;background:var(--bg-input);font-size:.86rem}
+.oo-how summary{cursor:pointer;padding:.6rem .85rem;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.oo-how summary::-webkit-details-marker{display:none}
+.oo-how summary::after{content:"+";font-size:1.15rem;line-height:1;color:var(--text-secondary)}
+.oo-how[open] summary::after{content:"\2212"}
+/* Two columns, the first as wide as the widest tier's chip. */
+.oo-ladder{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:.45rem .7rem;align-items:center;padding:.15rem .85rem .7rem;color:var(--text-secondary);line-height:1.35}
+.oo-rung{display:contents}
+.oo-rung .oo-chip{justify-self:start}
+.oo-rules{margin:0;padding:.65rem .85rem .75rem 1.9rem;border-top:1px solid var(--border-primary);color:var(--text-secondary);line-height:1.5;display:flex;flex-direction:column;gap:.3rem}
+/* The prompt: its kind and how many players fit, beside the count. */
+.oo-kicker-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem .75rem;flex-wrap:wrap}
+.oo-kind{display:inline-flex;align-items:center;gap:.32rem;font-size:.74rem;font-weight:700;color:var(--text-secondary);background:var(--bg-input);border:1px solid var(--border-primary);border-radius:999px;padding:.16rem .6rem;white-space:nowrap}
+.oo-mark{flex:none;vertical-align:-2px}
+/* With six seconds left the whole panel warns, not only the bar. */
+.oo-play{position:relative}
+.oo-play::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:2px solid #ef4444;opacity:0;pointer-events:none}
+.oo-play.low::after{animation:oo-warn 1s ease-in-out infinite}
+@keyframes oo-warn{0%,100%{opacity:0}50%{opacity:.8}}
+/* The reveal: what was typed, where the answer sits from common to rare, the pack's total. */
+.oo-read{margin:0;text-align:center;font-size:.82rem;color:var(--text-secondary)}
+.oo-read b{color:var(--text-primary)}
+.oo-meter{display:flex;flex-direction:column;gap:.4rem;padding-top:8px}
+.oo-meter-track{position:relative;display:flex;gap:3px;height:10px}
+.oo-meter-track i{flex:1;box-sizing:border-box;border-radius:3px;background:var(--oo);border:1px solid var(--oo-edge);opacity:.28}
+.oo-meter-track i.on{opacity:1;box-shadow:0 0 12px var(--oo-glow,transparent)}
+.oo-meter-pin{position:absolute;left:var(--at);top:-9px;margin-left:-6px;width:0;height:0;border:6px solid transparent;border-top:8px solid var(--text-primary);border-bottom:0;animation:oo-drop .5s 1s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes oo-drop{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
+.oo-meter-ends{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;font-size:.72rem;color:var(--text-secondary)}
+.oo-meter-ends strong{font-size:.84rem;color:var(--text-primary);text-align:center}
+.oo-total{margin:0;text-align:center;font-size:.85rem;color:var(--text-secondary)}
+.oo-total b{font-size:1.15rem;color:var(--text-primary);font-variant-numeric:tabular-nums;margin:0 .2rem 0 .3rem}
+/* Results: the pack's name, where the score stands, and more about each prompt. */
+.oo-rating{align-self:center;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fde68a;background:#0b0b0f;border:1px solid #eab308;border-radius:999px;padding:.22rem .75rem;box-shadow:0 0 14px rgba(234,179,8,.25)}
+.oo-rank{margin:0;text-align:center;font-size:.86rem;color:var(--text-secondary)}
+.oo-rank p{margin:0 0 .45rem}
+.oo-rank b{color:var(--text-primary)}
+.oo-rank-bar{height:6px;border-radius:999px;background:var(--bg-input);border:1px solid var(--border-primary);overflow:hidden}
+.oo-rank-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#16a34a,#5ece99);transform-origin:left center;transform:scaleX(var(--k));animation:oo-grow .8s .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes oo-grow{from{transform:scaleX(0)}to{transform:scaleX(var(--k))}}
+.oo-recap-meta{font-size:.8rem;color:var(--text-muted)}
+.oo-recap-meta .oo-mark{margin-right:.3rem}
+/* Loading: the shape of the screen to come, with a light passing over it. */
+.oo-sk{display:block;border-radius:8px;background:linear-gradient(100deg,var(--bg-input) 30%,var(--bg-hover) 50%,var(--bg-input) 70%);background-size:220% 100%;animation:oo-shimmer 1.3s linear infinite}
+@keyframes oo-shimmer{from{background-position:120% 0}to{background-position:-100% 0}}
+.oo-sk-fan{align-self:center;width:74px;height:104px;margin:.6rem 0 .9rem}
+.oo-sk-line{height:14px;align-self:center}
+.oo-sk-line.w40{width:40%}
+.oo-sk-line.w80{width:80%}
+.oo-sk-line.w60{width:60%}
+.oo-sk-btn{height:46px;border-radius:10px;margin-top:.4rem}
+@media (max-width:640px){.oo-fan{height:130px}.oo-fan-card{width:56px;height:78px;margin-left:-28px;bottom:30px}.oo-fan-card:nth-child(5){width:62px;height:88px;margin-left:-31px}}
 @media (prefers-reduced-motion:reduce){
-  .oo-glow,.oo-float,.oo-title-word,.oo-card,.oo-recap,.oo-shine::after,.oo-fan-card,.oo-slot.now,.oo-slot.new,.oo-prompt,.oo-secs.low,.oo-form.oo-shake,.oo-flip,.oo-flip::after,.oo-flip-pts,.oo-sparks i,.oo-results .oo-slot,.oo-tile{animation:none!important}
+  .oo-glow,.oo-float,.oo-title-word,.oo-card,.oo-recap,.oo-shine::after,.oo-fan-card,.oo-slot.now,.oo-slot.new,.oo-prompt,.oo-secs.low,.oo-form.oo-shake,.oo-flip,.oo-flip .oo-front::after,.oo-flip-pts,.oo-sparks i,.oo-results .oo-slot,.oo-tile,.oo-back,.oo-dot,.oo-play.low::after,.oo-meter-pin,.oo-rank-bar i,.oo-sk{animation:none!important}
+  .oo-tilt{transform:none;transition:none}
   .oo-float{opacity:var(--o);bottom:auto;top:calc(8% + var(--s,1)*38%)}
   .oo-sparks{display:none}
 }

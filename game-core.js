@@ -279,7 +279,10 @@ function startingTiers(prompt) {
 
 // ---- One day's play ----
 const validPid = (pid) => /^(u:[a-z0-9_.@-]{1,64}|d:[a-z0-9-]{16,64})$/.test(String(pid || ''));
-const _pubAnswer = (a) => (a ? { name: a.name, slug: a.slug, tier: a.tier, points: a.points, said: a.said, of: a.of } : null);
+// `rarer`: the share of answers, out of 100, that are more common than this
+// one (where it sits on the line that sets its tier).
+const _pubAnswer = (a) => (a ? { name: a.name, slug: a.slug, tier: a.tier, points: a.points, said: a.said, of: a.of, rarer: a.rarer == null ? null : a.rarer } : null);
+const _rarer = (before) => Math.max(0, Math.min(100, Math.floor(before * 1000) / 10));
 
 // The store is { get(key), put(key, value) }, both async. Keys:
 //   meta        { date, number, count }
@@ -287,6 +290,7 @@ const _pubAnswer = (a) => (a ? { name: a.name, slug: a.slug, tier: a.tier, point
 //   t:<slot>    { n, c: { answer index: players } }: what the day's players said
 //   u:<player>  one player's round
 //   c           { plays, finished, sum }
+//   h           { score: players who finished on it }
 class GameDay {
   constructor(store) {
     this.store = store;
@@ -339,11 +343,16 @@ class GameDay {
     const v = { mode: meta.mode || 'daily', date: meta.date, number: meta.number, count: meta.count, seconds: SECONDS, maxScore: meta.count * TIER.one.points,
       started: !!play, done: !!(play && play.done), slot: play ? play.slot : 0,
       score: play ? play.answers.reduce((s, a) => s + (a ? a.points : 0), 0) : 0,
-      answers: play ? play.answers.map(_pubAnswer) : [], active: null };
+      answers: play ? play.answers.map(_pubAnswer) : [], active: null,
+      // How many have opened this pack so far.
+      players: ((await this.store.get('c')) || {}).plays || 0 };
     if (play && !play.done && play.startedAt) {
       const left = play.startedAt + SECONDS * 1000 - now;
       if (left > -GRACE_MS) {
-        v.active = { slot: play.slot, text: (await this._prompt(play.slot)).text, msLeft: Math.max(0, left), triesLeft: MAX_TRIES - play.tries };
+        // The prompt on the clock: its words, what kind it is and how many
+        // players fit it. Never the players themselves.
+        const p = await this._prompt(play.slot);
+        v.active = { slot: play.slot, text: p.text, kind: p.type || '', pool: p.answers.length, msLeft: Math.max(0, left), triesLeft: MAX_TRIES - play.tries };
       }
     }
     return v;
@@ -373,6 +382,9 @@ class GameDay {
       if (!play.quiet) {
         await this._bump('finished');
         await this._bump('sum', play.score);
+        const h = (await this.store.get('h')) || {};
+        h[play.score] = (h[play.score] || 0) + 1;
+        await this.store.put('h', h);
       }
     }
   }
@@ -443,10 +455,12 @@ class GameDay {
       t.n++;
       if (!play.quiet) await this.store.put('t:' + slot, t);
       const a = prompt.answers[m.idx];
-      const mine = { i: m.idx, name: a[0], slug: a[1], tier: r.tier.id, points: r.tier.points, said: t.c[m.idx], of: t.n };
+      const mine = { i: m.idx, name: a[0], slug: a[1], tier: r.tier.id, points: r.tier.points, said: t.c[m.idx], of: t.n, rarer: _rarer(r.before) };
       play.answers.push(mine);
       await this._advance(play);
-      return save({ ok: true, answer: _pubAnswer(mine) });
+      // `read`: the name was not typed as it is spelt, and how it was read
+      // (surname, order, first, start, typo), so the page can say so.
+      return save({ ok: true, answer: _pubAnswer(mine), read: m.by || null });
     });
   }
 
@@ -454,7 +468,7 @@ class GameDay {
     const p = await this._prompt(slot), t = (await this.store.get('t:' + slot)) || { n: 0, c: {} };
     const said = Object.entries(t.c).map(([i, n]) => ({ name: p.answers[i][0], slug: p.answers[i][1], n }))
       .sort((x, y) => y.n - x.n || (x.name < y.name ? -1 : 1));
-    return { id: p.id, type: p.type, text: p.text, link: p.link, pool: p.answers.length, n: t.n,
+    return { id: p.id, type: p.type, text: p.text, link: p.link, pool: p.answers.length, n: t.n, named: said.length,
       top: said.slice(0, topN), rare: said.filter(x => x.n === 1).slice(0, 3) };
   }
 
@@ -468,7 +482,19 @@ class GameDay {
     if (!play || !play.done) return { error: 'not-done', view };
     const prompts = [];
     for (let i = 0; i < meta.count; i++) prompts.push({ ...(await this._promptRecap(i, 3)), yours: _pubAnswer(play.answers[i]) });
-    return { view, prompts };
+    return { view, prompts, rank: await this._rank(play) };
+  }
+
+  // Where a finished score stands among the others who finished this pack:
+  // { of: the others, beat: how many of them out of 100 scored less,
+  // average: the pack's average score }. A quiet round is in nobody's
+  // counts, so everyone counted is somebody else.
+  async _rank(play) {
+    const h = (await this.store.get('h')) || {}, score = play.score || 0;
+    let all = 0, lower = 0, sum = 0;
+    for (const [k, n] of Object.entries(h)) { all += n; sum += Number(k) * n; if (Number(k) < score) lower += n; }
+    const of = Math.max(0, all - (play.quiet ? 0 : 1));
+    return { of, beat: of ? Math.round(100 * lower / of) : null, average: all ? Math.round(sum / all) : null };
   }
 
   // For the admin page: how the day is going.
