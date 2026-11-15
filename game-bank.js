@@ -97,6 +97,18 @@ const an = (word) => (/^([aeiou]|mvp)/i.test(String(word)) ? 'an' : 'a');
 const TEAM_IN_NAME = new RegExp(`(${[...TEAMS].map(t => t.replace(/\./g, '\\.')).join('|')})`, 'i');
 const notAPlayer = (name) => TEAM_IN_NAME.test(name) || /\bchecklist\b|mystery rookie|\bteam (card|leaders)\b/i.test(name);
 
+// True when one NFL team is on more than a quarter of a checklist's cards
+// (a league-wide product has 32 teams; a bigger share means a bad import).
+function oneTeamStamped(c) {
+  const t = new Map(); let n = 0;
+  for (const s of c.sets || []) for (const k of (s && s.cards) || []) {
+    if (!k || !k.team) continue;
+    n++;
+    for (const x of String(k.team).split(' / ')) if (TEAMS.has(x)) t.set(x, (t.get(x) || 0) + 1);
+  }
+  return n >= 100 && Math.max(0, ...t.values()) / n > 0.25;
+}
+
 function buildBank({ checklists, players }) {
   const byName = new Map();
   players = (players || []).filter(p => p && p.name && p.slug && !notAPlayer(p.name));
@@ -119,7 +131,10 @@ function buildBank({ checklists, players }) {
     const name = label(c.name), year = c.year;
     const link = { href: `/sets/${c.id}/`, label: name };
     const nfl = !notNfl(c), low = nfl && lowNumbered(c), wholeYear = nfl && !thin(year), vintage = year < VINTAGE_BEFORE, era = eraOf(year);
-    const win = TEAM_WINDOWS.find(w => year >= w.from && year <= w.to) || null;
+    // A checklist whose import stamped one NFL team on a big share of its cards
+    // (2022 Illusions once had 749 "Commanders", Tom Brady among them) gives
+    // no team answers: a prompt must never take a player who does not fit.
+    const win = (!oneTeamStamped(c) && TEAM_WINDOWS.find(w => year >= w.from && year <= w.to)) || null;
     for (const s of c.sets) {
       const ins = s && s.category === 'insert' ? INSERT_NAME.get(insertKey(s.name)) : null;
       const auto = !!s && s.category === 'autograph';
