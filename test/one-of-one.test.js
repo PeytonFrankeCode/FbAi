@@ -228,6 +228,15 @@ const MS = G.SECONDS * 1000;
     check('college and draft products are left out', !bank.some(p => /collegiate|draft picks|university|\bsage\b/i.test(p.text)));
     check('the wording reads right: an Arizona Cardinals player, an Award Winners insert', bank.some(p => p.text.startsWith('Name an Arizona Cardinals player')) && !bank.some(p => /\ba (Arizona|Atlanta|Indianapolis|Oakland)\b/.test(p.text)) && !bank.some(p => /with a (Award|Instant|Inside|Unsung|All-Rookie)/.test(p.text)));
 
+    // A team prompt never takes a player who was not on that team (Nov 2026:
+    // 2022 Illusions and 2022 Score had one team stamped on most cards, so
+    // "a Washington Commanders player from 2022 or later" took Tom Brady).
+    const teamAns = (t) => { const p = bank.find(x => x.id === `team:${t}:2022-on`); return p ? p.answers.map(a => a[0]) : []; };
+    const cmd = teamAns('washington-commanders'), mia = teamAns('miami-dolphins');
+    check('team prompts take only that team’s players (no Tom Brady as a Commander or a Dolphin)',
+      cmd.includes('Terry McLaurin') && !cmd.includes('Tom Brady') && !cmd.includes('Patrick Mahomes II') && !mia.includes('Tom Brady') && !mia.includes('Justin Jefferson'),
+      `${cmd.length} Commanders, ${mia.length} Dolphins`);
+
     // What is not a player is not an answer.
     check('team cards, glued-on team names and checklists are not answers', B.notAPlayer('Green Bay Packers') && B.notAPlayer('Zach Ertz Philadelphia Eagles') && B.notAPlayer('Checklist 1-132')
       && !B.notAPlayer('Tom Brady') && !B.notAPlayer('Dallas Clark') && !bank.some(p => p.answers.some(a => B.notAPlayer(a[0]))));
