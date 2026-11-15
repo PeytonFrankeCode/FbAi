@@ -78,8 +78,16 @@ check('...including the 25-hour day when the clocks go back', Math.abs(G.msToNex
 const s1 = G.nextStats(null, '2026-11-12', 300), s2 = G.nextStats(s1, '2026-11-13', 500), s3 = G.nextStats(s2, '2026-11-15', 100);
 check('a streak is days in a row, and a missed day starts it again', s1.streak === 1 && s2.streak === 2 && s2.best === 500 && s3.streak === 1 && s3.bestStreak === 2 && s3.plays === 3 && s3.best === 500);
 check('...the same day is counted once, and the streak holds until a whole day is missed', G.nextStats(s2, '2026-11-13', 700) === s2 && G.liveStreak(s2, '2026-11-14') === 2 && G.liveStreak(s2, '2026-11-15') === 0);
+{
+  const playSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play.js'), 'utf8');
+  check('sharing sends a picture of the pack (score, tier cards, site) with the text', /async function shareImage\(v\)/.test(playSrc) && /navigator\.share\(\{ files: \[file\], text \}\)/.test(playSrc)
+    && /thecardhuddle\.com\/play/.test(playSrc) && /Can you beat it\?/.test(playSrc));
+  check('...made when the results show, so the tap opens the share sheet at once', /prepareShare\(v\);/.test(playSrc));
+  check('...and on a computer, a sheet with Copy image, Save image and Copy text', /data-sh="copyimg"/.test(playSrc) && /data-sh="save"/.test(playSrc) && /data-sh="copytext"/.test(playSrc));
+  check('the picture never shows an answer, only tiers and points', !/\.name\b/.test(playSrc.slice(playSrc.indexOf('async function shareImage'), playSrc.indexOf('async function prepareShare'))));
+}
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
-  === 'One of One #12  410/700\n⬛🟨🟦⬜🟩✖️⬛\nthecardhuddle.com/play');
+  === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
 
 const pack = (date, number = 1) => ({ date, number, prompts: Array.from({ length: 7 }, (_, i) => prompt(`Prompt ${i + 1} of ${date}`)), spares: [prompt('Spare A'), prompt('Spare B'), prompt('Spare C')] });
 const MS = G.SECONDS * 1000;
@@ -325,7 +333,7 @@ const MS = G.SECONDS * 1000;
     check('a right one comes back as its card', r.body.ok === true && r.body.answer.name === 'Tom Brady' && r.body.answer.tier === 'base' && !r.body.results);
     r = await round(d1, ['Bo Melton', 'x', 'Tucker Kraft', 'Luke Musgrave', 'Jayden Reed', 'Jordan Love']);
     check('the round ends with the score, the share text and what everyone said', r.body.view.done === true && r.body.view.score > 0 && r.body.results.length === 7
-      && r.body.share.startsWith('One of One #1  ') && r.body.share.includes(`${r.body.view.score}/700`) && r.body.results[0].yours.name === 'Tom Brady');
+      && r.body.share.startsWith('One of One #1 · ') && r.body.share.includes(`${r.body.view.score}/700`) && r.body.results[0].yours.name === 'Tom Brady');
     r = await call('/api/game/today', d1);
     check('coming back shows the finished round, not a new one', r.body.view.done === true && r.body.results.length === 7 && (await call('/api/game/next', { method: 'POST', ...d1, body: {} })).body.view.active === null);
     r = await call('/api/game/today', d2);
