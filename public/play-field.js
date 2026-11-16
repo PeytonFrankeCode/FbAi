@@ -20,9 +20,11 @@
   const BX = FW / 2;             // the ball is snapped from the middle
   const HASH = 3.083;            // the inbounds lines sit 18 ft 6 in apart
   const T0 = 550;                // the snap, in ms from the start
-  // How fast the play runs: 1 is the speed it was written at. The owner asked
-  // for it "a little bit" slower (Nov 2026), so it runs at three quarters.
-  const RATE = 0.75;
+  // How long a play lasts as watched, from the answer to the card (owner,
+  // Nov 2026: "it should be 5 seconds long total"). Every play, short or deep,
+  // a sack or a touchdown, is stretched to this; the timings below are the
+  // play's own clock.
+  const WATCH_MS = 5000;
   const TAU = Math.PI * 2;
 
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -590,6 +592,7 @@
     const shade = g.createLinearGradient(0, 0, 0, 64);
     shade.addColorStop(0, 'rgba(0,0,0,.34)'); shade.addColorStop(1, 'rgba(0,0,0,0)');
     const M = build(play, { seed: o.seed, vh: H / s });
+    const rate = M.T_END / WATCH_MS;                    // play-clock ms per watched ms
     const V = { W, H, s, dpr, field: painted.canvas, font, tag: play.sack ? '' : lastName(o.name), vig, shade };
 
     // Over the field: the score bug, the call, and the way past it.
@@ -638,7 +641,7 @@
     const frame = (now) => {
       if (over) return;
       if (!cv.isConnected) { over = true; clearTimeout(guard); return; }
-      const t = Math.max(0, now - t0) * RATE;             // the play's own clock
+      const t = Math.max(0, now - t0) * rate;             // the play's own clock
       draw(g, M, Math.min(t, M.T_END), V);
       if (t >= M.T_CALL) showCall();
       if (t >= M.T_END) { end(); return; }
@@ -646,11 +649,11 @@
     };
     raf = requestAnimationFrame(frame);
     // A tab in the background gets no frames: the play still ends.
-    guard = setTimeout(() => { showCall(); end(); }, M.T_END / RATE + 1500);
+    guard = setTimeout(() => { showCall(); end(); }, WATCH_MS + 1500);
     return { stop() { over = true; cancelAnimationFrame(raf); clearTimeout(guard); }, model: M };
   }
 
-  const api = { run, build, FW, FL, RATE };
+  const api = { run, build, FW, FL, WATCH_MS };
   if (typeof window !== 'undefined') window.ooField = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();
