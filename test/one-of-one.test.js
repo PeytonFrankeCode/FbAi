@@ -94,7 +94,10 @@ check('...the same day is counted once, and the streak holds until a whole day i
   const d = D([{ tier: 'base' }, { tier: 'gold' }, null, { tier: 'one' }, { tier: 'blue' }, { tier: 'one' }, { tier: 'green' }]);
   check('a pack is a drive: rarer answers throw deeper, a miss is a sack for no gain',
     d.plays[0].gain === 5 && d.plays[1].gain === 35 && d.plays[2].sack && d.plays[2].gain === 0 && d.plays[3].td && d.plays[3].gain === 35, JSON.stringify(d.plays.map(p => p.gain)));
-  check('...a touchdown starts the next drive at the 25, and the drive is counted', d.plays[4].from === 25 && d.tds === 2 && d.sacks === 1 && d.yards === 5 + 35 + 35 + 20 + 50 + 5 && d.plays[6].td && d.plays[6].gain === 5, `${d.tds} TDs, ${d.yards} yds`);
+  check('...a touchdown starts the next drive at the 25, and the drive is counted', d.plays[4].from === 25 && d.tds === 2 && d.sacks === 1 && d.yards === 5 + 35 + 35 + 20 + 55 + 12 && !d.plays[6].td && d.plays[6].from === 25, `${d.tds} TDs, ${d.yards} yds`);
+  // "When someone hits a 1/1 can we make it a touchdown" (owner, Nov 2026).
+  const d1 = D([{ tier: 'one' }, { tier: 'base' }, { tier: 'one' }]);
+  check('...a One of One is a touchdown from wherever the ball is', d1.plays[0].td && d1.plays[0].gain === 75 && d1.plays[2].td && d1.plays[2].from === 30 && d1.plays[2].gain === 70 && d1.tds === 2, JSON.stringify(d1.plays.map(p => p.gain)));
   check('...charted on the reveal and the results (an arc for each pass, a cross for a sack), and in the share picture',
     /\$\{field\(dr, !shown\.played\)\}/.test(ps) && (ps.match(/field\(drive\(v\.answers\), false\)/g) || []).length === 2 && /const dv = drive\(ans\);/.test(ps)
     && /class="oo-chart"/.test(ps) && /class="oo-arc sack"/.test(ps));
@@ -122,8 +125,25 @@ check('...the same day is counted once, and the streak holds until a whole day i
   // "It should be 5 seconds long total" (owner, Nov 2026): every play is
   // stretched to five seconds as watched, from the answer to the card.
   check('...every play lasts 5 seconds as watched, short or deep, sack or touchdown', F.WATCH_MS === 5000
-    && /const rate = M\.T_END \/ WATCH_MS;/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8'))
-    && /const t = Math\.max\(0, now - t0\) \* rate;/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8')));
+    && /const rate = M\.T_END \/ watch;/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8'))
+    && /const t = clock\(Math\.max\(0, now - t0\)\);/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8')));
+  // The One of One play: slow motion and a zoom as he goes up over the man covering him.
+  const mossP = { from: 45, to: 100, gain: 55, td: true, tier: 'one' }, MM = F.build(mossP, { seed: 3, vh: 54 });
+  check('a One of One is its own play: caught in the end zone at the top of a jump, over the man covering him, who goes down', (() => {
+    const star = MM.star, def = MM.men.find(e => e.mossed);
+    return MM.moss && !F.build({ from: 75, to: 100, gain: 25, td: true, tier: 'gold' }, { seed: 3, vh: 54 }).moss
+      && MM.cat[1] > 110 && MM.cat[1] < 120 && star.lift(MM.T_CATCH) > 0.9 && star.lift(MM.T_DOWN + 100) === 0
+      && !!def && def.lift(MM.T_CATCH - 100) > 0 && def.lift(MM.T_CATCH - 100) < star.lift(MM.T_CATCH - 100) && def.downAt > MM.T_CATCH
+      && Math.hypot(def.at(MM.T_CATCH)[0] - star.at(MM.T_CATCH)[0], def.at(MM.T_CATCH)[1] - star.at(MM.T_CATCH)[1]) < 1.5
+      && MM.ball(MM.T_CATCH - 1).h > 2;
+  })());
+  check('...the camera closes in on him as time slows, and eases back for the call', (() => {
+    const z = (t) => MM.zoom(t).z;
+    return z(MM.T_THROW) === 1 && z(MM.T_CATCH) > 2.4 && z(MM.T_END) > 1.2 && z(MM.T_END) < 1.6 && MM.SLOW_A < MM.T_CATCH && MM.SLOW_B > MM.T_CATCH
+      && F.build({ from: 25, to: 75, gain: 50, td: false, tier: 'gold' }, { seed: 1, vh: 54 }).zoom(2000).z === 1;
+  })());
+  check('...and it is given 8.5 seconds, the slow part at a fifth of the speed', F.MOSS_WATCH_MS === 8500 && F.SLOW === 0.2
+    && /clock = \(w\) => \(w < wa \? w \* r : w < wb \? A \+ \(w - wa\) \* SLOW \* r : B \+ \(w - wb\) \* r\);/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8')));
   const sackM = F.build(d.plays[2], { seed: 3, vh: 54 });
   check('...no answer is a sack: the ball never leaves the quarterback, who goes down behind the line, and the spot does not move', (() => {
     const L = 10 + d.plays[2].from, end = at(sackM, sackM.T_END), qb = sackM.men.find(e => e.downAt === sackM.T_SACK && e.team === 'o');
@@ -148,7 +168,7 @@ check('...the same day is counted once, and the streak holds until a whole day i
   check('...the buzz lands with the call, not before it: the throw is the reveal', /onCall: \(words\) => \{[^}]*thump\(a\); \}/.test(ps) && /if \(phase === 'reveal'\) thump\(d\.answer\);/.test(ps));
   const fsrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8');
   check('...the field only draws: it reads nothing from the game and writes text as text', !/fetch\(|innerHTML|localStorage|\/api\//.test(fsrc) && /textContent/.test(fsrc) && /window\.ooField = api/.test(fsrc));
-  check('...and a tab in the background still gets to the card', /guard = setTimeout\(\(\) => \{ showCall\(\); end\(\); \}, WATCH_MS \+ 1500\);/.test(fsrc));
+  check('...and a tab in the background still gets to the card', /guard = setTimeout\(\(\) => \{ showCall\(\); end\(\); \}, watch \+ 1500\);/.test(fsrc));
 }
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
   === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
