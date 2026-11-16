@@ -346,6 +346,9 @@ class GameDay {
       answers: play ? play.answers.map(_pubAnswer) : [], active: null,
       // How many have opened this pack so far.
       players: ((await this.store.get('c')) || {}).plays || 0 };
+    // A finished pack's name ("Hot pack"): the results, the share text and
+    // the share picture all say the same one.
+    v.rating = v.done ? packName(v.score, v.maxScore) : null;
     if (play && !play.done && play.startedAt) {
       const left = play.startedAt + SECONDS * 1000 - now;
       if (left > -GRACE_MS) {
@@ -550,16 +553,22 @@ function memoryStore() {
 
 // The share text: tiers only, never an answer, so it spoils nothing.
 const SQUARES = { base: '⬜', green: '🟩', blue: '🟦', gold: '🟨', one: '⬛', miss: '✖️' };
-// A line under the squares names the rare ones ("2 One of Ones · 1 Gold"),
-// since a black square alone does not say One of One.
+// A finished pack gets a name by its score, the way a box of cards does.
+function packName(score, max) {
+  const k = max ? score / max : 0;
+  return k >= 0.85 ? 'Case hit' : k >= 0.65 ? 'Monster pack' : k >= 0.45 ? 'Hot pack' : k >= 0.25 ? 'Solid pack' : score > 0 ? 'Base pack' : 'Empty wrapper';
+}
+// A line under the squares gives the pack's name and names the rare ones
+// ("Hot pack · 2 One of Ones · 1 Gold"), since a black square alone does not
+// say One of One.
 function shareText(view, site = 'thecardhuddle.com/play') {
   const ans = view.answers || [];
   const row = ans.map(a => (a ? SQUARES[a.tier] : SQUARES.miss)).join('');
   const n = (t) => ans.filter(a => a && a.tier === t).length;
-  const best = [];
+  const best = [packName(view.score, view.maxScore)];
   if (n('one')) best.push(n('one') === 1 ? '1 One of One' : `${n('one')} One of Ones`);
   if (n('gold')) best.push(`${n('gold')} Gold`);
-  return `One of One #${view.number} · ${view.score}/${view.maxScore}\n${row}${best.length ? '\n' + best.join(' · ') : ''}\nCan you beat it? ${site}`;
+  return `One of One #${view.number} · ${view.score}/${view.maxScore}\n${row}\n${best.join(' · ')}\nCan you beat it? ${site}`;
 }
 
 // A streak is days played in a row; a missed day starts it again.
@@ -580,5 +589,5 @@ module.exports = {
   PROMPTS_PER_DAY, SECONDS, GRACE_MS, MAX_TRIES, PRIOR_PLAYERS, FAME_POWER, TIERS, TIER, MAX_SCORE, SQUARES,
   gameDate, msToNextDay, isDate, dayIndex, dateOfDay,
   nameWords, dropSuffix, nameKey, editDistance, sameFirst, slipsFor, NICKNAMES, matchAnswer, fameShares, rarity, startingTiers,
-  validPid, GameDay, runOp, applySwaps, memoryStore, shareText, nextStats, liveStreak,
+  validPid, GameDay, runOp, applySwaps, memoryStore, shareText, packName, nextStats, liveStreak,
 };

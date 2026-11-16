@@ -230,11 +230,10 @@
         <div class="oo-meter-ends"><span>Common</span><strong>${esc(words)}</strong><span>Rare</span></div>
       </div>`;
   }
-  // A finished pack gets a name, the way a box of cards does.
-  function rating(score, max) {
-    const k = max ? score / max : 0;
-    return k >= 0.85 ? 'Case hit' : k >= 0.65 ? 'Monster pack' : k >= 0.45 ? 'Hot pack' : k >= 0.25 ? 'Solid pack' : score > 0 ? 'Base pack' : 'Empty wrapper';
-  }
+  // A finished pack gets a name, the way a box of cards does. The server
+  // gives it (game-core.js packName), so the results, the share text and the
+  // share picture all say the same one.
+  const rating = (v) => (v && v.rating) || '';
   // Where the score stands among the others who finished (the server's rank).
   function standing(unlimited) {
     const r = data && data.rank;
@@ -398,7 +397,7 @@
     if (unlimited) {
       root.innerHTML = `<div class="oo-card oo-results">
         <div class="oo-kicker oo-center">${kicker}</div>
-        <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
+        ${rating(v) ? `<div class="oo-rating">${esc(rating(v))}</div>` : ''}
         <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
         ${slots(v, -1, false, true)}
         ${standing(true)}
@@ -413,7 +412,7 @@
     }
     root.innerHTML = `<div class="oo-card oo-results">
       <div class="oo-kicker oo-center">${kicker}</div>
-      <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
+      ${rating(v) ? `<div class="oo-rating">${esc(rating(v))}</div>` : ''}
       <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
       ${slots(v, -1, false, true)}
       ${standing(false)}
@@ -548,11 +547,11 @@
   // tiers, the site) with the text, so it looks like something in a group
   // chat, not a row of squares. Tiers only, never an answer.
   const TIER_ART = {
-    base: { fill: '#cbd5e1', ink: '#0f172a', label: 'BASE' },
-    green: { fill: '#22c55e', ink: '#052e16', label: 'GREEN' },
-    blue: { fill: '#3b82f6', ink: '#ffffff', label: 'BLUE' },
-    gold: { fill: '#facc15', ink: '#231a00', label: 'GOLD' },
-    one: { fill: '#0b0b0f', ink: '#fde68a', label: '1/1' },
+    base: { fill: '#cbd5e1', ink: '#0f172a', edge: '#94a3b8', label: 'BASE' },
+    green: { fill: '#22c55e', ink: '#052e16', edge: '#15803d', label: 'GREEN' },
+    blue: { fill: '#3b82f6', ink: '#ffffff', edge: '#1d4ed8', label: 'BLUE' },
+    gold: { fill: '#facc15', ink: '#231a00', edge: '#ca8a04', label: 'GOLD' },
+    one: { fill: '#0b0b0f', ink: '#fde68a', edge: '#eab308', label: '1/1' },
   };
   let shareFile = null, shareFor = null;
   function roundRect(ctx, x, y, w, h, r) {
@@ -561,6 +560,62 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   const loadImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+  // A hex colour at part strength.
+  const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+
+  // One of the seven on the picture: a small copy of the card an answer comes
+  // back as (edge, frame, rays, foil on Gold and the 1/1) with its tier and
+  // points. `a` is the answer, or null for a slot left empty. Drawn about its
+  // own middle, so it can lean.
+  function shareCard(ctx, F, spaced, a, cx, cy, w, h, lean) {
+    const art = a ? TIER_ART[a.tier] : null, x = -w / 2, y = -h / 2, r = 16;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(lean); ctx.textAlign = 'center';
+    if (!art) {
+      roundRect(ctx, x, y, w, h, r); ctx.fillStyle = 'rgba(15,23,42,.6)'; ctx.fill();
+      ctx.setLineDash([10, 8]); ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#64748b'; ctx.font = F(800, 15); spaced(2); ctx.fillText('EMPTY', 1, y + 38); spaced(0);
+      ctx.font = F(900, 40); ctx.fillText('+0', 0, 26);
+      ctx.restore(); return;
+    }
+    const one = a.tier === 'one';
+    ctx.shadowColor = one ? 'rgba(234,179,8,.8)' : 'rgba(0,0,0,.55)'; ctx.shadowBlur = one ? 38 : 22; ctx.shadowOffsetY = one ? 0 : 10;
+    if (one) { const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, '#26263a'); g.addColorStop(1, '#000'); ctx.fillStyle = g; }
+    else ctx.fillStyle = art.fill;
+    roundRect(ctx, x, y, w, h, r); ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = 'transparent';
+    // Inside the card's edge: rays, a light from the top corner, and foil.
+    ctx.save(); roundRect(ctx, x, y, w, h, r); ctx.clip();
+    ctx.fillStyle = tint(art.ink, one ? 0.07 : 0.09);
+    for (let k = 0; k < 16; k++) {
+      const t0 = k * Math.PI / 8, t1 = t0 + Math.PI / 16;
+      ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(Math.cos(t0) * 220, 10 + Math.sin(t0) * 220); ctx.lineTo(Math.cos(t1) * 220, 10 + Math.sin(t1) * 220); ctx.closePath(); ctx.fill();
+    }
+    const light = ctx.createLinearGradient(x, y, x + w, y + h);
+    light.addColorStop(0, `rgba(255,255,255,${one ? 0.16 : 0.36})`); light.addColorStop(0.5, 'rgba(255,255,255,0)');
+    ctx.fillStyle = light; ctx.fillRect(x, y, w, h);
+    if (one || a.tier === 'gold') {
+      const foil = ctx.createLinearGradient(x, y + h, x + w, y);
+      foil.addColorStop(0.32, 'rgba(255,255,255,0)'); foil.addColorStop(0.5, `rgba(255,255,255,${one ? 0.22 : 0.4})`); foil.addColorStop(0.68, 'rgba(255,255,255,0)');
+      ctx.fillStyle = foil; ctx.fillRect(x, y, w, h);
+    }
+    ctx.restore();
+    roundRect(ctx, x, y, w, h, r); ctx.strokeStyle = art.edge; ctx.lineWidth = 5; ctx.stroke();
+    roundRect(ctx, x + 9, y + 9, w - 18, h - 18, 9); ctx.strokeStyle = tint(art.ink, 0.34); ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = art.ink;
+    if (one) {
+      ctx.font = F(900, 48); ctx.fillText('1/1', 0, 14);
+      ctx.font = F(800, 22); ctx.fillText(`+${a.points}`, 0, y + h - 26);
+    } else {
+      ctx.font = F(800, 15); spaced(2); ctx.fillText(art.label, 1, y + 38); spaced(0);
+      ctx.font = F(900, 42); ctx.fillText(`+${a.points}`, 0, 28);
+    }
+    ctx.restore();
+  }
+
+  // The picture is a card of its own, 1080 by 1350: a foil frame, the title
+  // as the page has it, the pack's name and score, the seven cards in an arc,
+  // what was rare, and where to play. What is not there (no rank yet, nothing
+  // rare) leaves no hole: the middle is set out around what there is.
   async function shareImage(v) {
     const W = 1080, H = 1350;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -569,108 +624,158 @@
     const font = (getComputedStyle(document.body).fontFamily || '') + ', Inter, system-ui, sans-serif';
     const F = (w, px) => `${w} ${px}px ${font}`;
     const spaced = (px) => { try { ctx.letterSpacing = px + 'px'; } catch (_) { /* older browsers */ } };
+    const logo = await loadImg('logo-dark-h160.webp');
 
     // Backdrop: the game's night sky, soft lights, a few cards drifting.
-    ctx.fillStyle = '#0a0f1c'; ctx.fillRect(0, 0, W, H);
-    const glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(10,15,28,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
-    glow(140, 120, 760, 'rgba(34,197,94,.30)');
-    glow(1000, 300, 560, 'rgba(59,130,246,.18)');
-    glow(940, 1300, 760, 'rgba(234,179,8,.22)');
-    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 3;
-    for (const [x, y, a] of [[90, 470, -0.3], [960, 560, 0.25], [140, 1150, 0.2], [930, 1060, -0.15], [820, 90, 0.35]]) {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(a); roundRect(ctx, -45, -63, 90, 126, 12); ctx.stroke(); ctx.restore();
-    }
-    ctx.restore();
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-
-    // The site's logo, or its name.
-    const logo = await loadImg('logo-dark-h160.webp');
-    if (logo) { const h = 112, w = h * logo.width / logo.height; ctx.drawImage(logo, (W - w) / 2, 44, w, h); }
-    else { ctx.fillStyle = '#e2e8f0'; ctx.font = F(800, 34); spaced(4); ctx.fillText('THE CARD HUDDLE', W / 2, 118); spaced(0); }
-
-    // Title in foil.
-    ctx.font = F(900, 128); spaced(-2);
-    const foil = ctx.createLinearGradient(220, 0, 860, 0);
-    foil.addColorStop(0, '#fde68a'); foil.addColorStop(0.35, '#facc15'); foil.addColorStop(0.55, '#fff7d6'); foil.addColorStop(0.8, '#eab308'); foil.addColorStop(1, '#fde68a');
-    ctx.fillStyle = foil; ctx.shadowColor = 'rgba(234,179,8,.35)'; ctx.shadowBlur = 30;
-    ctx.fillText('One of One', W / 2, 300);
-    ctx.shadowBlur = 0; spaced(0);
-    ctx.fillStyle = '#94a3b8'; ctx.font = F(700, 32); spaced(3);
-    ctx.fillText(`DAILY PACK #${v.number} · ${dateWords(v.date).toUpperCase()}`, W / 2, 368);
-    spaced(0);
-
-    // The score.
-    ctx.font = F(900, 240); const sw = ctx.measureText(String(v.score)).width;
-    ctx.font = F(800, 70); const mw = ctx.measureText(`/ ${v.maxScore}`).width;
-    const sx = (W - sw - 24 - mw) / 2;
-    ctx.textAlign = 'left';
-    ctx.font = F(900, 240); ctx.fillStyle = '#ffffff'; spaced(-6); ctx.fillText(String(v.score), sx, 640); spaced(0);
-    ctx.font = F(800, 70); ctx.fillStyle = '#64748b'; ctx.fillText(`/ ${v.maxScore}`, sx + sw + 24, 640);
-    ctx.textAlign = 'center';
-
-    // The seven cards.
-    const ans = v.answers || [];
-    const cw = 118, ch = 166, gap = 16, n = Math.max(ans.length, v.count || 7);
-    const x0 = (W - (n * cw + (n - 1) * gap)) / 2, y0 = 720;
-    for (let i = 0; i < n; i++) {
-      const a = ans[i], x = x0 + i * (cw + gap), art = a ? TIER_ART[a.tier] : null;
-      ctx.save();
-      if (!art) {
-        roundRect(ctx, x, y0, cw, ch, 16); ctx.setLineDash([10, 8]); ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = '#475569'; ctx.font = F(800, 40); ctx.fillText('–', x + cw / 2, y0 + ch / 2 + 14);
-        ctx.restore(); continue;
-      }
-      if (a.tier === 'one') {
-        ctx.shadowColor = 'rgba(234,179,8,.7)'; ctx.shadowBlur = 34;
-        const g = ctx.createLinearGradient(x, y0, x + cw, y0 + ch); g.addColorStop(0, '#26263a'); g.addColorStop(1, '#000'); ctx.fillStyle = g;
-      } else {
-        ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8; ctx.fillStyle = art.fill;
-      }
-      roundRect(ctx, x, y0, cw, ch, 16); ctx.fill();
-      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-      if (a.tier === 'one') { ctx.strokeStyle = '#eab308'; ctx.lineWidth = 4; ctx.stroke(); }
-      else { const sh = ctx.createLinearGradient(x, y0, x + cw, y0 + ch); sh.addColorStop(0, 'rgba(255,255,255,.35)'); sh.addColorStop(0.45, 'rgba(255,255,255,0)'); ctx.fillStyle = sh; roundRect(ctx, x, y0, cw, ch, 16); ctx.fill(); }
-      ctx.fillStyle = art.ink;
-      if (a.tier === 'one') { ctx.font = F(900, 46); ctx.fillText('1/1', x + cw / 2, y0 + ch / 2 + 16); }
-      else {
-        ctx.font = F(800, 17); spaced(2); ctx.fillText(art.label, x + cw / 2, y0 + 34); spaced(0);
-        ctx.font = F(900, 36); ctx.fillText(`+${a.points}`, x + cw / 2, y0 + ch - 30);
-      }
+    ctx.fillStyle = '#070b14'; ctx.fillRect(0, 0, W, H);
+    const glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(7,11,20,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
+    glow(110, 90, 820, 'rgba(34,197,94,.36)');
+    glow(1060, 420, 640, 'rgba(59,130,246,.28)');
+    glow(930, 1340, 820, 'rgba(234,179,8,.26)');
+    glow(90, 1180, 520, 'rgba(59,130,246,.14)');
+    for (const [x, y, lean, col] of [[108, 500, -0.3, '#22c55e'], [978, 560, 0.26, '#3b82f6'], [124, 1150, 0.2, '#facc15'], [966, 1136, -0.16, '#cbd5e1']]) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(lean); ctx.strokeStyle = tint(col, 0.3); ctx.lineWidth = 3;
+      roundRect(ctx, -44, -62, 88, 124, 12); ctx.stroke();
+      ctx.strokeStyle = tint(col, 0.16); ctx.lineWidth = 2; roundRect(ctx, -34, -52, 68, 104, 7); ctx.stroke();
       ctx.restore();
     }
+    // The frame: the picture is a card.
+    const edge = ctx.createLinearGradient(0, 0, W, H);
+    edge.addColorStop(0, '#fde68a'); edge.addColorStop(0.28, '#eab308'); edge.addColorStop(0.5, '#5ece99'); edge.addColorStop(0.74, '#60a5fa'); edge.addColorStop(1, '#fde68a');
+    roundRect(ctx, 22, 22, W - 44, H - 44, 48); ctx.strokeStyle = edge; ctx.lineWidth = 6; ctx.stroke();
+    roundRect(ctx, 38, 38, W - 76, H - 76, 36); ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textBaseline = 'alphabetic';
 
-    // The rare ones, and the streak.
-    const count = (t) => ans.filter(a => a && a.tier === t).length;
-    const bits = [];
-    if (count('one')) bits.push(count('one') === 1 ? '1 One of One' : `${count('one')} One of Ones`);
-    if (count('gold')) bits.push(`${count('gold')} Gold`);
+    // Top corners: the site, and the pack's number as a card's serial.
+    if (logo) { const h = 96, w = h * logo.width / logo.height; ctx.drawImage(logo, 70, 58, w, h); }
+    else { ctx.textAlign = 'left'; ctx.fillStyle = '#e2e8f0'; ctx.font = F(800, 30); spaced(3); ctx.fillText('THE CARD HUDDLE', 76, 116); spaced(0); }
+    ctx.font = '700 28px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    const serial = `PACK #${v.number}`, sw0 = ctx.measureText(serial).width + 40;
+    roundRect(ctx, W - 76 - sw0, 78, sw0, 54, 10); ctx.strokeStyle = 'rgba(253,230,138,.6)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fde68a'; ctx.fillText(serial, W - 76 - sw0 / 2, 115);
+
+    // The title in foil, as the page has it, with its 1/1.
+    ctx.font = F(900, 122); spaced(-2);
+    const title = 'One of One', tw = ctx.measureText(title).width, bw = 112, tx = (W - tw - 26 - bw) / 2;
+    const foil = ctx.createLinearGradient(tx, 0, tx + tw, 0);
+    foil.addColorStop(0, '#e5e7eb'); foil.addColorStop(0.28, '#5ece99'); foil.addColorStop(0.52, '#60a5fa'); foil.addColorStop(0.78, '#facc15'); foil.addColorStop(1, '#fde68a');
+    ctx.textAlign = 'left'; ctx.fillStyle = foil; ctx.shadowColor = 'rgba(94,206,153,.3)'; ctx.shadowBlur = 34;
+    ctx.fillText(title, tx, 286);
+    spaced(0);
+    ctx.shadowColor = 'rgba(234,179,8,.55)'; ctx.shadowBlur = 24;
+    roundRect(ctx, tx + tw + 26, 206, bw, 68, 14); ctx.fillStyle = '#0b0b0f'; ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fde68a'; ctx.font = F(800, 42); ctx.fillText('1/1', tx + tw + 26 + bw / 2, 255);
+    ctx.fillStyle = '#94a3b8'; ctx.font = F(700, 30); spaced(4);
+    ctx.fillText(`DAILY PACK · ${dateWords(v.date).toUpperCase()}`, W / 2, 344);
+    spaced(0);
+
+    // What goes in the middle.
+    const ans = v.answers || [], count = (t) => ans.filter(a => a && a.tier === t).length;
+    const rank = data && data.rank, beat = rank && rank.of >= 5 && rank.beat >= 50 ? rank.beat : null;
+    const chips = [];
+    if (count('one')) chips.push([count('one') === 1 ? '1 One of One' : `${count('one')} One of Ones`, '#0b0b0f', '#eab308', '#fde68a']);
+    if (count('gold')) chips.push([`${count('gold')} Gold`, 'rgba(250,204,21,.16)', 'rgba(250,204,21,.7)', '#fde68a']);
     const st = stats();
-    if (st && st.streak > 1) bits.push(`${st.streak}-day streak`);
-    if (bits.length) { ctx.fillStyle = '#e2e8f0'; ctx.font = F(700, 40); ctx.fillText(bits.join('  ·  '), W / 2, 1000); }
+    if (st && st.streak > 1) chips.push([`${st.streak}-day streak`, 'rgba(255,255,255,.07)', 'rgba(255,255,255,.24)', '#e2e8f0']);
+    const pack = rating(v).toUpperCase();
+    const tall = (pack ? 62 + 32 : 0) + 176 + (beat != null ? 28 + 36 : 0) + 52 + 222 + (chips.length ? 40 + 62 : 0);
+    let y = 384 + Math.max(0, (1124 - 384 - tall) / 2);
+
+    // The pack's name.
+    if (pack) {
+      ctx.font = F(800, 30); spaced(4);
+      const pw = ctx.measureText(pack).width + 76;
+      ctx.shadowColor = 'rgba(234,179,8,.45)'; ctx.shadowBlur = 26;
+      roundRect(ctx, (W - pw) / 2, y, pw, 62, 31); ctx.fillStyle = '#0b0b0f'; ctx.fill();
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#eab308'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = '#fde68a'; ctx.fillText(pack, W / 2 + 2, y + 42); spaced(0);
+      y += 62 + 32;
+    }
+
+    // The score.
+    ctx.font = F(900, 232); spaced(-6); const sw = ctx.measureText(String(v.score)).width; spaced(0);
+    ctx.font = F(800, 72); const mw = ctx.measureText(`/ ${v.maxScore}`).width;
+    const sx = (W - sw - 26 - mw) / 2, sy = y + 172;
+    const ink = ctx.createLinearGradient(0, sy - 172, 0, sy);
+    ink.addColorStop(0.15, '#ffffff'); ink.addColorStop(1, '#8be3b9');
+    ctx.textAlign = 'left';
+    ctx.font = F(900, 232); spaced(-6); ctx.fillStyle = ink; ctx.shadowColor = 'rgba(94,206,153,.28)'; ctx.shadowBlur = 40;
+    ctx.fillText(String(v.score), sx, sy); spaced(0);
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    ctx.font = F(800, 72); ctx.fillStyle = '#64748b'; ctx.fillText(`/ ${v.maxScore}`, sx + sw + 26, sy);
+    y += 176;
+
+    // Where it stands, when it stands well.
+    if (beat != null) {
+      y += 28;
+      ctx.font = F(600, 34); const a0 = 'Better than ', a2 = ' of players today';
+      ctx.font = F(900, 36); const bwid = ctx.measureText(`${beat}%`).width;
+      ctx.font = F(600, 34); const w0 = ctx.measureText(a0).width, w2 = ctx.measureText(a2).width;
+      let x = (W - w0 - bwid - w2) / 2;
+      ctx.fillStyle = '#cbd5e1'; ctx.fillText(a0, x, y + 30); x += w0;
+      ctx.font = F(900, 36); ctx.fillStyle = '#5ece99'; ctx.fillText(`${beat}%`, x, y + 30); x += bwid;
+      ctx.font = F(600, 34); ctx.fillStyle = '#cbd5e1'; ctx.fillText(a2, x, y + 30);
+      y += 36;
+    }
+
+    // The seven cards, in an arc.
+    y += 52;
+    const n = Math.max(ans.length, v.count || 7), cw = 120, ch = 172, gap = 13, mid = (n - 1) / 2;
+    const x0 = (W - (n * cw + (n - 1) * gap)) / 2 + cw / 2;
+    for (let i = 0; i < n; i++) {
+      const d = i - mid;
+      shareCard(ctx, F, spaced, ans[i] || null, x0 + i * (cw + gap), y + ch / 2 + d * d * 4.6, cw, ch, d * 0.052);
+    }
+    y += 222;
+
+    // What was rare, and the streak.
+    if (chips.length) {
+      y += 40;
+      ctx.font = F(700, 30);
+      const ws = chips.map(ch0 => ctx.measureText(ch0[0]).width + 56);
+      let x = (W - ws.reduce((p, q) => p + q, 0) - (chips.length - 1) * 18) / 2;
+      chips.forEach((ch0, i) => {
+        roundRect(ctx, x, y, ws[i], 62, 31); ctx.fillStyle = ch0[1]; ctx.fill(); ctx.strokeStyle = ch0[2]; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.textAlign = 'center'; ctx.fillStyle = ch0[3]; ctx.fillText(ch0[0], x + ws[i] / 2, y + 42);
+        x += ws[i] + 18;
+      });
+    }
 
     // The challenge and where to play.
-    ctx.fillStyle = '#ffffff'; ctx.font = F(900, 56); ctx.fillText('Can you beat it?', W / 2, 1138);
-    ctx.font = F(800, 38); const url = 'thecardhuddle.com/play', uw = ctx.measureText(url).width + 72;
-    roundRect(ctx, (W - uw) / 2, 1180, uw, 76, 38); ctx.fillStyle = 'rgba(34,197,94,.14)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(74,222,128,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.fillStyle = '#4ade80'; ctx.fillText(url, W / 2, 1231);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff'; ctx.font = F(900, 56); ctx.fillText('Can you beat it?', W / 2, 1196);
+    ctx.font = F(800, 38); const url = 'thecardhuddle.com/play', uw = ctx.measureText(url).width + 76;
+    roundRect(ctx, (W - uw) / 2, 1220, uw, 72, 36); ctx.fillStyle = 'rgba(34,197,94,.16)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(74,222,128,.65)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#4ade80'; ctx.fillText(url, W / 2, 1269);
 
     return new Promise((ok) => c.toBlob(ok, 'image/png'));
   }
   // Made when the results show, so the tap on Share opens the sheet at once.
-  async function prepareShare(v) {
+  // A tap that comes before the picture is done waits for it (sharePending).
+  let sharePending = null;
+  function prepareShare(v) {
     const key = `${v.date}|${v.score}`;
-    if (shareFor === key && shareFile) return;
+    if (shareFor === key && (shareFile || sharePending)) return sharePending;
     shareFor = key; shareFile = null;
-    try {
-      const blob = await shareImage(v);
-      if (blob && shareFor === key) shareFile = new File([blob], `one-of-one-${v.number}.png`, { type: 'image/png' });
-    } catch (_) { /* text still shares */ }
+    const job = (async () => {
+      try {
+        const blob = await shareImage(v);
+        if (blob && shareFor === key) shareFile = new File([blob], `one-of-one-${v.number}.png`, { type: 'image/png' });
+      } catch (_) { /* text still shares */ }
+      if (sharePending === job) sharePending = null;
+    })();
+    sharePending = job;
+    return job;
   }
 
   async function share() {
     const text = (data && data.share) || '';
     if (!text) return;
+    if (!shareFile && sharePending) await sharePending;
     const file = shareFile;
     const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     try {

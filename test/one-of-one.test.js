@@ -84,10 +84,19 @@ check('...the same day is counted once, and the streak holds until a whole day i
     && /thecardhuddle\.com\/play/.test(playSrc) && /Can you beat it\?/.test(playSrc));
   check('...made when the results show, so the tap opens the share sheet at once', /prepareShare\(v\);/.test(playSrc));
   check('...and on a computer, a sheet with Copy image, Save image and Copy text', /data-sh="copyimg"/.test(playSrc) && /data-sh="save"/.test(playSrc) && /data-sh="copytext"/.test(playSrc));
-  check('the picture never shows an answer, only tiers and points', !/\.name\b/.test(playSrc.slice(playSrc.indexOf('async function shareImage'), playSrc.indexOf('async function prepareShare'))));
+  check('the picture never shows an answer, only tiers and points', !/\.name\b/.test(playSrc.slice(playSrc.indexOf('function shareCard'), playSrc.indexOf('function prepareShare'))) && playSrc.indexOf('function shareCard') > 0);
+  check('the picture is a card of its own: a frame, the pack\'s name, the seven cards in an arc, and the rank when it is a good one',
+    /function shareCard\(ctx, F, spaced, a, cx, cy, w, h, lean\)/.test(playSrc) && /const pack = rating\(v\)\.toUpperCase\(\);/.test(playSrc) && /rank\.of >= 5 && rank\.beat >= 50 \? rank\.beat : null/.test(playSrc)
+    && /shareCard\(ctx, F, spaced, ans\[i\] \|\| null, [^;]*d \* d \* [\d.]+, cw, ch, d \* [\d.]+\);/.test(playSrc));
+  check('...and a tap that comes before the picture is ready waits for it', /if \(!shareFile && sharePending\) await sharePending;/.test(playSrc));
+  check('the pack\'s name comes from the server, so the screen, the text and the picture agree', /const rating = \(v\) => \(v && v\.rating\) \|\| '';/.test(playSrc) && !/Monster pack/.test(playSrc));
 }
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
-  === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
+  === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\nHot pack · 2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
+check('...and a pack with nothing rare still has its name on that line', G.shareText({ number: 3, score: 60, maxScore: 700, answers: [{ tier: 'base' }, { tier: 'green' }, { tier: 'base' }, null, { tier: 'base' }, null, null] })
+  === 'One of One #3 · 60/700\n⬜🟩⬜✖️⬜✖️✖️\nBase pack\nCan you beat it? thecardhuddle.com/play');
+check('a finished pack is named by its score', ['Empty wrapper', 'Base pack', 'Solid pack', 'Hot pack', 'Monster pack', 'Case hit'].join()
+  === [0, 10, 175, 315, 455, 595].map(n => G.packName(n, 700)).join() && G.packName(174, 700) === 'Base pack' && G.packName(700, 700) === 'Case hit');
 
 const pack = (date, number = 1) => ({ date, number, prompts: Array.from({ length: 7 }, (_, i) => prompt(`Prompt ${i + 1} of ${date}`)), spares: [prompt('Spare A'), prompt('Spare B'), prompt('Spare C')] });
 const MS = G.SECONDS * 1000;
@@ -131,6 +140,7 @@ const MS = G.SECONDS * 1000;
     check('what everyone said is not shown before the round is done', (await day.results(a)).error === 'not-done');
     r = await day.answer(a, 'Tucker Kraft', t + 200000 + MS + G.GRACE_MS + 10, { final: true });
     check('the seventh answer ends the round with its score', r.view.done === true && r.view.score === 10 + 100 + r.answer.points && r.view.answers.length === 7);
+    check('...and its name, which a round still going does not have', r.view.rating === G.packName(r.view.score, r.view.maxScore) && (await day.state(b, t)).rating === null);
     check('...and one round a day: Play again changes nothing', (await day.next(a, t + 900000)).view.done === true && (await day.next(a, t + 900000)).view.active === null);
     const res = await day.results(a);
     check('the results list each prompt, the player\'s answer and what was said', res.prompts.length === 7 && res.prompts[0].yours.name === 'Tom Brady' && res.prompts[0].top[0].name === 'Tom Brady' && res.prompts[1].yours === null && res.prompts[0].pool === NAMES.length);
