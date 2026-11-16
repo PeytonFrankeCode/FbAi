@@ -25,6 +25,11 @@
   // a sack or a touchdown, is stretched to this; the timings below are the
   // play's own clock.
   const WATCH_MS = 5000;
+  // A One of One is its own play (owner, Nov 2026: "a really cool animation
+  // that slows down as the camera zooms in and the player mosses the defender
+  // for a touchdown"): it is given longer, and time slows round the catch.
+  const MOSS_WATCH_MS = 8500;
+  const SLOW = 0.2;              // the speed of the slow motion, against the play's own clock
   const TAU = Math.PI * 2;
 
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -75,8 +80,12 @@
     // Where it is caught, and where the play ends: a yard or so of running
     // after the catch, so the ball is dead exactly `gain` yards on. A
     // touchdown is caught in the end zone, or in stride and run in.
+    // A One of One is always thrown into the end zone and caught over the man
+    // covering him: he is "mossed".
+    const moss = !!(play.td && play.tier === 'one');
     let cat, down;
-    if (play.td && toGoal <= 9) { cat = [cx, 113.6]; down = [cx + m * 0.6, 115.6]; }
+    if (moss) { cat = [cx, Math.min(116, Math.max(L + 6, 112.8))]; down = [cx - m * 0.5, Math.min(117.5, cat[1] + 1.5)]; }
+    else if (play.td && toGoal <= 9) { cat = [cx, 113.6]; down = [cx + m * 0.6, 115.6]; }
     else if (play.td) { cat = [cx, 107.4]; down = [cx - m * 0.8, 115.8]; }
     else { cat = [cx, L + deep - 1.2]; down = [cx + m * 0.3, L + deep]; }
 
@@ -84,10 +93,16 @@
     const F = 400 + 11.5 * Math.hypot(cat[0] - BX, cat[1] - (L - 7.2));       // the ball's time in the air
     const R = Math.max(520 + 21 * (cat[1] - L), F + 320);                     // the route, snap to catch
     const T_THROW = T0 + R - F, T_CATCH = T0 + R;
-    const T_DOWN = T_CATCH + (play.td ? 300 + 45 * Math.hypot(down[0] - cat[0], down[1] - cat[1]) : 240);
+    const T_DOWN = T_CATCH + (moss ? 520 : play.td ? 300 + 45 * Math.hypot(down[0] - cat[0], down[1] - cat[1]) : 240);
     const T_SACK = T0 + 1150;
     const T_CALL = play.sack ? T_SACK + 190 : T_DOWN + (play.td ? 80 : 150);
-    const T_END = T_CALL + (play.td ? 1450 : 1050);          // the call is held about a second and a half as watched
+    const T_END = T_CALL + (moss ? 1700 : play.td ? 1450 : 1050);          // the call is held about a second and a half as watched
+    // The slow motion: from just before he leaves the ground to just after he lands.
+    const SLOW_A = T_CATCH - 760, SLOW_B = T_CATCH + 330;
+    // The jump: up over the defender, the ball taken at the top. 0 on the ground, 1 at the top.
+    const leap = (t, from, len, amp) => { const u = (t - from) / len; return u > 0 && u < 1 ? amp * Math.pow(Math.sin(Math.PI * u), 0.8) : 0; };
+    const starLift = (t) => (moss ? leap(t, T_CATCH - 400, 700, 1) : 0);
+    const defLift = (t) => (moss ? leap(t, T_CATCH - 460, 560, 0.5) : 0);
 
     // The routes. The one thrown to breaks to the catch; the rest clear out.
     const stem = who === 'slot' ? [at0.slot[0], lerp(L, cat[1], 0.8)] : [lerp(at0[who][0], cat[0], 0.12), lerp(L, cat[1], 0.62)];
@@ -161,9 +176,10 @@
     for (const k of ['rb', 'te', 'x', 'z', 'slot']) {
       const mine = k === who && !play.sack;
       const e = add('o', run[k], mine ? {
-        star: true, downAt: play.td ? 0 : T_DOWN,
+        star: true, downAt: play.td ? 0 : T_DOWN, lift: starLift,
         // He reaches for the ball as it comes in, and throws his arms up in the end zone.
-        arms: (t) => (t > T_CATCH - 170 && t <= T_CATCH ? (t - T_CATCH + 170) / 170 : t > T_CATCH && t < T_CATCH + 90 ? 1 - (t - T_CATCH) / 90
+        arms: (t) => (moss && t > T_CATCH - 400 && t <= T_CATCH + 200 ? Math.min(1, (t - T_CATCH + 400) / 280)
+          : t > T_CATCH - 170 && t <= T_CATCH ? (t - T_CATCH + 170) / 170 : t > T_CATCH && t < T_CATCH + 90 ? 1 - (t - T_CATCH) / 90
           : play.td && t > T_DOWN ? 0.85 + 0.15 * Math.sin((t - T_DOWN) / 90) : 0),
         spread: (t) => (play.td && t > T_DOWN ? 1 : 0),
         face: (t) => (play.td && t > T_DOWN + 60 ? UP : null),
@@ -189,6 +205,20 @@
         const off = play.td ? [-m * 0.6, -2.7] : under ? [0.5, 1.7] : [-m * 0.5, -1.9];
         const trail = cover(route, from, off, 90);
         const hit = [down[0] + 0.6, down[1] + (under ? 0.5 : -0.5)];
+        if (moss) {
+          // He closes on the receiver as the ball comes down and goes up with
+          // him, a beat early and not as high; the receiver comes down with it
+          // and he goes down.
+          const side = [m * 0.5, -0.85], fall = [cat[0] + m * 1.1, cat[1] - 1.5];
+          add('d', (t) => {
+            if (t <= T_CATCH - 700) return trail(t);
+            if (t <= T_CATCH) { const a = trail(t), r = route(t), q = smooth((t - T_CATCH + 700) / 550); return [lerp(a[0], r[0] + side[0], q), lerp(a[1], r[1] + side[1], q)]; }
+            const a = [cat[0] + side[0], cat[1] + side[1]], q = smooth((t - T_CATCH) / 320);
+            return [lerp(a[0], fall[0], q), lerp(a[1], fall[1], q)];
+          }, { downAt: T_CATCH + 240, lift: defLift, mossed: true,
+            arms: (t) => (t > T_CATCH - 460 && t < T_CATCH + 120 ? 0.75 : 0) });
+          continue;
+        }
         add('d', play.td ? trail : (t) => {
           if (t <= T_CATCH) return trail(t);
           const a = trail(T_CATCH), q = smooth((t - T_CATCH) / (T_DOWN - T_CATCH));
@@ -212,13 +242,14 @@
     const hold = (p, side) => [p[0] + 0.42 * side, p[1] + 0.12];
     const rel = hold(qb(T_THROW), Math.sign(cat[0] - BX) || 1);
     const loft = 1 + Math.hypot(cat[0] - rel[0], cat[1] - rel[1]) * 0.15;      // how high it goes, in yards
+    const HIGH = 2.4;                                    // a jump, in the ball's height units
     const ball = (t) => {
       if (t < T0) return { x: BX, y: L - 0.25, h: 0 };
       if (t < T0 + 130) { const k = (t - T0) / 130, q = qb(T0 + 130); return { x: lerp(BX, q[0], k), y: lerp(L - 0.25, q[1], k), h: 0.3 * Math.sin(Math.PI * k) }; }
       if (play.sack || t < T_THROW) { const q = hold(qb(t), 1); return { x: q[0], y: q[1], h: 0, held: true }; }
-      if (t < T_CATCH) { const k = (t - T_THROW) / (T_CATCH - T_THROW); return { x: lerp(rel[0], cat[0], k), y: lerp(rel[1], cat[1], k), h: Math.sin(Math.PI * k) * loft, k, air: true }; }
+      if (t < T_CATCH) { const k = (t - T_THROW) / (T_CATCH - T_THROW); return { x: lerp(rel[0], cat[0], k), y: lerp(rel[1], cat[1], k), h: Math.sin(Math.PI * k) * loft + k * k * HIGH * starLift(T_CATCH), k, air: true }; }
       const p = route(Math.min(t, T_DOWN));
-      return { x: p[0] + 0.35, y: p[1] + 0.1, h: 0, held: true };
+      return { x: p[0] + 0.35, y: p[1] + 0.1, h: HIGH * starLift(t), held: true };
     };
 
     // The camera: the line of scrimmage low in the picture, then up the field
@@ -229,8 +260,19 @@
     const cam = (t) => (play.sack ? lerp(c0, c1, smooth((t - T0 - 250) / 800))
       : lerp(c0, c1, smooth((t - T_THROW + 120) / (T_DOWN - T_THROW + 120))));
 
+    // The zoom: on a One of One the camera closes in on the catch as time
+    // slows, then eases back a little for the call. `k` is how far the catch
+    // has been brought to the middle of the picture.
+    const ZMAX = 2.6;
+    // It follows the receiver in, so he is in the middle as he goes up.
+    const zoom = (t) => {
+      if (!moss) return { z: 1, k: 0, at: cat };
+      const kin = smooth((t - SLOW_A + 150) / (T_CATCH - 120 - SLOW_A + 150)), kout = smooth((t - T_DOWN - 120) / 600);
+      return { z: 1 + (ZMAX - 1) * kin - (ZMAX - 1.4) * kout, k: smooth((t - SLOW_A + 300) / 420), at: route(Math.min(t, T_DOWN)) };
+    };
+
     return {
-      play, L, m, who, men, star, ball, cam, qb, cat, down, rel, aim, loft,
+      play, L, m, who, men, star, ball, cam, qb, cat, down, rel, aim, loft, moss, zoom, SLOW_A, SLOW_B,
       T_THROW, T_CATCH, T_DOWN, T_SACK, T_CALL, T_END,
       spot: play.sack ? L : play.td ? 110 : L + play.gain,       // where the ball is dead, in field yards
     };
@@ -430,11 +472,20 @@
     const camY = M.cam(t);
     const SX = (x) => (x - BX) * s + W / 2 + jx, SY = (y) => H / 2 - (y - camY) * s + jy;
 
-    // The ground: the painted field, cut to what the camera sees.
+    // The zoom, about the catch: the picture is drawn larger round it, and
+    // the catch is brought to the middle.
+    const Z = M.zoom(t), fxs = SX(Z.at[0]), fys = SY(Z.at[1]);
+    const cxs = lerp(fxs, W / 2, Z.k), cys = lerp(fys, H * 0.47, Z.k);
+    const ZX = (x) => (x - fxs) * Z.z + cxs, ZY = (y) => (y - fys) * Z.z + cys;
     g.fillStyle = '#0d3b1e'; g.fillRect(0, 0, W, H);
-    const sh = Math.round(H * V.dpr);
-    const sy = Math.max(0, Math.min(V.field.height - sh, Math.round(((FL + PAD - (camY + H / s / 2)) * s - jy) * V.dpr)));
-    g.drawImage(V.field, 0, sy, V.field.width, sh, jx, 0, W, H);
+    g.save();
+    if (Z.z !== 1) { g.translate(cxs, cys); g.scale(Z.z, Z.z); g.translate(-fxs, -fys); }
+
+    // The ground: the painted field, placed where the camera has it. The whole
+    // of it is handed over and the canvas keeps what shows, so a zoom about a
+    // catch near the edge of the picture still has grass all round it.
+    if (Z.z !== 1) { g.fillStyle = '#0d3b1e'; g.fillRect(fxs - cxs / Z.z - 2, fys - cys / Z.z - 2, W / Z.z + 4, H / Z.z + 4); }
+    g.drawImage(V.field, jx - V.margin, SY(FL + PAD), W + V.margin * 2, (FL + PAD * 2) * s);
 
     // A touchdown lights the end zone.
     if (play.td && t > M.T_DOWN) {
@@ -464,12 +515,14 @@
         : e.team === 'o' ? -Math.PI / 2 : Math.atan2(-(ballNow.y - p[1]), ballNow.x - p[0]);
       const down = e.downAt && t >= e.downAt ? Math.min(1, (t - e.downAt) / 170) : 0;
       const arms = e.arms ? e.arms(t) : e.block && t > T0 + 250 ? 0.55 : 0;
+      const up = e.lift ? e.lift(t) : 0;                  // off the ground: drawn higher and nearer
       return {
-        e, x: SX(p[0]), y: SY(p[1]), ang, r: s * 1.22 * (e.big ? 1.12 : 1),
+        e, x: SX(p[0]), y: SY(p[1]), ang, r: s * 1.22 * (e.big ? 1.12 : 1), up,
         st: { down, arms: down ? 0 : arms, spread: e.spread ? e.spread(t) : 0, stride: !down && fast > 0.0012 && !e.block ? Math.sin((p[0] + p[1]) * 2.4) : 0 },
       };
     });
-    for (const n of now) shadow(g, n.x, n.y, n.r, n.st.down);
+    for (const n of now) shadow(g, n.x, n.y, n.r * (1 - 0.2 * n.up), n.st.down);
+    const body = (n, kit) => man(g, n.x, n.y - n.up * s * 1.2, n.ang, n.r * (1 + 0.45 * n.up), kit, n.st);
     // The one the ball is going to wears a gold ring on the turf.
     const starNow = M.star ? now.find((n) => n.e === M.star) : null;
     if (starNow && t > T0 && !(starNow.st.down > 0)) {
@@ -479,8 +532,8 @@
       g.beginPath(); g.ellipse(starNow.x, starNow.y, starNow.r * 1.55, starNow.r * 1.3, 0, 0, TAU); g.stroke();
       g.restore();
     }
-    for (const n of now) if (n !== starNow) man(g, n.x, n.y, n.ang, n.r, KIT[n.e.team], n.st);
-    if (starNow) man(g, starNow.x, starNow.y, starNow.ang, starNow.r, KIT.o, starNow.st);
+    for (const n of now) if (n !== starNow) body(n, KIT[n.e.team]);
+    if (starNow) body(starNow, KIT.o);                  // over everyone, and over the man he goes up over
 
     // The catch, the tackle, the hit.
     if (!play.sack && t > M.T_CATCH && t < M.T_CATCH + 340) {
@@ -537,15 +590,18 @@
       }
     }
 
-    // His name over the man who was named.
+    g.restore();                                         // the end of the zoomed picture
+
+    // His name over the man who was named, the same size however close the camera is.
     if (starNow && V.tag && t > T0 - 200) {
       g.save();
       g.globalAlpha = Math.min(1, (t - T0 + 200) / 200);
       g.font = `800 ${Math.round(Math.max(10, s * 1.2))}px ${V.font}`;
       const w = g.measureText(V.tag).width + 14, h = Math.max(17, s * 1.95);
-      const left = Math.max(5, Math.min(W - w - 5, starNow.x - w / 2));
-      let topY = starNow.y - starNow.r * 2.05 - h;
-      if (topY < 46) topY = starNow.y + starNow.r * 1.75;       // no room above him (the score bug is there): under him
+      const hx = ZX(starNow.x), hy = ZY(starNow.y - starNow.up * s * 1.2), hr = starNow.r * (1 + 0.45 * starNow.up) * Z.z;
+      const left = Math.max(5, Math.min(W - w - 5, hx - w / 2));
+      let topY = hy - hr * 2.05 - h;
+      if (topY < 46) topY = hy + hr * 1.75;              // no room above him (the score bug is there): under him
       g.fillStyle = 'rgba(8,12,22,.88)'; rr(g, left, topY, w, h, h / 2); g.fill();
       g.strokeStyle = 'rgba(250,204,21,.9)'; g.lineWidth = 1; g.stroke();
       g.fillStyle = '#fde68a'; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -556,6 +612,28 @@
     // The edges fall away, as under lights.
     g.fillStyle = V.vig; g.fillRect(0, 0, W, H);
     g.fillStyle = V.shade; g.fillRect(0, 0, W, 64);
+
+    if (M.moss) {
+      // The slow motion: the picture darkens at the edges and bars close in, as at the movies.
+      const kb = smooth((t - M.SLOW_A + 220) / 260) * (1 - smooth((t - M.T_DOWN - 160) / 460));
+      if (kb > 0) {
+        g.fillStyle = `rgba(0,0,0,${(0.28 * kb).toFixed(3)})`; g.fillRect(0, 0, W, H);
+        g.fillStyle = V.vig; g.globalAlpha = kb; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
+        const bar = Math.round(H * 0.09 * kb);
+        g.fillStyle = '#000'; g.fillRect(0, 0, W, bar); g.fillRect(0, H - bar, W, bar);
+      }
+      // The catch: a flash, and gold rays from where it was made.
+      if (t > M.T_CATCH && t < M.T_CATCH + 420) {
+        const k = (t - M.T_CATCH) / 420, cx = ZX(SX(M.cat[0])), cy = ZY(SY(M.cat[1]) - s * 2.4);
+        g.fillStyle = `rgba(255,255,255,${(0.45 * (1 - k) * (1 - k)).toFixed(3)})`; g.fillRect(0, 0, W, H);
+        g.save(); g.globalAlpha = 1 - k; g.strokeStyle = '#fde047'; g.lineWidth = 3; g.lineCap = 'round';
+        for (let i = 0; i < 14; i++) {
+          const a = i * TAU / 14 + 0.2, r0 = s * Z.z * (1.6 + 2.5 * k), r1 = s * Z.z * (2.6 + 5 * k);
+          g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke();
+        }
+        g.restore();
+      }
+    }
   }
 
   // ---- The scene ----
@@ -585,15 +663,31 @@
     let font = '';
     try { font = getComputedStyle(document.body).fontFamily; } catch (_) { /* the fallback below */ }
     font = font || 'system-ui, sans-serif';
-    const key = [W, s.toFixed(3), dpr].join('|');
-    if (!painted || painted.key !== key) painted = { key, canvas: paintField(W, s, dpr, font) };
+    const M = build(play, { seed: o.seed, vh: H / s });
+    // The zoom needs a sharper field: painted finer, within what a phone's canvas allows.
+    // And wider, so a zoom about a man near the sideline has ground beyond it.
+    const margin = M.moss ? Math.round(W * 0.5) : 0, PW = W + margin * 2;
+    const pdpr = M.moss ? Math.max(1, Math.min(4, dpr * 2.2, Math.sqrt(12e6 / (PW * (FL + PAD * 2) * s)))) : dpr;
+    const key = [PW, s.toFixed(3), pdpr.toFixed(3)].join('|');
+    if (!painted || painted.key !== key) painted = { key, canvas: paintField(PW, s, pdpr, font) };
     const vig = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.42, W / 2, H / 2, Math.hypot(W, H) * 0.56);
     vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.4)');
     const shade = g.createLinearGradient(0, 0, 0, 64);
     shade.addColorStop(0, 'rgba(0,0,0,.34)'); shade.addColorStop(1, 'rgba(0,0,0,0)');
-    const M = build(play, { seed: o.seed, vh: H / s });
-    const rate = M.T_END / WATCH_MS;                    // play-clock ms per watched ms
-    const V = { W, H, s, dpr, field: painted.canvas, font, tag: play.sack ? '' : lastName(o.name), vig, shade };
+    // Watched time to the play's own clock. Every play lasts WATCH_MS; a One of
+    // One lasts MOSS_WATCH_MS, and round the catch runs at SLOW.
+    const watch = M.moss ? MOSS_WATCH_MS : WATCH_MS;
+    let clock;
+    if (M.moss) {
+      const A = M.SLOW_A, B = M.SLOW_B;
+      const r = (A + (B - A) / SLOW + (M.T_END - B)) / watch;     // play ms per watched ms, outside the slow part
+      const wa = A / r, wb = wa + (B - A) / (SLOW * r);
+      clock = (w) => (w < wa ? w * r : w < wb ? A + (w - wa) * SLOW * r : B + (w - wb) * r);
+    } else {
+      const rate = M.T_END / watch;                      // play-clock ms per watched ms
+      clock = (w) => w * rate;
+    }
+    const V = { W, H, s, dpr, pdpr, margin, field: painted.canvas, font, tag: play.sack ? '' : lastName(o.name), vig, shade };
 
     // Over the field: the score bug, the call, and the way past it.
     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -611,12 +705,14 @@
     const tall = Math.min(128, Math.max(96, W * 0.3));
     let top = focus - 56 - tall;
     if (play.sack || top < 52 || sy(110) > top - 8) top = focus + 46;
+    if (M.moss) top = H * 0.47 + s * 1.4 * 5;           // under the catch, where the zoom leaves it
     call.style.top = `${Math.round(Math.max(52, Math.min(H - tall - 36, top)))}px`;
     host.textContent = '';
     host.appendChild(cv); host.appendChild(bug); host.appendChild(call);
     if (o.at == null) host.appendChild(el('span', 'oo-scene-skip', 'Tap to skip'));
 
     const said = play.sack ? { big: 'SACKED', sub: 'No gain', cls: 'bad', say: 'Sacked for no gain.' }
+      : M.moss ? { big: 'TOUCHDOWN', sub: `One of One · ${play.gain}-yard bomb`, cls: 'td one', say: `Touchdown! A ${play.gain}-yard bomb, caught over the defender. A One of One.` }
       : play.td ? { big: 'TOUCHDOWN', sub: `${play.gain}-yard pass`, cls: 'td', say: `Touchdown, a ${play.gain}-yard pass.` }
         : { big: `+${play.gain} ${play.gain === 1 ? 'YARD' : 'YARDS'}`, sub: o.after || '', cls: play.tier || '', say: `A ${play.gain}-yard pass. ${o.after || ''}`.trim() };
     let called = false, over = false, raf = 0, guard = 0;
@@ -641,7 +737,7 @@
     const frame = (now) => {
       if (over) return;
       if (!cv.isConnected) { over = true; clearTimeout(guard); return; }
-      const t = Math.max(0, now - t0) * rate;             // the play's own clock
+      const t = clock(Math.max(0, now - t0));             // the play's own clock
       draw(g, M, Math.min(t, M.T_END), V);
       if (t >= M.T_CALL) showCall();
       if (t >= M.T_END) { end(); return; }
@@ -649,11 +745,11 @@
     };
     raf = requestAnimationFrame(frame);
     // A tab in the background gets no frames: the play still ends.
-    guard = setTimeout(() => { showCall(); end(); }, WATCH_MS + 1500);
-    return { stop() { over = true; cancelAnimationFrame(raf); clearTimeout(guard); }, model: M };
+    guard = setTimeout(() => { showCall(); end(); }, watch + 1500);
+    return { stop() { over = true; cancelAnimationFrame(raf); clearTimeout(guard); }, model: M, watch, clock };
   }
 
-  const api = { run, build, FW, FL, WATCH_MS };
+  const api = { run, build, FW, FL, WATCH_MS, MOSS_WATCH_MS, SLOW };
   if (typeof window !== 'undefined') window.ooField = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();

@@ -174,7 +174,8 @@
     const plays = [];
     for (const a of answers || []) {
       if (!a) { plays.push({ from: pos, to: pos, gain: 0, sack: true }); sacks++; continue; }
-      const want = GAIN[a.tier] || 0, td = pos + want >= 100, gain = td ? 100 - pos : want;
+      // A One of One is a touchdown from wherever the ball is (owner, Nov 2026).
+      const want = a.tier === 'one' ? 100 - pos : GAIN[a.tier] || 0, td = pos + want >= 100, gain = td ? 100 - pos : want;
       plays.push({ from: pos, to: pos + gain, gain, td, tier: a.tier });
       yards += gain;
       if (td) { tds++; pos = 25; } else pos += gain;
