@@ -118,6 +118,12 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
     check('  ...and the AdSense script itself loads only then, never on page load', !eager.length
       && !/<script async src="https:\/\/pagead2/.test(lp + sv) && /data-ad-src/.test(lp) && /data-ad-src/.test(sv), JSON.stringify(eager));
     check('  ...and a mouse move alone is not a person', pages.every(([, h]) => { const g = (h.match(/<script data-adgate>[^<]*/) || [''])[0]; return g && !/mousemove/.test(g) && /createElement\('script'\)/.test(g); }));
+    // Bots that tap and type got past the interaction gate (Nov 2026, page
+    // RPM falling), so ads also wait for an invisible Cloudflare Turnstile pass.
+    const tsGate = (g) => /sitekey:K/.test(g) && /K='0x4AAAAAAGC2OD174V7F2qj1'/.test(g) && /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit&onload=chTsGo/.test(g)
+      && /if\(done\|\|!human\|\|!ok\)return/.test(g) && /callback:function\(\)\{ok=true;load\(\)\}/.test(g);
+    check('  ...and only for a visitor Cloudflare Turnstile passes (a tap is not enough)', pages.every(([, h]) => tsGate((h.match(/<script data-adgate>[^<]*/) || [''])[0]))
+      && tsGate(lp) && tsGate(sv));
   }
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);
