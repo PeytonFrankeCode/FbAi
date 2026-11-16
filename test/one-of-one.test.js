@@ -117,8 +117,11 @@ check('...the same day is counted once, and the streak holds until a whole day i
   check('...a rarer answer is a longer throw that hangs longer, and every play is over in a few seconds', (() => {
     const by = (tier) => F.build({ from: 25, to: 25 + { base: 5, green: 12, blue: 20, gold: 35, one: 50 }[tier], gain: { base: 5, green: 12, blue: 20, gold: 35, one: 50 }[tier], td: false, tier }, { seed: 2, vh: 54 });
     const t = ['base', 'green', 'blue', 'gold', 'one'].map(by);
-    return t.every((M, i) => !i || (M.cat[1] > t[i - 1].cat[1] && M.T_CATCH - M.T_THROW > t[i - 1].T_CATCH - t[i - 1].T_THROW)) && t.every(M => M.T_END > 2500 && M.T_END < 4500);
+    return t.every((M, i) => !i || (M.cat[1] > t[i - 1].cat[1] && M.T_CATCH - M.T_THROW > t[i - 1].T_CATCH - t[i - 1].T_THROW)) && t.every(M => M.T_END / F.RATE > 3000 && M.T_END / F.RATE < 5500);
   })());
+  // "Can we just slow down it a little bit" (owner, Nov 2026): the play runs
+  // at three quarters of the speed it was written at; the call is not held longer.
+  check('...the play runs a little slower than written, on its own clock', F.RATE === 0.75 && /const t = Math\.max\(0, now - t0\) \* RATE;/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8')));
   const sackM = F.build(d.plays[2], { seed: 3, vh: 54 });
   check('...no answer is a sack: the ball never leaves the quarterback, who goes down behind the line, and the spot does not move', (() => {
     const L = 10 + d.plays[2].from, end = at(sackM, sackM.T_END), qb = sackM.men.find(e => e.downAt === sackM.T_SACK && e.team === 'o');
@@ -143,7 +146,7 @@ check('...the same day is counted once, and the streak holds until a whole day i
   check('...the buzz lands with the call, not before it: the throw is the reveal', /onCall: \(words\) => \{[^}]*thump\(a\); \}/.test(ps) && /if \(phase === 'reveal'\) thump\(d\.answer\);/.test(ps));
   const fsrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8');
   check('...the field only draws: it reads nothing from the game and writes text as text', !/fetch\(|innerHTML|localStorage|\/api\//.test(fsrc) && /textContent/.test(fsrc) && /window\.ooField = api/.test(fsrc));
-  check('...and a tab in the background still gets to the card', /guard = setTimeout\(\(\) => \{ showCall\(\); end\(\); \}, M\.T_END \+ 1500\);/.test(fsrc));
+  check('...and a tab in the background still gets to the card', /guard = setTimeout\(\(\) => \{ showCall\(\); end\(\); \}, M\.T_END \/ RATE \+ 1500\);/.test(fsrc));
 }
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
   === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
