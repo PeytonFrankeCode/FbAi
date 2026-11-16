@@ -11025,3 +11025,37 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-sheet .oo-msg{margin-top:10px}
 @keyframes ooFadeIn{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.oo-sheet{animation:none}}
+
+/* ---- One of One: the drive down the field (Nov 2026) ---- */
+.oo-field{position:relative;margin:4px 0 2px;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.14),0 10px 24px -14px rgba(0,0,0,.7)}
+.oo-turf{position:relative;height:92px;background:
+  repeating-linear-gradient(90deg,#1f7a3a 0 8.333%,#1b6e34 8.333% 16.667%);}
+.oo-turf::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.18));pointer-events:none}
+.oo-ez{position:absolute;top:0;bottom:0;width:8.333%;display:flex;align-items:center;justify-content:center}
+.oo-ez span{font-weight:900;letter-spacing:.12em;font-size:10px;color:rgba(255,255,255,.85);writing-mode:vertical-rl;transform:rotate(180deg)}
+.oo-ez-l{left:0;background:#14532d}
+.oo-ez-r{right:0;background:linear-gradient(180deg,#1c1c26,#000);box-shadow:inset 2px 0 0 #eab308}
+.oo-ez-r span{color:#fde68a;writing-mode:horizontal-tb;transform:none;font-size:13px;letter-spacing:0}
+.oo-yl{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:rgba(255,255,255,.55)}
+.oo-yl.half{background:rgba(255,255,255,.22);width:1px}
+.oo-yn{position:absolute;bottom:3px;transform:translateX(-50%);font-size:10px;font-weight:800;color:rgba(255,255,255,.75);font-family:inherit}
+.oo-los{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#60a5fa;box-shadow:0 0 8px #3b82f6;transition:left .35s cubic-bezier(.2,.8,.2,1);z-index:1}
+.oo-man{position:absolute;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.oo-qb{background:#fff;border:3px solid #22c55e}
+.oo-wr{background:#facc15;border:3px solid #fff}
+.oo-de{background:#ef4444;border:3px solid #fff;opacity:.9}
+.oo-ball{position:absolute;width:15px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:3;
+  background:radial-gradient(ellipse at 40% 35%,#c47a3a,#7c3f12 70%);box-shadow:0 2px 3px rgba(0,0,0,.55)}
+.oo-ball::after{content:"";position:absolute;left:4px;right:4px;top:4px;height:1px;background:#fff;opacity:.9}
+.oo-call{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:4;pointer-events:none;
+  font-weight:900;font-size:22px;letter-spacing:.02em;color:#fff;white-space:nowrap;
+  text-shadow:0 2px 0 #000,0 0 2px #000,2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+.oo-call.on{animation:ooCall .5s cubic-bezier(.2,1.4,.4,1) forwards}
+.oo-call.green{color:#4ade80}.oo-call.blue{color:#93c5fd}.oo-call.gold,.oo-call.one{color:#fde047}.oo-call.bad{color:#f87171}
+@keyframes ooCall{to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.oo-field.td .oo-ez-r{animation:ooEz 1.2s ease-out 1;box-shadow:inset 2px 0 0 #eab308,0 0 30px #facc15}
+@keyframes ooEz{0%,100%{filter:none}30%{filter:brightness(1.8)}}
+.oo-field.sack{animation:ooSack .35s ease-out 1}
+@keyframes ooSack{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.oo-drive{margin:6px 0 0;text-align:center;font-size:.82rem;font-weight:700;color:var(--text-secondary);letter-spacing:.01em}
+@media (prefers-reduced-motion:reduce){.oo-call.on{animation:none;opacity:1;transform:translate(-50%,-50%)}.oo-field.td .oo-ez-r,.oo-field.sack{animation:none}.oo-los{transition:none}}

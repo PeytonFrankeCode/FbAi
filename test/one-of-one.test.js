@@ -86,6 +86,19 @@ check('...the same day is counted once, and the streak holds until a whole day i
   check('...and on a computer, a sheet with Copy image, Save image and Copy text', /data-sh="copyimg"/.test(playSrc) && /data-sh="save"/.test(playSrc) && /data-sh="copytext"/.test(playSrc));
   check('the picture never shows an answer, only tiers and points', !/\.name\b/.test(playSrc.slice(playSrc.indexOf('async function shareImage'), playSrc.indexOf('async function prepareShare'))));
 }
+{
+  // The drive (owner, Nov 2026): each right answer a pass as deep as it is
+  // rare, a miss a sack for no gain, a touchdown past the goal line.
+  const ps = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play.js'), 'utf8');
+  const D = new Function('plural', ps.slice(ps.indexOf('  const GAIN = {'), ps.indexOf('  // Across the turf')) + '; return drive;')((n, w) => `${n} ${w}${n === 1 ? '' : 's'}`);
+  const d = D([{ tier: 'base' }, { tier: 'gold' }, null, { tier: 'one' }, { tier: 'blue' }, { tier: 'one' }, { tier: 'green' }]);
+  check('a pack is a drive: rarer answers throw deeper, a miss is a sack for no gain',
+    d.plays[0].gain === 5 && d.plays[1].gain === 35 && d.plays[2].sack && d.plays[2].gain === 0 && d.plays[3].td && d.plays[3].gain === 35, JSON.stringify(d.plays.map(p => p.gain)));
+  check('...a touchdown starts the next drive at the 25, and the drive is counted', d.plays[4].from === 25 && d.tds === 2 && d.sacks === 1 && d.yards === 5 + 35 + 35 + 20 + 50 + 5 && d.plays[6].td && d.plays[6].gain === 5, `${d.tds} TDs, ${d.yards} yds`);
+  check('...shown on the reveal (the play runs) and the results (where it ended), and in the share picture',
+    /\$\{field\(dr, true\)\}/.test(ps) && /runPlay\(dr\);/.test(ps) && (ps.match(/field\(drive\(v\.answers\), false\)/g) || []).length === 2 && /const dv = drive\(ans\);/.test(ps));
+  check('...and stays still for anyone who asks for less motion', /if \(calm\(\)\) \{[^}]*done\(\); return; \}/.test(ps));
+}
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
   === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
 
