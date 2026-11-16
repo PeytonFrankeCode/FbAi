@@ -49,6 +49,7 @@ const WATCHED = [
   'app.js',
   'bounties.js',
   'play.js',
+  'play-field.js',
   'style.css',
   'index.html',
   'data/checklists/index.json',
@@ -96,7 +97,7 @@ function version(swSrc) {
 // point at files that have not changed and would not break a page if they
 // were stale — unlike a stylesheet, a month-old icon is just an icon.
 const PAGE_ASSETS = {
-  'index.html': ['style.css', 'app.js', 'bounties.js', 'play.js'],
+  'index.html': ['style.css', 'app.js', 'bounties.js', 'play.js', 'play-field.js'],
   'privacy.html': ['style.css'],
   'terms.html': ['style.css'],
   'about.html': ['style.css'],

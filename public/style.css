@@ -11027,9 +11027,10 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 @media (prefers-reduced-motion:reduce){.oo-sheet{animation:none}}
 
 /* ---- One of One: the drive down the field (Nov 2026) ---- */
+/* The strip under the cards: a chart of the drive. Each pass is an arc in its
+   tier's colour, each sack a cross, the ball where the drive stands. */
 .oo-field{position:relative;margin:4px 0 2px;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.14),0 10px 24px -14px rgba(0,0,0,.7)}
-.oo-turf{position:relative;height:92px;background:
-  repeating-linear-gradient(90deg,#1f7a3a 0 8.333%,#1b6e34 8.333% 16.667%);}
+.oo-turf{position:relative;height:92px;background:repeating-linear-gradient(90deg,#1f7a3a 0 8.333%,#1b6e34 8.333% 16.667%)}
 .oo-turf::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.18));pointer-events:none}
 .oo-ez{position:absolute;top:0;bottom:0;width:8.333%;display:flex;align-items:center;justify-content:center}
 .oo-ez span{font-weight:900;letter-spacing:.12em;font-size:10px;color:rgba(255,255,255,.85);writing-mode:vertical-rl;transform:rotate(180deg)}
@@ -11039,23 +11040,44 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-yl{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:rgba(255,255,255,.55)}
 .oo-yl.half{background:rgba(255,255,255,.22);width:1px}
 .oo-yn{position:absolute;bottom:3px;transform:translateX(-50%);font-size:10px;font-weight:800;color:rgba(255,255,255,.75);font-family:inherit}
-.oo-los{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#60a5fa;box-shadow:0 0 8px #3b82f6;transition:left .35s cubic-bezier(.2,.8,.2,1);z-index:1}
-.oo-man{position:absolute;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.5)}
-.oo-qb{background:#fff;border:3px solid #22c55e}
-.oo-wr{background:#facc15;border:3px solid #fff}
-.oo-de{background:#ef4444;border:3px solid #fff;opacity:.9}
-.oo-ball{position:absolute;width:15px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:3;
+.oo-chart{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible}
+.oo-arc{fill:none;stroke-width:2.5px;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.oo-arc.under{stroke:#0b0b0f;stroke-width:5.5px}
+.oo-arc.sack{stroke:#fca5a5;stroke-width:2.5px}
+.oo-los{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#60a5fa;box-shadow:0 0 8px #3b82f6;z-index:1}
+.oo-ball{position:absolute;top:66.7%;width:15px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:3;
   background:radial-gradient(ellipse at 40% 35%,#c47a3a,#7c3f12 70%);box-shadow:0 2px 3px rgba(0,0,0,.55)}
 .oo-ball::after{content:"";position:absolute;left:4px;right:4px;top:4px;height:1px;background:#fff;opacity:.9}
-.oo-call{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:4;pointer-events:none;
-  font-weight:900;font-size:22px;letter-spacing:.02em;color:#fff;white-space:nowrap;
+.oo-call{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);z-index:4;pointer-events:none;
+  font-weight:900;font-size:20px;letter-spacing:.02em;color:#fff;white-space:nowrap;
   text-shadow:0 2px 0 #000,0 0 2px #000,2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
-.oo-call.on{animation:ooCall .5s cubic-bezier(.2,1.4,.4,1) forwards}
 .oo-call.green{color:#4ade80}.oo-call.blue{color:#93c5fd}.oo-call.gold,.oo-call.one{color:#fde047}.oo-call.bad{color:#f87171}
-@keyframes ooCall{to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
-.oo-field.td .oo-ez-r{animation:ooEz 1.2s ease-out 1;box-shadow:inset 2px 0 0 #eab308,0 0 30px #facc15}
-@keyframes ooEz{0%,100%{filter:none}30%{filter:brightness(1.8)}}
-.oo-field.sack{animation:ooSack .35s ease-out 1}
-@keyframes ooSack{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.oo-field.td .oo-ez-r{box-shadow:inset 2px 0 0 #eab308,0 0 30px #facc15}
 .oo-drive{margin:6px 0 0;text-align:center;font-size:.82rem;font-weight:700;color:var(--text-secondary);letter-spacing:.01em}
-@media (prefers-reduced-motion:reduce){.oo-call.on{animation:none;opacity:1;transform:translate(-50%,-50%)}.oo-field.td .oo-ez-r,.oo-field.sack{animation:none}.oo-los{transition:none}}
+
+/* ---- One of One: the play takes the screen (Nov 2026) ----
+   After an answer the card is the field and nothing else (play-field.js draws
+   it on a canvas). Over it: the score bug, the call when the play ends, and
+   the way past it. Its colours are the field's, the same in light and dark. */
+/* A view is sized to its content (see .collection-view), and a canvas has
+   none until it is drawn: the card states its own width, capped at the screen. */
+.oo-card.oo-scene-card{width:620px;max-width:100%;padding:0;gap:0;overflow:hidden;background:#0d3b1e;border-color:rgba(255,255,255,.16);box-shadow:0 24px 50px -24px rgba(0,0,0,.7)}
+.oo-scene{position:relative;line-height:0;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;min-height:300px}
+.oo-scene:focus-visible{box-shadow:inset 0 0 0 3px #facc15}
+.oo-scene canvas{display:block;width:100%}
+.oo-bug{position:absolute;left:10px;top:10px;right:10px;display:flex;align-items:stretch;width:-moz-fit-content;width:fit-content;max-width:calc(100% - 20px);border-radius:8px;overflow:hidden;
+  font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1;white-space:nowrap;color:#fff;background:rgba(8,12,22,.84);box-shadow:0 6px 16px -8px rgba(0,0,0,.8)}
+.oo-bug b{background:linear-gradient(145deg,#1c1c26,#000);color:#fde68a;padding:8px 9px;box-shadow:inset -1px 0 0 rgba(234,179,8,.7);font-weight:900}
+.oo-bug span{padding:8px 10px;overflow:hidden;text-overflow:ellipsis}
+.oo-bug span + span{box-shadow:inset 1px 0 0 rgba(255,255,255,.16);color:#bbf7d0}
+.oo-scene.td .oo-bug-spot{color:#fde047}
+.oo-scene-call{position:absolute;left:8px;right:8px;top:36%;text-align:center;pointer-events:none;opacity:0;line-height:1.05}
+.oo-scene-call.on{animation:ooSceneCall .5s cubic-bezier(.2,1.5,.4,1) both}
+.oo-scene-call b{display:block;font-size:clamp(34px,11.5vw,62px);font-weight:900;letter-spacing:-.01em;color:#fff;
+  text-shadow:0 3px 0 #000,0 0 3px #000,3px 3px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,0 14px 34px rgba(0,0,0,.6)}
+.oo-scene-call span{display:inline-block;margin-top:10px;padding:7px 12px;border-radius:999px;background:rgba(8,12,22,.84);color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;line-height:1}
+.oo-scene-call span:empty{display:none}
+.oo-scene-call.green b{color:#4ade80}.oo-scene-call.blue b{color:#93c5fd}.oo-scene-call.gold b,.oo-scene-call.one b,.oo-scene-call.td b{color:#fde047}.oo-scene-call.bad b{color:#f87171}
+.oo-scene-call.td b{font-size:clamp(32px,10.5vw,60px)}
+@keyframes ooSceneCall{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.oo-scene-skip{position:absolute;right:10px;bottom:10px;padding:6px 10px;border-radius:999px;background:rgba(8,12,22,.6);color:rgba(255,255,255,.85);font-size:11px;font-weight:700;line-height:1;pointer-events:none}

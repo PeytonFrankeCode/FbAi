@@ -127,11 +127,11 @@ jobs:
       # that source and still change exactly when it does. Top-level names
       # are kept (a plain script, not a module), so onclick="switchView(...)"
       # and the other inline handlers still find their functions.
-      - name: Minify app.js, bounties.js, play.js and style.css
+      - name: Minify app.js, bounties.js, play.js, play-field.js and style.css
         run: |
-          for f in app.js bounties.js play.js; do npx esbuild "public/$f" --minify --target=es2020 --log-level=warning --outfile="public/$f.min" && mv "public/$f.min" "public/$f"; done
+          for f in app.js bounties.js play.js play-field.js; do npx esbuild "public/$f" --minify --target=es2020 --log-level=warning --outfile="public/$f.min" && mv "public/$f.min" "public/$f"; done
           npx esbuild public/style.css --minify --loader:.css=css --log-level=warning --outfile=public/style.css.min && mv public/style.css.min public/style.css
-          node --check public/app.js && node --check public/bounties.js && node --check public/play.js
+          node --check public/app.js && node --check public/bounties.js && node --check public/play.js && node --check public/play-field.js
           ls -la public/app.js public/bounties.js public/play.js public/style.css
 
 

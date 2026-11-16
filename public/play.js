@@ -1,7 +1,8 @@
 // One of One, the daily game (owner, Nov 2026): seven prompts a day, twenty
 // seconds each; name a player who fits, and the rarer the answer among the
 // day's players, the more it scores. Server: server.js "One of One"; rules:
-// game-core.js. This file is the screens: start, prompt, reveal, results.
+// game-core.js. This file is the screens: start, prompt, the play on the
+// field (drawn by play-field.js), reveal, results.
 // Unlimited mode is the same screens over practice rounds of seven, as many
 // as a player likes, apart from the daily pack and its streak.
 // Uses app.js helpers where they exist: authFetch, safeJson, escHtml,
@@ -37,7 +38,8 @@
   const ORDER = ['base', 'green', 'blue', 'gold', 'one'];
 
   let data = null;        // the server's last reply: { view, tiers, msToNext, results, rank, share, stats }
-  let phase = 'loading';  // loading | start | prompt | reveal | results | error
+  let phase = 'loading';  // loading | start | prompt | play | reveal | results | error
+  let scene = null;       // the play running on the field (play-field.js), while phase is 'play'
   let shown = null;       // what the reveal screen is showing: { answer, read, typed, was } or { miss: reason }
   let deadline = 0, total = 20000, raf = 0, busy = false, loaded = false, nextAt = 0, tick = 0, errorText = '';
   let mode = 'daily';     // daily | unlimited
@@ -190,75 +192,55 @@
     if (d.sacks) bits.push(plural(d.sacks, 'sack'));
     return bits.join(' &middot; ');
   }
-  // `live`: the last play is run on the field (the reveal screen); otherwise
-  // the ball sits where the drive ended (the results screen).
-  function field(d, live) {
+  // The drive on a strip of field: each pass an arc in its tier's colour, each
+  // sack a cross, the ball where the drive stands. A drive that has scored
+  // fades behind the one on the field now. The play itself is run on the big
+  // field (play-field.js, the 'play' screen); `call` names the last play here
+  // for anyone who did not see that (reduced motion, or no canvas).
+  const ARC = { base: '#e2e8f0', green: '#86efac', blue: '#93c5fd', gold: '#fde047', one: '#fde68a' };
+  const ballAt = (y) => (y === 50 ? 'Ball at midfield' : `Ball on ${yardWords(y)}`);
+  const playWords = (p) => (!p ? 'Your drive starts at your 25.' : p.sack ? 'Sacked for no gain.'
+    : p.td ? `Touchdown, a ${p.gain}-yard pass.` : `A ${p.gain}-yard pass to ${yardWords(p.to)}.`);
+  function field(d, call) {
     const p = d.plays[d.plays.length - 1];
-    const spot = !p ? 25 : live ? p.from : p.td ? 100 : p.to;
+    const spot = !p ? 25 : p.td ? 100 : p.to;
     let lines = '';
     for (let y = 5; y <= 95; y += 5) lines += `<i class="oo-yl${y % 10 ? ' half' : ''}" style="left:${pct(fx(y))}"></i>`;
     for (let y = 10; y <= 90; y += 10) lines += `<b class="oo-yn" style="left:${pct(fx(y))}">${y <= 50 ? y : 100 - y}</b>`;
-    const say = !p ? 'Your drive starts at your 25.' : p.sack ? 'Sacked for no gain.' : p.td ? `Touchdown, a ${p.gain}-yard pass.` : `A ${p.gain}-yard pass to ${yardWords(p.to)}.`;
-    return `<div class="oo-field${p && p.td && !live ? ' td' : ''}" id="oo-field" role="img" aria-label="${esc(say)}">
+    // Which drive each play belongs to: a touchdown ends one.
+    let n = 0;
+    const of = d.plays.map((q) => { const i = n; if (q.td) n++; return i; });
+    const lit = p && p.td ? n - 1 : n;
+    const arcs = d.plays.map((q, i) => {
+      const o = of[i] === lit ? 1 : 0.4, x1 = 10 + q.from;
+      if (q.sack) return `<path class="oo-arc sack" opacity="${o}" d="M${x1 - 1.3} 18.7L${x1 + 1.3} 21.3M${x1 - 1.3} 21.3L${x1 + 1.3} 18.7"/>`;
+      const x2 = 10 + q.to + (q.td ? 3 : 0), h = 4 + Math.min(q.gain, 50) * 0.27;
+      const path = `M${x1} 20Q${((x1 + x2) / 2).toFixed(1)} ${(20 - h * 2).toFixed(1)} ${x2} 20`;
+      return `${q.tier === 'one' ? `<path class="oo-arc under" opacity="${o}" d="${path}"/>` : ''}<path class="oo-arc" opacity="${o}" stroke="${ARC[q.tier] || '#fff'}" d="${path}"/>`;
+    }).join('');
+    const said = !call || !p ? '' : p.sack ? '<b class="oo-call on bad">SACKED</b>'
+      : p.td ? '<b class="oo-call on gold">TOUCHDOWN</b>' : `<b class="oo-call on ${p.tier}">+${p.gain} YDS</b>`;
+    return `<div class="oo-field${p && p.td ? ' td' : ''}" id="oo-field" role="img" aria-label="${esc(playWords(p))}">
         <div class="oo-turf">
           <i class="oo-ez oo-ez-l"><span>HUDDLE</span></i><i class="oo-ez oo-ez-r"><span>1/1</span></i>
           ${lines}
-          <i class="oo-los" id="oo-los" style="left:${pct(fx(spot))}"></i>
-          <i class="oo-man oo-wr" id="oo-wr" style="left:${pct(fx(spot))};top:30%"></i>
-          <i class="oo-man oo-de" id="oo-de" style="left:${pct(fx(Math.min(spot + 6, 100)))};top:72%"></i>
-          <i class="oo-man oo-qb" id="oo-qb" style="left:${pct(fx(spot))};top:52%"></i>
-          <i class="oo-ball" id="oo-ball" style="left:${pct(fx(spot))};top:52%"></i>
-          <b class="oo-call" id="oo-call"></b>
+          <svg class="oo-chart" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true">${arcs}</svg>
+          <i class="oo-los" style="left:${pct(fx(spot))}"></i>
+          <i class="oo-ball" style="left:${pct(fx(spot))}"></i>
+          ${said}
         </div>
       </div>
       <p class="oo-drive" id="oo-drive">${p ? driveLine(d) : ''}</p>`;
   }
-  // Runs the last play: the QB drops back and throws, the ball spirals to the
-  // receiver as far as the answer earned, the marker moves up. A miss: the
-  // rush gets home and the QB goes down.
-  function runPlay(d) {
-    const p = d.plays[d.plays.length - 1], el = $('oo-field');
-    if (!p || !el) return;
-    const qb = $('oo-qb'), wr = $('oo-wr'), de = $('oo-de'), ball = $('oo-ball'), los = $('oo-los'), call = $('oo-call');
-    const say = (text, cls) => { call.textContent = text; call.className = `oo-call on ${cls || ''}`; };
-    const at = (node, y, top) => { node.style.left = pct(fx(y)); if (top != null) node.style.top = `${top}%`; };
-    const done = () => {
-      at(los, p.td ? 100 : p.to);
-      if (p.sack) { el.classList.add('sack'); say('SACKED', 'bad'); }
-      else if (p.td) { el.classList.add('td'); say('TOUCHDOWN', 'gold'); at(ball, Math.min(p.to + 4, 108), 46); at(wr, Math.min(p.to + 4, 108), 46); }
-      else { say(`+${p.gain} YDS`, p.tier); at(ball, p.to, 34); at(wr, p.to, 34); }
-    };
-    if (calm()) { qb.style.opacity = '.0'; de.style.opacity = '0'; done(); return; }
-    const ease = (k) => 1 - Math.pow(1 - k, 3), lerp = (a, b, k) => a + (b - a) * k;
-    const drop = p.from - 2.5, t0 = performance.now();
-    const T = p.sack ? 900 : 1250;
-    const endY = p.td ? Math.min(p.to + 4, 108) : p.to;
-    const arc = 10 + Math.min(p.gain, 50) * 0.9;   // pixels of loft
-    const frame = (now) => {
-      if (!el.isConnected) return;
-      const t = now - t0;
-      const k1 = Math.min(1, t / 300);              // the drop
-      at(qb, lerp(p.from, drop, ease(k1)), 52);
-      if (p.sack) {
-        const kr = Math.min(1, Math.max(0, (t - 120) / 520));
-        at(de, lerp(Math.min(p.from + 6, 100), drop + 0.8, ease(kr)), lerp(72, 54, ease(kr)));
-        at(ball, lerp(p.from, drop, ease(k1)), 52);
-        at(wr, lerp(p.from, p.from + 6, Math.min(1, t / 800)), 30);
-      } else {
-        const kw = Math.min(1, t / (T - 100));
-        at(wr, lerp(p.from, endY, kw * kw * (3 - 2 * kw)), lerp(30, p.td ? 46 : 34, kw));
-        de.style.left = pct(fx(lerp(Math.min(p.from + 6, 100), Math.min(p.from + 9, 104), kw)));
-        if (t < 300) { at(ball, lerp(p.from, drop, ease(k1)), 52); ball.style.transform = ''; }
-        else {
-          const kb = Math.min(1, (t - 300) / (T - 300));
-          at(ball, lerp(drop, endY, kb), lerp(52, p.td ? 46 : 34, kb));
-          ball.style.transform = `translate(-50%,-50%) translateY(${(-Math.sin(Math.PI * kb) * arc).toFixed(1)}px) rotate(${(kb * 720).toFixed(0)}deg) scale(${(1 + Math.sin(Math.PI * kb) * 0.45).toFixed(2)})`;
-        }
-      }
-      if (t < T) requestAnimationFrame(frame);
-      else { ball.style.transform = ''; done(); }
-    };
-    requestAnimationFrame(frame);
+  // The buzz for an answer, and more for a rare one. With the play on the
+  // field it lands with the call, not before: the throw is the reveal.
+  const thump = (a) => buzz(!a ? 30 : a.tier === 'one' ? [20, 50, 20, 50, 45] : a.tier === 'gold' ? [15, 40, 20] : 12);
+  // Reduced motion gets no play: the card comes straight up, as before.
+  const showsPlay = () => !calm() && !!(window.ooField && window.ooField.run);
+  function endPlay() {
+    if (phase !== 'play') return;
+    phase = 'reveal';
+    paint();
   }
   // The score counts up to where it ends.
   function countUp(el, to, from = 0) {
@@ -387,10 +369,11 @@
     const root = $('oo-root');
     if (!root) return;
     cancelAnimationFrame(raf); clearInterval(tick);
+    if (scene) { scene.stop(); scene = null; }
     const v = data && data.view;
     // A round on the clock gets the screen to itself (style.css, .oo-live).
     const view = $('play-view');
-    if (view) view.classList.toggle('oo-live', phase === 'prompt' || phase === 'reveal');
+    if (view) view.classList.toggle('oo-live', phase === 'prompt' || phase === 'play' || phase === 'reveal');
     if (phase === 'loading') { root.innerHTML = skeleton(); return; }
     const unlimited = mode === 'unlimited';
     if (phase === 'error' || !v) {
@@ -444,6 +427,36 @@
       return;
     }
 
+    // The play: the screen goes to the field, and the pass goes as far as the
+    // answer earned (play-field.js). A tap, or the end of the play, turns to
+    // the card.
+    if (phase === 'play' && shown) {
+      const d = drive(v.answers), p = d.plays[d.plays.length - 1];
+      root.innerHTML = `<div class="oo-card oo-scene-card">
+        <div class="oo-scene" id="oo-scene" data-act="card" tabindex="0" role="button" aria-label="The play on the field. Press to go straight to your card."></div>
+        <p class="sr-only" id="oo-said" role="status" aria-live="polite"></p>
+      </div>`;
+      const host = $('oo-scene');
+      if (window.innerWidth <= 640) { try { root.scrollIntoView({ block: 'start' }); } catch (_) { /* older browsers */ } }
+      // As tall as the screen allows, so the field is the whole picture.
+      const size = () => Math.round(Math.max(300, Math.min(680, host.clientWidth * 1.6, window.innerHeight - Math.max(0, host.getBoundingClientRect().top) - 16)));
+      let h = size();
+      if (h < 380) { try { root.scrollIntoView({ block: 'start' }); } catch (_) { /* as above */ } h = size(); }
+      const a = shown.answer;
+      scene = p && showsPlay() ? window.ooField.run(host, p, {
+        height: h, seed: (v.number || 0) + v.answers.length, name: a ? a.name : '',
+        bug: `Play ${v.answers.length} of ${v.count}`, before: ballAt(p.from), after: p.td ? 'Touchdown' : ballAt(p.to),
+        onCall: (words) => { const said = $('oo-said'); if (said) said.textContent = words; thump(a); },
+        onEnd: endPlay,
+      }) : null;
+      if (scene) {
+        shown.played = true;
+        try { host.focus({ preventScroll: true }); } catch (_) { host.focus(); }
+        return;
+      }
+      phase = 'reveal';                                  // nothing to draw it on: straight to the card
+    }
+
     if (phase === 'reveal' && shown) {
       const a = shown.answer, last = v.done;
       let card, line;
@@ -464,7 +477,7 @@
       const dr = drive(v.answers);
       root.innerHTML = `<div class="oo-card oo-reveal">
         ${slots(v, -1, true)}
-        ${field(dr, true)}
+        ${field(dr, !shown.played)}
         ${card}
         ${typed}
         <p class="oo-p oo-center">${line}</p>
@@ -473,7 +486,6 @@
         <button type="button" class="oo-btn oo-big" id="oo-go" data-act="${last ? 'results' : 'next'}">${last ? 'See your results' : `Next prompt &middot; ${Math.min(v.slot + 1, v.count)} of ${v.count}`}</button>
       </div>`;
       if (a) countUp($('oo-total'), v.score, v.score - a.points);
-      runPlay(dr);
       tilt();
       const go = $('oo-go');
       if (go) { try { go.focus({ preventScroll: true }); } catch (_) { go.focus(); } }
@@ -625,10 +637,11 @@
       const d = await api('/api/game/answer', { ...which(), text, final: !!final });
       take(d);
       if (d.ok) {
-        shown = { answer: d.answer, read: d.read || null, typed: text, kind }; phase = 'reveal';
-        buzz(d.answer.tier === 'one' ? [20, 50, 20, 50, 45] : d.answer.tier === 'gold' ? [15, 40, 20] : 12);
+        shown = { answer: d.answer, read: d.read || null, typed: text, kind };
+        phase = showsPlay() ? 'play' : 'reveal';
+        if (phase === 'reveal') thump(d.answer);
       }
-      else if (d.timeout) { shown = { miss: d.reason, kind }; phase = 'reveal'; }
+      else if (d.timeout) { shown = { miss: d.reason, kind }; phase = showsPlay() ? 'play' : 'reveal'; }
       else if (d.error || !d.view.active) { busy = false; return load(); }   // the round moved on without this page
       else {
         // Not a match: same prompt, same clock, try again.
@@ -861,11 +874,17 @@
       else if (act === 'another') playUnlimited(true);
       else if (act === 'daily') backToDaily();
       else if (act === 'results') { phase = 'results'; paint(); }
+      else if (act === 'card') endPlay();
       else if (act === 'share') share();
       else if (act === 'reload') load();
       else if (act === 'login' && typeof showLogin === 'function') showLogin();
     });
     root.addEventListener('submit', (e) => { e.preventDefault(); send(false); });
+    // Enter or Escape goes past the play to the card. Not Space: its click
+    // lands on key-up, which would press the card's button too.
+    root.addEventListener('keydown', (e) => {
+      if (phase === 'play' && !e.repeat && (e.key === 'Enter' || e.key === 'Escape')) { e.preventDefault(); endPlay(); }
+    });
   }
 
   // switchView('play') calls this each time the tab is opened.
@@ -874,7 +893,7 @@
     if (!loaded) { loaded = true; load(); return; }
     // Coming back to the tab: a round on the clock is left alone; anything
     // else is read again, so a new day or a sign-in shows.
-    if (phase !== 'prompt' && phase !== 'reveal' && !busy) load();
+    if (phase !== 'prompt' && phase !== 'play' && phase !== 'reveal' && !busy) load();
   };
   // The backdrop (index.html, .oo-bg) shows while the game's view does:
   // switchView hides and shows views by their `hidden` class.
