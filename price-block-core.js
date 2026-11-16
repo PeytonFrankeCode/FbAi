@@ -244,14 +244,16 @@ function pricedHead(summary, title, description) {
     for (const amp of ['&amp;', '&']) {
       const phrase = ` — Values ${amp} Checklist`;
       if (title.includes(phrase)) {
-        // At most 70 characters as the reader sees them (owner, Nov 2026):
-        // the price stays, the brand and then "& Checklist" go first.
-        const fits = (t) => t.replace(/&amp;/g, '&').length <= 70;
+        // Shorter than 70 characters (owner, Nov 2026): 65 as the reader
+        // sees it and under 70 in the page source (&amp;). The price stays;
+        // the brand and then "& Checklist" go first.
+        const fits = (t) => { const plain = t.replace(/&amp;/g, '&'); return plain.length <= 65 && plain.replace(/&/g, '&amp;').length < 70; };
         const tries = [
           title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`),
           title.replace(phrase, ` — Median Sale ${m} ${amp} Checklist`).replace(/ \| The Card Huddle$/, ''),
           title.replace(phrase, ` — Median Sale ${m}`).replace(/ \| The Card Huddle$/, ''),
           title.replace(phrase, ` — ${m} Median`).replace(/ \| The Card Huddle$/, ''),
+          title.replace(phrase, ` — ${m} Median`).replace(/ \| The Card Huddle$/, '').replace(/ (Football|Basketball|Baseball) Cards — /, ' — '),
         ];
         out.title = tries.find(fits) || tries[tries.length - 1];
         break;

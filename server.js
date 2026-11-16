@@ -18811,12 +18811,17 @@ const NEWS_CSS = [
 const NEWS_AD_TAG = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window,d=document,K='0x4AAAAAAGC2OD174V7F2qj1';(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel'],done=false,human=false,ok=false;function go(e){if(e&&e.isTrusted===false)return;human=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});load()}function load(){if(done||!human||!ok)return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0;var a=d.querySelector('script[data-ad-src]');if(a&&!a.getAttribute('data-loaded')){a.setAttribute('data-loaded','1');var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=a.getAttribute('data-ad-src');d.head.appendChild(s)}}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})});w.chTsGo=function(){try{var b=d.createElement('div');b.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.body.appendChild(b);w.turnstile.render(b,{sitekey:K,callback:function(){ok=true;load()},'error-callback':function(){return true}})}catch(x){}};function ts(){var s=d.createElement('script');s.async=true;s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=chTsGo';d.head.appendChild(s)}if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',ts);else ts()})();</script><script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>` + '<script async data-ad-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
 // A page title at 70 characters at most (owner, Nov 2026): the site name goes
 // first, then the title is cut at a word with an ellipsis.
+// Shorter than 70 characters (owner, Nov 2026): 65 as read, and under 70 in
+// the page source, where & < > " ' are written as entities.
 function _fitTitle(t) {
+  const fits = (x) => x.length <= 65 && _esc(x).length < 70;
   let s = String(t || '').replace(/\s+/g, ' ').trim();
-  if (s.length <= 70) return s;
+  if (fits(s)) return s;
   s = s.replace(/\s*[·|—-]\s*The Card Huddle$/, '');
-  if (s.length <= 70) return s;
-  return s.slice(0, 69).replace(/[\s,:;&—·-]+\S*$/, '').trim() + '…';
+  if (fits(s)) return s;
+  let cut = s.slice(0, 64).replace(/[\s,:;&—·-]+\S*$/, '').trim();
+  while (cut && !fits(cut + '…')) cut = cut.replace(/[\s,:;&—·-]*\S+$/, '').trim();
+  return cut + '…';
 }
 function newsShell(opts) {
   opts = { ...opts, title: _fitTitle(opts.title) };
@@ -19387,7 +19392,7 @@ app.get('/s/:file', async (req, res) => {
   const e = _esc;
   res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', 'public, max-age=3600');
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${e(title)} · The Card Huddle</title><meta name="description" content="${e(desc)}"><meta name="robots" content="noindex, follow">
+<title>${e(_fitTitle(`${title} · The Card Huddle`))}</title><meta name="description" content="${e(desc)}"><meta name="robots" content="noindex, follow">
 <link rel="canonical" href="${e(DRIP_ORIGIN + dest)}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="The Card Huddle"><meta property="og:title" content="${e(title)}">
 <meta property="og:description" content="${e(desc)}"><meta property="og:image" content="${e(img)}"><meta property="og:image:width" content="1080"><meta property="og:image:height" content="1080">
