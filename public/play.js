@@ -418,7 +418,7 @@
       ${slots(v, -1, false, true)}
       ${standing(false)}
       ${statTiles()}
-      <button type="button" class="oo-btn oo-big" data-act="share">Share your pack</button>
+      <button type="button" class="oo-btn oo-big oo-share-btn" data-act="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share your pack</button>
       <p id="oo-shared" class="oo-msg oo-center" role="status" aria-live="polite"></p>
       <p class="oo-foot">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span>${signedIn() ? '' : ' &middot; <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak'}</p>
       ${unlimitedDoor()}
@@ -426,6 +426,7 @@
     <h3 class="oo-h2">What everyone said</h3>
     <div class="oo-recap">${recap}</div>`;
     countUp(root.querySelector('.oo-score strong'), v.score);
+    prepareShare(v);
     tick = setInterval(() => {
       const el = $('oo-countdown'), left = nextAt - Date.now();
       if (!el) { clearInterval(tick); return; }
@@ -542,18 +543,190 @@
     paint();
   }
 
+  // ---- Sharing ----
+  // Sharing sends a picture of the pack (the score, the seven cards in their
+  // tiers, the site) with the text, so it looks like something in a group
+  // chat, not a row of squares. Tiers only, never an answer.
+  const TIER_ART = {
+    base: { fill: '#cbd5e1', ink: '#0f172a', label: 'BASE' },
+    green: { fill: '#22c55e', ink: '#052e16', label: 'GREEN' },
+    blue: { fill: '#3b82f6', ink: '#ffffff', label: 'BLUE' },
+    gold: { fill: '#facc15', ink: '#231a00', label: 'GOLD' },
+    one: { fill: '#0b0b0f', ink: '#fde68a', label: '1/1' },
+  };
+  let shareFile = null, shareFor = null;
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  const loadImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+  async function shareImage(v) {
+    const W = 1080, H = 1350;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) { /* draw with what there is */ }
+    const font = (getComputedStyle(document.body).fontFamily || '') + ', Inter, system-ui, sans-serif';
+    const F = (w, px) => `${w} ${px}px ${font}`;
+    const spaced = (px) => { try { ctx.letterSpacing = px + 'px'; } catch (_) { /* older browsers */ } };
+
+    // Backdrop: the game's night sky, soft lights, a few cards drifting.
+    ctx.fillStyle = '#0a0f1c'; ctx.fillRect(0, 0, W, H);
+    const glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(10,15,28,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
+    glow(140, 120, 760, 'rgba(34,197,94,.30)');
+    glow(1000, 300, 560, 'rgba(59,130,246,.18)');
+    glow(940, 1300, 760, 'rgba(234,179,8,.22)');
+    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 3;
+    for (const [x, y, a] of [[90, 470, -0.3], [960, 560, 0.25], [140, 1150, 0.2], [930, 1060, -0.15], [820, 90, 0.35]]) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a); roundRect(ctx, -45, -63, 90, 126, 12); ctx.stroke(); ctx.restore();
+    }
+    ctx.restore();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+
+    // The site's logo, or its name.
+    const logo = await loadImg('logo-dark-h160.webp');
+    if (logo) { const h = 112, w = h * logo.width / logo.height; ctx.drawImage(logo, (W - w) / 2, 44, w, h); }
+    else { ctx.fillStyle = '#e2e8f0'; ctx.font = F(800, 34); spaced(4); ctx.fillText('THE CARD HUDDLE', W / 2, 118); spaced(0); }
+
+    // Title in foil.
+    ctx.font = F(900, 128); spaced(-2);
+    const foil = ctx.createLinearGradient(220, 0, 860, 0);
+    foil.addColorStop(0, '#fde68a'); foil.addColorStop(0.35, '#facc15'); foil.addColorStop(0.55, '#fff7d6'); foil.addColorStop(0.8, '#eab308'); foil.addColorStop(1, '#fde68a');
+    ctx.fillStyle = foil; ctx.shadowColor = 'rgba(234,179,8,.35)'; ctx.shadowBlur = 30;
+    ctx.fillText('One of One', W / 2, 300);
+    ctx.shadowBlur = 0; spaced(0);
+    ctx.fillStyle = '#94a3b8'; ctx.font = F(700, 32); spaced(3);
+    ctx.fillText(`DAILY PACK #${v.number} · ${dateWords(v.date).toUpperCase()}`, W / 2, 368);
+    spaced(0);
+
+    // The score.
+    ctx.font = F(900, 240); const sw = ctx.measureText(String(v.score)).width;
+    ctx.font = F(800, 70); const mw = ctx.measureText(`/ ${v.maxScore}`).width;
+    const sx = (W - sw - 24 - mw) / 2;
+    ctx.textAlign = 'left';
+    ctx.font = F(900, 240); ctx.fillStyle = '#ffffff'; spaced(-6); ctx.fillText(String(v.score), sx, 640); spaced(0);
+    ctx.font = F(800, 70); ctx.fillStyle = '#64748b'; ctx.fillText(`/ ${v.maxScore}`, sx + sw + 24, 640);
+    ctx.textAlign = 'center';
+
+    // The seven cards.
+    const ans = v.answers || [];
+    const cw = 118, ch = 166, gap = 16, n = Math.max(ans.length, v.count || 7);
+    const x0 = (W - (n * cw + (n - 1) * gap)) / 2, y0 = 720;
+    for (let i = 0; i < n; i++) {
+      const a = ans[i], x = x0 + i * (cw + gap), art = a ? TIER_ART[a.tier] : null;
+      ctx.save();
+      if (!art) {
+        roundRect(ctx, x, y0, cw, ch, 16); ctx.setLineDash([10, 8]); ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#475569'; ctx.font = F(800, 40); ctx.fillText('–', x + cw / 2, y0 + ch / 2 + 14);
+        ctx.restore(); continue;
+      }
+      if (a.tier === 'one') {
+        ctx.shadowColor = 'rgba(234,179,8,.7)'; ctx.shadowBlur = 34;
+        const g = ctx.createLinearGradient(x, y0, x + cw, y0 + ch); g.addColorStop(0, '#26263a'); g.addColorStop(1, '#000'); ctx.fillStyle = g;
+      } else {
+        ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8; ctx.fillStyle = art.fill;
+      }
+      roundRect(ctx, x, y0, cw, ch, 16); ctx.fill();
+      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+      if (a.tier === 'one') { ctx.strokeStyle = '#eab308'; ctx.lineWidth = 4; ctx.stroke(); }
+      else { const sh = ctx.createLinearGradient(x, y0, x + cw, y0 + ch); sh.addColorStop(0, 'rgba(255,255,255,.35)'); sh.addColorStop(0.45, 'rgba(255,255,255,0)'); ctx.fillStyle = sh; roundRect(ctx, x, y0, cw, ch, 16); ctx.fill(); }
+      ctx.fillStyle = art.ink;
+      if (a.tier === 'one') { ctx.font = F(900, 46); ctx.fillText('1/1', x + cw / 2, y0 + ch / 2 + 16); }
+      else {
+        ctx.font = F(800, 17); spaced(2); ctx.fillText(art.label, x + cw / 2, y0 + 34); spaced(0);
+        ctx.font = F(900, 36); ctx.fillText(`+${a.points}`, x + cw / 2, y0 + ch - 30);
+      }
+      ctx.restore();
+    }
+
+    // The rare ones, and the streak.
+    const count = (t) => ans.filter(a => a && a.tier === t).length;
+    const bits = [];
+    if (count('one')) bits.push(count('one') === 1 ? '1 One of One' : `${count('one')} One of Ones`);
+    if (count('gold')) bits.push(`${count('gold')} Gold`);
+    const st = stats();
+    if (st && st.streak > 1) bits.push(`${st.streak}-day streak`);
+    if (bits.length) { ctx.fillStyle = '#e2e8f0'; ctx.font = F(700, 40); ctx.fillText(bits.join('  ·  '), W / 2, 1000); }
+
+    // The challenge and where to play.
+    ctx.fillStyle = '#ffffff'; ctx.font = F(900, 56); ctx.fillText('Can you beat it?', W / 2, 1138);
+    ctx.font = F(800, 38); const url = 'thecardhuddle.com/play', uw = ctx.measureText(url).width + 72;
+    roundRect(ctx, (W - uw) / 2, 1180, uw, 76, 38); ctx.fillStyle = 'rgba(34,197,94,.14)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(74,222,128,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#4ade80'; ctx.fillText(url, W / 2, 1231);
+
+    return new Promise((ok) => c.toBlob(ok, 'image/png'));
+  }
+  // Made when the results show, so the tap on Share opens the sheet at once.
+  async function prepareShare(v) {
+    const key = `${v.date}|${v.score}`;
+    if (shareFor === key && shareFile) return;
+    shareFor = key; shareFile = null;
+    try {
+      const blob = await shareImage(v);
+      if (blob && shareFor === key) shareFile = new File([blob], `one-of-one-${v.number}.png`, { type: 'image/png' });
+    } catch (_) { /* text still shares */ }
+  }
+
   async function share() {
     const text = (data && data.share) || '';
-    const out = $('oo-shared');
     if (!text) return;
+    const file = shareFile;
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     try {
-      if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { await navigator.share({ text }); return; }
-      await navigator.clipboard.writeText(text);
-      if (out) out.textContent = 'Copied. Paste it anywhere.';
+      if (mobile && file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+      if (mobile && navigator.share && !file) { await navigator.share({ text }); return; }
     } catch (err) {
       if (err && err.name === 'AbortError') return;
-      if (out) out.textContent = text;   // no clipboard: show it to copy by hand
     }
+    openShareSheet(file, text);
+  }
+
+  // On a computer (or a phone that cannot share a picture): the picture, with
+  // Copy image, Save image and Copy text.
+  function openShareSheet(file, text) {
+    closeShareSheet();
+    const url = file ? URL.createObjectURL(file) : '';
+    const canCopyImg = !!(file && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
+    const el = document.createElement('div');
+    el.className = 'oo-sheet'; el.id = 'oo-sheet';
+    el.innerHTML = `<div class="oo-sheet-card" role="dialog" aria-modal="true" aria-label="Share your pack">
+      <button type="button" class="oo-sheet-x" data-sh="close" aria-label="Close">&times;</button>
+      ${url ? `<img class="oo-sheet-img" src="${url}" alt="Your One of One pack: ${esc(String(data.view.score))} of ${esc(String(data.view.maxScore))}">` : `<pre class="oo-sheet-text">${esc(text)}</pre>`}
+      <div class="oo-sheet-row">
+        ${canCopyImg ? '<button type="button" class="oo-btn" data-sh="copyimg">Copy image</button>' : ''}
+        ${file ? `<a class="oo-btn oo-ghost" data-sh="save" href="${url}" download="${esc(file.name)}">Save image</a>` : ''}
+        <button type="button" class="oo-btn oo-ghost" data-sh="copytext">Copy text</button>
+      </div>
+      <p class="oo-msg oo-center" id="oo-sheet-msg" role="status" aria-live="polite"></p>
+    </div>`;
+    const say = (m) => { const o = document.getElementById('oo-sheet-msg'); if (o) o.textContent = m; };
+    el.addEventListener('click', async (e) => {
+      if (e.target === el) { closeShareSheet(); return; }
+      const b = e.target.closest('[data-sh]');
+      if (!b) return;
+      const act = b.dataset.sh;
+      if (act === 'close') closeShareSheet();
+      else if (act === 'copyimg') {
+        try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': file })]); say('Image copied. Paste it anywhere.'); }
+        catch (_) { say('Your browser would not copy the image. Save it instead.'); }
+      } else if (act === 'copytext') {
+        try { await navigator.clipboard.writeText(text); say('Copied. Paste it anywhere.'); }
+        catch (_) { say(text); }
+      } else if (act === 'save') say('Saved.');
+    });
+    el._url = url;
+    document.body.appendChild(el);
+    document.addEventListener('keydown', sheetKey);
+    const first = el.querySelector('.oo-sheet-row .oo-btn'); if (first) first.focus();
+  }
+  function sheetKey(e) { if (e.key === 'Escape') closeShareSheet(); }
+  function closeShareSheet() {
+    const el = document.getElementById('oo-sheet');
+    document.removeEventListener('keydown', sheetKey);
+    if (!el) return;
+    if (el._url) setTimeout(() => URL.revokeObjectURL(el._url), 1000);
+    el.remove();
   }
 
   // A player's name opens their sold prices in Search.

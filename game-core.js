@@ -550,9 +550,16 @@ function memoryStore() {
 
 // The share text: tiers only, never an answer, so it spoils nothing.
 const SQUARES = { base: '⬜', green: '🟩', blue: '🟦', gold: '🟨', one: '⬛', miss: '✖️' };
+// A line under the squares names the rare ones ("2 One of Ones · 1 Gold"),
+// since a black square alone does not say One of One.
 function shareText(view, site = 'thecardhuddle.com/play') {
-  const row = (view.answers || []).map(a => (a ? SQUARES[a.tier] : SQUARES.miss)).join('');
-  return `One of One #${view.number}  ${view.score}/${view.maxScore}\n${row}\n${site}`;
+  const ans = view.answers || [];
+  const row = ans.map(a => (a ? SQUARES[a.tier] : SQUARES.miss)).join('');
+  const n = (t) => ans.filter(a => a && a.tier === t).length;
+  const best = [];
+  if (n('one')) best.push(n('one') === 1 ? '1 One of One' : `${n('one')} One of Ones`);
+  if (n('gold')) best.push(`${n('gold')} Gold`);
+  return `One of One #${view.number} · ${view.score}/${view.maxScore}\n${row}${best.length ? '\n' + best.join(' · ') : ''}\nCan you beat it? ${site}`;
 }
 
 // A streak is days played in a row; a missed day starts it again.
