@@ -95,9 +95,55 @@ check('...the same day is counted once, and the streak holds until a whole day i
   check('a pack is a drive: rarer answers throw deeper, a miss is a sack for no gain',
     d.plays[0].gain === 5 && d.plays[1].gain === 35 && d.plays[2].sack && d.plays[2].gain === 0 && d.plays[3].td && d.plays[3].gain === 35, JSON.stringify(d.plays.map(p => p.gain)));
   check('...a touchdown starts the next drive at the 25, and the drive is counted', d.plays[4].from === 25 && d.tds === 2 && d.sacks === 1 && d.yards === 5 + 35 + 35 + 20 + 50 + 5 && d.plays[6].td && d.plays[6].gain === 5, `${d.tds} TDs, ${d.yards} yds`);
-  check('...shown on the reveal (the play runs) and the results (where it ended), and in the share picture',
-    /\$\{field\(dr, true\)\}/.test(ps) && /runPlay\(dr\);/.test(ps) && (ps.match(/field\(drive\(v\.answers\), false\)/g) || []).length === 2 && /const dv = drive\(ans\);/.test(ps));
-  check('...and stays still for anyone who asks for less motion', /if \(calm\(\)\) \{[^}]*done\(\); return; \}/.test(ps));
+  check('...charted on the reveal and the results (an arc for each pass, a cross for a sack), and in the share picture',
+    /\$\{field\(dr, !shown\.played\)\}/.test(ps) && (ps.match(/field\(drive\(v\.answers\), false\)/g) || []).length === 2 && /const dv = drive\(ans\);/.test(ps)
+    && /class="oo-chart"/.test(ps) && /class="oo-arc sack"/.test(ps));
+
+  // The play takes the screen (owner, Nov 2026: "focus to just the field ... a
+  // more detailed field with the players and everything"): after an answer the
+  // card is a football field from above, and the pass goes as far as the
+  // answer earned. play-field.js draws it and decides nothing.
+  const F = require(require('path').join(__dirname, '..', 'public', 'play-field.js'));
+  const at = (M, t) => { const b = M.ball(t); return [b.x, b.y]; };
+  const plays = d.plays.filter(p => !p.sack);
+  const built = plays.map(p => F.build(p, { seed: 3, vh: 54 }));
+  check('the field has both teams on it: eleven a side, one of them thrown to', built.every(M => M.men.filter(e => e.team === 'o').length === 11 && M.men.filter(e => e.team === 'd').length === 11
+    && M.men.filter(e => e.star).length === 1 && M.star.team === 'o'));
+  check('...the ball is snapped from the spot, thrown, caught, and dead exactly as far on as the answer earned', built.every((M, i) => {
+    const p = plays[i], snap = at(M, 0), end = at(M, M.T_END);
+    return Math.abs(snap[1] - (10 + p.from)) < 0.5 && M.T_THROW > 550 && M.T_CATCH > M.T_THROW && M.T_DOWN > M.T_CATCH && M.ball((M.T_THROW + M.T_CATCH) / 2).air === true
+      && (p.td ? end[1] > 110 && end[1] < 120 && M.spot === 110 : Math.abs(end[1] - (10 + p.to)) < 0.3 && M.spot === 10 + p.to);
+  }), built.map((M, i) => `${plays[i].gain}: ${(at(M, M.T_END)[1] - 10).toFixed(1)}`).join(', '));
+  check('...a rarer answer is a longer throw that hangs longer, and every play is over in a few seconds', (() => {
+    const by = (tier) => F.build({ from: 25, to: 25 + { base: 5, green: 12, blue: 20, gold: 35, one: 50 }[tier], gain: { base: 5, green: 12, blue: 20, gold: 35, one: 50 }[tier], td: false, tier }, { seed: 2, vh: 54 });
+    const t = ['base', 'green', 'blue', 'gold', 'one'].map(by);
+    return t.every((M, i) => !i || (M.cat[1] > t[i - 1].cat[1] && M.T_CATCH - M.T_THROW > t[i - 1].T_CATCH - t[i - 1].T_THROW)) && t.every(M => M.T_END > 2500 && M.T_END < 4500);
+  })());
+  const sackM = F.build(d.plays[2], { seed: 3, vh: 54 });
+  check('...no answer is a sack: the ball never leaves the quarterback, who goes down behind the line, and the spot does not move', (() => {
+    const L = 10 + d.plays[2].from, end = at(sackM, sackM.T_END), qb = sackM.men.find(e => e.downAt === sackM.T_SACK && e.team === 'o');
+    return !!qb && end[1] < L - 4 && sackM.spot === L && !sackM.star && [300, 900, 1500, 2500].every(t => !sackM.ball(t).air);
+  })());
+  check('...the camera starts on the line of scrimmage and follows a deep ball up the field; a short one it holds', (() => {
+    const deepM = F.build({ from: 25, to: 75, gain: 50, td: false, tier: 'one' }, { seed: 1, vh: 54 }), shortM = F.build({ from: 25, to: 30, gain: 5, td: false, tier: 'base' }, { seed: 1, vh: 54 });
+    return Math.abs(deepM.cam(0) - shortM.cam(0)) < 0.01 && deepM.cam(deepM.T_END) > deepM.cam(0) + 25 && Math.abs(shortM.cam(shortM.T_END) - shortM.cam(0)) < 0.01
+      && [0, 1200, 2400, 4000].every(t => deepM.cam(t) >= 54 / 2 - 3 && deepM.cam(t) <= 123 - 54 / 2);
+  })());
+  check('...the same play draws the same way twice, and the two sides of the formation mirror', (() => {
+    const p = { from: 40, to: 60, gain: 20, td: false, tier: 'blue' }, a = F.build(p, { seed: 1, vh: 54 }), b = F.build(p, { seed: 1, vh: 54 }), c = F.build(p, { seed: 2, vh: 54 });
+    const mid = F.FW / 2;
+    return [0, 700, 1500, 2600].every(t => a.men.every((e, i) => { const x = e.at(t), y = b.men[i].at(t); return x[0] === y[0] && x[1] === y[1]; }))
+      && Math.abs((a.cat[0] - mid) + (c.cat[0] - mid)) < 0.01 && a.cat[1] === c.cat[1];
+  })());
+  check('an answer goes to the field first, then the card; reduced motion goes straight to the card',
+    /phase = showsPlay\(\) \? 'play' : 'reveal';/.test(ps) && /const showsPlay = \(\) => !calm\(\) && !!\(window\.ooField && window\.ooField\.run\);/.test(ps)
+    && /if \(phase === 'play' && shown\) \{/.test(ps) && /onEnd: endPlay,/.test(ps) && /phase = 'reveal';\s+\/\/ nothing to draw it on/.test(ps));
+  check('...a tap, Enter or Escape goes past the play to the card (not Space, whose click would land on the card\'s button)',
+    /data-act="card"/.test(ps) && /else if \(act === 'card'\) endPlay\(\);/.test(ps) && /phase === 'play' && !e\.repeat && \(e\.key === 'Enter' \|\| e\.key === 'Escape'\)/.test(ps));
+  check('...the buzz lands with the call, not before it: the throw is the reveal', /onCall: \(words\) => \{[^}]*thump\(a\); \}/.test(ps) && /if \(phase === 'reveal'\) thump\(d\.answer\);/.test(ps));
+  const fsrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'play-field.js'), 'utf8');
+  check('...the field only draws: it reads nothing from the game and writes text as text', !/fetch\(|innerHTML|localStorage|\/api\//.test(fsrc) && /textContent/.test(fsrc) && /window\.ooField = api/.test(fsrc));
+  check('...and a tab in the background still gets to the card', /guard = setTimeout\(\(\) => \{ showCall\(\); end\(\); \}, M\.T_END \+ 1500\);/.test(fsrc));
 }
 check('the share text shows tiers and never an answer', G.shareText({ number: 12, score: 410, maxScore: 700, answers: [{ tier: 'one' }, { tier: 'gold' }, { tier: 'blue' }, { tier: 'base' }, { tier: 'green' }, null, { tier: 'one' }] })
   === 'One of One #12 · 410/700\n⬛🟨🟦⬜🟩✖️⬛\n2 One of Ones · 1 Gold\nCan you beat it? thecardhuddle.com/play');
@@ -495,13 +541,14 @@ const MS = G.SECONDS * 1000;
   check('wrangler.toml binds the GameDay object and migrates it in', /name = "GAME_DAY"\s+class_name = "GameDay"/.test(toml) && /tag = "v3"\s+new_sqlite_classes = \["GameDay"\]/.test(toml) && /export class GameDay \{/.test(w));
   check('the Worker marks a program\'s round, and drops the mark from anyone else', /h\.delete\('x-game-uncounted'\);\s+if \(NO_TAGS_FOR\.has\(visitorKind\)\) h\.set\('x-game-uncounted', '1'\)/.test(w));
   check('the deploy deals the packs before the tests and minifies play.js', yml.indexOf('npm run build:game') > yml.indexOf('npm run build:pages') && yml.indexOf('npm run build:game') < yml.indexOf('node scripts/run-ci-tests.js')
-    && /for f in app\.js bounties\.js play\.js;/.test(yml) && /"build:game": "node scripts\/build-daily-game\.js"/.test(read('package.json')));
+    && /for f in app\.js bounties\.js play\.js play-field\.js;/.test(yml) && /"build:game": "node scripts\/build-daily-game\.js"/.test(read('package.json')));
   check('the dealt packs are not committed', /^public\/data\/game\/$/m.test(read('.gitignore')));
   check('the app has the tab, the view, the home link and play.js', /data-view="play" onclick="switchView\('play'\)"/.test(html) && /id="play-view" class="collection-view hidden"/.test(html) && /id="oo-root"/.test(html)
-    && /class="mm-report-link oo-home-link" href="\/play"/.test(html) && /<script src="play\.js\?v=[a-z0-9]+"><\/script>/.test(html));
+    && /class="mm-report-link oo-home-link" href="\/play"/.test(html) && /<script src="play\.js\?v=[a-z0-9]+"><\/script>/.test(html) && /<script src="play-field\.js\?v=[a-z0-9]+" defer><\/script>/.test(html));
   check('...and opens it at /play', /play: '\/play'/.test(app) && /'\/play': 'play'/.test(app) && /if \(playView\) \{ playView\.classList\.remove\('hidden'\); if \(typeof initPlayView === 'function'\) initPlayView\(\); \}/.test(app)
     && /if \(playView\) playView\.classList\.add\('hidden'\);/.test(app));
-  check('play.js is stamped and cached with the rest', /'play\.js',/.test(read('scripts/stamp-sw.js')) && /'index\.html': \['style\.css', 'app\.js', 'bounties\.js', 'play\.js'\]/.test(read('scripts/stamp-sw.js')));
+  check('play.js and play-field.js are stamped and cached with the rest', /'play\.js',/.test(read('scripts/stamp-sw.js')) && /'play-field\.js',/.test(read('scripts/stamp-sw.js'))
+    && /'index\.html': \['style\.css', 'app\.js', 'bounties\.js', 'play\.js', 'play-field\.js'\]/.test(read('scripts/stamp-sw.js')));
   const play = read('public/play.js');
   check('the page never holds the answers: it only shows what the server sends back', !/answers\s*:\s*\[\[/.test(play) && /x-game-device/.test(play) && /final: !!final/.test(play) && /window\.initPlayView = function/.test(play));
   check('there is no Skip button: a prompt is answered or runs out', !/data-act="skip"/.test(play) && !/skip/i.test(play.replace(/There is no Skip button[^\n]*/, '')));
