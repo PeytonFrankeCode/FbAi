@@ -606,19 +606,23 @@ function buildPlayerIndex(checklists) {
   return players;
 }
 
-// ---- Titles: 70 characters at most (owner, Nov 2026) ----------------------
+// ---- Titles: shorter than 70 characters (owner, Nov 2026) ----------------
 // Search results cut a title at about 60-70 characters, and long ones read as
 // spammy to a quality review. Each page offers its title from fullest to
 // shortest; the first that fits is used. The card or set name always leads,
 // so what gets dropped is the brand and the extra words, never the subject.
-// Measured as the reader sees it (& not &amp;).
-const TITLE_MAX = 70;
+// Bing still counted 93 titles as too long at 70 (Nov 2026), so a title is
+// held to 65 as the reader sees it, and under 70 even counted in the page
+// source, where "&" is written "&amp;".
+const TITLE_MAX = 65;
+const titleFits = (t) => t.length <= TITLE_MAX && esc(t).length < 70;
 function fitTitle(...candidates) {
   const list = candidates.filter(Boolean).map(t => String(t).replace(/\s+/g, ' ').trim());
-  const hit = list.find(t => t.length <= TITLE_MAX);
+  const hit = list.find(titleFits);
   if (hit) return hit;
-  const last = list[list.length - 1];
-  return last.slice(0, TITLE_MAX - 1).replace(/[\s,&—-]+\S*$/, '').trim() + '…';
+  let cut = list[list.length - 1].slice(0, TITLE_MAX - 1).replace(/[\s,&—-]+\S*$/, '').trim();
+  while (!titleFits(cut + '…')) cut = cut.replace(/[\s,&—-]*\S+$/, '').trim();
+  return cut + '…';
 }
 
 // ---- Shared chrome --------------------------------------------------------
@@ -717,7 +721,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
   // name -> slug for the sets of this product that got their own page.
   const subsetSlug = new Map((subsets || []).map(x => [x.set.name, x.slug]));
   const title = fitTitle(`${cl.name} Checklist & Card Prices | The Card Huddle`, `${cl.name} Checklist & Prices | The Card Huddle`,
-    `${cl.name} Checklist & Card Prices`, `${cl.name} Checklist & Prices`, `${cl.name} Checklist`);
+    `${cl.name} Checklist & Card Prices`, `${cl.name} Checklist & Prices`, `${cl.name} Checklist`, cl.name);
   const canonical = `${SITE}${S.base}/sets/${cl.id}/`;
   const setLabel = cl.name.replace(S.wordRe, '');
   const description =
@@ -864,7 +868,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
   const fullLabel = `${productLabel} ${setName}`;
   const canonical = `${SITE}${S.base}/sets/${cl.id}/${slug}/`;
   const title = fitTitle(`${fullLabel} Checklist & Card Prices | The Card Huddle`, `${fullLabel} Checklist & Prices | The Card Huddle`,
-    `${fullLabel} Checklist & Card Prices`, `${fullLabel} Checklist & Prices`, `${fullLabel} Checklist`);
+    `${fullLabel} Checklist & Card Prices`, `${fullLabel} Checklist & Prices`, `${fullLabel} Checklist`, fullLabel);
   const description =
     `Complete ${fullLabel} checklist — all ${cards.length} cards` +
     (parallels.length ? ` and ${parallels.length} parallels` : '') +
@@ -943,7 +947,8 @@ function buildYearHub(year, products, subsetIndex) {
   const canonical = `${SITE}${S.base}/sets/${year}/`;
   const cards = products.reduce((n, p) => n + p.cardCount, 0);
   const title = fitTitle(`${S.yearLabel(year)} ${S.Word} Card Checklists — Every Set & Prices | The Card Huddle`,
-    `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices | The Card Huddle`, `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices`);
+    `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices | The Card Huddle`, `${S.yearLabel(year)} ${S.Word} Card Checklists & Prices`,
+    `${S.yearLabel(year)} ${S.Word} Card Checklists`);
   const description =
     `Every ${S.yearLabel(year)} ${S.word} card checklist — ${products.length} products, ` +
     `${cards.toLocaleString()} cards. Check real eBay sold prices by grade for any card. Free.`;
@@ -1015,7 +1020,7 @@ function rookieYearOf(p) {
 
 function buildPlayerPage(p, related, teamSlug, more = {}) {
   // Keeps " — Values & Checklist", the phrase the Worker swaps for the median
-  // (price-block-core pricedHead, which fits its own result to 70 too).
+  // (price-block-core pricedHead, which fits its own result the same way).
   const title = fitTitle(`${p.name} ${S.Word} Cards — Values & Checklist | The Card Huddle`,
     `${p.name} ${S.Word} Cards — Values & Checklist`, `${p.name} Cards — Values & Checklist`);
   const canonical = `${SITE}${S.base}/players/${p.slug}/`;
@@ -1250,7 +1255,8 @@ const TEAM_PLAYER_CAP = 250;
 
 function buildTeamPage(team, playerSlug, relatedTeams) {
   const title = fitTitle(`${team.name} ${S.Word} Cards — Checklist & Values | The Card Huddle`,
-    `${team.name} Cards — Checklist & Values | The Card Huddle`, `${team.name} ${S.Word} Cards — Checklist & Values`);
+    `${team.name} Cards — Checklist & Values | The Card Huddle`, `${team.name} ${S.Word} Cards — Checklist & Values`,
+    `${team.name} Cards — Checklist & Values`, `${team.name} ${S.Word} Cards`);
   const canonical = `${SITE}${S.base}/teams/${team.slug}/`;
   const players = [...team.players.entries()].sort((a, b) => b[1] - a[1]); // [name, count]
   const description =
