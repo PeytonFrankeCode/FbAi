@@ -161,6 +161,44 @@ const MS = G.SECONDS * 1000;
     const sum = await day2.summary();
     check('answers arriving together are all counted', sum.plays === 12 && sum.prompts[0].n === 12 && sum.prompts[0].top[0].n === 12);
     check('a player id is an account or a browser\'s own id, nothing else', G.validPid('u:liam') && G.validPid('d:0123456789abcdef') && !G.validPid('d:short') && !G.validPid('x:0123456789abcdef') && !G.validPid('') && (await day2.next('nope', t)).error === 'player');
+
+    // The detail a screen shows (owner, Nov 2026: "a little bit more detail").
+    const day3 = new G.GameDay(G.memoryStore());
+    await day3.setPack(pack('2026-11-12'));
+    const pid = (i) => 'd:' + String(i).padStart(16, 'y');
+    // A whole round: one name per prompt, null to leave it empty.
+    const play = async (who, names, quiet) => {
+      let last = await day3.next(who, t, { quiet: !!quiet });
+      const first = last.view;
+      for (const n of names) { last = await day3.answer(who, n || 'zz', t + 1, { final: true }); if (!last.view.done) await day3.next(who, t); }
+      return { first, last, res: await day3.results(who) };
+    };
+    const empty = [null, null, null, null, null, null];
+    check('a pack nobody has opened says so', (await day3.state(pid(0), t)).players === 0);
+    const one = await play(pid(1), ['Tom Brady', ...empty]);
+    check('the prompt on the clock comes with its kind and how many players fit, never the players',
+      one.first.active.kind === 'team' && one.first.active.pool === NAMES.length && !NAMES.some(n => JSON.stringify(one.first).includes(n)));
+    check('the most common answer is rarer than nothing, and the rarest than nearly everything', one.res.prompts[0].yours.rarer === 0
+      && (await play(pid(2), ['Bo Melton', ...empty])).res.prompts[0].yours.rarer > 90);
+    check('...and the number is where the answer sits on the line that sets its tier', (() => {
+      const r = G.rarity(P, {}, 0, 6);
+      return Math.abs(r.before * 100 - (Math.floor(r.before * 1000) / 10)) < 0.1 && r.before >= 0 && r.before < 1;
+    })());
+    let slip = await day3.next(pid(3), t);
+    slip = await day3.answer(pid(3), 'Jordon Love', t + 1);
+    const exact = await (async () => { await day3.next(pid(4), t); return day3.answer(pid(4), 'jordan love', t + 1); })();
+    check('a name that had to be read says how; one typed right does not', slip.ok === true && slip.answer.name === 'Jordan Love' && slip.read === 'typo' && exact.ok === true && exact.read === null);
+    for (const who of [pid(3), pid(4)]) { for (let i = 0; i < 6; i++) { await day3.next(who, t); await day3.answer(who, 'zz', t + 1, { final: true }); } }
+    await play(pid(5), empty.concat(null));                                   // 0
+    await play(pid(6), ['Aaron Rodgers', 'Aaron Rodgers', ...empty.slice(1)]); // two answers
+    const top = await play(pid(7), ['Tucker Kraft', 'Tucker Kraft', 'Tucker Kraft', ...empty.slice(2)]);
+    const rank = top.res.rank, low = (await day3.results(pid(5))).rank;
+    check('a finished round is ranked against the others who finished: the best beats them all, the worst none',
+      rank.of === 6 && rank.beat === 100 && low.of === 6 && low.beat === 0 && rank.average > 0 && rank.average === low.average, JSON.stringify([rank, low]));
+    const hush = await play(pid(8), ['Tom Brady', ...empty], true);
+    check('a quiet round is ranked too, and changes nobody else\'s rank', hush.res.rank.of === 7 && (await day3.results(pid(7))).rank.of === 6 && (await day3.results(pid(7))).rank.average === rank.average);
+    check('the pack counts who has opened it, and each prompt how many different players were named',
+      (await day3.state(pid(0), t)).players === 7 && top.res.prompts[0].named === 5 && top.res.prompts[0].n === 6, JSON.stringify([(await day3.state(pid(0), t)).players, top.res.prompts[0].named, top.res.prompts[0].n]));
   }
 
   // ---- Unlimited mode: a round kept by number, that can be played again ----
@@ -323,6 +361,8 @@ const MS = G.SECONDS * 1000;
     check('...but playing needs the browser\'s own id', (await call('/api/game/next', { method: 'POST', body: {} })).status === 400);
     r = await call('/api/game/next', { method: 'POST', ...d1, body: {} });
     check('Play starts the first prompt', r.status === 200 && r.body.view.active.slot === 0 && r.body.view.active.msLeft === MS);
+    check('...with its kind and how many players fit, and where each tier starts', r.body.view.active.kind === 'team' && r.body.view.active.pool === NAMES.length
+      && r.body.tiers.map(x => x.from).join() === '0,50,75,90,99' && r.body.view.players === 1);
     const leaked = JSON.stringify(r.body);
     check('...and sends the prompt without its answers', !NAMES.some(n => leaked.includes(n)) && !('results' in r.body) && !('share' in r.body));
     r = await call('/api/game/answer', { method: 'POST', ...d1, body: { text: 'Not A Player' } });
@@ -331,6 +371,7 @@ const MS = G.SECONDS * 1000;
     check('a real player who does not fit is told so', r.body.ok === false && r.body.reason === 'other' && r.body.view.active.triesLeft === G.MAX_TRIES - 2);
     r = await call('/api/game/answer', { method: 'POST', ...d1, body: { text: 'tom brady' } });
     check('a right one comes back as its card', r.body.ok === true && r.body.answer.name === 'Tom Brady' && r.body.answer.tier === 'base' && !r.body.results);
+    check('...with how rare it is, and no rank until the round is done', r.body.answer.rarer === 0 && r.body.read === null && !('rank' in r.body));
     r = await round(d1, ['Bo Melton', 'x', 'Tucker Kraft', 'Luke Musgrave', 'Jayden Reed', 'Jordan Love']);
     check('the round ends with the score, the share text and what everyone said', r.body.view.done === true && r.body.view.score > 0 && r.body.results.length === 7
       && r.body.share.startsWith('One of One #1 · ') && r.body.share.includes(`${r.body.view.score}/700`) && r.body.results[0].yours.name === 'Tom Brady');
@@ -471,6 +512,15 @@ const MS = G.SECONDS * 1000;
   check('the cards fan, turn over and throw sparks, and no animation moves the layout', /class="oo-fan"/.test(play) && /@keyframes oo-turn\{/.test(css) && /@keyframes oo-spark\{/.test(css) && /function countUp\(/.test(play)
     && (css.match(/@keyframes oo-[a-z-]+\{(?:[^{}]*\{[^{}]*\})*\}/g) || []).length >= 12
     && !(css.match(/@keyframes oo-[a-z-]+\{(?:[^{}]*\{[^{}]*\})*\}/g) || []).some(k => /\b(left|top|right|bottom|width|height|margin|padding)\s*:/.test(k)));
+  check('the answer comes back as a card with a front and a back, and the turn does not fade the card itself (that would flatten it)',
+    /class="oo-face oo-back"/.test(play) && /class="oo-face oo-front"/.test(play) && /class="oo-cf-serial"/.test(play) && /function cardFace\(/.test(play)
+    && /\.oo-flip\{[^}]*transform-style:preserve-3d/.test(css) && /\.oo-face\{[^}]*backface-visibility:hidden/.test(css) && /\.oo-back\{transform:rotateY\(180deg\)/.test(css)
+    && !/opacity/.test((css.match(/@keyframes oo-turn\{(?:[^{}]*\{[^{}]*\})*\}/) || ['opacity'])[0]));
+  check('the prompt shows its kind and pool, the reveal a rarity meter and how the name was read, the results a rank',
+    /v\.active\.kind/.test(play) && /fits\(v\.active\.pool\)/.test(play) && /function meter\(a\)/.test(play) && /class="oo-read"/.test(play) && /function standing\(/.test(play)
+    && /body\.rank = \(r && r\.rank\) \|\| null;/.test(srv) && /function howItWorks\(\)/.test(play) && /const skeleton = \(\) =>/.test(play));
+  check('...and the new motion holds still too for someone who asked for less', /\.oo-meter-pin,\.oo-rank-bar i,\.oo-sk\{animation:none!important\}/.test(css) && /\.oo-tilt\{transform:none;transition:none\}/.test(css)
+    && /if \(!card \|\| calm\(\)\) return;/.test(play) && /if \(calm\(\) \|\| typeof navigator === 'undefined'/.test(play));
   check('the admin page has the game\'s numbers and the swap', /async function loadGame\(\)/.test(read('public/admin.html')) && /function swapGame\(/.test(read('public/admin.html')) && /loadGame\(\);/.test(read('public/admin.html')));
 
   console.log(failures ? `\n${failures} One of One check(s) failed` : '\nall One of One checks passed');

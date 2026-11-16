@@ -18,9 +18,27 @@
     empty: 'Type a player’s name.',
   };
 
-  let data = null;        // the server's last reply: { view, tiers, msToNext, results, share, stats }
+  // What kind of prompt it is, as a tag beside it: [label, the mark's path].
+  // The marks are drawn here, 16 by 16, in the colour of the text around them.
+  const MARK = {
+    shield: '<path d="M8 1.6l5.4 2v4.1c0 3.1-2.2 5.5-5.4 6.7-3.2-1.2-5.4-3.6-5.4-6.7V3.6z"/>',
+    stack: '<rect x="2.5" y="4.5" width="8.5" height="10" rx="1.5"/><path d="M5.5 2h6.5a1.5 1.5 0 0 1 1.5 1.5v8.5"/>',
+    star: '<path d="M8 1.9l1.9 3.8 4.2.6-3 3 .7 4.2L8 11.5l-3.8 2 .7-4.2-3-3 4.2-.6z"/>',
+    year: '<rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/>',
+    pen: '<path d="M2.5 13.5l.8-3.2 7.4-7.4a1.4 1.4 0 0 1 2 0l.4.4a1.4 1.4 0 0 1 0 2l-7.4 7.4zM9.7 3.9l2.4 2.4"/>',
+    hash: '<path d="M6.2 2L4.8 14M11.2 2L9.8 14M2.5 5.7h11.3M2.2 10.3h11.3"/>',
+    rookie: '<circle cx="8" cy="8" r="6.3"/><path d="M5.4 8.3l1.8 1.8 3.5-3.9"/>',
+  };
+  const KIND = {
+    team: ['Team', 'shield'], product: ['Set', 'stack'], insert: ['Insert', 'star'], year: ['Year', 'year'], rookie: ['Rookies', 'rookie'],
+    auto: ['Autographs', 'pen'], autoyear: ['Autographs', 'pen'], low: ['Numbered', 'hash'], count: ['Card count', 'stack'],
+  };
+  const mark = (name) => `<svg class="oo-mark" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MARK[name] || MARK.stack}</svg>`;
+  const ORDER = ['base', 'green', 'blue', 'gold', 'one'];
+
+  let data = null;        // the server's last reply: { view, tiers, msToNext, results, rank, share, stats }
   let phase = 'loading';  // loading | start | prompt | reveal | results | error
-  let shown = null;       // what the reveal screen is showing: { answer } or { miss: reason }
+  let shown = null;       // what the reveal screen is showing: { answer, read, typed, was } or { miss: reason }
   let deadline = 0, total = 20000, raf = 0, busy = false, loaded = false, nextAt = 0, tick = 0, errorText = '';
   let mode = 'daily';     // daily | unlimited
 
@@ -111,12 +129,15 @@
 
   // ---- Pieces of a screen ----
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  // How open a prompt is: "214 players fit".
+  const fits = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'player fits' : 'players fit'}`;
   // `fresh`: the slot just filled lands with a pop (the reveal screen).
-  function slots(view, current, fresh) {
+  // `points`: each card shows what it scored (the results screen).
+  function slots(view, current, fresh, points) {
     let h = '<div class="oo-slots" aria-label="Your pack so far">';
     for (let i = 0; i < view.count; i++) {
       const a = view.answers[i], pop = fresh && i === view.answers.length - 1 ? ' new' : '';
-      if (i < view.answers.length) h += a ? `<span class="oo-slot oo-t-${a.tier}${pop}" style="--i:${i}" title="${esc(TIER[a.tier])}"></span>` : `<span class="oo-slot oo-t-miss${pop}" style="--i:${i}" title="No answer"></span>`;
+      if (i < view.answers.length) h += a ? `<span class="oo-slot oo-t-${a.tier}${pop}" style="--i:${i}" title="${esc(TIER[a.tier])}${a.name ? ': ' + esc(a.name) : ''}">${points ? (a.tier === 'one' ? '1/1' : a.points) : ''}</span>` : `<span class="oo-slot oo-t-miss${pop}" style="--i:${i}" title="No answer">${points ? '0' : ''}</span>`;
       else h += `<span class="oo-slot${i === current ? ' now' : ''}" style="--i:${i}"></span>`;
     }
     return h + '</div>';
@@ -125,7 +146,8 @@
   // ---- Show ----
   const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   // The five tiers as a fan of cards, the 1/1 in front (the start screen).
-  const fan = () => `<div class="oo-fan" aria-hidden="true"><i class="oo-fan-card oo-t-base"></i><i class="oo-fan-card oo-t-green"></i><i class="oo-fan-card oo-t-blue"></i><i class="oo-fan-card oo-t-gold"></i><i class="oo-fan-card oo-t-one oo-shine">1/1</i></div>`;
+  // Each carries what it scores.
+  const fan = () => `<div class="oo-fan" aria-hidden="true"><i class="oo-fan-card oo-t-base">10</i><i class="oo-fan-card oo-t-green">25</i><i class="oo-fan-card oo-t-blue">50</i><i class="oo-fan-card oo-t-gold">75</i><i class="oo-fan-card oo-t-one oo-shine">1/1</i></div>`;
   // A One of One throws sparks; a Gold, a few.
   function sparks(tier) {
     const n = tier === 'one' ? 22 : tier === 'gold' ? 9 : 0;
@@ -134,22 +156,109 @@
     let h = '<span class="oo-sparks" aria-hidden="true">';
     for (let i = 0; i < n; i++) {
       const angle = Math.round((360 / n) * i + Math.random() * 16 - 8), reach = 120 + Math.round(Math.random() * 80);
-      h += `<i style="--a:${angle}deg;--r:${reach}px;--k:${colors[i % colors.length]};--u:${(0.8 + Math.random() * 0.5).toFixed(2)}s;--w:${(0.45 + Math.random() * 0.15).toFixed(2)}s"></i>`;
+      h += `<i style="--a:${angle}deg;--r:${reach}px;--k:${colors[i % colors.length]};--u:${(0.8 + Math.random() * 0.5).toFixed(2)}s;--w:${(0.8 + Math.random() * 0.15).toFixed(2)}s"></i>`;
     }
     return h + '</span>';
   }
   // The score counts up to where it ends.
-  function countUp(el, to) {
-    if (!el || !(to > 0) || calm()) return;
+  function countUp(el, to, from = 0) {
+    if (!el || !(to > from) || calm()) return;
     const t0 = performance.now(), ms = 850;
     const step = (t) => {
       const k = Math.min(1, (t - t0) / ms);
-      el.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      el.textContent = String(Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))));
       if (k < 1 && el.isConnected) requestAnimationFrame(step);
     };
-    el.textContent = '0';
+    el.textContent = String(from);
     requestAnimationFrame(step);
   }
+  // A phone that can buzz gives a tap on an answer, and more for a rare one.
+  function buzz(pattern) {
+    if (calm() || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+    try { navigator.vibrate(pattern); } catch (_) { /* not allowed here: no buzz */ }
+  }
+
+  // ---- The card an answer comes back as ----
+  // A trading card, front and back: it lands face down and turns over. The
+  // front has the tier, a serial (how many said it, out of everyone who
+  // answered; a One of One is 1/1), the player's initials where the photo
+  // would be, the name plate, and the points.
+  const initials = (name) => {
+    const w = String(name || '').replace(/[^A-Za-z' -]/g, '').split(/[\s-]+/).filter(x => x && !/^(jr|sr|ii|iii|iv|v)$/i.test(x));
+    return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase();
+  };
+  function cardFace(a, why, kind) {
+    const tier = a ? a.tier : 'miss';
+    const serial = !a ? '' : a.tier === 'one' ? '1/1' : `${a.said}/${a.of}`;
+    const tag = KIND[kind] ? KIND[kind][0] : '';
+    return `<div class="oo-flip-wrap" id="oo-tilt"><div class="oo-tilt"><div class="oo-flip oo-t-${tier}">
+        <div class="oo-face oo-back" aria-hidden="true"><span class="oo-back-mark">1/1</span></div>
+        <div class="oo-face oo-front">
+          <div class="oo-cf-top"><span class="oo-flip-tier">${esc(a ? TIER[a.tier] : why)}</span>${a ? `<span class="oo-cf-serial" title="${a.tier === 'one' ? 'The only one' : `Said by ${a.said} of ${a.of}`}">${serial}</span>` : ''}</div>
+          <div class="oo-cf-art"><span class="oo-cf-mono">${a ? esc(initials(a.name)) : '&ndash;'}</span></div>
+          <div class="oo-cf-plate"><span class="oo-flip-name">${a ? esc(a.name) : 'No answer'}</span></div>
+          <div class="oo-cf-foot"><span class="oo-cf-kind">${esc(tag)}</span><span class="oo-flip-pts">+${a ? a.points : 0}</span></div>
+        </div>
+      </div></div>${a ? sparks(a.tier) : ''}</div>`;
+  }
+  // The card leans toward the pointer, and its foil moves with it.
+  function tilt() {
+    const wrap = $('oo-tilt'), card = wrap && wrap.querySelector('.oo-tilt');
+    if (!card || calm()) return;
+    const set = (x, y) => {
+      card.style.setProperty('--ry', `${(x * 18).toFixed(1)}deg`);
+      card.style.setProperty('--rx', `${(-y * 14).toFixed(1)}deg`);
+      card.style.setProperty('--fx', `${Math.round(50 + x * 90)}%`);
+    };
+    wrap.addEventListener('pointermove', (e) => {
+      const r = wrap.getBoundingClientRect();
+      if (r.width && r.height) set((e.clientX - r.left) / r.width - 0.5, (e.clientY - r.top) / r.height - 0.5);
+    });
+    wrap.addEventListener('pointerleave', () => set(0, 0));
+  }
+  // Where an answer sits between common and rare: the five tiers in a row,
+  // its own lit, and a pin at its place on the line (data.tiers `from`).
+  function meter(a) {
+    const tiers = (data && data.tiers) || [], i = ORDER.indexOf(a.tier);
+    if (i < 0 || tiers.length !== ORDER.length) return '';
+    const lo = tiers[i].from || 0, hi = i + 1 < tiers.length ? tiers[i + 1].from : 100;
+    const k = a.tier === 'one' || a.rarer == null ? 0.5 : Math.max(0, Math.min(1, (a.rarer - lo) / Math.max(1, hi - lo)));
+    const at = Math.max(3, Math.min(97, ((i + k) / ORDER.length) * 100));
+    const words = a.rarer == null ? TIER[a.tier] : a.rarer >= 10 ? `Rarer than ${Math.floor(a.rarer)}% of answers` : 'One of the most common answers';
+    return `<div class="oo-meter" role="img" aria-label="${esc(words)}">
+        <div class="oo-meter-track">${ORDER.map(t => `<i class="oo-t-${t}${t === a.tier ? ' on' : ''}"></i>`).join('')}<b class="oo-meter-pin oo-t-${a.tier}" style="--at:${at.toFixed(1)}%"></b></div>
+        <div class="oo-meter-ends"><span>Common</span><strong>${esc(words)}</strong><span>Rare</span></div>
+      </div>`;
+  }
+  // A finished pack gets a name, the way a box of cards does.
+  function rating(score, max) {
+    const k = max ? score / max : 0;
+    return k >= 0.85 ? 'Case hit' : k >= 0.65 ? 'Monster pack' : k >= 0.45 ? 'Hot pack' : k >= 0.25 ? 'Solid pack' : score > 0 ? 'Base pack' : 'Empty wrapper';
+  }
+  // Where the score stands among the others who finished (the server's rank).
+  function standing(unlimited) {
+    const r = data && data.rank;
+    if (!r || r.beat == null) return '';
+    const where = unlimited ? 'on this round' : 'today';
+    if (r.of < 5) return `<p class="oo-rank">Among the first to finish ${unlimited ? 'this round' : 'today&rsquo;s pack'}.</p>`;
+    return `<div class="oo-rank"><p>Better than <b>${r.beat}%</b> of ${plural(r.of, 'other player')} ${where}${r.average != null ? ` &middot; average ${r.average}` : ''}</p>
+      <div class="oo-rank-bar" aria-hidden="true"><i style="--k:${(r.beat / 100).toFixed(2)}"></i></div></div>`;
+  }
+  // How the scoring works, folded away on the start screen.
+  function howItWorks() {
+    const t = (data && data.tiers) || [];
+    if (t.length !== ORDER.length) return '';
+    const says = [`the most common answers`, `rarer than ${t[1].from}% of answers`, `rarer than ${t[2].from}%`, `rarer than ${t[3].from}%`, `the rarest ${100 - t[4].from}%, and only if nobody else has said it`];
+    return `<details class="oo-how"><summary>How scoring works</summary>
+      <div class="oo-ladder">${t.map((x, i) => `<div class="oo-rung"><span class="oo-chip oo-t-${x.id}">${esc(x.name)} <b>${x.points}</b></span><span>${says[i]}</span></div>`).join('')}</div>
+      <ul class="oo-rules">
+        <li>Every right answer is lined up from most to least common. Famous players start out common, and each answer real players give moves the line.</li>
+        <li>Close spellings count, and a last name is enough when only one player fits.</li>
+        <li>You get up to 8 tries on a prompt. The clock keeps running.</li>
+        <li>A new pack lands every midnight, Eastern time.</li>
+      </ul></details>`;
+  }
+  const skeleton = () => `<div class="oo-card oo-skel" aria-busy="true" aria-label="Loading the pack"><i class="oo-sk oo-sk-fan"></i><i class="oo-sk oo-sk-line w40"></i><i class="oo-sk oo-sk-line w80"></i><i class="oo-sk oo-sk-line w60"></i><i class="oo-sk oo-sk-btn"></i></div>`;
   function tierChips() {
     return '<div class="oo-tiers">' + ((data && data.tiers) || []).map(t =>
       `<span class="oo-chip oo-t-${t.id}">${esc(t.name)} <b>${t.points}</b></span>`).join('') + '</div>';
@@ -182,7 +291,7 @@
     // A round on the clock gets the screen to itself (style.css, .oo-live).
     const view = $('play-view');
     if (view) view.classList.toggle('oo-live', phase === 'prompt' || phase === 'reveal');
-    if (phase === 'loading') { root.innerHTML = '<p class="oo-loading">Loading today’s pack&hellip;</p>'; return; }
+    if (phase === 'loading') { root.innerHTML = skeleton(); return; }
     const unlimited = mode === 'unlimited';
     if (phase === 'error' || !v) {
       root.innerHTML = `<div class="oo-card"><p class="oo-p">${esc(errorText || 'The game could not be loaded.')}</p><button type="button" class="oo-btn" data-act="reload">Try again</button>
@@ -200,8 +309,10 @@
         <p class="oo-p">Each prompt asks for a player. Any right answer scores, and the rarer it is among today&rsquo;s players, the more it&rsquo;s worth.</p>
         ${tierChips()}
         <p class="oo-p oo-small">A One of One is a right answer nobody else has given today.</p>
+        ${howItWorks()}
         ${going ? slots(v, v.slot) : ''}
         <button type="button" class="oo-btn oo-big" data-act="next">${going ? `Keep going: prompt ${Math.min(v.slot + 1, v.count)} of ${v.count}` : 'Play today’s pack'}</button>
+        ${v.players > 0 ? `<p class="oo-count"><i class="oo-dot" aria-hidden="true"></i>${v.players === 1 ? '1 collector has' : `${v.players.toLocaleString('en-US')} collectors have`} opened ${unlimited ? 'this round' : 'today&rsquo;s pack'}</p>` : ''}
         ${statsLine()}
         ${signedIn() ? '' : '<p class="oo-small oo-muted">No account needed. <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak on every device.</p>'}
         ${unlimitedDoor()}
@@ -212,7 +323,10 @@
     if (phase === 'prompt' && v.active) {
       root.innerHTML = `<div class="oo-card oo-play">
         ${slots(v, v.active.slot)}
-        <div class="oo-kicker">${unlimited ? `${kicker} &middot; ` : ''}Prompt ${v.active.slot + 1} of ${v.count}</div>
+        <div class="oo-kicker-row">
+          <div class="oo-kicker">${unlimited ? `${kicker} &middot; ` : ''}Prompt ${v.active.slot + 1} of ${v.count}</div>
+          ${KIND[v.active.kind] ? `<span class="oo-kind">${mark(KIND[v.active.kind][1])}${KIND[v.active.kind][0]}${v.active.pool ? ` &middot; ${fits(v.active.pool)}` : ''}</span>` : ''}
+        </div>
         <h3 class="oo-prompt">${esc(v.active.text)}</h3>
         <div class="oo-clock" aria-hidden="true"><div class="oo-clock-bar" id="oo-bar"></div></div>
         <form id="oo-form" class="oo-form" autocomplete="off">
@@ -234,22 +348,30 @@
       const a = shown.answer, last = v.done;
       let card, line;
       if (a) {
-        card = `<div class="oo-flip-wrap"><div class="oo-flip oo-t-${a.tier}"><span class="oo-flip-tier">${esc(TIER[a.tier])}</span><span class="oo-flip-name">${esc(a.name)}</span><span class="oo-flip-pts">+${a.points}</span></div>${sparks(a.tier)}</div>`;
+        card = cardFace(a, '', shown.kind);
         const when = unlimited ? 'in this round' : 'today';
         line = a.tier === 'one' ? `Nobody else has said that ${when}. It&rsquo;s a One of One.`
           : a.said <= 1 ? `You&rsquo;re the first to say that ${when}.`
             : `${a.said} of ${plural(a.of, 'player')} said that.`;
       } else {
         const why = shown.miss === 'tries' ? 'Out of tries' : 'Out of time';
-        card = `<div class="oo-flip-wrap"><div class="oo-flip oo-t-miss"><span class="oo-flip-tier">${why}</span><span class="oo-flip-name">No answer</span><span class="oo-flip-pts">+0</span></div></div>`;
+        card = cardFace(null, why, shown.kind);
         line = 'That slot stays empty. The answers show once you finish.';
       }
+      // What was typed, when it was read as a name spelt another way.
+      const typed = a && shown.read && shown.typed && shown.typed.toLowerCase() !== a.name.toLowerCase()
+        ? `<p class="oo-read">Read &ldquo;${esc(shown.typed)}&rdquo; as <b>${esc(a.name)}</b></p>` : '';
       root.innerHTML = `<div class="oo-card oo-reveal">
         ${slots(v, -1, true)}
         ${card}
+        ${typed}
         <p class="oo-p oo-center">${line}</p>
-        <button type="button" class="oo-btn oo-big" id="oo-go" data-act="${last ? 'results' : 'next'}">${last ? 'See your results' : 'Next prompt'}</button>
+        ${a ? meter(a) : ''}
+        <p class="oo-total">Pack total <b id="oo-total">${v.score}</b><span>/ ${v.maxScore}</span></p>
+        <button type="button" class="oo-btn oo-big" id="oo-go" data-act="${last ? 'results' : 'next'}">${last ? 'See your results' : `Next prompt &middot; ${Math.min(v.slot + 1, v.count)} of ${v.count}`}</button>
       </div>`;
+      if (a) countUp($('oo-total'), v.score, v.score - a.points);
+      tilt();
       const go = $('oo-go');
       if (go) { try { go.focus({ preventScroll: true }); } catch (_) { go.focus(); } }
       return;
@@ -262,18 +384,24 @@
       const chip = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span>` : '<span class="oo-chip oo-t-miss">No answer</span>';
       // With one answer in, "most said" would only repeat the player's own.
       const top = p.n >= 2 ? (p.top || []).map(t => `${playerLink(t)} (${t.n})`).join(', ') : '';
+      // How open the prompt was, and how much of it has been found.
+      const pool = p.pool ? `${fits(p.pool)}${p.named ? ` &middot; ${p.named.toLocaleString('en-US')} named so far` : ''}` : '';
+      const set = p.link && /^\/[a-z0-9/_-]+$/i.test(p.link.href || '') ? ` &middot; <a class="oo-name" href="${esc(p.link.href)}">See the checklist</a>` : '';
       return `<div class="oo-recap-item">
         <div class="oo-recap-q">${i + 1}. ${esc(p.text)}</div>
         <div class="oo-recap-chip">${chip}</div>
-        ${y ? `<div class="oo-recap-line">You said ${playerLink(y)}</div>` : ''}
+        ${y ? `<div class="oo-recap-line">You said ${playerLink(y)}${y.rarer >= 10 ? `, rarer than ${Math.floor(y.rarer)}% of answers` : ''}</div>` : ''}
         ${top ? `<div class="oo-recap-line">Most said: ${top}</div>` : ''}
+        ${pool ? `<div class="oo-recap-line oo-recap-meta">${KIND[p.type] ? `${mark(KIND[p.type][1])}${KIND[p.type][0]} &middot; ` : ''}${pool}${set}</div>` : ''}
       </div>`;
     }).join('');
     if (unlimited) {
       root.innerHTML = `<div class="oo-card oo-results">
         <div class="oo-kicker oo-center">${kicker}</div>
+        <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
         <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
-        ${slots(v, -1)}
+        ${slots(v, -1, false, true)}
+        ${standing(true)}
         ${roundTiles()}
         <button type="button" class="oo-btn oo-big" id="oo-go" data-act="another">Next round</button>
         <p class="oo-foot"><button type="button" class="oo-link" data-act="daily">Back to today&rsquo;s pack</button></p>
@@ -285,8 +413,10 @@
     }
     root.innerHTML = `<div class="oo-card oo-results">
       <div class="oo-kicker oo-center">${kicker}</div>
+      <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
       <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
-      ${slots(v, -1)}
+      ${slots(v, -1, false, true)}
+      ${standing(false)}
       ${statTiles()}
       <button type="button" class="oo-btn oo-big oo-share-btn" data-act="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share your pack</button>
       <p id="oo-shared" class="oo-msg oo-center" role="status" aria-live="polite"></p>
@@ -314,6 +444,8 @@
       const left = deadline - performance.now();
       bar.style.transform = `scaleX(${Math.max(0, Math.min(1, left / total))})`;
       bar.classList.toggle('low', left < 6000);
+      const card = bar.closest('.oo-play');
+      if (card) card.classList.toggle('low', left < 6000);
       if (secs) { secs.textContent = String(Math.max(0, Math.ceil(left / 1000))); secs.classList.toggle('low', left < 6000); }
       if (left <= 0) { send(true); return; }
       raf = requestAnimationFrame(step);
@@ -381,13 +513,17 @@
     if (!final && !text) { if (msg) msg.textContent = WHY.empty; return; }
     busy = true;
     cancelAnimationFrame(raf);
+    const kind = (data && data.view && data.view.active && data.view.active.kind) || '';
     if (input) input.disabled = true;
     if (btn) btn.disabled = true;
     try {
       const d = await api('/api/game/answer', { ...which(), text, final: !!final });
       take(d);
-      if (d.ok) { shown = { answer: d.answer }; phase = 'reveal'; }
-      else if (d.timeout) { shown = { miss: d.reason }; phase = 'reveal'; }
+      if (d.ok) {
+        shown = { answer: d.answer, read: d.read || null, typed: text, kind }; phase = 'reveal';
+        buzz(d.answer.tier === 'one' ? [20, 50, 20, 50, 45] : d.answer.tier === 'gold' ? [15, 40, 20] : 12);
+      }
+      else if (d.timeout) { shown = { miss: d.reason, kind }; phase = 'reveal'; }
       else if (d.error || !d.view.active) { busy = false; return load(); }   // the round moved on without this page
       else {
         // Not a match: same prompt, same clock, try again.
@@ -396,6 +532,7 @@
         if (btn) btn.disabled = false;
         const form = $('oo-form');
         if (form) { form.classList.remove('oo-shake'); void form.offsetWidth; form.classList.add('oo-shake'); }
+        buzz(30);
         const left = d.view.active.triesLeft;
         if (msg) msg.textContent = (WHY[d.reason] || WHY.none) + (left <= 3 ? ` ${left} ${left === 1 ? 'try' : 'tries'} left.` : '');
         runClock();
