@@ -160,6 +160,106 @@
     }
     return h + '</span>';
   }
+  // ---- The drive (owner, Nov 2026) ----
+  // The pack is a drive down a football field. Each right answer is a pass,
+  // and the rarer the answer the deeper it goes; a miss is a sack for no
+  // gain. Crossing the goal line is a touchdown, and the next drive starts at
+  // the 25. Worked out from the pack's answers, so a reload shows the same
+  // drive; the points are untouched, the field is the show.
+  const GAIN = { base: 5, green: 12, blue: 20, gold: 35, one: 50 };
+  function drive(answers) {
+    let pos = 25, tds = 0, yards = 0, sacks = 0;
+    const plays = [];
+    for (const a of answers || []) {
+      if (!a) { plays.push({ from: pos, to: pos, gain: 0, sack: true }); sacks++; continue; }
+      const want = GAIN[a.tier] || 0, td = pos + want >= 100, gain = td ? 100 - pos : want;
+      plays.push({ from: pos, to: pos + gain, gain, td, tier: a.tier });
+      yards += gain;
+      if (td) { tds++; pos = 25; } else pos += gain;
+    }
+    return { plays, tds, yards, sacks, pos };
+  }
+  // Across the turf: 10 yards of end zone, the 100-yard field, 10 more.
+  const fx = (y) => ((10 + y) / 120) * 100;
+  const pct = (n) => `${n.toFixed(2)}%`;
+  const yardWords = (y) => y === 50 ? 'midfield' : y < 50 ? `your ${y}` : `their ${100 - y}`;
+  function driveLine(d) {
+    const bits = [];
+    if (d.tds) bits.push(plural(d.tds, 'touchdown'));
+    bits.push(`${d.yards} ${d.yards === 1 ? 'yard' : 'yards'}`);
+    if (d.sacks) bits.push(plural(d.sacks, 'sack'));
+    return bits.join(' &middot; ');
+  }
+  // `live`: the last play is run on the field (the reveal screen); otherwise
+  // the ball sits where the drive ended (the results screen).
+  function field(d, live) {
+    const p = d.plays[d.plays.length - 1];
+    const spot = !p ? 25 : live ? p.from : p.td ? 100 : p.to;
+    let lines = '';
+    for (let y = 5; y <= 95; y += 5) lines += `<i class="oo-yl${y % 10 ? ' half' : ''}" style="left:${pct(fx(y))}"></i>`;
+    for (let y = 10; y <= 90; y += 10) lines += `<b class="oo-yn" style="left:${pct(fx(y))}">${y <= 50 ? y : 100 - y}</b>`;
+    const say = !p ? 'Your drive starts at your 25.' : p.sack ? 'Sacked for no gain.' : p.td ? `Touchdown, a ${p.gain}-yard pass.` : `A ${p.gain}-yard pass to ${yardWords(p.to)}.`;
+    return `<div class="oo-field${p && p.td && !live ? ' td' : ''}" id="oo-field" role="img" aria-label="${esc(say)}">
+        <div class="oo-turf">
+          <i class="oo-ez oo-ez-l"><span>HUDDLE</span></i><i class="oo-ez oo-ez-r"><span>1/1</span></i>
+          ${lines}
+          <i class="oo-los" id="oo-los" style="left:${pct(fx(spot))}"></i>
+          <i class="oo-man oo-wr" id="oo-wr" style="left:${pct(fx(spot))};top:30%"></i>
+          <i class="oo-man oo-de" id="oo-de" style="left:${pct(fx(Math.min(spot + 6, 100)))};top:72%"></i>
+          <i class="oo-man oo-qb" id="oo-qb" style="left:${pct(fx(spot))};top:52%"></i>
+          <i class="oo-ball" id="oo-ball" style="left:${pct(fx(spot))};top:52%"></i>
+          <b class="oo-call" id="oo-call"></b>
+        </div>
+      </div>
+      <p class="oo-drive" id="oo-drive">${p ? driveLine(d) : ''}</p>`;
+  }
+  // Runs the last play: the QB drops back and throws, the ball spirals to the
+  // receiver as far as the answer earned, the marker moves up. A miss: the
+  // rush gets home and the QB goes down.
+  function runPlay(d) {
+    const p = d.plays[d.plays.length - 1], el = $('oo-field');
+    if (!p || !el) return;
+    const qb = $('oo-qb'), wr = $('oo-wr'), de = $('oo-de'), ball = $('oo-ball'), los = $('oo-los'), call = $('oo-call');
+    const say = (text, cls) => { call.textContent = text; call.className = `oo-call on ${cls || ''}`; };
+    const at = (node, y, top) => { node.style.left = pct(fx(y)); if (top != null) node.style.top = `${top}%`; };
+    const done = () => {
+      at(los, p.td ? 100 : p.to);
+      if (p.sack) { el.classList.add('sack'); say('SACKED', 'bad'); }
+      else if (p.td) { el.classList.add('td'); say('TOUCHDOWN', 'gold'); at(ball, Math.min(p.to + 4, 108), 46); at(wr, Math.min(p.to + 4, 108), 46); }
+      else { say(`+${p.gain} YDS`, p.tier); at(ball, p.to, 34); at(wr, p.to, 34); }
+    };
+    if (calm()) { qb.style.opacity = '.0'; de.style.opacity = '0'; done(); return; }
+    const ease = (k) => 1 - Math.pow(1 - k, 3), lerp = (a, b, k) => a + (b - a) * k;
+    const drop = p.from - 2.5, t0 = performance.now();
+    const T = p.sack ? 900 : 1250;
+    const endY = p.td ? Math.min(p.to + 4, 108) : p.to;
+    const arc = 10 + Math.min(p.gain, 50) * 0.9;   // pixels of loft
+    const frame = (now) => {
+      if (!el.isConnected) return;
+      const t = now - t0;
+      const k1 = Math.min(1, t / 300);              // the drop
+      at(qb, lerp(p.from, drop, ease(k1)), 52);
+      if (p.sack) {
+        const kr = Math.min(1, Math.max(0, (t - 120) / 520));
+        at(de, lerp(Math.min(p.from + 6, 100), drop + 0.8, ease(kr)), lerp(72, 54, ease(kr)));
+        at(ball, lerp(p.from, drop, ease(k1)), 52);
+        at(wr, lerp(p.from, p.from + 6, Math.min(1, t / 800)), 30);
+      } else {
+        const kw = Math.min(1, t / (T - 100));
+        at(wr, lerp(p.from, endY, kw * kw * (3 - 2 * kw)), lerp(30, p.td ? 46 : 34, kw));
+        de.style.left = pct(fx(lerp(Math.min(p.from + 6, 100), Math.min(p.from + 9, 104), kw)));
+        if (t < 300) { at(ball, lerp(p.from, drop, ease(k1)), 52); ball.style.transform = ''; }
+        else {
+          const kb = Math.min(1, (t - 300) / (T - 300));
+          at(ball, lerp(drop, endY, kb), lerp(52, p.td ? 46 : 34, kb));
+          ball.style.transform = `translate(-50%,-50%) translateY(${(-Math.sin(Math.PI * kb) * arc).toFixed(1)}px) rotate(${(kb * 720).toFixed(0)}deg) scale(${(1 + Math.sin(Math.PI * kb) * 0.45).toFixed(2)})`;
+        }
+      }
+      if (t < T) requestAnimationFrame(frame);
+      else { ball.style.transform = ''; done(); }
+    };
+    requestAnimationFrame(frame);
+  }
   // The score counts up to where it ends.
   function countUp(el, to, from = 0) {
     if (!el || !(to > from) || calm()) return;
@@ -361,8 +461,10 @@
       // What was typed, when it was read as a name spelt another way.
       const typed = a && shown.read && shown.typed && shown.typed.toLowerCase() !== a.name.toLowerCase()
         ? `<p class="oo-read">Read &ldquo;${esc(shown.typed)}&rdquo; as <b>${esc(a.name)}</b></p>` : '';
+      const dr = drive(v.answers);
       root.innerHTML = `<div class="oo-card oo-reveal">
         ${slots(v, -1, true)}
+        ${field(dr, true)}
         ${card}
         ${typed}
         <p class="oo-p oo-center">${line}</p>
@@ -371,6 +473,7 @@
         <button type="button" class="oo-btn oo-big" id="oo-go" data-act="${last ? 'results' : 'next'}">${last ? 'See your results' : `Next prompt &middot; ${Math.min(v.slot + 1, v.count)} of ${v.count}`}</button>
       </div>`;
       if (a) countUp($('oo-total'), v.score, v.score - a.points);
+      runPlay(dr);
       tilt();
       const go = $('oo-go');
       if (go) { try { go.focus({ preventScroll: true }); } catch (_) { go.focus(); } }
@@ -401,6 +504,7 @@
         <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
         <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
         ${slots(v, -1, false, true)}
+        ${field(drive(v.answers), false)}
         ${standing(true)}
         ${roundTiles()}
         <button type="button" class="oo-btn oo-big" id="oo-go" data-act="another">Next round</button>
@@ -416,6 +520,7 @@
       <div class="oo-rating">${rating(v.score, v.maxScore)}</div>
       <div class="oo-score"><strong>${v.score}</strong><span>/ ${v.maxScore}</span></div>
       ${slots(v, -1, false, true)}
+      ${field(drive(v.answers), false)}
       ${standing(false)}
       ${statTiles()}
       <button type="button" class="oo-btn oo-big oo-share-btn" data-act="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share your pack</button>
@@ -645,6 +750,8 @@
     if (count('one')) bits.push(count('one') === 1 ? '1 One of One' : `${count('one')} One of Ones`);
     if (count('gold')) bits.push(`${count('gold')} Gold`);
     const st = stats();
+    const dv = drive(ans);
+    if (dv.tds) bits.push(dv.tds === 1 ? '1 TD' : `${dv.tds} TDs`);
     if (st && st.streak > 1) bits.push(`${st.streak}-day streak`);
     if (bits.length) { ctx.fillStyle = '#e2e8f0'; ctx.font = F(700, 40); ctx.fillText(bits.join('  ·  '), W / 2, 1000); }
 
