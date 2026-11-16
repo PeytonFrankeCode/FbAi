@@ -20,6 +20,9 @@
   const BX = FW / 2;             // the ball is snapped from the middle
   const HASH = 3.083;            // the inbounds lines sit 18 ft 6 in apart
   const T0 = 550;                // the snap, in ms from the start
+  // How fast the play runs: 1 is the speed it was written at. The owner asked
+  // for it "a little bit" slower (Nov 2026), so it runs at three quarters.
+  const RATE = 0.75;
   const TAU = Math.PI * 2;
 
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -82,7 +85,7 @@
     const T_DOWN = T_CATCH + (play.td ? 300 + 45 * Math.hypot(down[0] - cat[0], down[1] - cat[1]) : 240);
     const T_SACK = T0 + 1150;
     const T_CALL = play.sack ? T_SACK + 190 : T_DOWN + (play.td ? 80 : 150);
-    const T_END = T_CALL + (play.td ? 1750 : 1350);
+    const T_END = T_CALL + (play.td ? 1450 : 1050);          // the call is held about a second and a half as watched
 
     // The routes. The one thrown to breaks to the catch; the rest clear out.
     const stem = who === 'slot' ? [at0.slot[0], lerp(L, cat[1], 0.8)] : [lerp(at0[who][0], cat[0], 0.12), lerp(L, cat[1], 0.62)];
@@ -635,7 +638,7 @@
     const frame = (now) => {
       if (over) return;
       if (!cv.isConnected) { over = true; clearTimeout(guard); return; }
-      const t = Math.max(0, now - t0);
+      const t = Math.max(0, now - t0) * RATE;             // the play's own clock
       draw(g, M, Math.min(t, M.T_END), V);
       if (t >= M.T_CALL) showCall();
       if (t >= M.T_END) { end(); return; }
@@ -643,11 +646,11 @@
     };
     raf = requestAnimationFrame(frame);
     // A tab in the background gets no frames: the play still ends.
-    guard = setTimeout(() => { showCall(); end(); }, M.T_END + 1500);
+    guard = setTimeout(() => { showCall(); end(); }, M.T_END / RATE + 1500);
     return { stop() { over = true; cancelAnimationFrame(raf); clearTimeout(guard); }, model: M };
   }
 
-  const api = { run, build, FW, FL };
+  const api = { run, build, FW, FL, RATE };
   if (typeof window !== 'undefined') window.ooField = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();
