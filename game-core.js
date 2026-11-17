@@ -26,6 +26,8 @@ const MAX_TRIES = 8;              // guesses per prompt: a wrong one costs time,
 // dropped from a One of One straight to Base. At 300 they get Gold or Blue,
 // and it takes several people saying a name before it reads as common. Real
 // answers still take over as the day's players pass a few hundred.
+// How many accounts a day's leaderboard keeps (the best of them).
+const LB_KEEP = 2000;
 const PRIOR_PLAYERS = 300;
 const FAME_POWER = 1.5;
 
@@ -385,8 +387,31 @@ class GameDay {
         const h = (await this.store.get('h')) || {};
         h[play.score] = (h[play.score] || 0) + 1;
         await this.store.put('h', h);
+        // The leaderboard (owner, Nov 2026): accounts only, so a name can be
+        // shown. { user: [score, finished at] }, kept to the best LB_KEEP.
+        if (typeof play.pid === 'string' && play.pid.startsWith('u:')) {
+          const lb = (await this.store.get('lb')) || {};
+          lb[play.pid.slice(2)] = [play.score, Date.now()];
+          const names = Object.keys(lb);
+          if (names.length > LB_KEEP) {
+            names.sort((a, b) => lb[b][0] - lb[a][0] || lb[a][1] - lb[b][1]);
+            for (const n of names.slice(LB_KEEP)) delete lb[n];
+          }
+          await this.store.put('lb', lb);
+        }
       }
     }
+  }
+
+  // The day's leaderboard: the best `limit` finished accounts, highest score
+  // first and, level on score, whoever finished first. `me` adds that
+  // account's own place. { top: [[user, score]], n, me: { rank, score } }.
+  async board(limit = 10, me = '') {
+    const lb = (await this.store.get('lb')) || {};
+    const all = Object.entries(lb).sort((a, b) => b[1][0] - a[1][0] || a[1][1] - b[1][1]);
+    const i = me ? all.findIndex(([u]) => u === me) : -1;
+    return { top: all.slice(0, Math.max(1, Math.min(50, limit | 0))).map(([u, v]) => [u, v[0]]), n: all.length,
+      me: i >= 0 ? { rank: i + 1, score: all[i][1][0] } : null, scores: all.map(([u, v]) => [u, v[0]]) };
   }
 
   // Show the next prompt and start its clock. Asking again while the clock is
@@ -410,10 +435,11 @@ class GameDay {
       if (!meta) return { error: 'no-pack' };
       let play = await this.store.get('u:' + pid);
       if (play && play.done && opts && opts.again && meta.mode === 'unlimited') {
-        play = { slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: true };
+        play = { pid, slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: true };
       }
+      if (play && !play.pid) play.pid = pid;          // rounds begun before plays knew their player
       if (!play) {
-        play = { slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: !!(opts && opts.quiet) };
+        play = { pid, slot: 0, startedAt: 0, tries: 0, answers: [], done: false, at: now, quiet: !!(opts && opts.quiet) };
         if (!play.quiet) await this._bump('plays');
       }
       if (!play.done && play.startedAt && now > play.startedAt + SECONDS * 1000 + GRACE_MS) await this._miss(play);
@@ -520,6 +546,7 @@ async function runOp(day, m, now = Date.now()) {
     case 'answer': return day.answer(m.pid, m.text, now, { final: !!m.final, known: !!m.known });
     case 'results': return day.results(m.pid, now);
     case 'summary': return { summary: await day.summary() };
+    case 'board': return day.board(m.limit, String(m.me || ''));
     default: return { error: 'op' };
   }
 }
@@ -577,7 +604,7 @@ function liveStreak(stats, today) {
 }
 
 module.exports = {
-  PROMPTS_PER_DAY, SECONDS, GRACE_MS, MAX_TRIES, PRIOR_PLAYERS, FAME_POWER, TIERS, TIER, MAX_SCORE, SQUARES,
+  LB_KEEP, PROMPTS_PER_DAY, SECONDS, GRACE_MS, MAX_TRIES, PRIOR_PLAYERS, FAME_POWER, TIERS, TIER, MAX_SCORE, SQUARES,
   gameDate, msToNextDay, isDate, dayIndex, dateOfDay,
   nameWords, dropSuffix, nameKey, editDistance, sameFirst, slipsFor, NICKNAMES, matchAnswer, fameShares, rarity, startingTiers,
   validPid, GameDay, runOp, applySwaps, memoryStore, shareText, nextStats, liveStreak,

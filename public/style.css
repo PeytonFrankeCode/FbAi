@@ -11081,3 +11081,42 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-scene-call.td b{font-size:clamp(32px,10.5vw,60px)}
 @keyframes ooSceneCall{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 .oo-scene-skip{position:absolute;right:10px;bottom:10px;padding:6px 10px;border-radius:999px;background:rgba(8,12,22,.6);color:rgba(255,255,255,.85);font-size:11px;font-weight:700;line-height:1;pointer-events:none}
+
+/* ---- One of One: a tidier recap, and the leaderboard (Nov 2026) ---- */
+.oo-recap{padding:.35rem .4rem}
+.oo-recap-item{display:block;position:relative;padding:.75rem .75rem .75rem 1rem;border-top:1px solid var(--border-primary);border-radius:10px}
+.oo-recap-item::before{content:"";position:absolute;left:.25rem;top:.85rem;bottom:.85rem;width:4px;border-radius:2px;background:var(--oo-edge,var(--border-primary))}
+.oo-recap-item.oo-t-miss::before{background:repeating-linear-gradient(180deg,var(--border-primary) 0 4px,transparent 4px 7px)}
+.oo-recap-head{display:flex;align-items:flex-start;gap:.55rem}
+.oo-recap-n{flex:0 0 auto;min-width:1.35rem;height:1.35rem;border-radius:50%;background:var(--bg-hover);color:var(--text-secondary);font-size:.72rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-top:.05rem}
+.oo-recap-q{flex:1 1 auto;min-width:0;font-weight:700;font-size:.92rem;line-height:1.35}
+.oo-recap-pts{flex:0 0 auto;font-weight:900;font-size:.85rem;padding:.2rem .55rem;border-radius:999px;background:var(--oo);color:var(--oo-ink);border:1px solid var(--oo-edge)}
+.oo-recap-pts.oo-t-miss{background:transparent;color:var(--text-muted);border-style:dashed}
+.oo-recap-you{margin:.35rem 0 0 1.9rem;font-size:.9rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .5rem}
+.oo-recap-you .oo-name{font-weight:800}
+.oo-recap-tier{font-size:.78rem;color:var(--text-secondary)}
+.oo-recap-none{color:var(--text-muted);font-style:italic}
+.oo-recap-line{margin:.2rem 0 0 1.9rem;font-size:.82rem;color:var(--text-secondary)}
+.oo-recap-meta{margin:.2rem 0 0 1.9rem;font-size:.76rem;color:var(--text-muted)}
+.oo-board{margin-top:1.1rem;background:var(--bg-card);border:1px solid var(--border-primary);border-radius:14px;padding:.85rem 1rem 1rem}
+.oo-board-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin-bottom:.4rem}
+.oo-board-head .oo-h2{margin:0}
+.oo-board-tabs{display:inline-flex;background:var(--bg-hover);border-radius:999px;padding:3px}
+.oo-board-tab{border:0;background:transparent;color:var(--text-secondary);font:inherit;font-size:.8rem;font-weight:700;padding:.35rem .8rem;border-radius:999px;cursor:pointer}
+.oo-board-tab.on{background:var(--accent);color:var(--accent-on)}
+.oo-board-tab:hover:not(.on){color:var(--text-primary)}
+.oo-board-list{list-style:none;margin:0;padding:0}
+.oo-board-row{display:flex;align-items:center;gap:.65rem;padding:.5rem .35rem;border-top:1px solid var(--border-primary);font-size:.92rem}
+.oo-board-row:first-child{border-top:0}
+.oo-board-rank{flex:0 0 1.7rem;height:1.7rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;background:var(--bg-hover);color:var(--text-secondary)}
+.oo-board-row.top1 .oo-board-rank{background:linear-gradient(145deg,#fde68a,#eab308);color:#231a00}
+.oo-board-row.top2 .oo-board-rank{background:linear-gradient(145deg,#f1f5f9,#94a3b8);color:#0f172a}
+.oo-board-row.top3 .oo-board-rank{background:linear-gradient(145deg,#fdba74,#c2410c);color:#fff}
+.oo-board-name{flex:1 1 auto;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oo-board-name em{font-style:normal;font-size:.7rem;font-weight:800;color:var(--accent);margin-left:.3rem;text-transform:uppercase;letter-spacing:.04em}
+.oo-board-days{flex:0 0 auto;font-size:.75rem;color:var(--text-muted)}
+.oo-board-score{flex:0 0 auto;font-weight:900;font-variant-numeric:tabular-nums}
+.oo-board-row.me{background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:10px}
+.oo-board-mine{margin-top:.35rem;border-top:1px dashed var(--border-primary);padding-top:.35rem}
+.oo-board-foot{margin:.55rem 0 0;font-size:.76rem;color:var(--text-muted)}
+.oo-board-join{margin:.35rem 0 0;font-size:.85rem}
