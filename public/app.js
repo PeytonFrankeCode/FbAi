@@ -5695,12 +5695,25 @@ let _planTrial = null; // { days, tokens } while this account can still start th
 const _usd = (c) => '$' + (c / 100).toFixed(2);
 const _num = (n) => Number(n).toLocaleString('en-US');
 const _tok = (n) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)} million` : _num(n));
+// The day a trial started now would first charge: what a collector most wants
+// to know before Stripe asks for a card (owner, Nov 2026).
+const _trialEnds = (days) => new Date(Date.now() + days * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function _trialStrip() {
+  if (!_planTrial) return '';
+  const tick = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+  return `<div class="trial-strip" role="note">
+      <span class="trial-strip-head">Huddle+ free trial</span>
+      <span>${tick}<b>$0 due today</b></span>
+      <span>${tick}Not charged until ${_trialEnds(_planTrial.days)}</span>
+      <span>${tick}Cancel anytime in Manage billing</span>
+    </div>`;
+}
 function _planCard(p, current) {
   const mine = current === p.id;
   const best = p.id === 'veteran';
   const trial = p.tokens && !current && _planTrial;
   const lines = p.tokens
-    ? [...(trial ? [`<b>First ${_planTrial.days} days free</b>, then ${_usd(p.monthly)}/month`] : []), `No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokensShown || p.tokens)}+ AI tokens each month`]
+    ? [...(trial ? [`<b>$0 today.</b> Free until ${_trialEnds(_planTrial.days)}, then ${_usd(p.monthly)}/month`] : []), `No ads anywhere`, `<b>About ${_num(p.answers)} AI answers</b> a month`, `or about ${_num(p.deep)} Deep answers`, `${_tok(p.tokensShown || p.tokens)}+ AI tokens each month`]
     : [`No ads anywhere`, `No Huddle AI`, `Supports the free site`];
   return `<div class="plan-card${best ? ' plan-best' : ''}${mine ? ' plan-mine' : ''}" data-tier="${p.id}">
     ${best ? '<span class="plan-badge">Most popular</span>' : ''}${mine ? '<span class="plan-badge plan-badge-mine">Your plan</span>' : ''}
@@ -5708,7 +5721,8 @@ function _planCard(p, current) {
     <div class="plan-price">${_usd(p.monthly)}<span>/month</span></div>
     <ul class="plan-lines">${lines.map(l => `<li>${l}</li>`).join('')}</ul>
     ${mine ? '<button type="button" class="plan-btn" disabled>Current plan</button>'
-      : `<button type="button" class="plan-btn" data-tier="${p.id}" data-period="monthly">${current ? 'Switch to this' : trial ? `Start ${_planTrial.days}-day free trial` : 'Choose'}</button>`}
+      : `<button type="button" class="plan-btn" data-tier="${p.id}" data-period="monthly"${trial ? ' data-trial="1"' : ''}>${current ? 'Switch to this' : trial ? `Start ${_planTrial.days}-day free trial` : 'Choose'}</button>`}
+    ${trial && !mine ? '<p class="plan-trial-note">Card needed, nothing charged today</p>' : ''}
     ${p.yearly && !mine ? `<button type="button" class="plan-yearly" data-tier="${p.id}" data-period="yearly">or ${_usd(p.yearly)} a year</button>` : ''}
   </div>`;
 }
@@ -5727,6 +5741,7 @@ function _adFreeModal() {
       <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <h3 id="adfree-title" class="adfree-title">Choose your plan</h3>
       <p class="adfree-sub">Every search, price and tool on The Card Huddle stays free. A plan removes the ads, and Huddle+ adds <b>Huddle AI</b>: what any card is worth, whether to grade it, and how a player's market is moving, from real sales.</p>
+      <div id="trial-strip-slot"></div>
       <div class="plan-grid" id="plan-grid"></div>
       <p class="adfree-fine" id="adfree-fine">A Deep answer thinks harder on a stronger model and uses about 20 times the tokens of a normal answer. New tokens arrive on the 1st of each month; unused ones do not roll over. Change or cancel anytime. Secure checkout by Stripe.</p>
       <div class="adfree-done hidden" id="adfree-done"><button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button></div>
@@ -5744,6 +5759,8 @@ function _paintPlans(m) {
   const st = _adFreeState || {};
   const current = getSessionToken() && st.on ? (st.tier || (st.owner ? null : 'rookie')) : null;
   m.querySelector('#plan-grid').innerHTML = (_plans || PLAN_FALLBACK).map(p => _planCard(p, current)).join('');
+  const strip = m.querySelector('#trial-strip-slot');
+  if (strip) strip.innerHTML = current ? '' : _trialStrip();
   m.querySelector('#adfree-title').textContent = st.owner ? 'Plans (you have everything as the owner)' : current ? 'Your plan' : 'Choose your plan';
   m.querySelector('#adfree-done').classList.toggle('hidden', !(current && st.billing));
 }
@@ -5787,7 +5804,9 @@ async function _startAdFreeCheckout(tier, period, btn) {
   const btns = document.querySelectorAll('#plan-grid button[data-tier]');
   btns.forEach(b => { b.disabled = true; });
   if (btn) btn.classList.add('is-loading');
-  msg.textContent = (_adFreeState && _adFreeState.on) ? 'Switching your plan…' : 'Opening secure checkout…';
+  msg.textContent = (_adFreeState && _adFreeState.on) ? 'Switching your plan…'
+    : btn && btn.dataset.trial ? `Opening secure checkout… Stripe asks for a card to start the trial, but charges $0 today. Cancel before ${_trialEnds(_planTrial ? _planTrial.days : 7)} and you pay nothing.`
+    : 'Opening secure checkout…';
   try {
     const r = await authFetch('/api/stripe/create-checkout-adfree', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tier, period }),
