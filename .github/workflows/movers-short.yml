@@ -10,6 +10,7 @@ jobs:
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
           curl -sS -m 60 -A 'Mozilla/5.0 (movers-short)' "$B/news/market-movers" -o r.html
           wc -c r.html
+          echo '=====HTML-B64-START'; gzip -9c r.html | base64 -w 0; echo; echo '=====HTML-B64-END'
           python3 - <<'PY'
           import re, html, json
           s = open('r.html', encoding='utf-8').read()
