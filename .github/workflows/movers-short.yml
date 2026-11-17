@@ -10,6 +10,9 @@ jobs:
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
           curl -sS -m 60 -A 'Mozilla/5.0 (movers-short)' "$B/news/market-movers" -o r.html
           wc -c r.html
+          mkdir -p imgs; grep -o 'src="https://i.ebayimg.com[^"]*"' r.html | sed 's/src="//;s/"$//' | sort -u | head -40 > urls.txt; wc -l urls.txt
+          i=0; while read u; do i=$((i+1)); curl -sS -m 20 -A 'Mozilla/5.0' "$u" -o "imgs/$(printf %02d $i).jpg" && echo "$(printf %02d $i) $u" >> imgs/map.txt; done < urls.txt
+          echo '=====IMG-B64-START'; tar czf - imgs | base64 -w 0; echo; echo '=====IMG-B64-END'
           echo '=====HTML-B64-START'; gzip -9c r.html | base64 -w 0; echo; echo '=====HTML-B64-END'
           python3 - <<'PY'
           import re, html, json
