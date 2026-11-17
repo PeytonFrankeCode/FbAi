@@ -21,7 +21,8 @@ What it does, in order:
 
 Settings (environment):
   OPENWEBNINJA_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   required
-  NINJA_PAGES     successful pages to collect per run (default 10)
+  NINJA_PAGES     successful pages to collect per run (default: paced to
+                  the free tier, see PAGES below)
   NINJA_MIN_PRICE lowest sale price in dollars (default 100; 0 for all)
   NINJA_QUERY     search words (default "football card")
   NINJA_SPORT     sport stamped when a title doesn't say (default football)
@@ -52,7 +53,13 @@ CF_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
 CF_ACCOUNT = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
 D1_ID = "a887dd0e-d852-4ebc-98f0-0e01bc82ad0b"  # nflcarddb, as in NflCardDB's daily.bat
 
-PAGES = int(os.environ.get("NINJA_PAGES") or 10)
+# The free tier is 100 successful calls a month (Nov 2026: 70 used by the
+# 17th, at 10 a night, with 23 days to the reset). Paced so a month never
+# runs dry: 3 pages a night is 90 a month. Until the first reset (10 Dec
+# 2026) only 30 are left for 23 nights, so 1 a night. NINJA_PAGES (a repo
+# variable) overrides both.
+FREE_TIER_RESET = date(2026, 12, 10)
+PAGES = int(os.environ.get("NINJA_PAGES") or (1 if date.today() < FREE_TIER_RESET else 3))
 MIN_PRICE = float(os.environ.get("NINJA_MIN_PRICE") or 100)
 QUERY = os.environ.get("NINJA_QUERY") or "football card"
 SPORT = os.environ.get("NINJA_SPORT") or "football"
@@ -70,7 +77,9 @@ KEEP_DAYS = 14              # best-match pages carry the odd months-old sale
 # so lots and sealed product come back too. Their price is not a card's price.
 NOT_A_SINGLE = re.compile(
     r"\blots?\b|\bsealed\b|\bunopened\b|\bwax\b|\bhobby box\b|\bblaster\b|\bmega box\b"
-    r"|\bpacks?\b|\bteam set\b|\bcomplete set\b|\bcase\b|\bbreak\b|\bbundle\b",
+    r"|\bpacks?\b|\bteam set\b|\bcomplete set\b|\bcase\b|\bbreak\b|\bbundle\b"
+    # Nov 2026: "Group of PSA Graded Cards -- 243 in Total" topped the week.
+    r"|\bgroup of\b|\bin total\b|\bcollection\b|\b\d{2,}\s*(?:graded\s+)?cards\b",
     re.I,
 )
 SOLD_RE = re.compile(r"sold\s+([A-Z][a-z]{2}\s+\d{1,2},?\s+\d{4})", re.I)

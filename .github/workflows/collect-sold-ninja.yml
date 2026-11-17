@@ -6,12 +6,13 @@ name: Collect sold sales (nightly)
 #
 # Nightly at 04:17 UTC (11:17pm Eastern), when most of the US day's sales
 # have ended. Also runs when the script changes: on main for real, on any
-# other branch as a 3-page dry run that uploads nothing. (GitHub's mobile
+# other branch as a 1-page dry run that uploads nothing. (GitHub's mobile
 # site has no "Run workflow" button, so a push is the way to start one.)
 #
 # Tuning without a code change -- repo Settings -> Secrets and variables ->
 # Actions -> Variables:
-#   NINJA_PAGES      successful pages per night (default 10; 60 sales each)
+#   NINJA_PAGES      successful pages per night (default: paced to the free
+#                    tier's 100 a month -- 1 until 10 Dec 2026, then 3; 60 sales each)
 #   NINJA_MIN_PRICE  lowest price in dollars (default 100; 0 for everything)
 
 on:
@@ -50,6 +51,6 @@ jobs:
           OPENWEBNINJA_KEY: ${{ secrets.OPENWEBNINJA_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NINJA_PAGES: ${{ github.ref == 'refs/heads/main' && (vars.NINJA_PAGES || '10') || '3' }}
+          NINJA_PAGES: ${{ github.ref == 'refs/heads/main' && (vars.NINJA_PAGES || '') || '1' }}
           NINJA_MIN_PRICE: ${{ vars.NINJA_MIN_PRICE || '100' }}
           DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}
