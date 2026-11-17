@@ -1,41 +1,24 @@
-name: Movers for a Short (one-off, never merge)
+name: Sold stats check (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
-permissions:
-  contents: write
 jobs:
-  fetch:
+  check:
     runs-on: ubuntu-latest
     steps:
       - run: |
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
-          curl -sS -m 60 -A 'Mozilla/5.0 (movers-short)' "$B/news/market-movers" -o r.html
-          wc -c r.html
-          mkdir -p imgs; grep -o 'src="https://i.ebayimg.com[^"]*"' r.html | sed 's/src="//;s/"$//' | sort -u | head -40 > urls.txt; wc -l urls.txt
-          i=0; while read u; do i=$((i+1)); curl -sS -m 20 -A 'Mozilla/5.0' "$u" -o "imgs/$(printf %02d $i).jpg" && echo "$(printf %02d $i) $u" >> imgs/map.txt; done < urls.txt
-          python3 - <<'PY'
-          import re, html, json
-          s = open('r.html', encoding='utf-8').read()
-          t = re.search(r'<h1>(.*?)</h1>', s, re.S)
-          print('TITLE', html.unescape(t.group(1)) if t else None)
-          out = {}
-          for sec in re.findall(r'<section class="mm-section"><h2>(.*?)</h2>.*?<ul class="mm-list">(.*?)</ul></section>', s, re.S):
-              name, body = sec
-              rows = []
-              for li in re.findall(r'<li class="mm-row">(.*?)</li>', body, re.S):
-                  strong = re.search(r'<strong>(.*?)</strong>', li, re.S)
-                  spans = re.findall(r'<span class="mm-text"><strong>.*?</strong><span>(.*?)</span>', li, re.S)
-                  right = re.search(r'<span class="mm-right[^"]*">(.*?)</span>', li, re.S)
-                  rows.append([html.unescape(re.sub('<[^>]+>', '', strong.group(1))) if strong else '', html.unescape(spans[0]) if spans else '', html.unescape(right.group(1)) if right else ''])
-              out[html.unescape(name)] = rows
-          print('JSON' + json.dumps(out))
-          brief = re.findall(r'<section class="mm-brief">.*?</section>', s, re.S)
-          if brief: print('BRIEF', [html.unescape(re.sub('<[^>]+>', '', x)) for x in re.findall(r'<li>(.*?)</li>', brief[0], re.S)])
-          stats = re.search(r'<p class="mm-stats">(.*?)</p>', s, re.S)
-          if stats: print('STATS', html.unescape(re.sub('<[^>]+>', ' ', stats.group(1))))
+          for d in 7 30; do
+            echo "== sold-stats $d"
+            curl -sS -m 90 "$B/api/sold-stats?days=$d" -o s$d.json; wc -c s$d.json
+            python3 - "$d" <<'PY'
+          import json, sys
+          d = json.load(open(f's{sys.argv[1]}.json'))
+          print('keys', sorted(d.keys())[:30])
+          for k in ('available','builtAt','through','since','refreshing','reason','version','days','sales','value'):
+              if k in d: print(k, '=', d[k])
+          for r in (d.get('priciest') or [])[:6]: print('  top', r.get('soldDate') or r.get('sold_date') or r.get('date'), r.get('price'), str(r.get('title'))[:60])
           PY
-      - run: |
-          mkdir out && cd out && cp ../r.html . && cp -r ../imgs . && git init -q && git checkout -q -b audit/movers-short
-          git -c user.name=bot -c user.email=bot@example.com add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm "movers page for a Short (one-off)"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" audit/movers-short
+          done
+          echo "== newest report"; curl -sS -m 30 "$B/news/market-movers" | grep -o '<h1>[^<]*</h1>'
+          echo "== health"; curl -sS -m 40 "$B/api/health" | head -c 1500; echo
