@@ -22899,6 +22899,7 @@ async function _gameCall(date, op, args = {}) {
     // after fourteen of them, and must not push today out of memory.
     if (op === 'summary') return { summary: null };
     if (op === 'has') return { has: false };
+    if (op === 'board') return { top: [], n: 0, me: null, scores: [] };
     const cutoff = GAME.dayIndex(_gameDate()) - 2;
     for (const d of _gameMem.keys()) if (GAME.isDate(d) && GAME.dayIndex(d) < cutoff) _gameMem.delete(d);
     day = new GAME.GameDay(GAME.memoryStore());
@@ -23094,6 +23095,46 @@ async function _gameSend(res, date, who, out) {
 const _gameNotReady = (res) => res.status(503).json({ error: "Today's pack is not ready yet. Check back in a few minutes." });
 const _gameFail = (res, where, err) => { console.error(`[game/${where}]`, err && err.message); res.status(500).json({ error: 'The game hit a problem. Try again.' }); };
 
+// GET /api/game/board?period=day|week — the leaderboard (owner, Nov 2026).
+// Signed-in players only, by username: today's daily pack, or this week's
+// (Monday to today, Eastern) daily scores added up. Unlimited rounds never
+// count. With an account, `me` is where that account stands.
+const _gameBoardMemo = new Map();      // `${period}|${to}` -> { at, all } for a minute
+async function _gameBoard(period) {
+  const to = _gameDate(), today = GAME.dayIndex(to);
+  const key = `${period}|${to}`, hit = _gameBoardMemo.get(key);
+  if (hit && _gameNow() - hit.at < 60000) return hit;
+  let days = [to];
+  if (period === 'week') {
+    const dow = (new Date(to + 'T12:00:00Z').getUTCDay() + 6) % 7;     // Monday 0 .. Sunday 6
+    days = Array.from({ length: dow + 1 }, (_, i) => GAME.dateOfDay(today - dow + i));
+  }
+  const sum = new Map();
+  for (const d of days) {
+    let r = null;
+    try { r = await _gameCall(d, 'board', { limit: 1 }); } catch (_) { r = null; }
+    for (const [u, sc] of (r && r.scores) || []) {
+      const e = sum.get(u) || { score: 0, days: 0 };
+      e.score += sc; e.days++; sum.set(u, e);
+    }
+  }
+  const all = [...sum.entries()].map(([name, e]) => ({ name, score: e.score, days: e.days }))
+    .sort((a, b) => b.score - a.score || b.days - a.days || a.name.localeCompare(b.name));
+  const out = { at: _gameNow(), all, from: days[0], to };
+  _gameBoardMemo.set(key, out);
+  if (_gameBoardMemo.size > 20) _gameBoardMemo.delete(_gameBoardMemo.keys().next().value);
+  return out;
+}
+app.get('/api/game/board', async (req, res) => {
+  const period = req.query.period === 'week' ? 'week' : 'day';
+  try {
+    const b = await _gameBoard(period), user = getSessionUser(req);
+    const i = user ? b.all.findIndex(x => x.name === user) : -1;
+    res.set('Cache-Control', 'no-store').json({ period, from: b.from, to: b.to, players: b.all.length,
+      top: b.all.slice(0, 10).map((x, k) => ({ rank: k + 1, ...x })), me: i >= 0 ? { rank: i + 1, ...b.all[i] } : null, signedIn: !!user });
+  } catch (err) { _gameFail(res, 'board', err); }
+});
+
 // GET /api/game/today — today's round as it stands for this player.
 // With ?round=<number>, that unlimited round instead.
 app.get('/api/game/today', async (req, res) => {
@@ -23200,7 +23241,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

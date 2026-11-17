@@ -474,6 +474,21 @@ const MS = G.SECONDS * 1000;
     const profile = await call('/api/account/profile', { token });
     check('...and My Account shows it', profile.body.game && profile.body.game.streak === 1 && profile.body.game.plays === 1);
 
+    // The leaderboard (owner, Nov 2026): accounts by name, best first; a guest's round is not on it.
+    const user2 = 'oob' + Date.now().toString(36);
+    const token2 = (await call('/api/auth/register', { method: 'POST', body: { username: user2, password: 'secret123' } })).body.token;
+    const r2 = await round({ token: token2 }, ['D.K. Metcalf', 'Amon-Ra St. Brown', 'x', 'x', 'x', 'x', 'x']);
+    const b1 = await call('/api/game/board?period=day', { token });
+    const names = (b1.body.top || []).map(x => x.name);
+    check('the day’s leaderboard lists the accounts that finished, best first, and no guests', b1.status === 200 && b1.body.period === 'day' && names.includes(user) && names.includes(user2)
+      && b1.body.players === 2 && b1.body.top[0].score >= b1.body.top[1].score && b1.body.top[0].rank === 1, JSON.stringify(b1.body.top));
+    check('...it knows where you stand, and whether you are signed in', b1.body.me && b1.body.me.name === user && b1.body.signedIn === true
+      && (await call('/api/game/board')).body.signedIn === false && (await call('/api/game/board')).body.me === null);
+    S._gameBoardMemo.clear();
+    const bw = await call('/api/game/board?period=week', { token: token2 });
+    check('...and the week adds the daily scores up from Monday', bw.body.period === 'week' && bw.body.from === '2026-11-09' && bw.body.to === '2026-11-12'
+      && bw.body.top.some(x => x.name === user2 && x.score === r2.body.view.score && x.days === 1) && bw.body.me.name === user2, JSON.stringify(bw.body));
+
     // A visitor the Worker takes for a program.
     const quietBefore = (await call('/api/admin/game', { admin: true })).body.days[0].plays;
     await call('/api/game/next', { method: 'POST', dev: 'device-bot-cccccccc', body: {}, headers: { 'x-game-uncounted': '1' } });
@@ -483,7 +498,7 @@ const MS = G.SECONDS * 1000;
     // Admin.
     check('the admin routes need the admin key', (await call('/api/admin/game')).status === 401 && (await call('/api/admin/game/swap', { method: 'POST', body: { date: '2026-11-13', slot: 0 } })).status === 401);
     const adm = (await call('/api/admin/game', { admin: true })).body;
-    check('the admin page gets today\'s numbers and prompts', adm.today === '2026-11-12' && adm.days[0].date === '2026-11-12' && adm.days[0].plays === 3 && adm.days[0].finished === 2 && adm.days[0].prompts[0].top[0].name === 'Tom Brady');
+    check('the admin page gets today\'s numbers and prompts', adm.today === '2026-11-12' && adm.days[0].date === '2026-11-12' && adm.days[0].plays === 4 && adm.days[0].finished === 3 && adm.days[0].prompts[0].top[0].name === 'Tom Brady');
     check('...and the next seven days, with where each pool starts', adm.upcoming.length === 7 && adm.upcoming[0].date === '2026-11-13' && adm.upcoming[0].number === 2 && adm.upcoming[0].prompts.length === 7 && adm.upcoming[0].prompts[0].start.base >= 1 && adm.upcoming[0].sparesLeft === 3);
     check('today\'s pack cannot be swapped: people are playing it', (await call('/api/admin/game/swap', { method: 'POST', admin: true, body: { date: '2026-11-12', slot: 0 } })).status === 400);
     await call('/api/admin/game/swap', { method: 'POST', admin: true, body: { date: '2026-11-13', slot: 1 } });
@@ -524,7 +539,7 @@ const MS = G.SECONDS * 1000;
     r = await playRound({ token }, 3, 'Jordan Love', true);
     const statsNow = (await call('/api/game/today', { token })).body.stats;
     check('an unlimited round neither shows nor changes an account\'s streak', r.body.view.done === true && !('stats' in r.body) && statsNow.streak === 1 && statsNow.plays === 1);
-    check('...and is not in the admin page\'s numbers for the day', (await call('/api/admin/game', { admin: true })).body.days[0].plays === 3);
+    check('...and is not in the admin page\'s numbers for the day', (await call('/api/admin/game', { admin: true })).body.days[0].plays === 4);
 
     // The next day.
     now = Date.parse('2026-11-13T04:59:55Z');   // five seconds to midnight Eastern, still the 12th
@@ -577,8 +592,14 @@ const MS = G.SECONDS * 1000;
   const play = read('public/play.js');
   check('the page never holds the answers: it only shows what the server sends back', !/answers\s*:\s*\[\[/.test(play) && /x-game-device/.test(play) && /final: !!final/.test(play) && /window\.initPlayView = function/.test(play));
   check('there is no Skip button: a prompt is answered or runs out', !/data-act="skip"/.test(play) && !/skip/i.test(play.replace(/There is no Skip button[^\n]*/, '')));
+  check('the recap is one tidy row per prompt: tier edge, points, your answer, most said only when it adds anything, one meta line',
+    /class="oo-recap-item oo-t-\$\{y \? y\.tier : 'miss'\}"/.test(play) && /class="oo-recap-pts/.test(play) && /class="oo-recap-you"/.test(play)
+    && /\.filter\(t => !y \|\| t\.name !== y\.name\)/.test(play) && !/named so far/.test(play) && /Checklist &rsaquo;/.test(play));
+  check('the leaderboard sits on the start screen and the daily results, with Today and This week, and a way on for a guest',
+    /const boardBox = \(\) =>/.test(play) && /data-act="board-day"/.test(play) && /data-act="board-week"/.test(play) && (play.match(/loadBoard\(\);/g) || []).length === 2 && /if \(!unlimited\) loadBoard\(\);/.test(play)
+    && /api\(`\/api\/game\/board\?period=\$\{want\}`\)/.test(play) && /to get your name on the leaderboard/.test(play) && /\$\{esc\(x\.name\)\}/.test(play));
   check('the results screen shows the streak, best score and packs played as tiles, and one line for what was most said',
-    /function statTiles\(\)/.test(play) && /'Day streak'/.test(play) && /'Best score'/.test(play) && /Most said: \$\{top\}/.test(play)
+    /function statTiles\(\)/.test(play) && /'Day streak'/.test(play) && /'Best score'/.test(play) && /Most said \$\{top\}/.test(play)
     && !/Said by one player/.test(play) && /\.oo-tiles\{display:grid;grid-template-columns:repeat\(3,/.test(read('public/style.css')));
   check('the game\'s buttons keep their colour under the pointer', /\.oo-btn:hover,\.oo-btn:focus-visible\{background:var\(--accent-hover\);color:var\(--accent-on\)\}/.test(read('public/style.css')));
   check('unlimited mode: the page has its way in, its Next round and its way back, and names the round on every call',

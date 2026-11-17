@@ -400,7 +400,9 @@
         ${statsLine()}
         ${signedIn() ? '' : '<p class="oo-small oo-muted">No account needed. <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak on every device.</p>'}
         ${unlimitedDoor()}
-      </div>`;
+      </div>
+      ${unlimited ? '' : boardBox()}`;
+      if (!unlimited) loadBoard();
       return;
     }
 
@@ -495,20 +497,22 @@
 
     // Results: the round is done. One card for the score, one list for what
     // was said: the prompt with its tier on the right, then two short lines.
+    // What everyone said: one tidy row per prompt. The tier's colour down the
+    // left edge and its points on the right; then what you said (and how
+    // rare it was), what most people said when that adds anything, and one
+    // quiet line: how many players fit, and the checklist.
     const recap = (data.results || []).map((p, i) => {
       const y = p.yours;
-      const chip = y ? `<span class="oo-chip oo-t-${y.tier}">${esc(TIER[y.tier])} <b>${y.points}</b></span>` : '<span class="oo-chip oo-t-miss">No answer</span>';
       // With one answer in, "most said" would only repeat the player's own.
-      const top = p.n >= 2 ? (p.top || []).map(t => `${playerLink(t)} (${t.n})`).join(', ') : '';
-      // How open the prompt was, and how much of it has been found.
-      const pool = p.pool ? `${fits(p.pool)}${p.named ? ` &middot; ${p.named.toLocaleString('en-US')} named so far` : ''}` : '';
-      const set = p.link && /^\/[a-z0-9/_-]+$/i.test(p.link.href || '') ? ` &middot; <a class="oo-name" href="${esc(p.link.href)}">See the checklist</a>` : '';
-      return `<div class="oo-recap-item">
-        <div class="oo-recap-q">${i + 1}. ${esc(p.text)}</div>
-        <div class="oo-recap-chip">${chip}</div>
-        ${y ? `<div class="oo-recap-line">You said ${playerLink(y)}${y.rarer >= 10 ? `, rarer than ${Math.floor(y.rarer)}% of answers` : ''}</div>` : ''}
-        ${top ? `<div class="oo-recap-line">Most said: ${top}</div>` : ''}
-        ${pool ? `<div class="oo-recap-line oo-recap-meta">${KIND[p.type] ? `${mark(KIND[p.type][1])}${KIND[p.type][0]} &middot; ` : ''}${pool}${set}</div>` : ''}
+      const top = p.n >= 2 ? (p.top || []).filter(t => !y || t.name !== y.name).slice(0, 2).map(t => `${playerLink(t)} (${t.n})`).join(', ') : '';
+      const set = p.link && /^\/[a-z0-9/_-]+$/i.test(p.link.href || '') ? `<a class="oo-name" href="${esc(p.link.href)}">Checklist &rsaquo;</a>` : '';
+      const meta = [p.pool ? fits(p.pool) : '', set].filter(Boolean).join(' &middot; ');
+      return `<div class="oo-recap-item oo-t-${y ? y.tier : 'miss'}">
+        <div class="oo-recap-head"><span class="oo-recap-n">${i + 1}</span><span class="oo-recap-q">${esc(p.text)}</span>
+          <span class="oo-recap-pts oo-t-${y ? y.tier : 'miss'}">${y ? (y.tier === 'one' ? '1/1' : '+' + y.points) : '0'}</span></div>
+        <div class="oo-recap-you">${y ? `${playerLink(y)}<span class="oo-recap-tier">${esc(TIER[y.tier])}${y.rarer >= 10 ? ` &middot; rarer than ${Math.floor(y.rarer)}%` : ''}</span>` : '<span class="oo-recap-none">No answer</span>'}</div>
+        ${top ? `<div class="oo-recap-line">Most said ${top}</div>` : ''}
+        ${meta ? `<div class="oo-recap-meta">${meta}</div>` : ''}
       </div>`;
     }).join('');
     if (unlimited) {
@@ -541,16 +545,52 @@
       <p class="oo-foot">Next pack in <span id="oo-countdown" class="oo-countdown">${clockWords(nextAt - Date.now())}</span>${signedIn() ? '' : ' &middot; <button type="button" class="oo-link" data-act="login">Sign in</button> to keep your streak'}</p>
       ${unlimitedDoor()}
     </div>
+    ${boardBox()}
     <h3 class="oo-h2">What everyone said</h3>
     <div class="oo-recap">${recap}</div>`;
     countUp(root.querySelector('.oo-score strong'), v.score);
     prepareShare(v);
+    loadBoard();
     tick = setInterval(() => {
       const el = $('oo-countdown'), left = nextAt - Date.now();
       if (!el) { clearInterval(tick); return; }
       if (left <= 0) { clearInterval(tick); load(); return; }   // midnight: the next pack is here
       el.textContent = clockWords(left);
     }, 1000);
+  }
+
+  // ---- The leaderboard (owner, Nov 2026) ----
+  // Today's and this week's best daily scores, signed-in players by name.
+  // A guest sees the board and a way onto it.
+  let boardPeriod = 'day';
+  const boardBox = () => `<section class="oo-board" id="oo-board" aria-label="Leaderboard">
+      <div class="oo-board-head"><h3 class="oo-h2">Leaderboard</h3>
+        <div class="oo-board-tabs" role="tablist">
+          <button type="button" role="tab" class="oo-board-tab${boardPeriod === 'day' ? ' on' : ''}" aria-selected="${boardPeriod === 'day'}" data-act="board-day">Today</button>
+          <button type="button" role="tab" class="oo-board-tab${boardPeriod === 'week' ? ' on' : ''}" aria-selected="${boardPeriod === 'week'}" data-act="board-week">This week</button>
+        </div></div>
+      <div class="oo-board-body" id="oo-board-body"><p class="oo-small oo-muted">Loading&hellip;</p></div>
+    </section>`;
+  async function loadBoard(period) {
+    if (period) boardPeriod = period;
+    const box = $('oo-board');
+    if (!box) return;
+    box.querySelectorAll('.oo-board-tab').forEach(b => { const on = b.dataset.act === 'board-' + boardPeriod; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+    const body = $('oo-board-body'), want = boardPeriod;
+    let d;
+    try { d = await api(`/api/game/board?period=${want}`); } catch (_) { if (body) body.innerHTML = '<p class="oo-small oo-muted">The leaderboard could not be loaded.</p>'; return; }
+    if (want !== boardPeriod || !body || !body.isConnected) return;
+    const week = want === 'week';
+    const row = (x, mine) => `<li class="oo-board-row${mine ? ' me' : ''}${x.rank <= 3 ? ' top' + x.rank : ''}">
+        <span class="oo-board-rank">${x.rank}</span><span class="oo-board-name">${esc(x.name)}${mine ? ' <em>you</em>' : ''}</span>
+        ${week ? `<span class="oo-board-days">${plural(x.days, 'day')}</span>` : ''}<span class="oo-board-score">${x.score.toLocaleString('en-US')}</span></li>`;
+    const mine = d.me && d.me.name;
+    let h = (d.top || []).length ? `<ol class="oo-board-list">${d.top.map(x => row(x, x.name === mine)).join('')}</ol>`
+      : `<p class="oo-small oo-muted">Nobody signed in has finished ${week ? 'a pack this week' : 'today&rsquo;s pack'} yet. The first one takes #1.</p>`;
+    if (d.me && d.me.rank > 10) h += `<ol class="oo-board-list oo-board-mine" start="${d.me.rank}">${row(d.me, true)}</ol>`;
+    h += `<p class="oo-board-foot">${d.players ? `${plural(d.players, 'player')} ${week ? 'this week' : 'today'}` : ''}${week ? `${d.players ? ' &middot; ' : ''}Daily scores added up, Monday to today` : ''}</p>`;
+    if (!d.signedIn) h += `<p class="oo-board-join"><button type="button" class="oo-link" data-act="login">Sign in</button> to get your name on the leaderboard.</p>`;
+    body.innerHTML = h;
   }
 
   // The bar and the seconds follow the server's clock: it sends how long is
@@ -877,6 +917,8 @@
       else if (act === 'results') { phase = 'results'; paint(); }
       else if (act === 'card') endPlay();
       else if (act === 'share') share();
+      else if (act === 'board-day') loadBoard('day');
+      else if (act === 'board-week') loadBoard('week');
       else if (act === 'reload') load();
       else if (act === 'login' && typeof showLogin === 'function') showLogin();
     });
