@@ -30,6 +30,11 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
     const v = await call('/api/growth/visit', { method: 'POST', body: { src: 'cardguy' } });
     check('a visit is accepted (204) even without D1', v.status === 204, `status ${v.status}`);
 
+    // How a real visit's ads went (Nov 2026): one of five outcomes, nothing else.
+    const a1 = await call('/api/growth/ads', { method: 'POST', body: { r: 'open-timeout' } });
+    const a2 = await call('/api/growth/ads', { method: 'POST', body: { r: '<script>' } });
+    check('an ads outcome is accepted (204), and an unknown one is ignored', a1.status === 204 && a2.status === 204);
+
     const reg = await (await call('/api/auth/register', { method: 'POST', body: { username: NEWU, password: 'secret123' } })).json();
     const c1 = await (await call('/api/growth/claim', { method: 'POST', token: reg.token, body: { src: 'CardGuy' } })).json();
     check('a new account claims the link it came from', c1.ok === true && S._growthRefOf(NEWU) === 'cardguy', JSON.stringify(c1));
@@ -46,6 +51,9 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
 
   // An old account signing in from a link claims nothing.
   const src = read('server.js');
+  check('the ads outcomes are kept apart from the sources and handed to the panel', /const ADS_OUTCOMES = \['ok', 'bot', 'open-timeout', 'open-error', 'open-noscript'\];/.test(src)
+    && /_growthBump\('ads-' \+ r, 'visits'\)/.test(src) && (src.match(/src NOT LIKE 'ads-%'/g) || []).length === 2 && /available: true, ads,/.test(src)
+    && /id="gr-ads"/.test(read('public/admin.html')));
   check('only an account made in the last ten minutes can claim', /GROWTH_CLAIM_MS = 10 \* 60 \* 1000/.test(src) && /Date\.now\(\) - Date\.parse\(u\.createdAt \|\| 0\) < GROWTH_CLAIM_MS/.test(src));
   check('checkout carries the source to Stripe', /\.\.\.\(_growthRefOf\(username\) \? \{ ref: _growthRefOf\(username\) \} : \{\}\)/.test(src));
   check('a trial or a sale is counted for the source (no link counts as "No link")', /_growthBump\(subs\[username\]\.ref, session\.metadata\?\.trial \? 'trials' : 'paid'\)/.test(src));

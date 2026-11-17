@@ -18808,7 +18808,7 @@ const NEWS_CSS = [
 
 // AdSense on an article: written content, the one kind of page here that is
 // ours in words as well as numbers. Not on the index, which is a list.
-const NEWS_AD_TAG = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window,d=document,K='0x4AAAAAAGC2OD174V7F2qj1';(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel'],done=false,human=false,ok=false;function go(e){if(e&&e.isTrusted===false)return;human=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});load()}function load(){if(done||!human||!ok)return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0;var a=d.querySelector('script[data-ad-src]');if(a&&!a.getAttribute('data-loaded')){a.setAttribute('data-loaded','1');var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=a.getAttribute('data-ad-src');d.head.appendChild(s)}}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})});w.chTsGo=function(){try{var b=d.createElement('div');b.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.body.appendChild(b);w.turnstile.render(b,{sitekey:K,callback:function(){ok=true;load()},'error-callback':function(){return true}})}catch(x){}};function ts(){var s=d.createElement('script');s.async=true;s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=chTsGo';d.head.appendChild(s)}if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',ts);else ts()})();</script><script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>` + '<script async data-ad-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
+const NEWS_AD_TAG = `<script data-adgate>(function(){try{if(localStorage.getItem('chAdFree')==='1')return}catch(e){}var w=window,d=document,K='0x4AAAAAAGC2OD174V7F2qj1';(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=1;var ON=['pointerdown','touchstart','keydown','wheel'],done=false,human=false,ok=false,open='',bad=false,told=false,wait=0;function tell(r){if(told)return;told=true;try{var b=JSON.stringify({r:r});if(!(navigator.sendBeacon&&navigator.sendBeacon('/api/growth/ads',new Blob([b],{type:'application/json'}))))fetch('/api/growth/ads',{method:'POST',headers:{'Content-Type':'application/json'},body:b,keepalive:true}).catch(function(){})}catch(x){}}function go(e){if(e&&e.isTrusted===false)return;human=true;ON.forEach(function(t){w.removeEventListener(t,go,true)});if(!wait)wait=setTimeout(function(){if(ok||done)return;if(bad){tell('bot');return}open='timeout';load()},6000);load()}function load(){if(done||!human||!(ok||open))return;try{if(localStorage.getItem('chAdFree')==='1')return}catch(x){}done=true;clearTimeout(wait);tell(ok?'ok':'open-'+open);(w.adsbygoogle=w.adsbygoogle||[]).pauseAdRequests=0;var a=d.querySelector('script[data-ad-src]');if(a&&!a.getAttribute('data-loaded')){a.setAttribute('data-loaded','1');var s=d.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src=a.getAttribute('data-ad-src');d.head.appendChild(s)}}ON.forEach(function(t){w.addEventListener(t,go,{capture:true,passive:true})});w.chTsGo=function(){try{var b=d.createElement('div');b.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.body.appendChild(b);w.turnstile.render(b,{sitekey:K,callback:function(){ok=true;load()},'error-callback':function(c){c=String(c||'');if(/^600/.test(c))bad=true;else{open='error';load()}return true}})}catch(x){open='error';load()}};function ts(){var s=d.createElement('script');s.async=true;s.onerror=function(){open='noscript';load()};s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=chTsGo';d.head.appendChild(s)}if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',ts);else ts()})();</script><script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>` + '<script async data-ad-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
 // A page title at 70 characters at most (owner, Nov 2026): the site name goes
 // first, then the title is cut at a word with an ellipsis.
 // Shorter than 70 characters (owner, Nov 2026): 65 as read, and under 70 in
@@ -19267,6 +19267,19 @@ app.post('/api/growth/visit', async (req, res) => {
   res.status(204).end();
 });
 
+// How a real visit's ads went (owner, Nov 2026: AdSense counted 4 page views
+// where the site counted 25 engaged ones). The ad gate says once per page:
+// ok (Turnstile passed), bot (Turnstile failed it: no ads), or open-timeout /
+// open-error / open-noscript (Turnstile gave no verdict, so the ads loaded
+// anyway). Kept in the growth table as ads-* rows, apart from the sources.
+const ADS_OUTCOMES = ['ok', 'bot', 'open-timeout', 'open-error', 'open-noscript'];
+app.post('/api/growth/ads', async (req, res) => {
+  const ua = String(req.headers['user-agent'] || '');
+  const r = String((req.body || {}).r || '');
+  if (ADS_OUTCOMES.includes(r) && ua && !_BOT_UA.test(ua)) await _growthBump('ads-' + r, 'visits');
+  res.status(204).end();
+});
+
 // An account just made claims the source its browser arrived from. Only a
 // new account (made in the last ten minutes) and only once, so signing in
 // to an old account from a creator's link counts nothing.
@@ -19325,11 +19338,15 @@ app.get('/api/admin/growth', async (req, res) => {
   try {
     const sums = GROWTH_COLS.map(c => `SUM(${c}) AS ${c}`).join(', ');
     const per = await db.prepare(
-      `SELECT src, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? GROUP BY src ORDER BY visits DESC`).bind(since).all();
+      `SELECT src, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? AND src NOT LIKE 'ads-%' GROUP BY src ORDER BY visits DESC`).bind(since).all();
     const daily = await db.prepare(
-      `SELECT day, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? GROUP BY day ORDER BY day`).bind(since).all();
+      `SELECT day, ${sums} FROM ${GROWTH_TABLE} WHERE day >= ? AND src NOT LIKE 'ads-%' GROUP BY day ORDER BY day`).bind(since).all();
+    const adsRows = await db.prepare(
+      `SELECT src, SUM(visits) AS n FROM ${GROWTH_TABLE} WHERE day >= ? AND src LIKE 'ads-%' GROUP BY src`).bind(since).all();
+    const ads = Object.fromEntries(ADS_OUTCOMES.map(k => [k, 0]));
+    for (const row of (adsRows && adsRows.results) || []) { const k = String(row.src).slice(4); if (k in ads) ads[k] = Number(row.n) || 0; }
     const num = (r) => Object.fromEntries(GROWTH_COLS.map(c => [c, Number(r[c]) || 0]));
-    res.json({ days, since, available: true,
+    res.json({ days, since, available: true, ads,
       sources: ((per && per.results) || []).map(r => ({ src: r.src, organic: GROWTH_ORGANIC.includes(r.src), ...num(r) })),
       daily: ((daily && daily.results) || []).map(r => ({ day: r.day, ...num(r) })) });
   } catch (err) {

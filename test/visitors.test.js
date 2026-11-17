@@ -120,9 +120,15 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
     check('  ...and a mouse move alone is not a person', pages.every(([, h]) => { const g = (h.match(/<script data-adgate>[^<]*/) || [''])[0]; return g && !/mousemove/.test(g) && /createElement\('script'\)/.test(g); }));
     // Bots that tap and type got past the interaction gate (Nov 2026, page
     // RPM falling), so ads also wait for an invisible Cloudflare Turnstile pass.
+    // Nov 2026, later: AdSense counted 4 page views against 25 engaged ones,
+    // so a Turnstile that gives no verdict (its script blocked, an error that
+    // says nothing about the visitor, no answer 6 s after the tap) no longer
+    // keeps the ads off: only a failed challenge (600xxx) does.
     const tsGate = (g) => /sitekey:K/.test(g) && /K='0x4AAAAAAGC2OD174V7F2qj1'/.test(g) && /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit&onload=chTsGo/.test(g)
-      && /if\(done\|\|!human\|\|!ok\)return/.test(g) && /callback:function\(\)\{ok=true;load\(\)\}/.test(g);
-    check('  ...and only for a visitor Cloudflare Turnstile passes (a tap is not enough)', pages.every(([, h]) => tsGate((h.match(/<script data-adgate>[^<]*/) || [''])[0]))
+      && /if\(done\|\|!human\|\|!\(ok\|\|open\)\)return/.test(g) && /callback:function\(\)\{ok=true;load\(\)\}/.test(g)
+      && /if\(\/\^600\/\.test\(c\)\)bad=true;else\{open='error';load\(\)\}/.test(g) && /s\.onerror=function\(\)\{open='noscript';load\(\)\}/.test(g)
+      && /if\(bad\)\{tell\('bot'\);return\}open='timeout';load\(\)\},6000\)/.test(g) && /tell\(ok\?'ok':'open-'\+open\)/.test(g);
+    check('  ...and only for a visitor Cloudflare Turnstile passes or cannot judge (a tap is not enough)', pages.every(([, h]) => tsGate((h.match(/<script data-adgate>[^<]*/) || [''])[0]))
       && tsGate(lp) && tsGate(sv));
   }
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
