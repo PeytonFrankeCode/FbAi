@@ -505,6 +505,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         subs[username].subscribedAt = new Date().toISOString();
         subs[username].status = session.metadata?.trial ? 'trialing' : 'active';
         if (session.metadata?.trial) subs[username].trialUsed = new Date().toISOString();
+        // Where the trial reminders go (trialReminders): the email Stripe took at checkout.
+        const paidEmail = session.customer_details && session.customer_details.email;
+        if (paidEmail) subs[username].email = String(paidEmail).slice(0, 200);
         // Growth: the source the account came from gets the trial or the sale.
         // No link is a source too (Nov 2026: a trial from search or a typed-in
         // visit was counted nowhere, so the Trials tile missed it).
@@ -20842,6 +20845,57 @@ function _huddleTier(user) {
 // During the free trial the AI gets Rookie's tokens whatever the plan (owner,
 // Nov 2026), so a trial that is cancelled costs at most the cheapest plan's.
 const HUDDLE_TRIAL_DAYS = 7;
+// ---- Trial reminders (owner, Nov 2026: "you will be notified 3 and 2 days
+// prior to your trial ending") ----
+// A Huddle+ free trial gets an email 3 days and 2 days before it ends, with
+// the date, what it will cost, and a link that opens Manage billing. Run from
+// the Worker's cron (hourly is plenty); each reminder is sent once and marked
+// on the subscription. Sent only when email is set up (RESEND_API_KEY), and
+// the plan picker promises it only then (/api/ai/usage trialReminders).
+const TRIAL_REMIND_DAYS = [3, 2];
+const trialRemindersOn = () => !!(useResend || emailTransporter);
+function _trialReminderEmail(user, sub, daysLeft) {
+  const plan = HUDDLE_PLANS[sub.tier] || HUDDLE_PLANS.rookie;
+  const ends = new Date(sub.trialEnd).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
+  const price = '$' + (plan.monthly / 100).toFixed(2);
+  const link = `${DRIP_ORIGIN}/?plans=1&utm_source=email&utm_medium=trial-reminder`;
+  const e = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return {
+    subject: `Your Huddle+ free trial ends in ${daysLeft} days`,
+    html: `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a;line-height:1.5">
+      <p style="font-size:13px;color:#64748b;margin:0 0 4px">The Card Huddle</p>
+      <h1 style="font-size:22px;margin:0 0 12px">Your free trial ends in ${daysLeft} days</h1>
+      <p>Hi ${e(user)}, your <b>${e(plan.name)}</b> free trial ends on <b>${e(ends)}</b>.</p>
+      <p>If you keep it, your card is charged <b>${price}</b> that day and then each month. You keep no ads and Huddle AI.</p>
+      <p>Don't want it? Cancel any time before then and you pay nothing.</p>
+      <p style="margin:22px 0"><a href="${e(link)}" style="background:#22c55e;color:#052e16;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px;display:inline-block">Keep it or cancel</a></p>
+      <p style="font-size:13px;color:#64748b">Sign in, then Manage billing. We'll send one more reminder before it ends.</p>
+    </div>`.replace('We\'ll send one more reminder before it ends.', daysLeft > Math.min(...TRIAL_REMIND_DAYS) ? 'We\'ll send one more reminder before it ends.' : 'This is your last reminder.'),
+  };
+}
+async function trialReminders({ now = Date.now(), send = sendEmail } = {}) {
+  if (!trialRemindersOn() && send === sendEmail) return { ok: false, reason: 'email not configured' };
+  const subs = loadSubscriptions(), users = loadServerUsers();
+  let sent = 0, changed = false;
+  for (const [user, sub] of Object.entries(subs)) {
+    if (!sub || sub.status !== 'trialing' || !sub.trialEnd) continue;
+    const left = (sub.trialEnd - now) / 86400000;
+    if (left <= 0) continue;
+    // The reminder for N days is due once there are N days or fewer to go
+    // (and more than N - 1): the 3-day one in the fourth-last 24 hours, and so on.
+    const due = TRIAL_REMIND_DAYS.find(d => left <= d && left > d - 1);
+    if (!due) continue;
+    sub.reminded = sub.reminded || {};
+    if (sub.reminded[due]) continue;
+    const to = sub.email || ((users[user] || {}).email) || '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { sub.reminded[due] = 'no-email'; changed = true; continue; }
+    const msg = _trialReminderEmail(user, sub, due);
+    if (await send({ to, subject: msg.subject, html: msg.html })) { sub.reminded[due] = new Date(now).toISOString(); sent++; changed = true; }
+  }
+  if (changed) saveSubscriptions(subs);
+  return { ok: true, sent };
+}
+
 const _huddleTrialing = (user) => (getEffectiveSubscription(user) || {}).status === 'trialing';
 const _huddleTrialEligible = (rec) => !(rec && (rec.trialUsed || rec.stripeSubscriptionId));
 const _huddleCredits = (user) => {
@@ -21313,7 +21367,7 @@ app.get('/api/ai/usage', async (req, res) => {
   res.set('Cache-Control', 'no-store').json({ signedIn: !!user, plus, unlimited, tier,
     extraTokens: _toTokens(topup), canTopup: !unlimited && !!credits,
     topup: { pricePerMillion: HUDDLE_TOPUP_PRICE_PER_M, min: HUDDLE_TOPUP_MIN, max: HUDDLE_TOPUP_MAX }, tierName: tier ? HUDDLE_PLANS[tier].name + (trialing ? ' (free trial)' : '') : null,
-    trialing, trialEligible: trialEligible || !user, trialDays: HUDDLE_TRIAL_DAYS, trialTokens: HUDDLE_PLANS.rookie.shown,
+    trialing, trialEligible: trialEligible || !user, trialDays: HUDDLE_TRIAL_DAYS, trialTokens: HUDDLE_PLANS.rookie.shown, trialReminders: trialRemindersOn(),
     tokens: credits == null ? null : _toTokens(credits), tokensUsed: Math.min(_toTokens(spent), credits == null ? Infinity : _toTokens(credits)),
     pct: credits ? Math.min(100, Math.round((spent / credits) * 1000) / 10) : 0,
     resetsAt: _nextMonthUtc(), deepTimes: Math.round(per.deep / per.normal), plans: await _huddlePlansPublic(),
@@ -23241,7 +23295,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

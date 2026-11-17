@@ -148,7 +148,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -160,7 +160,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick };
   return serverInit;
 }
 
@@ -1605,6 +1605,13 @@ export default {
         // The weekly Market Movers email (server.js sendMarketDigest). Every
         // tick: outside Monday 14:00+ UTC it returns without touching KV, and
         // inside it sends the next batches until the week's run is done.
+        // Huddle+ trial reminders, 3 and 2 days before a trial ends (server.js
+        // trialReminders). Hourly is plenty: each one is sent once.
+        if (typeof trialReminders === 'function' && aliasTick) {
+          const tr = await trialReminders().catch(err => { console.error('[Cron] trial reminders failed:', err && err.message || err); return null; });
+          if (tr && tr.sent) console.log('[Cron] trial reminders sent:', tr.sent);
+        }
+
         if (typeof sendMarketDigest === 'function') {
           const r = await sendMarketDigest().catch(err => {
             console.error('[Cron] market digest failed:', err && err.message || err);
