@@ -79,7 +79,7 @@ NOT_A_SINGLE = re.compile(
     r"\blots?\b|\bsealed\b|\bunopened\b|\bwax\b|\bhobby box\b|\bblaster\b|\bmega box\b"
     r"|\bpacks?\b|\bteam set\b|\bcomplete set\b|\bcase\b|\bbreak\b|\bbundle\b"
     # Nov 2026: "Group of PSA Graded Cards -- 243 in Total" topped the week.
-    r"|\bgroup of\b|\bin total\b|\bcollection\b|\b\d{2,}\s*(?:graded\s+)?cards\b",
+    r"|\bgroup of\b|\bin total\b|\b\d{2,}\s*(?:graded\s+)?cards\b",
     re.I,
 )
 SOLD_RE = re.compile(r"sold\s+([A-Z][a-z]{2}\s+\d{1,2},?\s+\d{4})", re.I)
