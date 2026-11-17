@@ -5691,7 +5691,7 @@ const PLAN_FALLBACK = [
   { id: 'hof', name: 'Huddle+ Hall of Fame', monthly: 1999, tokens: 13000000, tokensShown: 12500000, answers: 3900, deep: 215 },
 ];
 let _plans = null;
-let _planTrial = null; // { days, tokens } while this account can still start the free trial
+let _planTrial = null; // { days, tokens, remind } while this account can still start the free trial
 const _usd = (c) => '$' + (c / 100).toFixed(2);
 const _num = (n) => Number(n).toLocaleString('en-US');
 const _tok = (n) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)} million` : _num(n));
@@ -5706,6 +5706,7 @@ function _trialStrip() {
       <span>${tick}<b>$0 due today</b></span>
       <span>${tick}Not charged until ${_trialEnds(_planTrial.days)}</span>
       <span>${tick}Cancel anytime in Manage billing</span>
+      ${_planTrial.remind ? `<span>${tick}We'll email you 3 days and 2 days before it ends</span>` : ''}
     </div>`;
 }
 function _planCard(p, current) {
@@ -5776,7 +5777,7 @@ async function openAdFree() {
   try {
     const u = await (await authFetch('/api/ai/usage')).json();
     if (u && Array.isArray(u.plans) && u.plans.length) _plans = u.plans;
-    _planTrial = u && u.trialEligible ? { days: u.trialDays || 7, tokens: u.trialTokens || 2.5e6 } : null;
+    _planTrial = u && u.trialEligible ? { days: u.trialDays || 7, tokens: u.trialTokens || 2.5e6, remind: !!u.trialReminders } : null;
     if (_planTrial) { const f = m.querySelector('#adfree-fine'); if (f && !/free trial/.test(f.textContent)) f.textContent = `Free trial: ${_planTrial.days} days on any Huddle+ plan with ${_tok(_planTrial.tokens)}+ AI tokens, then the plan's price each month. Cancel before it ends and you pay nothing. One trial per account. ` + f.textContent; }
     if (u && u.deepTimes) { const f = m.querySelector('#adfree-fine'); f.textContent = f.textContent.replace(/about \d+ times/, `about ${u.deepTimes} times`); }
   } catch (_) { /* the fallback numbers stand */ }
