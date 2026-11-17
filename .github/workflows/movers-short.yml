@@ -1,0 +1,33 @@
+name: Movers for a Short (one-off, never merge)
+on:
+  push:
+    branches: ['run/movers-short']
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          B=https://the-card-huddle.thecardhuddleoffical.workers.dev
+          curl -sS -m 60 -A 'Mozilla/5.0 (movers-short)' "$B/news/market-movers" -o r.html
+          wc -c r.html
+          python3 - <<'PY'
+          import re, html, json
+          s = open('r.html', encoding='utf-8').read()
+          t = re.search(r'<h1>(.*?)</h1>', s, re.S)
+          print('TITLE', html.unescape(t.group(1)) if t else None)
+          out = {}
+          for sec in re.findall(r'<section class="mm-section"><h2>(.*?)</h2>.*?<ul class="mm-list">(.*?)</ul></section>', s, re.S):
+              name, body = sec
+              rows = []
+              for li in re.findall(r'<li class="mm-row">(.*?)</li>', body, re.S):
+                  strong = re.search(r'<strong>(.*?)</strong>', li, re.S)
+                  spans = re.findall(r'<span class="mm-text"><strong>.*?</strong><span>(.*?)</span>', li, re.S)
+                  right = re.search(r'<span class="mm-right[^"]*">(.*?)</span>', li, re.S)
+                  rows.append([html.unescape(re.sub('<[^>]+>', '', strong.group(1))) if strong else '', html.unescape(spans[0]) if spans else '', html.unescape(right.group(1)) if right else ''])
+              out[html.unescape(name)] = rows
+          print('JSON' + json.dumps(out))
+          brief = re.findall(r'<section class="mm-brief">.*?</section>', s, re.S)
+          if brief: print('BRIEF', [html.unescape(re.sub('<[^>]+>', '', x)) for x in re.findall(r'<li>(.*?)</li>', brief[0], re.S)])
+          stats = re.search(r'<p class="mm-stats">(.*?)</p>', s, re.S)
+          if stats: print('STATS', html.unescape(re.sub('<[^>]+>', ' ', stats.group(1))))
+          PY
