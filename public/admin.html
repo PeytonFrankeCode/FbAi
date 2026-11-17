@@ -433,6 +433,7 @@
     <input id="gr-name" placeholder="Make a link: creator or post name, e.g. cardcollector22" maxlength="40" oninput="growthLink()" />
   </div>
   <div class="gr-out" id="gr-out"></div>
+  <p class="page-subtitle" id="gr-ads" style="margin:.25rem 0 .75rem"></p>
   <div class="ap-tiles">
     <div class="ap-tile"><b id="gr-visits">&ndash;</b><span>Visits</span></div>
     <div class="ap-tile"><b id="gr-signups">&ndash;</b><span>New accounts</span></div>
@@ -941,6 +942,12 @@
       artEl('gr-signups').textContent = t.signups.toLocaleString();
       artEl('gr-trials').textContent = t.trials.toLocaleString();
       artEl('gr-paid').textContent = (t.paid + t.converted).toLocaleString();
+      // How real visits' ads went: the bot check passed, it gave no verdict
+      // (ads shown anyway), or it caught a bot (no ads).
+      const a = r.ads || {}, open = (a['open-timeout'] || 0) + (a['open-error'] || 0) + (a['open-noscript'] || 0), all = (a.ok || 0) + open + (a.bot || 0);
+      artEl('gr-ads').textContent = all ? `Ads on real visits: ${(a.ok || 0).toLocaleString()} passed the bot check, ${open.toLocaleString()} shown without a verdict`
+        + ` (${a['open-timeout'] || 0} no answer, ${a['open-error'] || 0} check error, ${a['open-noscript'] || 0} check blocked), ${(a.bot || 0).toLocaleString()} stopped as bots.`
+        : 'Ads on real visits: nothing counted yet. Each visit is counted once it has been tapped.';
       const byDay = Object.fromEntries((r.daily || []).map(d => [d.day, d.visits]));
       const days = Number(r.days) || 30;
       const list = Array.from({ length: days }, (_, i) => { const d = new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().slice(0, 10); return [d, byDay[d] || 0]; });
