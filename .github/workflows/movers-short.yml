@@ -2,6 +2,8 @@ name: Movers for a Short (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
+permissions:
+  contents: write
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -12,8 +14,6 @@ jobs:
           wc -c r.html
           mkdir -p imgs; grep -o 'src="https://i.ebayimg.com[^"]*"' r.html | sed 's/src="//;s/"$//' | sort -u | head -40 > urls.txt; wc -l urls.txt
           i=0; while read u; do i=$((i+1)); curl -sS -m 20 -A 'Mozilla/5.0' "$u" -o "imgs/$(printf %02d $i).jpg" && echo "$(printf %02d $i) $u" >> imgs/map.txt; done < urls.txt
-          echo '=====IMG-B64-START'; tar czf - imgs | base64 -w 0; echo; echo '=====IMG-B64-END'
-          echo '=====HTML-B64-START'; gzip -9c r.html | base64 -w 0; echo; echo '=====HTML-B64-END'
           python3 - <<'PY'
           import re, html, json
           s = open('r.html', encoding='utf-8').read()
@@ -35,3 +35,7 @@ jobs:
           stats = re.search(r'<p class="mm-stats">(.*?)</p>', s, re.S)
           if stats: print('STATS', html.unescape(re.sub('<[^>]+>', ' ', stats.group(1))))
           PY
+      - run: |
+          mkdir out && cd out && cp ../r.html . && cp -r ../imgs . && git init -q && git checkout -q -b audit/movers-short
+          git -c user.name=bot -c user.email=bot@example.com add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm "movers page for a Short (one-off)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" audit/movers-short
