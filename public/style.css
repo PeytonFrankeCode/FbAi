@@ -11120,3 +11120,11 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .oo-board-mine{margin-top:.35rem;border-top:1px dashed var(--border-primary);padding-top:.35rem}
 .oo-board-foot{margin:.55rem 0 0;font-size:.76rem;color:var(--text-muted)}
 .oo-board-join{margin:.35rem 0 0;font-size:.85rem}
+
+/* ---- Plans: the free trial, said plainly before checkout (Nov 2026) ---- */
+.trial-strip{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem .9rem;margin:.2rem 0 .9rem;padding:.6rem .8rem;border-radius:12px;
+  background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);font-size:.85rem;color:var(--text-primary)}
+.trial-strip span{display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+.trial-strip svg{color:var(--accent);flex:0 0 auto}
+.plan-trial-note{margin:.35rem 0 0;font-size:.74rem;color:var(--text-muted);text-align:center}
+.trial-strip-head{flex-basis:100%;justify-content:center;font-weight:800;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}

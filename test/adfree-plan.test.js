@@ -59,6 +59,12 @@ const call = (p, { method = 'GET', token, body, raw, headers = {} } = {}) => fet
   // ---- the browser side ----
   const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  // The free trial said plainly before checkout (owner, Nov 2026): $0 today,
+  // the date of the first charge, how to cancel, and that the card is not charged.
+  check('the plan picker says the trial costs $0 today and when the first charge would be',
+    /Huddle\+ free trial/.test(app) && /\$0 due today/.test(app) && /Not charged until \$\{_trialEnds\(_planTrial\.days\)\}/.test(app)
+    && /<b>\$0 today\.<\/b> Free until \$\{_trialEnds\(_planTrial\.days\)\}, then/.test(app) && /Card needed, nothing charged today/.test(app)
+    && /charges \$0 today\. Cancel before/.test(app) && /id="trial-strip-slot"/.test(app));
   check('every ad label offers "Remove ads"', /const AD_LABEL = [\s\S]{0,300}Remove ads/.test(app) && (app.match(/AD_LABEL/g) || []).length >= 5
     && !/<p class="ad-label">Advertisement<\/p>/.test(app));
   check('checkout goes through the signed-in session, not a username', /authFetch\('\/api\/stripe\/create-checkout-adfree'/.test(app)
