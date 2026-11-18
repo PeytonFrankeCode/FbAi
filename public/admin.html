@@ -420,6 +420,11 @@
     <thead><tr><th>Account</th><th>Plan</th><th>Status</th><th>Started</th><th>Trial ends</th><th>Came from</th></tr></thead>
     <tbody id="sub-rows"><tr><td colspan="6" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
   </table></div>
+  <div class="gr-link" style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+    <input id="test-email-to" type="email" placeholder="Your email, to test the trial reminder" maxlength="200" style="flex:1 1 14rem" />
+    <button type="button" id="test-email-btn" onclick="sendTestEmail()">Send test email</button>
+  </div>
+  <p class="page-subtitle" id="test-email-msg" style="margin:.35rem 0 1rem"></p>
 
   <!-- Growth: where collectors come from, by source (/api/admin/growth) -->
   <div class="page-title">Growth</div>
@@ -912,6 +917,15 @@
     });
   }
   // Subscribers (owner, Nov 2026): who is on a plan or a free trial.
+  // Sends the trial reminder email to the owner's own address, to see it arrive.
+  async function sendTestEmail() {
+    const to = artEl('test-email-to').value.trim(), msg = artEl('test-email-msg'), btn = artEl('test-email-btn');
+    btn.disabled = true; msg.textContent = 'Sending…';
+    try { const r = await artApi('/api/admin/test-email', { method: 'POST', body: JSON.stringify({ to }) }); msg.textContent = `Sent to ${r.to}. Check your inbox (and spam) in a minute.`; }
+    catch (err) { msg.textContent = 'Not sent: ' + err.message; }
+    btn.disabled = false;
+  }
+  window.sendTestEmail = sendTestEmail;
   async function loadSubscribers() {
     const rowsEl = artEl('sub-rows');
     try {

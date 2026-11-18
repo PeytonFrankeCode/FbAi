@@ -19307,6 +19307,20 @@ function _growthRefOf(username) {
 // Who is subscribed (owner, Nov 2026: "is there a way to see if someone has
 // started a free trial?"): every paid plan and trial, newest first, with when
 // a trial ends. The owner's own grant and staff grants are left out.
+// A test of the trial reminder (owner, Nov 2026: "is there a way I can test
+// that I get the email?"): sends the 3-day reminder, as a collector would get
+// it, to the address given. Admin only; says why when it could not send.
+app.post('/api/admin/test-email', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const to = String((req.body || {}).to || '').trim().slice(0, 200);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'Enter an email address.' });
+  if (!trialRemindersOn()) return res.status(503).json({ error: 'Email is not set up on the site (RESEND_API_KEY).' });
+  const msg = _trialReminderEmail('cardhuddle', { tier: 'rookie', trialEnd: Date.now() + 3 * 86400000 }, 3);
+  const ok = await sendEmail({ to, subject: '[Test] ' + msg.subject, html: msg.html });
+  if (!ok) return res.status(502).json({ error: 'Resend refused it. Check the domain shows Verified in Resend, and that RESEND_FROM uses that domain.' });
+  res.json({ ok: true, to });
+});
+
 app.get('/api/admin/subscribers', (req, res) => {
   if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
   const subs = loadSubscriptions();
