@@ -6850,6 +6850,7 @@ async function openAccount(focus) {
       const g = document.getElementById('acct-giveaways');
       if (g) g.scrollIntoView({ block: 'start' });
     }
+    acctPartnerLoad(focus === 'partner');
   } catch (err) {
     body.innerHTML = `<div class="acct-error">${escHtml(err.message || 'Could not load your account.')} <button type="button" class="acct-link" onclick="openAccount()">Try again</button></div>`;
   }
@@ -6948,12 +6949,81 @@ function _renderAccount() {
       </form>
     </section>
 
+    <section class="acct-section" id="acct-partner">
+      <h3 class="acct-section-title">Partner program</h3>
+      <div id="acct-partner-body"><p class="acct-muted">Loading&hellip;</p></div>
+    </section>
+
     <div class="acct-footer">
       <button type="button" class="acct-link" onclick="closeAccount(); showSettings()">Settings, export &amp; delete account</button>
       <button type="button" class="acct-link acct-link--danger" onclick="closeAccount(); handleLogout()">Log out</button>
     </div>
   `;
 }
+
+// ---- Partner program (owner, Nov 2026) ----
+// Creators apply; the owner approves. A partner earns 15% of every payment a
+// member they referred makes in their first 12 months (server.js partners).
+const _money = (c) => '$' + ((Number(c) || 0) / 100).toFixed(2);
+async function acctPartnerLoad(scroll) {
+  const box = document.getElementById('acct-partner-body');
+  if (!box) return;
+  let d;
+  try { const r = await authFetch('/api/partners/me'); d = await r.json(); if (!r.ok) throw new Error(d.error || 'Could not load.'); }
+  catch (err) { box.innerHTML = `<p class="acct-muted">${escHtml(err.message || 'Could not load the partner program.')}</p>`; return; }
+  const t = d.terms || { rate: 0.15, months: 12, holdDays: 30, minPayout: 2500 };
+  const pct = Math.round(t.rate * 100);
+  const terms = `<ul class="partner-terms">
+      <li><b>${pct}% of every payment</b> a member you refer makes, for their first ${t.months} months.</li>
+      <li>Members come through your own link. Trials earn once they become paid.</li>
+      <li>Earnings are held ${t.holdDays} days for refunds, then paid by PayPal each month once you have ${_money(t.minPayout)} or more.</li>
+      <li>No earning from your own account, and no paid ads on the name The Card Huddle.</li>
+    </ul>`;
+  const p = d.partner;
+  if (!p || p.status === 'declined') {
+    box.innerHTML = `<p class="acct-muted">Make card content? Send your followers to The Card Huddle and earn from every member who joins.</p>${terms}
+      ${p && p.status === 'declined' ? `<p class="acct-msg acct-msg--err">Your last application wasn't approved${p.note ? ': ' + escHtml(p.note) : ''}. You can apply again.</p>` : ''}
+      <form class="acct-address" id="partner-form" onsubmit="event.preventDefault(); acctPartnerApply(this)" novalidate>
+        <label class="acct-field"><span>Your name or channel name</span><input name="name" maxlength="80" required></label>
+        <label class="acct-field"><span>Where you post (YouTube, TikTok, Instagram link)</span><input name="channel" maxlength="300" required placeholder="https://"></label>
+        <label class="acct-field"><span>About how many followers?</span><input name="audience" maxlength="80" placeholder="e.g. 2,500 on TikTok"></label>
+        <label class="acct-field"><span>PayPal email to be paid at</span><input name="payout" type="email" maxlength="200" required></label>
+        <label class="acct-field"><span>Anything else? (optional)</span><input name="why" maxlength="1000"></label>
+        <div class="acct-actions"><button type="submit" class="acct-btn">Apply</button></div>
+        <div class="acct-msg" id="partner-msg" role="status"></div>
+      </form>`;
+  } else if (p.status === 'pending') {
+    box.innerHTML = `<p><b>Application received.</b> We'll look at it and get back to you here. Applied ${escHtml(new Date(p.appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}.</p>${terms}`;
+  } else {
+    const s = d.stats || {}, tt = d.totals || {};
+    const tile = (n, l) => `<div class="partner-tile"><b>${n}</b><span>${l}</span></div>`;
+    box.innerHTML = `<p class="acct-muted">You're a partner. Share your link: everyone who joins through it is yours for ${t.months} months.</p>
+      <div class="partner-link"><input readonly value="${escHtml(d.link)}" id="partner-link" aria-label="Your partner link"><button type="button" class="acct-btn acct-btn--small" onclick="acctPartnerCopy(this)">Copy</button></div>
+      <div class="partner-tiles">${tile((s.visits || 0).toLocaleString(), 'Visits')}${tile(s.signups || 0, 'Sign-ups')}${tile(s.trials || 0, 'Trials')}${tile((s.paid || 0) + (s.converted || 0), 'Paying members')}</div>
+      <div class="partner-tiles">${tile(_money(tt.pending), `Pending (${t.holdDays}-day hold)`)}${tile(_money(tt.ready), 'Ready to pay')}${tile(_money(tt.paid), 'Paid to you')}</div>
+      ${(d.recent || []).length ? `<ul class="partner-recent">${d.recent.map(e => `<li><span>${escHtml(new Date(e.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))} &middot; ${escHtml(e.plan || 'plan')} payment</span><b>${e.reversed ? 'refunded' : '+' + _money(e.cents)}${e.paid ? ' &middot; paid' : ''}</b></li>`).join('')}</ul>` : '<p class="acct-muted">No earnings yet. They show here as your members pay.</p>'}
+      ${terms}`;
+  }
+  if (scroll) { const sec = document.getElementById('acct-partner'); if (sec) sec.scrollIntoView({ block: 'start' }); }
+}
+async function acctPartnerApply(form) {
+  const f = new FormData(form), body = Object.fromEntries([...f.entries()].map(([k, v]) => [k, String(v).trim()]));
+  const msg = document.getElementById('partner-msg');
+  try {
+    const r = await authFetch('/api/partners/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Could not apply.');
+    acctPartnerLoad(false);
+  } catch (err) { if (msg) { msg.textContent = err.message; msg.className = 'acct-msg acct-msg--err'; } }
+}
+function acctPartnerCopy(btn) {
+  const i = document.getElementById('partner-link');
+  if (!i) return;
+  (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).then(() => { btn.textContent = 'Copied'; }).catch(() => { i.select(); document.execCommand && document.execCommand('copy'); btn.textContent = 'Copied'; });
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+// The footer's "Partner program" link: the account page, at the program.
+function openPartners() { if (!getSessionToken()) { showLogin(); return; } openAccount('partner'); }
 
 function acctCountryChanged(c) {
   const sel = document.getElementById('acct-state');
