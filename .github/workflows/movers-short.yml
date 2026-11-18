@@ -1,4 +1,4 @@
-name: Sold stats check (one-off, never merge)
+name: Email check (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
@@ -8,17 +8,6 @@ jobs:
     steps:
       - run: |
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
-          for d in 7 30; do
-            echo "== sold-stats $d"
-            curl -sS -m 90 "$B/api/sold-stats?days=$d" -o s$d.json; wc -c s$d.json
-            python3 - "$d" <<'PY'
-          import json, sys
-          d = json.load(open(f's{sys.argv[1]}.json'))
-          print('keys', sorted(d.keys())[:30])
-          for k in ('available','builtAt','through','since','refreshing','reason','version','days','sales','value'):
-              if k in d: print(k, '=', d[k])
-          for r in (d.get('priciest') or [])[:6]: print('  top', r.get('soldDate') or r.get('sold_date') or r.get('date'), r.get('price'), str(r.get('title'))[:60])
-          PY
-          done
-          echo "== newest report"; curl -sS -m 30 "$B/news/market-movers" | grep -o '<h1>[^<]*</h1>'
-          echo "== health"; curl -sS -m 40 "$B/api/health" | head -c 1500; echo
+          echo "== health"; curl -sS -m 40 "$B/api/health" | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get('integrations',{}).get('email')))"
+          echo "== usage"; curl -sS -m 40 "$B/api/ai/usage" | python3 -c "import json,sys; d=json.load(sys.stdin); print({k: d.get(k) for k in ('trialReminders','trialEligible','trialDays')})"
+          echo "== build"; curl -sS -m 20 "$B/build.json"; echo
