@@ -533,6 +533,17 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
       }
       break;
     }
+    // Partner program: a paid invoice earns the referring partner their 15%,
+    // and a refund takes it back (partnerInvoicePaid / partnerChargeRefunded).
+    case 'invoice.paid': {
+      const r = await partnerInvoicePaid(event.data.object, subs);
+      if (r && r.entry) saveSubscriptions(subs);       // the member's firstPaidAt
+      break;
+    }
+    case 'charge.refunded': {
+      await partnerChargeRefunded(event.data.object);
+      break;
+    }
     case 'customer.subscription.deleted': {
       const sub = event.data.object;
       if (_bizSubEvent(subs, sub, 'cancelled')) { saveSubscriptions(subs); break; }
@@ -19283,6 +19294,188 @@ app.post('/api/growth/ads', async (req, res) => {
   res.status(204).end();
 });
 
+// ==================== Partner program (owner, Nov 2026) ====================
+//
+// "15% and then we do like an apply program": creators apply, the owner
+// approves, and an approved partner earns 15% of every payment a member they
+// referred makes in that member's first 12 months. The referral is the
+// growth system's ?ref= link: an account made from a partner's link carries
+// the code (users[u].ref), checkout carries it to Stripe, and the plan keeps
+// it (subs[u].ref). Each paid invoice (invoice.paid) earns the partner its
+// share, held 30 days for refunds; a refund takes it back (charge.refunded).
+// Paid out by hand (PayPal) once $25 or more is ready; the owner marks it paid.
+// 15% of the price never costs a month: see the margins in CLAUDE.md.
+const PARTNER_RATE = 0.15;
+const PARTNER_MONTHS = 12;
+const PARTNER_HOLD_DAYS = 30;
+const PARTNER_MIN_PAYOUT = 2500;              // cents
+const PARTNER_KEY = (u) => `partner:${u}`;
+const PARTNER_CODE_KEY = (c) => `partner:code:${c}`;
+const PARTNER_LEDGER_KEY = (u) => `partner:ledger:${u}`;
+const PARTNER_INDEX_KEY = 'partner:index';
+const PARTNER_RESERVED = new Set(['org-none', 'org-search', 'org-social', 'org-direct', 'org-other', 'share', 'email', 'app', 'report', 'admin', 'test']);
+const _partnerCode = (s) => _growthSrc(s).replace(/^-+|-+$/g, '').slice(0, 30);
+async function _partnerGet(u) { return u ? await recordGet(PARTNER_KEY(u)) : null; }
+async function _partnerSave(p) { await recordPut(PARTNER_KEY(p.user), p); }
+async function _partnerIndex() { return (await recordGet(PARTNER_INDEX_KEY)) || []; }
+async function _partnerLedger(u) { return (await recordGet(PARTNER_LEDGER_KEY(u))) || []; }
+// What a partner's ledger adds up to, now: pending (in the 30-day hold),
+// ready (out of the hold, unpaid), paid; reversed entries count for nothing.
+function _partnerTotals(ledger, now = Date.now()) {
+  const t = { pending: 0, ready: 0, paid: 0, earned: 0, members: 0 };
+  const members = new Set();
+  for (const e of ledger) {
+    const net = Math.max(0, e.cents - (e.reversedCents || 0));
+    if (!net) continue;
+    members.add(e.member);
+    t.earned += net;
+    if (e.paidAt) t.paid += net;
+    else if (now - Date.parse(e.at) >= PARTNER_HOLD_DAYS * 86400000) t.ready += net;
+    else t.pending += net;
+  }
+  t.members = members.size;
+  return t;
+}
+// A paid invoice: the partner who referred the member earns their share.
+// Pure enough to test: hands back the entry it added, or why it added none.
+async function partnerInvoicePaid(inv, subs, now = Date.now()) {
+  if (!inv || !(inv.amount_paid > 0) || !inv.customer) return { skip: 'nothing paid' };
+  const found = Object.entries(subs || {}).find(([, d]) => d && d.stripeCustomerId === inv.customer && !d.permanent);
+  if (!found) return { skip: 'no member' };
+  const [member, sub] = found;
+  if (sub.business && inv.subscription && sub.business.stripeSubscriptionId === inv.subscription) return { skip: 'business plan' };
+  const code = _partnerCode(sub.ref || '');
+  if (!code || PARTNER_RESERVED.has(code)) return { skip: 'no partner link' };
+  const owner = await recordGet(PARTNER_CODE_KEY(code));
+  const partner = owner && owner.user ? await _partnerGet(owner.user) : null;
+  if (!partner || partner.status !== 'approved') return { skip: 'not an approved partner' };
+  if (partner.user === member) return { skip: 'own account' };
+  // The 12 months run from the member's first paid invoice.
+  if (!sub.firstPaidAt) sub.firstPaidAt = new Date(now).toISOString();
+  if (now - Date.parse(sub.firstPaidAt) > PARTNER_MONTHS * 30.44 * 86400000) return { skip: 'past 12 months' };
+  const ledger = await _partnerLedger(partner.user);
+  if (ledger.some(e => e.invoice === inv.id)) return { skip: 'already counted' };
+  const base = inv.amount_paid - (Number(inv.tax) || 0);
+  const entry = { invoice: inv.id, charge: inv.charge || null, member, plan: sub.tier || sub.plan || '', paidCents: base,
+    cents: Math.floor(base * PARTNER_RATE), at: new Date(now).toISOString() };
+  ledger.push(entry);
+  await recordPut(PARTNER_LEDGER_KEY(partner.user), ledger);
+  return { entry, partner: partner.user };
+}
+// A refund takes the partner's share of it back (in proportion).
+async function partnerChargeRefunded(ch) {
+  if (!ch || !ch.invoice) return { skip: 'no invoice' };
+  for (const u of await _partnerIndex()) {
+    const ledger = await _partnerLedger(u);
+    const e = ledger.find(x => x.invoice === ch.invoice);
+    if (!e) continue;
+    const share = ch.amount ? Math.min(1, (Number(ch.amount_refunded) || 0) / ch.amount) : 1;
+    e.reversedCents = Math.min(e.cents, Math.round(e.cents * share));
+    e.reversedAt = new Date().toISOString();
+    await recordPut(PARTNER_LEDGER_KEY(u), ledger);
+    return { partner: u, reversed: e.reversedCents };
+  }
+  return { skip: 'no partner entry' };
+}
+// What visits, sign-ups, trials and paid plans a code has brought, from Growth.
+async function _partnerStats(code) {
+  const out = { visits: 0, signups: 0, trials: 0, paid: 0, converted: 0 };
+  try {
+    const db = await _growthDb();
+    if (!db) return out;
+    const r = await db.prepare(`SELECT ${GROWTH_COLS.map(c => `SUM(${c}) AS ${c}`).join(', ')} FROM ${GROWTH_TABLE} WHERE src = ?`).bind(code).first();
+    for (const c of GROWTH_COLS) out[c] = Number(r && r[c]) || 0;
+  } catch (_) { /* no numbers yet */ }
+  return out;
+}
+const _partnerView = (p) => p && ({ status: p.status, code: p.code || null, name: p.name, channel: p.channel, audience: p.audience,
+  payout: p.payout, appliedAt: p.appliedAt, decidedAt: p.decidedAt || null, note: p.note || '' });
+
+app.post('/api/partners/apply', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Sign in to apply.' });
+  const b = req.body || {}, clip = (v, n) => String(v || '').trim().slice(0, n);
+  const name = clip(b.name, 80), channel = clip(b.channel, 300), audience = clip(b.audience, 80), payout = clip(b.payout, 200), why = clip(b.why, 1000);
+  if (!name || !channel) return res.status(400).json({ error: 'Add your name and a link to where you post.' });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payout)) return res.status(400).json({ error: 'Add the PayPal email you want to be paid at.' });
+  const was = await _partnerGet(user);
+  if (was && (was.status === 'approved' || was.status === 'pending')) return res.status(409).json({ error: was.status === 'approved' ? 'You are already a partner.' : 'Your application is in. We will get back to you.' });
+  const p = { user, status: 'pending', name, channel, audience, payout, why, appliedAt: new Date().toISOString() };
+  await _partnerSave(p);
+  const idx = await _partnerIndex();
+  if (!idx.includes(user)) { idx.push(user); await recordPut(PARTNER_INDEX_KEY, idx); }
+  res.json({ ok: true, partner: _partnerView(p) });
+});
+
+app.get('/api/partners/me', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Sign in first.' });
+  const p = await _partnerGet(user);
+  const out = { partner: _partnerView(p), terms: { rate: PARTNER_RATE, months: PARTNER_MONTHS, holdDays: PARTNER_HOLD_DAYS, minPayout: PARTNER_MIN_PAYOUT } };
+  if (p && p.status === 'approved') {
+    const ledger = await _partnerLedger(user);
+    out.link = `${DRIP_ORIGIN}/?ref=${p.code}`;
+    out.stats = await _partnerStats(p.code);
+    out.totals = _partnerTotals(ledger);
+    out.recent = ledger.slice(-10).reverse().map(e => ({ at: e.at, plan: e.plan, cents: Math.max(0, e.cents - (e.reversedCents || 0)), paid: !!e.paidAt, reversed: !!e.reversedCents }));
+  }
+  res.set('Cache-Control', 'no-store').json(out);
+});
+
+app.get('/api/admin/partners', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const rows = [];
+  for (const u of await _partnerIndex()) {
+    const p = await _partnerGet(u);
+    if (!p) continue;
+    const row = { user: u, ..._partnerView(p), why: p.why || '' };
+    if (p.status === 'approved') { row.totals = _partnerTotals(await _partnerLedger(u)); row.stats = await _partnerStats(p.code); }
+    rows.push(row);
+  }
+  const order = { pending: 0, approved: 1, declined: 2 };
+  rows.sort((a, b) => (order[a.status] - order[b.status]) || String(b.appliedAt).localeCompare(String(a.appliedAt)));
+  res.set('Cache-Control', 'no-store').json({ partners: rows, minPayout: PARTNER_MIN_PAYOUT });
+});
+
+app.post('/api/admin/partners/decide', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const b = req.body || {}, p = await _partnerGet(String(b.user || ''));
+  if (!p) return res.status(404).json({ error: 'No such application.' });
+  if (b.approve) {
+    const code = _partnerCode(b.code || p.code || p.user);
+    if (!code || code.length < 3 || PARTNER_RESERVED.has(code) || code.startsWith('org-') || code.startsWith('ads-')) return res.status(400).json({ error: 'Pick a different link name.' });
+    const taken = await recordGet(PARTNER_CODE_KEY(code));
+    if (taken && taken.user !== p.user) return res.status(409).json({ error: `The link name "${code}" is taken.` });
+    if (p.code && p.code !== code) await recordPut(PARTNER_CODE_KEY(p.code), { user: null });
+    await recordPut(PARTNER_CODE_KEY(code), { user: p.user });
+    p.code = code; p.status = 'approved';
+  } else {
+    p.status = 'declined';
+  }
+  p.note = String(b.note || '').slice(0, 300);
+  p.decidedAt = new Date().toISOString();
+  await _partnerSave(p);
+  res.json({ ok: true, partner: _partnerView(p) });
+});
+
+// The owner sent a payout (PayPal): everything ready is marked paid.
+app.post('/api/admin/partners/paid', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const u = String((req.body || {}).user || ''), p = await _partnerGet(u);
+  if (!p) return res.status(404).json({ error: 'No such partner.' });
+  const ledger = await _partnerLedger(u), now = Date.now(), at = new Date(now).toISOString();
+  let cents = 0;
+  for (const e of ledger) {
+    const net = Math.max(0, e.cents - (e.reversedCents || 0));
+    if (!e.paidAt && net && now - Date.parse(e.at) >= PARTNER_HOLD_DAYS * 86400000) { e.paidAt = at; cents += net; }
+  }
+  if (!cents) return res.status(400).json({ error: 'Nothing is ready to pay.' });
+  await recordPut(PARTNER_LEDGER_KEY(u), ledger);
+  p.payouts = (p.payouts || []).concat([{ at, cents }]);
+  await _partnerSave(p);
+  res.json({ ok: true, cents });
+});
+
 // An account just made claims the source its browser arrived from. Only a
 // new account (made in the last ten minutes) and only once, so signing in
 // to an old account from a creator's link counts nothing.
@@ -23309,7 +23502,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

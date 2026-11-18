@@ -52,6 +52,13 @@ and a feature:
   of front and back before the buyer pays); slabs also need the cert number.
   New sellers are capped at $100 bounties, rising with finished sales.
   Taking payments needs `BOUNTY_PAYMENTS=on` and Connect enabled in Stripe.
+- The Partner program (owner, Nov 2026): creators apply from My Account and
+  the owner approves them in Admin. An approved partner gets a `?ref=` link
+  and earns 15% of every payment a member from that link makes in the
+  member's first 12 months (paid invoices only, held 30 days, refunds taken
+  back, no self-referral), paid by PayPal once $25 is ready. 15% of the price
+  keeps every plan profitable even when a member uses all their AI credits;
+  never more than 20%. It is a cost of growth, not a collector feature.
 
 The plans stay optional: apart from Huddle AI, everything works the same
 without one.

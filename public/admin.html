@@ -426,6 +426,15 @@
   </div>
   <p class="page-subtitle" id="test-email-msg" style="margin:.35rem 0 1rem"></p>
 
+  <!-- Partners: applications, partners and payouts (/api/admin/partners) -->
+  <div class="page-title">Partners</div>
+  <div class="page-subtitle">Creators apply from My Account. Approve to give them a link (their 15% runs for a member's first 12 months). Pay by PayPal once someone has $25 or more ready, then mark it paid.</div>
+  <div class="ap-table"><table>
+    <thead><tr><th>Partner</th><th>Status</th><th>Where they post</th><th>Members</th><th>Ready</th><th></th></tr></thead>
+    <tbody id="partner-rows"><tr><td colspan="6" style="color:var(--text-muted)">Loading&hellip;</td></tr></tbody>
+  </table></div>
+  <p class="page-subtitle" id="partner-msg" style="margin:.35rem 0 1rem"></p>
+
   <!-- Growth: where collectors come from, by source (/api/admin/growth) -->
   <div class="page-title">Growth</div>
   <div class="ap-head">
@@ -686,6 +695,7 @@
       loadArticles();
       loadArticleStats();
       loadSubscribers();
+      loadPartners();
       loadGrowth();
       loadGame();
       loadBounties();
@@ -926,6 +936,41 @@
     btn.disabled = false;
   }
   window.sendTestEmail = sendTestEmail;
+  // Partners: applications to decide, partners with what they have earned.
+  async function loadPartners() {
+    const rowsEl = artEl('partner-rows');
+    const $$ = (c) => '$' + ((Number(c) || 0) / 100).toFixed(2);
+    try {
+      const r = await artApi('/api/admin/partners');
+      const list = r.partners || [];
+      rowsEl.innerHTML = list.length ? list.map(p => {
+        const t = p.totals || {};
+        const act = p.status === 'pending'
+          ? `<button type="button" onclick="decidePartner('${escHtml(p.user)}', true)">Approve</button> <button type="button" onclick="decidePartner('${escHtml(p.user)}', false)">Decline</button>`
+          : p.status === 'approved' && t.ready >= r.minPayout ? `<button type="button" onclick="paidPartner('${escHtml(p.user)}', ${t.ready})">Mark ${$$(t.ready)} paid</button>` : '';
+        const link = /^https?:\/\//.test(p.channel || '') ? `<a href="${escHtml(p.channel)}" target="_blank" rel="noopener">${escHtml(p.channel.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40))}</a>` : escHtml(p.channel || '');
+        return `<tr><td><b>${escHtml(p.name || p.user)}</b><br><span style="color:var(--text-muted)">${escHtml(p.user)}${p.code ? ' &middot; ?ref=' + escHtml(p.code) : ''}<br>PayPal: ${escHtml(p.payout || '')}</span></td>
+          <td>${escHtml(p.status)}</td><td>${link}<br><span style="color:var(--text-muted)">${escHtml(p.audience || '')}${p.why ? ' &middot; ' + escHtml(p.why) : ''}</span></td>
+          <td>${p.status === 'approved' ? (t.members || 0) : ''}</td><td>${p.status === 'approved' ? $$(t.ready) + (t.pending ? `<br><span style="color:var(--text-muted)">${$$(t.pending)} pending</span>` : '') : ''}</td><td>${act}</td></tr>`;
+      }).join('') : '<tr><td colspan="6" style="color:var(--text-muted)">No applications yet. Creators apply from My Account (or the footer link).</td></tr>';
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="6" style="color:var(--red)">Could not load partners: ${escHtml(err.message)}</td></tr>`;
+    }
+  }
+  async function decidePartner(user, approve) {
+    const msg = artEl('partner-msg');
+    let code = '', note = '';
+    if (approve) { code = prompt('Their link name (thecardhuddle.com/?ref=NAME):', user) || ''; if (!code) return; }
+    else note = prompt('A short reason they will see (optional):', '') || '';
+    try { await artApi('/api/admin/partners/decide', { method: 'POST', body: JSON.stringify({ user, approve, code, note }) }); msg.textContent = approve ? `Approved ${user}.` : `Declined ${user}.`; loadPartners(); }
+    catch (err) { msg.textContent = 'Not saved: ' + err.message; }
+  }
+  async function paidPartner(user, cents) {
+    if (!confirm(`Did you send $${(cents / 100).toFixed(2)} to ${user} by PayPal? This marks it paid.`)) return;
+    try { const r = await artApi('/api/admin/partners/paid', { method: 'POST', body: JSON.stringify({ user }) }); artEl('partner-msg').textContent = `Marked $${(r.cents / 100).toFixed(2)} paid to ${user}.`; loadPartners(); }
+    catch (err) { artEl('partner-msg').textContent = 'Not saved: ' + err.message; }
+  }
+  window.decidePartner = decidePartner; window.paidPartner = paidPartner;
   async function loadSubscribers() {
     const rowsEl = artEl('sub-rows');
     try {
