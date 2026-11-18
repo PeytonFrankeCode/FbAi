@@ -40,6 +40,14 @@ const DAY = 86400000;
       && S.loadSubscriptions().noemail.reminded && S.loadSubscriptions().noemail.reminded[3] === 'no-email');
     r = await S.trialReminders({ now });
     check('without email set up, nothing is sent', r.ok === false && /not configured/.test(r.reason));
+    // The owner's test send (Admin > Subscribers): admin only, a real address, and email set up.
+    process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'test-admin';
+    const server = S.app.listen(0), base = `http://127.0.0.1:${server.address().port}`;
+    const post = (body, key) => fetch(base + '/api/admin/test-email', { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json', ...(key ? { 'x-admin-key': key } : {}) } });
+    const t1 = await post({ to: 'me@example.com' }), t2 = await post({ to: 'nope' }, process.env.ADMIN_PASSWORD), t3 = await post({ to: 'me@example.com' }, process.env.ADMIN_PASSWORD);
+    server.close();
+    check('a test email can be sent from Admin: admin only, a real address, and it says when email is not set up', t1.status === 401 && t2.status === 400 && t3.status === 503
+      && /Email is not set up/.test((await t3.json()).error));
     const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'), app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8'), wk = fs.readFileSync(path.join(ROOT, 'worker.js'), 'utf8');
     check('the checkout webhook keeps the email Stripe took', /const paidEmail = session\.customer_details && session\.customer_details\.email;/.test(src));
     check('the Worker runs it hourly', /typeof trialReminders === 'function' && aliasTick/.test(wk));
