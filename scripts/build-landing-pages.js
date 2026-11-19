@@ -1940,6 +1940,8 @@ function main() {
   }
   // The Huddle AI page (public/ai.html), a hand-written page worth indexing.
   urls.push(`  <url>\n    <loc>${SITE}/ai</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`);
+  // The Partner program page (public/partners.html), shared by creators.
+  urls.push(`  <url>\n    <loc>${SITE}/partners</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`);
   if (BUILT.size > PAGE_CAP) throw new Error(`${BUILT.size} pages planned, over the ${PAGE_CAP} cap`);
   // What was built, for the Worker: a generated address not on this list
   // answers 404 rather than the app shell (worker.js isBuiltPage).

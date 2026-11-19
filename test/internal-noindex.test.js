@@ -10,7 +10,9 @@ const PUBLIC_PAGES = new Set(['index.html', 'about.html', 'contact.html',
   // Card Huddle for Business: a public landing page; the tool behind it signs in.
   'business.html',
   // Huddle AI: the public page for the one paid plan (owner, Nov 2026).
-  'ai.html']);
+  'ai.html',
+  // Partner program: the public page creators share (owner, Nov 2026).
+  'partners.html']);
 
 let failures = 0;
 for (const f of fs.readdirSync(PUB).filter(f => f.endsWith('.html'))) {

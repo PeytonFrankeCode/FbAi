@@ -9888,7 +9888,7 @@ function _d1UsageBody(req, res) {
 // the basketball and baseball pages have no sold data to be priced by.
 // Under the 4,000-page cap (owner, Oct 2026): every football page built is
 // offered to search, plus the home page and four hand-written pages (one is /ai).
-const INDEXABLE_URLS = 3703;
+const INDEXABLE_URLS = 3704;
 // Rebuilt on the nightly price map (Nov 2026). The first version scanned the
 // whole sales table three times, grouped on normalised columns, to decide
 // whether price blocks were worth building; they were built, and the table

@@ -6454,8 +6454,9 @@ async function _haiAsk() {
     setTimeout(_refreshAdFreePlan, 1500);
   }
   // Links from the /ai page and creators' posts: ?plans=1 opens the plan
-  // picker, ?ai=1 opens Huddle AI.
+  // picker, ?ai=1 opens Huddle AI, ?partner=1 opens the partner application.
   if (params.get('plans') === '1') setTimeout(openAdFree, 300);
+  else if (params.get('partner') === '1') setTimeout(openPartners, 300);
   else if (params.get('ai') === '1') setTimeout(openHuddleAI, 300);
 })();
 
