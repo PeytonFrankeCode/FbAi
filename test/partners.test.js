@@ -66,8 +66,11 @@ const DAY = 86400000;
 
   const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'), app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8'), admin = fs.readFileSync(path.join(ROOT, 'public', 'admin.html'), 'utf8'), html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
   check('the Stripe webhook earns on invoice.paid and takes back on charge.refunded', /case 'invoice\.paid': \{\s*const r = await partnerInvoicePaid\(event\.data\.object, subs\);/.test(src) && /case 'charge\.refunded': \{\s*await partnerChargeRefunded\(event\.data\.object\);/.test(src));
-  check('My Account has the program, the footer links to it, and Admin decides and pays', /id="acct-partner"/.test(app) && /function acctPartnerApply/.test(app) && /openPartners\(\)">Partner program<\/a>/.test(html)
+  check('My Account has the program, the footer links to it, and Admin decides and pays', /id="acct-partner"/.test(app) && /function acctPartnerApply/.test(app) && /href="\/partners">Partner program<\/a>/.test(html)
+    && /params\.get\('partner'\) === '1'\) setTimeout\(openPartners/.test(app)
     && /id="partner-rows"/.test(admin) && /loadPartners\(\);/.test(admin) && /\/api\/admin\/partners\/paid/.test(admin));
+  const page = fs.readFileSync(path.join(ROOT, 'public', 'partners.html'), 'utf8');
+  check('the /partners page states the real terms and links to the application', /15%/.test(page) && /12 months/.test(page) && /30 days/.test(page) && /\$25/.test(page) && /href="\/\?partner=1"/.test(page) && /og-partners\.png/.test(page));
   console.log(failures ? `\n${failures} partner check(s) failed` : '\nall partner checks passed');
   process.exit(failures ? 1 : 0);
 })();
