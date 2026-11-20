@@ -5,7 +5,7 @@ name: Collect sold sales from The Card API (nightly)
 # scripts/collect-sold-cardapi.py for how and why.
 #
 # Nightly at 06:41 UTC, once the vendor has indexed the previous UTC day.
-# Also runs when the script changes (GitHub's mobile site has no "Run
+# Also runs when the script changes: (GitHub's mobile site has no "Run
 # workflow" button): on any branch but main, as a dry run.
 #
 # Repo Settings -> Secrets and variables -> Actions:
@@ -13,7 +13,7 @@ name: Collect sold sales from The Card API (nightly)
 #   Variable CARDAPI_PLAN        starter once subscribed. Until then it stays
 #                                "free" and nothing is uploaded: the free key
 #                                is for evaluation only under the vendor's terms.
-#   Variable CARDAPI_MIN_PRICE   lowest sale price in dollars (default 15)
+#   Variable CARDAPI_MIN_PRICE   lowest sale price in dollars (default 10)
 #   Variable CARDAPI_PURGE       1 to delete every Card API sale (after cancelling)
 
 on:
@@ -53,6 +53,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CARDAPI_PLAN: ${{ vars.CARDAPI_PLAN || 'free' }}
-          CARDAPI_MIN_PRICE: ${{ vars.CARDAPI_MIN_PRICE || '15' }}
+          CARDAPI_MIN_PRICE: ${{ vars.CARDAPI_MIN_PRICE || '10' }}
           CARDAPI_PURGE: ${{ github.ref == 'refs/heads/main' && (vars.CARDAPI_PURGE || '') || '' }}
           DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}

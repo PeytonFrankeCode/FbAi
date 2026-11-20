@@ -12,9 +12,11 @@ storing up to 500,000 of its records. Tested 20 Nov 2026 (scripts/probe-card-api
 What it does, in order:
   1. Pages through yesterday's sales at CARDAPI_MIN_PRICE and up (the API's
      `price_min`), 100 a page, until the day runs out or the row budget does.
-     Most sales are $1-4 singles; $15+ keeps the day near 10,000 rows.
+     Most sales are $1-4 singles; $10+ keeps the day near 10,000 rows.
   2. Keeps football, baseball and basketball (the API's sport filter doesn't
-     work, so other sports are dropped here and still cost rows), and drops
+     work, so trading card games and other sports are dropped here and still
+     cost rows; the sport field is often blank, so the title and the NFL
+     roster fill in), and drops
      $0 / unconfirmed prices, lots, breaks, reprints and sealed product.
   3. Reads every title with NflCardDB's own parser, so rows match PC ones.
   4. Inserts into D1's `sales` with ON CONFLICT DO NOTHING. eBay sales keep
@@ -31,7 +33,7 @@ so nothing is uploaded until CARDAPI_PLAN (a repo variable) names a paid plan.
 Settings (environment):
   CARD_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   required
   CARDAPI_PLAN       free (default: collect a sample, upload nothing) | starter | builder | pro
-  CARDAPI_MIN_PRICE  lowest sale price in dollars (default 15)
+  CARDAPI_MIN_PRICE  lowest sale price in dollars (default 10)
   CARDAPI_ROWS       rows to spend per run (default: the plan's daily allowance less 300)
   CARDAPI_DAY        YYYY-MM-DD to collect (default: yesterday, UTC)
   CARDAPI_PURGE=1    delete every Card API sale from D1 (after cancelling)
@@ -55,6 +57,7 @@ from nflcarddb.api_export import EXPORT_COLUMNS, _iter_rows_to_export, _sql_lite
 from nflcarddb.d1_http import push_sql, run_sql
 from nflcarddb.models import Sale
 from nflcarddb.parse_title import PARSER_VERSION, load_roster, parse_title
+from nflcarddb.sport import sport_from_title
 
 KEY = os.environ.get("CARD_API_KEY", "").strip()
 CF_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
@@ -76,7 +79,7 @@ PAID = PLAN != "free"
 # Stay a little under each limit: the probe and the site share the key.
 ROWS = int(os.environ.get("CARDAPI_ROWS") or (300 if not PAID else PLANS[PLAN]["rows"] - 300))
 STORE_CAP = int(PLANS[PLAN]["store"] * 0.96)
-MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 15)
+MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 10)
 DAY = os.environ.get("CARDAPI_DAY") or (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
 DRY_RUN = os.environ.get("DRY_RUN") == "1" or not PAID
 PURGE = os.environ.get("CARDAPI_PURGE") == "1"
@@ -92,6 +95,10 @@ NOT_A_SINGLE = re.compile(
     r"|\bgroup of\b|\bin total\b|\b\d{2,}\s*(?:graded\s+)?cards\b",
     re.I,
 )
+# About two-thirds of a day's $15+ rows are trading card games (20 Nov 2026
+# sample: category "tcg", mostly Pokemon on TCGplayer and Fanatics).
+TCG_RE = re.compile(r"pok[eé]mon|\bmtg\b|magic the gathering|yu-?gi-?oh|one piece|lorcana|digimon"
+                    r"|dragon ball|flesh and blood|weiss schwarz|star wars unlimited", re.I)
 ITEM_RE = re.compile(r"/itm/(?:[^/?#]+/)?(\d{9,15})")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 # Must match SALE_PLATFORMS in server.js, which labels and links these.
@@ -162,12 +169,37 @@ def item_id_of(s: dict) -> str | None:
     return f"{slug}-{sid}" if sid and slug in KNOWN_SLUGS else None
 
 
+_ROSTER: set[str] | None = None
+NOT_FOOTBALL_NAMES = {"michael jordan", "chris paul", "anthony davis"}
+
+
+def sport_of(s: dict, title: str) -> tuple[str | None, str]:
+    """The sale's sport, or (None, why not). Most recent sales come with the
+    sport field blank, so it falls back to the title, then the NFL roster."""
+    global _ROSTER
+    sport = str(s.get("sport") or "").strip().lower()
+    if sport:
+        return (sport, "") if sport in SPORTS else (None, "other sport")
+    if str(s.get("category") or "").lower() == "tcg" or TCG_RE.search(title):
+        return None, "trading card game"
+    guess = sport_from_title(title)
+    if guess:
+        return (guess, "") if guess in SPORTS else (None, "other sport")
+    if _ROSTER is None:
+        _ROSTER = load_roster(ROSTER) if Path(ROSTER).exists() else set()
+    player = (parse_title(title, _ROSTER).player or "").lower()
+    # Some NFL roster names belong to a bigger star in another sport.
+    if player and player in _ROSTER and player not in NOT_FOOTBALL_NAMES:
+        return "football", ""
+    return None, "sport not stated (not an NFL roster name)"
+
+
 def to_sale(s: dict) -> tuple[Sale | None, str]:
     """(sale, '') or (None, why it was dropped)."""
-    sport = str(s.get("sport") or "").strip().lower()
-    if sport not in SPORTS:
-        return None, "other sport"
     title = str(s.get("title") or "").strip()
+    sport, why = sport_of(s, title)
+    if not sport:
+        return None, why
     if not title or NOT_A_SINGLE.search(title):
         return None, "lot, sealed or reprint"
     price = cents(s.get("price_usd") if s.get("price_usd") is not None else s.get("price"))
