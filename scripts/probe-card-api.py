@@ -181,6 +181,21 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("R. What does one 'row' cost? Fresh queries, remaining before and after")
+    import random
+    for n in (1, 7, 60):
+        tag = f"rookie {random.randint(1000, 9999)}"  # unseen query, so nothing is cached
+        get("sales", limit=1, q="zzqx nothing matches this")
+        before = int(last_headers.get("x-ratelimit-remaining", -1))
+        j = get("sales", limit=n, q="rookie", sort="date_desc", date_from="2026-11-1" + str(n % 9), date_to="2026-11-1" + str(n % 9))
+        after = int(last_headers.get("x-ratelimit-remaining", -1))
+        got = len((j or {}).get("data") or [])
+        out(f"  limit={n}: {got} sales came back; allowance went {before} -> {after} (used {before - after})")
+    out("  cheap-card filter: Nov 18 totals")
+    for kw in ({}, {"min_price": 10}, {"price_min": 10}, {"min": 10}, {"price_gte": 10}, {"min_price": 25}):
+        j = get("sales", limit=1, date_from="2026-11-18", date_to="2026-11-18", **kw)
+        out(f"    {kw or 'no filter'}: total {(j or {}).get('pagination', {}).get('total')}")
+
     out("A. Volume per sport: total held, oldest and newest sale, per day")
     for sport in ("football", "baseball", "basketball"):
         for label, kw in ((f"q={sport}", {"q": sport}), (f"sport={sport}", {"sport": sport})):
