@@ -181,7 +181,52 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
-    out("1. Newest football sales (structure and freshness)")
+    out("A. Volume per sport: total held, oldest and newest sale, per day")
+    for sport in ("football", "baseball", "basketball"):
+        for label, kw in ((f"q={sport}", {"q": sport}), (f"sport={sport}", {"sport": sport})):
+            new = get("sales", limit=1, sort="date_desc", **kw)
+            old = get("sales", limit=1, sort="date_asc", **kw)
+            if not new or not old:
+                continue
+            tot = (new.get("pagination") or {}).get("total")
+            d1_, d0 = day((new.get("data") or [{}])[0]), day((old.get("data") or [{}])[0])
+            span = None
+            try:
+                span = (datetime.fromisoformat(d1_) - datetime.fromisoformat(d0)).days + 1
+            except ValueError:
+                pass
+            out(f"  {label}: total {tot}; {d0} .. {d1_}" + (f"; ~{tot // span:,} a day over {span} days" if span and tot else ""))
+    for kw in ({"date_from": "2026-11-18", "date_to": "2026-11-18"}, {"start_date": "2026-11-18", "end_date": "2026-11-18"}, {"sold_after": "2026-11-18"}):
+        j = get("sales", limit=1, **kw)
+        out(f"  one-day filter {list(kw)}: total {(j or {}).get('pagination', {}).get('total')}")
+    j = get("sales", limit=1, sort="date_desc")
+    out(f"  everything, no query: total {(j or {}).get('pagination', {}).get('total')}; meta {json.dumps((j or {}).get('meta'))[:400]}")
+
+    out("\nB. Pricing and terms pages")
+    for path in ("pricing", "terms", "tos", "terms-of-service", "license"):
+        try:
+            r = requests.get(f"https://www.thecardapi.com/{path}", timeout=20)
+        except requests.RequestException as e:
+            out(f"  /{path}: {type(e).__name__}"); continue
+        out(f"  /{path}: HTTP {r.status_code}")
+        if not r.ok:
+            continue
+        text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", r.text, flags=re.S)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"\\u[0-9a-f]{4}|\\n", " ", text)
+        text = re.sub(r"\s+", " ", text)
+        pat = (r"[^.]{0,160}(\$\s?\d[\d,.]*(?:\s*/\s*mo(?:nth)?)?|rows? (?:per|a|/) ?day|per month|commercial|redistribut|resell|display|store|cache|attribution|enterprise|unlimited)[^.]{0,200}\.")
+        seen = set()
+        for m in re.finditer(pat, text, re.I):
+            t = m.group(0).strip()
+            if t[:60] in seen:
+                continue
+            seen.add(t[:60])
+            out(f"    > {t[:360]}")
+            if len(seen) >= 25:
+                break
+
+    out("\n1. Newest football sales (structure and freshness)")
     j = get("sales", q="football", limit=100, sort="date_desc")
     first = (j or {}).get("data") or []
     if j is not None:
