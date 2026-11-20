@@ -199,6 +199,11 @@ def main() -> int:
     for kw in ({"date_from": "2026-11-18", "date_to": "2026-11-18"}, {"start_date": "2026-11-18", "end_date": "2026-11-18"}, {"sold_after": "2026-11-18"}):
         j = get("sales", limit=1, **kw)
         out(f"  one-day filter {list(kw)}: total {(j or {}).get('pagination', {}).get('total')}")
+    for kw in ({"category": "football"}, {"league": "NFL"}, {"category": "Football"}, {"sport": "Football"}, {"sports": "football"}):
+        j = get("sales", limit=1, date_from="2026-11-18", date_to="2026-11-18", **kw)
+        out(f"  Nov 18 with {kw}: total {(j or {}).get('pagination', {}).get('total')}")
+    j = get("sales", limit=100, date_from="2026-11-18", date_to="2026-11-18")
+    out(f"  Nov 18 sample of 100 by sport/category: {dict(Counter((s.get('sport') or '?') + '/' + (s.get('category') or '?') for s in (j or {}).get('data') or []))}")
     j = get("sales", limit=1, sort="date_desc")
     out(f"  everything, no query: total {(j or {}).get('pagination', {}).get('total')}; meta {json.dumps((j or {}).get('meta'))[:400]}")
 
@@ -216,6 +221,12 @@ def main() -> int:
         text = re.sub(r"\\u[0-9a-f]{4}|\\n", " ", text)
         text = re.sub(r"\s+", " ", text)
         pat = (r"[^.]{0,160}(\$\s?\d[\d,.]*(?:\s*/\s*mo(?:nth)?)?|rows? (?:per|a|/) ?day|per month|commercial|redistribut|resell|display|store|cache|attribution|enterprise|unlimited)[^.]{0,200}\.")
+        if path == "pricing":
+            for name in ("Free", "Starter", "Builder", "Pro", "Enterprise"):
+                i = text.find(f" {name} $")
+                if i < 0:
+                    i = text.find(f" {name} ")
+                out(f"    [{name}] {text[i:i+420] if i >= 0 else '(not found)'}")
         seen = set()
         for m in re.finditer(pat, text, re.I):
             t = m.group(0).strip()
