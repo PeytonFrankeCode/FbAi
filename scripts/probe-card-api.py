@@ -181,6 +181,37 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("S. Nov 19 at $15+: what are the sales, by sport, category and league?")
+    seen = 0
+    sport_c, cat_c, league_c, plat_c = Counter(), Counter(), Counter(), Counter()
+    blank_titles = []
+    for page in (1, 15, 30, 45, 60):
+        j = get("sales", limit=100, page=page, sort="date_desc", date_from="2026-11-19", date_to="2026-11-19", price_min=15)
+        rows = (j or {}).get("data") or []
+        if page == 1:
+            out(f"  total that day at $15+: {(j or {}).get('pagination', {}).get('total')}")
+        for r in rows:
+            seen += 1
+            sport_c[r.get("sport") or "(blank)"] += 1
+            cat_c[r.get("category") or "(blank)"] += 1
+            league_c[r.get("league") or "(blank)"] += 1
+            plat_c[r.get("platform") or "(blank)"] += 1
+            if not r.get("sport") and len(blank_titles) < 25:
+                blank_titles.append(f"{r.get('category')}/{r.get('platform')}: {(r.get('title') or '')[:80]}")
+    out(f"  sampled {seen} sales from pages 1, 15, 30, 45, 60")
+    out(f"  sport: {dict(sport_c.most_common())}")
+    out(f"  category: {dict(cat_c.most_common())}")
+    out(f"  league: {dict(league_c.most_common(12))}")
+    out(f"  platform: {dict(plat_c.most_common())}")
+    out("  titles with a blank sport:")
+    for t in blank_titles:
+        out(f"    - {t}")
+    for kw in ({"category": "sports"}, {"category": "tcg"}, {"q": "football"}, {"q": "rookie"}):
+        j = get("sales", limit=1, date_from="2026-11-19", date_to="2026-11-19", price_min=15, **kw)
+        out(f"  Nov 19 $15+ with {kw}: total {(j or {}).get('pagination', {}).get('total')}")
+    out(f"  allowance left: {last_headers}")
+    return 0
+
     out("R. What does one 'row' cost? Fresh queries, remaining before and after")
     import random
     for n in (1, 7, 60):
