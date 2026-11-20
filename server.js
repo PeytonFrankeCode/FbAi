@@ -1648,6 +1648,34 @@ function _isPackListing(title, player) {
   return !_CHASE_NAME_RE.test(t);
 }
 
+// Sales from The Card API (scripts/collect-sold-cardapi.py) keep their eBay
+// item id when eBay sold them; other platforms' sales are stored as
+// "<platform>-<id>" (fanatics-123). Those have no eBay page, so they link to
+// an eBay sold search for the same title (still an eBay Partner link) and say
+// where the sale happened.
+const SALE_PLATFORMS = {
+  fanatics: 'Fanatics Collect', goldin: 'Goldin', lelands: 'Lelands', scpauctions: 'SCP Auctions',
+  hakes: 'Hakes', rea: 'REA', pwcc: 'PWCC', heritage: 'Heritage', tcgplayer: 'TCGplayer',
+  yahooauctionsjapan: 'Yahoo Auctions Japan',
+};
+// The platform slug of a vendor sale's id, or null for an eBay item id (or
+// anything else, which keeps the eBay link it always had).
+function _saleVendor(itemId) {
+  const m = /^([a-z]+)-./.exec(String(itemId || ''));
+  return m && Object.prototype.hasOwnProperty.call(SALE_PLATFORMS, m[1]) ? m[1] : null;
+}
+function _salePlatform(itemId) {
+  const v = _saleVendor(itemId);
+  return v ? SALE_PLATFORMS[v] : 'eBay';
+}
+function _saleLink(r) {
+  const id = String((r && r.item_id) || '');
+  if (!id) return '';
+  if (!_saleVendor(id)) return `https://www.ebay.com/itm/${encodeURIComponent(id)}`;
+  const q = String(r.title || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  return q ? `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1` : '';
+}
+
 function mapNflDbSale(r) {
   // Same rule as the analysis buckets: an unparsed grade isn't proof a card
   // was raw, so don't label a likely slab "Ungraded".
@@ -1662,7 +1690,7 @@ function mapNflDbSale(r) {
     currency: r.currency || 'USD',
     soldDate: r.sold_date || '',
     imageUrl: r.image_url || null, // absent until the collector stores one
-    itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
+    itemUrl: _saleLink(r),
     condition: grade || 'Ungraded',
     buyingOptions: r.listing_format === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
     saleType: saleTypeOf({ bestOffer: r.best_offer, listingFormat: r.listing_format }),
@@ -1671,7 +1699,7 @@ function mapNflDbSale(r) {
     printRun: null,
     grader: r.grader || null,
     grade: r.grade != null ? String(r.grade).replace(/\.0$/, '') : null,
-    platform: 'eBay',
+    platform: _salePlatform(r.item_id),
     source: 'nflcarddb',
     // The query already enforces the confidence floor, so a player name is the
     // only remaining condition for /api/card-analysis to return something.
@@ -11277,7 +11305,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
     const gradeOf = (r) => r.grade != null
       ? `${r.grader || ''} ${String(r.grade).replace(/\.0$/, '')}`.trim()
       : null;
-    const linkOf = (r) => r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '';
+    const linkOf = _saleLink;
 
     // The Most Sold board, grouped in JS because the parallel is in the title
     // on half of these sales and the dictionary that reads it is not SQL.
@@ -14653,7 +14681,7 @@ async function _cardAnalysisRoute(req, res) {
           price: (r.price_cents || 0) / 100,
           soldDate: r.sold_date,
           imageUrl: r.image_url || null,
-          itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
+          itemUrl: _saleLink(r),
         })),
         median: Math.round(_median(prices) * 100) / 100,
         low: prices[0] ?? null,
@@ -23502,7 +23530,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE, _saleLink, _salePlatform };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
