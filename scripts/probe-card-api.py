@@ -44,11 +44,62 @@ def out(line: str = "") -> None:
     print(line.replace(KEY, "***") if KEY else line, flush=True)
 
 
+AUTH = {"x-market-api-key": KEY}
+
+
+def find_auth() -> bool:
+    """The key came back 401 with x-market-api-key. Read the docs the API
+    publishes and try the usual ways of sending a key, to learn which it takes."""
+    raw = os.environ.get("CARD_API_KEY", "")
+    out(f"  key: {len(KEY)} chars after trimming ({len(raw)} raw); "
+        f"inner spaces {' ' in KEY}; quotes {any(c in KEY for c in chr(34) + chr(39))}; "
+        f"shape {re.sub(r'[A-Za-z]', 'a', re.sub(r'[0-9]', '9', KEY))[:6]}...")
+    for path in ("openapi.json", "api/openapi.json", "api/v1/openapi.json", "docs"):
+        try:
+            r = requests.get(f"https://www.thecardapi.com/{path}", timeout=20)
+        except requests.RequestException as e:
+            out(f"  /{path}: {type(e).__name__}"); continue
+        out(f"  /{path}: HTTP {r.status_code}, {len(r.text)} bytes")
+        if r.ok and path.endswith("json"):
+            try:
+                spec = r.json()
+                out(f"    security schemes: {json.dumps((spec.get('components') or {}).get('securitySchemes'))[:500]}")
+                out(f"    paths: {sorted((spec.get('paths') or {}).keys())[:40]}")
+            except ValueError:
+                pass
+        elif r.ok:
+            for m in sorted(set(re.findall(r"(?i)(x-[a-z-]*key|authorization: ?bearer|api[_-]?key)", r.text)))[:10]:
+                out(f"    docs mention: {m}")
+    tries = [
+        ("x-market-api-key", {"x-market-api-key": KEY}, {}),
+        ("X-API-Key", {"X-API-Key": KEY}, {}),
+        ("Authorization: Bearer", {"Authorization": f"Bearer {KEY}"}, {}),
+        ("x-api-key + market", {"x-api-key": KEY}, {}),
+        ("?api_key=", {}, {"api_key": KEY}),
+    ]
+    global AUTH
+    for label, h, qp in tries:
+        try:
+            r = requests.get(f"{BASE}/sales", params={"q": "football", "limit": 1, **qp}, headers=h, timeout=30)
+        except requests.RequestException as e:
+            out(f"  {label}: {type(e).__name__}"); continue
+        out(f"  {label}: HTTP {r.status_code} {r.text[:120] if r.status_code != 200 else ''}")
+        if r.status_code == 200:
+            AUTH = h
+            if qp:
+                AUTH = {"__q": KEY}
+            return True
+    return False
+
+
 def get(path: str, **params) -> dict | None:
     global calls, last_headers
     calls += 1
+    h = dict(AUTH)
+    if "__q" in h:
+        params["api_key"] = h.pop("__q")
     try:
-        r = requests.get(f"{BASE}/{path}", params=params, headers={"x-market-api-key": KEY}, timeout=30)
+        r = requests.get(f"{BASE}/{path}", params=params, headers=h, timeout=30)
     except requests.RequestException as e:
         out(f"  request failed: {type(e).__name__}")
         return None
@@ -124,6 +175,11 @@ def main() -> int:
         return 0
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     out(f"The Card API probe, {now}\n")
+    out("0. How does the API want the key?")
+    if not find_auth():
+        out("  No way of sending the key was accepted. The key may be wrong, not yet")
+        out("  activated, or for another product. Stopping before spending calls.")
+        return 0
 
     out("1. Newest football sales (structure and freshness)")
     j = get("sales", q="football", limit=100, sort="date_desc")
