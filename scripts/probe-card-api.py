@@ -12,7 +12,7 @@ This asks the free key a handful of questions and prints the answers:
   volume     how many football sales a day, and what the key allows.
 
 Budget: about 12 calls of at most 100 rows, inside the free tier's daily
-rows. The key is read from CARD_API_KEY and never printed.
+rows. The key is read from CARD_API_KEY (a repo secret) and never printed.
 """
 
 from __future__ import annotations
