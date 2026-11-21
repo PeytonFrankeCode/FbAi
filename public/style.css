@@ -11139,3 +11139,26 @@ body.oo-on > .oo-bg,body:has(#play-view:not(.hidden)) > .oo-bg{display:block}
 .partner-tile span{font-size:.72rem;color:var(--text-muted)}
 .partner-recent{list-style:none;margin:.5rem 0;padding:0;font-size:.85rem}
 .partner-recent li{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-top:1px solid var(--border-primary)}
+
+/* Live now (partner streamers live right now) and the partner stream controls. */
+.live-now{margin:.75rem 0 0;padding:.75rem .85rem;border:1px solid var(--border-primary);border-radius:14px;background:var(--bg-secondary)}
+.live-now-head{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:.95rem;margin-bottom:.5rem}
+.live-now-sub{font-weight:500;color:var(--text-secondary);font-size:.8rem}
+.live-dot{width:.6rem;height:.6rem;border-radius:50%;background:#e5484d;box-shadow:0 0 0 0 rgba(229,72,77,.6);animation:live-pulse 1.6s infinite}
+@keyframes live-pulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.55)}70%{box-shadow:0 0 0 .45rem rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+@media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
+.live-now-list{display:flex;flex-wrap:wrap;gap:.5rem}
+.live-now-item{display:flex;align-items:center;gap:.5rem;padding:.45rem .7rem;border-radius:999px;border:1px solid var(--border-primary);background:var(--bg-primary);color:var(--text-primary);text-decoration:none;font-size:.85rem;max-width:100%}
+.live-now-item:hover{border-color:var(--accent);text-decoration:none}
+.live-now-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:14rem}
+.live-now-plat{color:var(--text-secondary);font-size:.78rem}
+.live-now-go{color:var(--accent);font-weight:700}
+.partner-stream{margin:.9rem 0;padding-top:.6rem;border-top:1px solid var(--border-primary)}
+.partner-stream h4{margin:.6rem 0 .25rem;font-size:.95rem}
+.partner-stream-form{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.partner-stream-form select,.partner-stream-form input{flex:1 1 10rem;min-width:0;padding:.5rem .65rem;border-radius:10px;border:1px solid var(--border-primary);background:var(--bg-input,var(--bg-secondary));color:var(--text-primary);font:inherit;font-size:.85rem}
+.partner-stream-form select{flex:0 1 9rem}
+.partner-live{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;margin:.4rem 0}
+.partner-live-on{color:#e5484d;font-weight:700;font-size:.85rem}
+.partner-howto{font-size:.8rem}
+.acct-btn--ghost{background:transparent;color:var(--text-primary);border:1px solid var(--border-primary)}
