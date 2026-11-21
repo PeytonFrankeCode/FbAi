@@ -948,10 +948,14 @@
         const act = p.status === 'pending'
           ? `<button type="button" onclick="decidePartner('${escHtml(p.user)}', true)">Approve</button> <button type="button" onclick="decidePartner('${escHtml(p.user)}', false)">Decline</button>`
           : p.status === 'approved' && t.ready >= r.minPayout ? `<button type="button" onclick="paidPartner('${escHtml(p.user)}', ${t.ready})">Mark ${$$(t.ready)} paid</button>` : '';
+        // Live now: their stream, and a switch to hide them from the home page strip.
+        const live = p.status === 'approved' && p.stream
+          ? `<br><span style="color:var(--text-muted)">${p.live ? '&#128308; live &middot; ' : ''}<a href="${escHtml(p.stream.url)}" target="_blank" rel="noopener">${escHtml(p.stream.platform)}</a> &middot; ${p.featured ? 'on Live now' : 'hidden'}</span> <button type="button" onclick="featurePartner('${escHtml(p.user)}', ${!p.featured})">${p.featured ? 'Hide' : 'Show'}</button>`
+          : '';
         const link = /^https?:\/\//.test(p.channel || '') ? `<a href="${escHtml(p.channel)}" target="_blank" rel="noopener">${escHtml(p.channel.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40))}</a>` : escHtml(p.channel || '');
         return `<tr><td><b>${escHtml(p.name || p.user)}</b><br><span style="color:var(--text-muted)">${escHtml(p.user)}${p.code ? ' &middot; ?ref=' + escHtml(p.code) : ''}<br>PayPal: ${escHtml(p.payout || '')}</span></td>
           <td>${escHtml(p.status)}</td><td>${link}<br><span style="color:var(--text-muted)">${escHtml(p.audience || '')}${p.why ? ' &middot; ' + escHtml(p.why) : ''}</span></td>
-          <td>${p.status === 'approved' ? (t.members || 0) : ''}</td><td>${p.status === 'approved' ? $$(t.ready) + (t.pending ? `<br><span style="color:var(--text-muted)">${$$(t.pending)} pending</span>` : '') : ''}</td><td>${act}</td></tr>`;
+          <td>${p.status === 'approved' ? (t.members || 0) : ''}</td><td>${p.status === 'approved' ? $$(t.ready) + (t.pending ? `<br><span style="color:var(--text-muted)">${$$(t.pending)} pending</span>` : '') : ''}</td><td>${act}${live}</td></tr>`;
       }).join('') : '<tr><td colspan="6" style="color:var(--text-muted)">No applications yet. Creators apply from My Account (or the footer link).</td></tr>';
     } catch (err) {
       rowsEl.innerHTML = `<tr><td colspan="6" style="color:var(--red)">Could not load partners: ${escHtml(err.message)}</td></tr>`;
@@ -970,7 +974,11 @@
     try { const r = await artApi('/api/admin/partners/paid', { method: 'POST', body: JSON.stringify({ user }) }); artEl('partner-msg').textContent = `Marked $${(r.cents / 100).toFixed(2)} paid to ${user}.`; loadPartners(); }
     catch (err) { artEl('partner-msg').textContent = 'Not saved: ' + err.message; }
   }
-  window.decidePartner = decidePartner; window.paidPartner = paidPartner;
+  async function featurePartner(user, featured) {
+    try { await artApi('/api/admin/partners/feature', { method: 'POST', body: JSON.stringify({ user, featured }) }); artEl('partner-msg').textContent = featured ? `${user} shows on Live now.` : `${user} is hidden from Live now.`; loadPartners(); }
+    catch (err) { artEl('partner-msg').textContent = 'Not saved: ' + err.message; }
+  }
+  window.decidePartner = decidePartner; window.paidPartner = paidPartner; window.featurePartner = featurePartner;
   async function loadSubscribers() {
     const rowsEl = artEl('sub-rows');
     try {

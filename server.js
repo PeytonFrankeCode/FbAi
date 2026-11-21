@@ -19445,6 +19445,8 @@ app.get('/api/partners/me', async (req, res) => {
     out.link = `${DRIP_ORIGIN}/?ref=${p.code}`;
     out.stats = await _partnerStats(p.code);
     out.totals = _partnerTotals(ledger);
+    if (!p.overlayKey) { p.overlayKey = _overlayKey(); await _partnerSave(p); }
+    out.streamInfo = _partnerStreamView(p);
     out.recent = ledger.slice(-10).reverse().map(e => ({ at: e.at, plan: e.plan, cents: Math.max(0, e.cents - (e.reversedCents || 0)), paid: !!e.paidAt, reversed: !!e.reversedCents }));
   }
   res.set('Cache-Control', 'no-store').json(out);
@@ -19456,7 +19458,7 @@ app.get('/api/admin/partners', async (req, res) => {
   for (const u of await _partnerIndex()) {
     const p = await _partnerGet(u);
     if (!p) continue;
-    const row = { user: u, ..._partnerView(p), why: p.why || '' };
+    const row = { user: u, ..._partnerView(p), why: p.why || '', stream: p.stream || null, featured: p.featured !== false, live: _isLive(p) };
     if (p.status === 'approved') { row.totals = _partnerTotals(await _partnerLedger(u)); row.stats = await _partnerStats(p.code); }
     rows.push(row);
   }
@@ -19484,6 +19486,142 @@ app.post('/api/admin/partners/decide', async (req, res) => {
   p.decidedAt = new Date().toISOString();
   await _partnerSave(p);
   res.json({ ok: true, partner: _partnerView(p) });
+});
+
+// ---- Live now + stream overlay (owner, Nov 2026: "build the live now spot
+// and overlay first") ----
+// An approved partner adds where they stream. Their card shows on the home
+// page's "Live now" strip while they're live: either they tapped "I'm live"
+// in My Account (good for 4 hours), or their stream overlay is open in OBS,
+// which checks in every 2 minutes. The overlay is a page of their own
+// (/overlay?ref=CODE&key=KEY): real sold prices for the card they're showing,
+// the week's top sales, and a QR code of their partner link. The key keeps
+// anyone else from marking them live. The owner can hide a partner from the
+// strip in Admin. Free tools, so nothing here is gated.
+const STREAM_PLATFORMS = { whatnot: 'Whatnot', tiktok: 'TikTok', youtube: 'YouTube', twitch: 'Twitch', instagram: 'Instagram', kick: 'Kick', facebook: 'Facebook', other: 'Live' };
+const LIVE_MANUAL_MS = 4 * 3600 * 1000;       // "I'm live" lasts a typical break
+const LIVE_OVERLAY_MS = 5 * 60 * 1000;        // the overlay checks in every 2 min
+const OVERLAY_CHECKIN_MS = 60 * 1000;         // at most one write a minute
+const _liveNowMemo = { at: 0, data: null };
+function _streamUrlOk(u) {
+  try { const x = new URL(String(u || '')); return x.protocol === 'https:' && !!x.hostname && x.hostname.includes('.'); } catch (_) { return false; }
+}
+function _isLive(p, now = Date.now()) { return !!(p && p.liveUntil && Date.parse(p.liveUntil) > now); }
+// Web Crypto: exists on both Node and Workers (see the note at hashPassword).
+function _overlayKey() { const a = new Uint8Array(12); globalThis.crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); }
+async function _approvedPartner(req, res) {
+  const user = getSessionUser(req);
+  if (!user) { res.status(401).json({ error: 'Sign in first.' }); return null; }
+  const p = await _partnerGet(user);
+  if (!p || p.status !== 'approved') { res.status(403).json({ error: 'This is for approved partners.' }); return null; }
+  return p;
+}
+// What My Account shows an approved partner about their stream and overlay.
+function _partnerStreamView(p) {
+  return {
+    stream: p.stream || null,
+    featured: p.featured !== false,
+    live: _isLive(p),
+    liveUntil: _isLive(p) ? p.liveUntil : null,
+    overlayUrl: p.code && p.overlayKey ? `${DRIP_ORIGIN}/overlay?ref=${encodeURIComponent(p.code)}&key=${p.overlayKey}` : null,
+    overlayCard: (p.overlayCard && p.overlayCard.q) || '',
+    platforms: STREAM_PLATFORMS,
+  };
+}
+
+app.post('/api/partners/stream', async (req, res) => {
+  const p = await _approvedPartner(req, res);
+  if (!p) return;
+  const b = req.body || {};
+  const platform = String(b.platform || '').toLowerCase();
+  const url = String(b.url || '').trim().slice(0, 300);
+  if (!url && !platform) { p.stream = null; }
+  else {
+    if (!STREAM_PLATFORMS[platform]) return res.status(400).json({ error: 'Pick where you stream.' });
+    if (!_streamUrlOk(url)) return res.status(400).json({ error: 'Add the full link to your stream or channel (https://…).' });
+    p.stream = { platform, url };
+  }
+  if (!p.overlayKey) p.overlayKey = _overlayKey();
+  await _partnerSave(p);
+  _liveNowMemo.at = 0;
+  res.json({ ok: true, ..._partnerStreamView(p) });
+});
+
+app.post('/api/partners/live', async (req, res) => {
+  const p = await _approvedPartner(req, res);
+  if (!p) return;
+  if ((req.body || {}).on && !p.stream) return res.status(400).json({ error: 'Add where you stream first.' });
+  p.liveUntil = (req.body || {}).on ? new Date(Date.now() + LIVE_MANUAL_MS).toISOString() : null;
+  await _partnerSave(p);
+  _liveNowMemo.at = 0;
+  res.json({ ok: true, ..._partnerStreamView(p) });
+});
+
+// The card the overlay is showing, set from My Account during a stream.
+app.post('/api/partners/overlay-card', async (req, res) => {
+  const p = await _approvedPartner(req, res);
+  if (!p) return;
+  const q = String((req.body || {}).q || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  p.overlayCard = q ? { q, at: new Date().toISOString() } : null;
+  if (!p.overlayKey) p.overlayKey = _overlayKey();
+  await _partnerSave(p);
+  res.json({ ok: true, ..._partnerStreamView(p) });
+});
+
+// The overlay's own check-in: who it's for, the card to show, and (with the
+// right key) "this partner is live". Public, as OBS can't sign in.
+app.get('/api/partners/overlay', async (req, res) => {
+  const code = _partnerCode(String(req.query.ref || ''));
+  const owner = code ? await recordGet(PARTNER_CODE_KEY(code)) : null;
+  const p = owner && owner.user ? await _partnerGet(owner.user) : null;
+  if (!p || p.status !== 'approved') return res.status(404).json({ error: 'No such partner.' });
+  const keyOk = !!(p.overlayKey && String(req.query.key || '') === p.overlayKey);
+  if (keyOk && p.stream && p.featured !== false) {
+    const now = Date.now(), until = p.liveUntil ? Date.parse(p.liveUntil) : 0;
+    // A write at most once a minute, and never shortening a manual 4 hours.
+    if (until - now < LIVE_OVERLAY_MS - OVERLAY_CHECKIN_MS) {
+      p.liveUntil = new Date(now + LIVE_OVERLAY_MS).toISOString();
+      await _partnerSave(p);
+      _liveNowMemo.at = 0;
+    }
+  }
+  res.set('Cache-Control', 'no-store').json({
+    name: p.name, code: p.code, link: `${DRIP_ORIGIN}/?ref=${p.code}`, keyOk,
+    card: keyOk && p.overlayCard ? p.overlayCard.q : '',
+  });
+});
+
+// The home page's "Live now" strip: approved partners with a stream link,
+// the ones live right now first. Everyone sees the same list, so it's built
+// once a minute at most.
+async function _liveNowList(now = Date.now()) {
+  if (_liveNowMemo.data && now - _liveNowMemo.at < 60 * 1000) return _liveNowMemo.data;
+  const rows = [];
+  for (const u of await _partnerIndex()) {
+    const p = await _partnerGet(u);
+    if (!p || p.status !== 'approved' || !p.stream || p.featured === false) continue;
+    rows.push({ name: p.name, code: p.code, platform: p.stream.platform, platformName: STREAM_PLATFORMS[p.stream.platform] || 'Live',
+      url: p.stream.url, live: _isLive(p, now) });
+  }
+  rows.sort((a, b) => (b.live - a.live) || a.name.localeCompare(b.name));
+  _liveNowMemo.data = { partners: rows, live: rows.filter(r => r.live).length };
+  _liveNowMemo.at = now;
+  return _liveNowMemo.data;
+}
+app.get('/api/partners/live-now', async (req, res) => {
+  res.set('Cache-Control', 'public, max-age=60').json(await _liveNowList());
+});
+
+// The owner can take a partner off the strip (and put them back).
+app.post('/api/admin/partners/feature', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const b = req.body || {}, p = await _partnerGet(String(b.user || ''));
+  if (!p) return res.status(404).json({ error: 'No such partner.' });
+  p.featured = !!b.featured;
+  if (!p.featured) p.liveUntil = null;
+  await _partnerSave(p);
+  _liveNowMemo.at = 0;
+  res.json({ ok: true, featured: p.featured });
 });
 
 // The owner sent a payout (PayPal): everything ready is marked paid.
@@ -23530,7 +23668,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE, _saleLink, _salePlatform };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE, _saleLink, _salePlatform, _liveNowList, _liveNowMemo, _isLive, _streamUrlOk };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

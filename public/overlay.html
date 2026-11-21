@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stream Overlay | The Card Huddle</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- A partner's stream overlay (owner, Nov 2026). Added to OBS / Streamlabs
+       as a Browser Source, 1920x1080. The background is transparent: only the
+       bar at the bottom shows on stream. It shows real sold prices for the card
+       the partner sets in My Account, the week's top sales, and a QR code of
+       their partner link. While it's open it marks the partner "Live now" on
+       the home page. Options: &pos=top, &ticker=0, &qr=0, &sport=baseball. -->
+  <style>
+    :root{--bg:rgba(12,14,20,.92);--card:rgba(28,34,51,.95);--text:#edf0f7;--muted:#9aa3b2;--accent:#5ece99;--border:rgba(94,206,153,.35)}
+    *{box-sizing:border-box;margin:0}
+    html,body{background:transparent;overflow:hidden;width:100%;height:100%}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+    .bar{position:fixed;left:24px;right:24px;bottom:24px;display:flex;gap:16px;align-items:stretch}
+    body.top .bar{bottom:auto;top:24px}
+    .panel{background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+    .qr{display:flex;align-items:center;gap:14px;padding:12px 16px 12px 12px;flex:none}
+    .qr canvas,.qr img{width:112px;height:112px;border-radius:10px;background:#fff;padding:6px;display:block}
+    .qr .brand{display:flex;flex-direction:column;gap:4px;max-width:200px}
+    .qr .brand b.name{color:var(--accent);font-size:17px;font-weight:800}
+    .qr .brand b{font-size:15px;line-height:1.2}
+    .qr .brand span{font-size:12px;color:var(--muted);line-height:1.3;word-break:break-all}
+    .main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+    .now{padding:14px 20px 10px;display:flex;align-items:center;gap:18px;min-height:86px}
+    .now .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+    .now .card{font-size:22px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .now .txt{flex:1 1 auto;min-width:0}
+    .stats{display:flex;gap:10px;flex:none}
+    .stat{background:var(--card);border-radius:12px;padding:8px 14px;text-align:center;min-width:96px}
+    .stat small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .stat strong{display:block;font-size:24px;font-weight:800;color:var(--accent);line-height:1.1;margin-top:2px}
+    .idle .card{color:var(--muted);font-weight:700;font-size:18px}
+    .ticker{border-top:1px solid rgba(255,255,255,.08);height:38px;overflow:hidden;position:relative;white-space:nowrap;display:flex;align-items:center}
+    .ticker .tag{flex:none;height:100%;display:flex;align-items:center;padding:0 12px 0 20px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#06231a;background:var(--accent)}
+    .ticker .track{display:inline-block;padding-left:100%;animation:scroll var(--dur,90s) linear infinite;font-size:15px}
+    .ticker .item{margin-right:42px}
+    .ticker .item b{color:var(--accent);margin-left:6px}
+    .ticker .item i{font-style:normal;color:var(--muted);margin-left:6px;font-size:13px}
+    body.noticker .ticker{display:none}
+    body.noqr .qr{display:none}
+    @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+    .err{position:fixed;left:24px;bottom:24px;background:var(--bg);color:var(--text);padding:14px 18px;border-radius:12px;font-size:15px;border:1px solid #c0392b}
+  </style>
+</head>
+<body>
+  <div class="bar" id="bar" hidden>
+    <div class="panel qr" id="qr-panel">
+      <div id="qr"></div>
+      <div class="brand">
+        <b class="name">The Card Huddle</b>
+        <b>Free card prices</b>
+        <span id="qr-link"></span>
+      </div>
+    </div>
+    <div class="panel main">
+      <div class="now idle" id="now">
+        <div class="txt">
+          <div class="lbl">Price check</div>
+          <div class="card" id="now-card">Real sold prices on The Card Huddle</div>
+        </div>
+        <div class="stats" id="now-stats" hidden>
+          <div class="stat"><small>Typical</small><strong id="s-med">-</strong></div>
+          <div class="stat"><small>Low - High</small><strong id="s-range" style="font-size:18px;padding-top:4px">-</strong></div>
+          <div class="stat"><small>Sales</small><strong id="s-n">-</strong></div>
+        </div>
+      </div>
+      <div class="ticker" id="ticker">
+        <div class="tag">Top sales this week</div>
+        <div style="overflow:hidden;flex:1;height:100%;display:flex;align-items:center"><div class="track" id="track"></div></div>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor/qrcode.js"></script>
+  <script>
+  (function () {
+    var qs = new URLSearchParams(location.search);
+    var ref = (qs.get('ref') || '').trim(), key = qs.get('key') || '';
+    var sport = (qs.get('sport') || 'football').toLowerCase();
+    if (qs.get('pos') === 'top') document.body.classList.add('top');
+    if (qs.get('ticker') === '0') document.body.classList.add('noticker');
+    if (qs.get('qr') === '0') document.body.classList.add('noqr');
+    var $ = function (id) { return document.getElementById(id); };
+    var money = function (n) { n = Number(n) || 0; return '$' + (n >= 100 ? Math.round(n).toLocaleString('en-US') : n.toFixed(2).replace(/\.00$/, '')); };
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    function fail(msg) { var d = document.createElement('div'); d.className = 'err'; d.textContent = msg; document.body.appendChild(d); }
+    if (!ref) { fail('Overlay link is missing ?ref=. Copy it from My Account > Partner program.'); return; }
+
+    var shownCard = null;
+    function qr(link) {
+      $('qr-link').textContent = link.replace(/^https?:\/\//, '');
+      try {
+        var q = qrcode(0, 'M'); q.addData(link); q.make();
+        $('qr').innerHTML = q.createImgTag(4, 0);
+      } catch (e) { $('qr-panel').style.display = 'none'; }
+    }
+    function median(a) { a = a.slice().sort(function (x, y) { return x - y; }); var m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+    function showCard(q) {
+      if (q === shownCard) return;
+      shownCard = q;
+      if (!q) { $('now').classList.add('idle'); $('now-card').textContent = 'Real sold prices on The Card Huddle'; $('now-stats').hidden = true; return; }
+      $('now').classList.remove('idle');
+      $('now-card').textContent = q;
+      $('now-stats').hidden = true;
+      fetch('/api/search?mode=sold&limit=40&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (d) {
+        if (q !== shownCard) return;
+        var prices = ((d && d.results) || []).map(function (x) { return parseFloat(x.price); }).filter(function (p) { return p > 0; });
+        if (!prices.length) { $('s-med').textContent = '-'; $('s-range').textContent = 'No sales yet'; $('s-n').textContent = '0'; $('now-stats').hidden = false; return; }
+        $('s-med').textContent = money(median(prices));
+        $('s-range').textContent = money(Math.min.apply(null, prices)) + ' - ' + money(Math.max.apply(null, prices));
+        $('s-n').textContent = String(prices.length);
+        $('now-stats').hidden = false;
+      }).catch(function () {});
+    }
+    function ticker() {
+      fetch('/api/sold-stats?days=7&sport=' + encodeURIComponent(sport)).then(function (r) { return r.json(); }).then(function (d) {
+        var rows = ((d && d.priciest) || []).slice(0, 15);
+        if (!rows.length) { $('ticker').style.display = 'none'; return; }
+        $('track').innerHTML = rows.map(function (r) {
+          return '<span class="item">' + esc(String(r.title || '').slice(0, 70)) + '<b>' + money(r.price) + '</b>' + (r.grade && r.grade !== 'Raw' ? '<i>' + esc(r.grade) + '</i>' : '') + '</span>';
+        }).join('');
+        $('track').style.setProperty('--dur', Math.max(45, rows.length * 9) + 's');
+      }).catch(function () {});
+    }
+    var first = true;
+    function checkIn() {
+      fetch('/api/partners/overlay?ref=' + encodeURIComponent(ref) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) {
+          if (!x.ok) { if (first) fail('This overlay link is not active. Copy it again from My Account > Partner program.'); return; }
+          if (first) { qr(x.d.link); $('bar').hidden = false; ticker(); first = false; }
+          showCard(x.d.card || '');
+        }).catch(function () {});
+    }
+    checkIn();
+    setInterval(checkIn, 20000);           // picks up a new card within 20 seconds
+    setInterval(ticker, 30 * 60 * 1000);   // the week's top sales, refreshed
+  })();
+  </script>
+</body>
+</html>

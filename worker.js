@@ -690,7 +690,7 @@ const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)
 // so a page added without being listed fails the suite instead of vanishing.
 export const STATIC_PAGES = new Set([
   '_avatar-preview', 'about', 'admin', 'ai', 'admin-news', 'business', 'contact', 'diag', 'index',
-  'insert-desk', 'methodology', 'parallel-desk', 'privacy', 'sale-desk',
+  'insert-desk', 'methodology', 'overlay', 'parallel-desk', 'privacy', 'sale-desk',
   'partners', 'sort-desk', 'terms', 'usage',
 ]);
 

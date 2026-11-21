@@ -1850,6 +1850,24 @@ document.querySelectorAll('.mp-period').forEach(btn => {
 // which are defined further down.
 setTimeout(() => loadMarketPulse(30), 0);
 
+// Live now (owner, Nov 2026): partner streamers who are live right now, under
+// the market boards. They're live while their overlay is open in OBS or for 4
+// hours after tapping "I'm live" in My Account. Nothing shows when nobody is.
+async function loadLiveNow() {
+  const box = document.getElementById('live-now');
+  if (!box) return;
+  let d;
+  try { const r = await fetch('/api/partners/live-now'); if (!r.ok) return; d = await r.json(); } catch (_) { return; }
+  const live = ((d && d.partners) || []).filter(p => p.live).slice(0, 8);
+  if (!live.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="live-now-head"><span class="live-dot" aria-hidden="true"></span>Live now<span class="live-now-sub">Card streams from our partners</span></div>
+    <div class="live-now-list">${live.map(p => `<a class="live-now-item" href="${escHtml(p.url)}" target="_blank" rel="noopener" onclick="if (typeof gtag === 'function') gtag('event', 'live_now_click', { partner: ${escHtml(JSON.stringify(p.code || ''))} })">
+      <span class="live-now-name">${escHtml(p.name)}</span><span class="live-now-plat">${escHtml(p.platformName || 'Live')}</span><span class="live-now-go">Watch &rsaquo;</span></a>`).join('')}</div>`;
+  box.hidden = false;
+}
+setTimeout(loadLiveNow, 1200);
+setInterval(() => { if (!document.hidden) loadLiveNow(); }, 2 * 60 * 1000);
+
 // ---- Mode Tabs ----
 function updatePriceFilterVisibility() {
   const wrap = document.getElementById('price-filter');
@@ -7002,11 +7020,59 @@ async function acctPartnerLoad(scroll) {
       <div class="partner-link"><input readonly value="${escHtml(d.link)}" id="partner-link" aria-label="Your partner link"><button type="button" class="acct-btn acct-btn--small" onclick="acctPartnerCopy(this)">Copy</button></div>
       <div class="partner-tiles">${tile((s.visits || 0).toLocaleString(), 'Visits')}${tile(s.signups || 0, 'Sign-ups')}${tile(s.trials || 0, 'Trials')}${tile((s.paid || 0) + (s.converted || 0), 'Paying members')}</div>
       <div class="partner-tiles">${tile(_money(tt.pending), `Pending (${t.holdDays}-day hold)`)}${tile(_money(tt.ready), 'Ready to pay')}${tile(_money(tt.paid), 'Paid to you')}</div>
+      ${_partnerStreamHtml(d.streamInfo)}
       ${(d.recent || []).length ? `<ul class="partner-recent">${d.recent.map(e => `<li><span>${escHtml(new Date(e.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))} &middot; ${escHtml(e.plan || 'plan')} payment</span><b>${e.reversed ? 'refunded' : '+' + _money(e.cents)}${e.paid ? ' &middot; paid' : ''}</b></li>`).join('')}</ul>` : '<p class="acct-muted">No earnings yet. They show here as your members pay.</p>'}
       ${terms}`;
   }
   if (scroll) { const sec = document.getElementById('acct-partner'); if (sec) sec.scrollIntoView({ block: 'start' }); }
 }
+// Live now + stream overlay (owner, Nov 2026): where they stream, an
+// "I'm live" switch for the home page's Live now strip, their OBS overlay
+// link, and the card the overlay shows.
+function _partnerStreamHtml(si) {
+  if (!si) return '';
+  const plats = si.platforms || {};
+  const st = si.stream || {};
+  const opts = Object.keys(plats).map(k => `<option value="${k}"${st.platform === k ? ' selected' : ''}>${escHtml(plats[k])}</option>`).join('');
+  const liveBtn = si.live
+    ? `<button type="button" class="acct-btn acct-btn--small" onclick="acctPartnerLive(false)">End live</button> <span class="partner-live-on">&#9679; You're live on the home page${si.liveUntil ? ' until ' + escHtml(new Date(si.liveUntil).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })) : ''}</span>`
+    : `<button type="button" class="acct-btn acct-btn--small" onclick="acctPartnerLive(true)"${st.url ? '' : ' disabled'}>I'm live now</button>`;
+  return `<div class="partner-stream">
+      <h4>Your stream</h4>
+      <p class="acct-muted">Add where you stream and you'll show in the <b>Live now</b> spot on our home page whenever you're live.${si.featured ? '' : ' <b>Your card is hidden from the strip right now.</b>'}</p>
+      <form class="partner-stream-form" onsubmit="event.preventDefault(); acctPartnerStream(this)">
+        <select name="platform" aria-label="Where you stream"><option value="">Platform</option>${opts}</select>
+        <input name="url" maxlength="300" placeholder="https:// link to your stream or channel" value="${escHtml(st.url || '')}" aria-label="Stream link">
+        <button type="submit" class="acct-btn acct-btn--small">Save</button>
+      </form>
+      <div class="partner-live">${liveBtn}</div>
+      <h4>Stream overlay</h4>
+      <p class="acct-muted">A free overlay for your stream: real sold prices for the card you're showing, this week's top sales, and a QR code of your link. While it's open you show as live automatically.</p>
+      ${si.overlayUrl ? `<div class="partner-link"><input readonly value="${escHtml(si.overlayUrl)}" id="partner-overlay-link" aria-label="Your overlay link"><button type="button" class="acct-btn acct-btn--small" onclick="acctPartnerCopy(this, 'partner-overlay-link')">Copy</button></div>
+      <p class="acct-muted partner-howto">In OBS or Streamlabs: <b>Sources</b> &rarr; <b>+</b> &rarr; <b>Browser</b>, paste the link, width <b>1920</b>, height <b>1080</b>. Keep it private: it marks you live.</p>
+      <form class="partner-stream-form" onsubmit="event.preventDefault(); acctPartnerCard(this)">
+        <input name="q" maxlength="120" placeholder="Card on screen, e.g. 2024 Prizm Bo Nix Silver" value="${escHtml(si.overlayCard || '')}" aria-label="Card to show on your overlay">
+        <button type="submit" class="acct-btn acct-btn--small">Show</button>
+        ${si.overlayCard ? '<button type="button" class="acct-btn acct-btn--small acct-btn--ghost" onclick="acctPartnerCard(null)">Clear</button>' : ''}
+      </form>
+      <div class="acct-msg" id="partner-stream-msg" role="status"></div>` : ''}
+    </div>`;
+}
+async function _partnerPost(path, body) {
+  const msg = document.getElementById('partner-stream-msg');
+  try {
+    const r = await authFetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Could not save.');
+    await acctPartnerLoad(false);
+    const m = document.getElementById('partner-stream-msg');
+    if (m) { m.textContent = 'Saved.'; m.className = 'acct-msg acct-msg--ok'; }
+  } catch (err) { if (msg) { msg.textContent = err.message; msg.className = 'acct-msg acct-msg--err'; } else alert(err.message); }
+}
+function acctPartnerStream(form) { const f = new FormData(form); _partnerPost('/api/partners/stream', { platform: String(f.get('platform') || ''), url: String(f.get('url') || '').trim() }); }
+function acctPartnerLive(on) { _partnerPost('/api/partners/live', { on: !!on }); }
+function acctPartnerCard(form) { _partnerPost('/api/partners/overlay-card', { q: form ? String(new FormData(form).get('q') || '').trim() : '' }); }
+
 async function acctPartnerApply(form) {
   const f = new FormData(form), body = Object.fromEntries([...f.entries()].map(([k, v]) => [k, String(v).trim()]));
   const msg = document.getElementById('partner-msg');
@@ -7017,8 +7083,8 @@ async function acctPartnerApply(form) {
     acctPartnerLoad(false);
   } catch (err) { if (msg) { msg.textContent = err.message; msg.className = 'acct-msg acct-msg--err'; } }
 }
-function acctPartnerCopy(btn) {
-  const i = document.getElementById('partner-link');
+function acctPartnerCopy(btn, id) {
+  const i = document.getElementById(id || 'partner-link');
   if (!i) return;
   (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).then(() => { btn.textContent = 'Copied'; }).catch(() => { i.select(); document.execCommand && document.execCommand('copy'); btn.textContent = 'Copied'; });
   setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
