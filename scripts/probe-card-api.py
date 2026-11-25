@@ -181,6 +181,26 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("T. Can brand keywords skip the trading card games? Nov 23 totals")
+    day = "2026-11-23"
+    def tot(**kw):
+        j = get("sales", limit=1, date_from=day, date_to=day, **kw)
+        return (j or {}).get("pagination", {}).get("total")
+    for floor in (1, 5, 10):
+        out(f"  ${floor}+ everything: {tot(price_min=floor)}")
+    brands = ["panini", "topps", "bowman", "upper deck", "donruss", "prizm", "fleer", "leaf", "score", "select", "optic", "mosaic", "chrome"]
+    for b in brands:
+        out(f"  $5+ q={b!r}: {tot(price_min=5, q=b)}")
+    for q in ("(panini,topps,bowman,upper deck,leaf,fleer,score)", "panini OR topps", "panini topps", "panini|topps"):
+        out(f"  $5+ q={q!r}: {tot(price_min=5, q=q)}")
+    j = get("sales", limit=100, date_from=day, date_to=day, price_min=5, q="(panini,topps,bowman,upper deck,leaf,fleer,score)")
+    rows = (j or {}).get("data") or []
+    out(f"  sample of 100 from the OR query: categories {dict(Counter((r.get('category') or '-') for r in rows))}")
+    for r in rows[:12]:
+        out(f"    - ${r.get('price')}  {(r.get('title') or '')[:90]}")
+    out(f"  allowance left: {last_headers}")
+    return 0
+
     out("S. Nov 19 at $15+: what are the sales, by sport, category and league?")
     seen = 0
     sport_c, cat_c, league_c, plat_c = Counter(), Counter(), Counter(), Counter()
