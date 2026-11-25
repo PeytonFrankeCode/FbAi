@@ -30,11 +30,13 @@ on:
   push:
     paths:
       - scripts/collect-sold-cardapi.py
+      - scripts/cardapi-replay.txt
       - .github/workflows/collect-sold-cardapi.yml
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read     # to download a saved run's sales for a replay
 
 concurrency:
   group: collect-sold-cardapi
@@ -54,6 +56,22 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -q ./nflcarddb requests
+      # Replay: put a run id in scripts/cardapi-replay.txt and push it to main.
+      # That run's saved sales are uploaded without spending any rows. Only a
+      # push replays; the daily schedule always collects.
+      - name: Which saved run to replay
+        id: replay
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "run=$(grep -Eo '^[0-9]{6,}' scripts/cardapi-replay.txt 2>/dev/null | head -1)" >> "$GITHUB_OUTPUT"
+      - name: Download its saved sales
+        if: steps.replay.outputs.run != ''
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cardapi-raw-*
+          path: replay
+          merge-multiple: true
+          run-id: ${{ steps.replay.outputs.run }}
+          github-token: ${{ github.token }}
       - name: Collect and upload
         run: python scripts/collect-sold-cardapi.py
         env:
@@ -64,3 +82,13 @@ jobs:
           CARDAPI_MIN_PRICE: ${{ vars.CARDAPI_MIN_PRICE || '' }}
           CARDAPI_PURGE: ${{ github.ref == 'refs/heads/main' && (vars.CARDAPI_PURGE || '') || '' }}
           DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}
+          CARDAPI_RAW_DIR: raw
+          CARDAPI_REPLAY_DIR: ${{ steps.replay.outputs.run != '' && 'replay' || '' }}
+      # Every page this run fetched, kept 30 days, so its sales can be replayed.
+      - name: Save the fetched sales
+        if: always() && hashFiles('raw/*.jsonl') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: cardapi-raw-${{ github.run_id }}
+          path: raw/
+          retention-days: 30

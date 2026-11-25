@@ -1,0 +1,3 @@
+# Put a GitHub Actions run id of "Collect sold sales from The Card API" on the
+# first line and push this file to main: that run's saved sales are uploaded
+# without spending any of the day's rows. Leave it as comments otherwise.
