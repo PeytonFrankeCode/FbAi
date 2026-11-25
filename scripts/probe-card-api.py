@@ -181,6 +181,19 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("D. Do older days hold more sales? Sports-brand query, one row per count")
+    from datetime import date, timedelta
+    brands = "(panini,topps,bowman,upper deck,donruss,prizm,select,optic,mosaic,leaf,fleer,score,hoops,contenders,skybox,stadium club,sage,wild card,onit,playoff,pacific,pinnacle,finest)"
+    today = datetime.now(timezone.utc).date()
+    for back in range(1, 22):
+        d = (today - timedelta(days=back)).isoformat()
+        def tot(**kw):
+            j = get("sales", limit=1, date_from=d, date_to=d, **kw)
+            return (j or {}).get("pagination", {}).get("total")
+        out(f"  {d} ({back} days back): brands $1+ {tot(q=brands, price_min=1)}; everything $1+ {tot(price_min=1)}")
+    out(f"  allowance: {last_headers}")
+    return 0
+
     out("P. Which plan is the key on now?")
     j = get("sales", limit=1, q="zzqx plan check")
     out(f"  rate-limit headers: {last_headers}  (Starter = 10000 a day)")
