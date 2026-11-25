@@ -12,7 +12,9 @@ storing up to 500,000 of its records. Tested 20 Nov 2026 (scripts/probe-card-api
 What it does, in order:
   1. Pages through yesterday's sales at CARDAPI_MIN_PRICE and up (the API's
      `price_min`), 100 a page, until the day runs out or the row budget does.
-     Most sales are $1-4 singles; $10+ keeps the day near 10,000 rows.
+     Only titles naming a sports card maker (Panini, Topps, Bowman...), which
+     keeps out the trading card games that were two-thirds of a day's rows,
+     at the lowest price floor whose day fits the plan's rows.
   2. Keeps football, baseball and basketball (the API's sport filter doesn't
      work, so trading card games and other sports are dropped here and still
      cost rows; the sport field is often blank, so the title and the NFL
@@ -33,7 +35,8 @@ so nothing is uploaded until CARDAPI_PLAN (a repo variable) names a paid plan.
 Settings (environment):
   CARD_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   required
   CARDAPI_PLAN       free (default: collect a sample, upload nothing) | starter | builder | pro
-  CARDAPI_MIN_PRICE  lowest sale price in dollars (default 10)
+  CARDAPI_MIN_PRICE  lowest sale price in dollars (default: the lowest that fits the rows)
+  CARDAPI_QUERY      the title query (default: sports card makers, so TCG is skipped)
   CARDAPI_ROWS       rows to spend per run (default: the plan's daily allowance less 300)
   CARDAPI_DAY        YYYY-MM-DD to collect (default: yesterday, UTC)
   CARDAPI_PURGE=1    delete every Card API sale from D1 (after cancelling)
@@ -79,7 +82,22 @@ PAID = PLAN != "free"
 # Stay a little under each limit: the probe and the site share the key.
 ROWS = int(os.environ.get("CARDAPI_ROWS") or (300 if not PAID else PLANS[PLAN]["rows"] - 300))
 STORE_CAP = int(PLANS[PLAN]["store"] * 0.96)
-MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 10)
+# The floor is chosen for the plan's whole day; on the free key (evaluation
+# only) it's chosen as Starter would, so a dry run shows what Starter gets.
+FLOOR_ROWS = (PLANS[PLAN]["rows"] if PAID else PLANS["starter"]["rows"]) - 300
+# The API's `q` takes an any-of group, "(a,b,c)", over the title. Sports card
+# makers' names keep trading card games out of the rows we pay for: on 23 Nov
+# 2026 a 100-sale sample of this query was 95 sports cards, against about a
+# third of the unfiltered day. (A Topps Pokemon card still slips in; the TCG
+# filter below drops it.)
+BRAND_QUERY = os.environ.get("CARDAPI_QUERY") or (
+    "(panini,topps,bowman,upper deck,donruss,prizm,select,optic,mosaic,leaf,fleer,score,"
+    "hoops,contenders,skybox,stadium club,sage,wild card,onit,playoff,pacific,pinnacle,finest)")
+# Lowest price floor whose day still fits the row budget (cheapest sales are
+# the most numerous, so the floor decides how many we can afford). A fixed
+# CARDAPI_MIN_PRICE overrides the search.
+FLOORS = (1, 2, 3, 5, 7, 10, 15, 25, 50)
+MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 0)
 DAY = os.environ.get("CARDAPI_DAY") or (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
 DRY_RUN = os.environ.get("DRY_RUN") == "1" or not PAID
 PURGE = os.environ.get("CARDAPI_PURGE") == "1"
@@ -122,7 +140,7 @@ class OutOfRows(RuntimeError):
 
 def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
     """One page of the day's sales. Returns (rows, total, rows remaining today)."""
-    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": "date_desc"}
+    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": "date_desc", "q": BRAND_QUERY}
     if MIN_PRICE > 0:
         params["price_min"] = f"{MIN_PRICE:g}"
     for attempt in range(1, 5):
@@ -148,6 +166,27 @@ def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
         return (j.get("data") or [], (j.get("pagination") or {}).get("total"),
                 int(left) if left and left.lstrip("-").isdigit() else None)
     return [], None, None
+
+
+def day_total(floor: float) -> int | None:
+    """How many sales the day holds at this floor (costs one row)."""
+    try:
+        r = requests.get(f"{BASE}/sales", params={"date_from": DAY, "date_to": DAY, "limit": 1, "q": BRAND_QUERY,
+                                                 "price_min": f"{floor:g}"},
+                         headers={"x-market-api-key": KEY}, timeout=60)
+        return int((r.json().get("pagination") or {}).get("total")) if r.ok else None
+    except (requests.RequestException, ValueError, TypeError):
+        return None
+
+
+def pick_floor() -> float:
+    """The lowest floor whose whole day fits the row budget."""
+    for f in FLOORS:
+        t = day_total(f)
+        log(f"  floor ${f:g}: {t if t is not None else '?'} sales that day")
+        if t is not None and t <= FLOOR_ROWS:
+            return float(f)
+    return float(FLOORS[-1])
 
 
 def cents(v) -> int | None:
@@ -346,6 +385,7 @@ def purge() -> int:
 
 
 def main() -> int:
+    global MIN_PRICE
     log(f"# Nightly sold collection (The Card API), {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
     missing = [n for n, v in (("CARD_API_KEY", KEY), ("CLOUDFLARE_API_TOKEN", CF_TOKEN),
                               ("CLOUDFLARE_ACCOUNT_ID", CF_ACCOUNT)) if not v]
@@ -357,8 +397,11 @@ def main() -> int:
         log(f"PURGE: deleted {purge():,} Card API sales from D1")
         return 0
 
-    log(f"plan {PLAN}: sales on {DAY}, ${MIN_PRICE:g}+, up to {ROWS:,} rows"
+    log(f"plan {PLAN}: sales on {DAY}, up to {ROWS:,} rows"
         + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
+    if MIN_PRICE <= 0:
+        MIN_PRICE = pick_floor()
+    log(f"query {BRAND_QUERY}; price floor ${MIN_PRICE:g}")
     sales, stats = collect()
     total = f"{stats['total']:,}" if isinstance(stats["total"], int) else "?"
     log(f"pages {stats['pages']}, rows spent {stats['rows']:,} of {total} that day at "
