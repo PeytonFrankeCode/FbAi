@@ -223,10 +223,73 @@ _ROSTER: set[str] | None = None
 NOT_FOOTBALL_NAMES = {"michael jordan", "chris paul", "anthony davis"}
 
 
+# Player names by sport: the NFL roster NflCardDB uses, and the site's own
+# basketball and baseball lists (public/data/sport-players.json, built for the
+# checklists). Names lowercased with punctuation as spaces ("a ja wilson").
+SPORT_PLAYERS = Path(__file__).resolve().parent.parent / "public" / "data" / "sport-players.json"
+# Football players from the site's football checklists (the player pages'
+# index). Cleaner than the roster learned from sale titles, which has picked
+# up LeBron James, Kobe Bryant and Paul Skenes.
+FOOTBALL_PLAYERS = Path(__file__).resolve().parent.parent / "public" / "data" / "players" / "index.json"
+_NAMES: dict[str, set[str]] | None = None
+
+
+def _norm(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", str(name or "").lower()).strip()
+
+
+def _names() -> dict[str, set[str]]:
+    global _NAMES, _ROSTER
+    if _NAMES is None:
+        if _ROSTER is None:
+            _ROSTER = load_roster(ROSTER) if Path(ROSTER).exists() else set()
+        import json
+        try:
+            other = json.loads(SPORT_PLAYERS.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            other = {}
+        _NAMES = {}
+        for sp in ("basketball", "baseball"):
+            # Two words at least, and none of the list's stray non-names ("a card").
+            _NAMES[sp] = {n for n in (_norm(x) for x in other.get(sp) or [])
+                          if len(n.split()) >= 2 and "card" not in n.split()}
+        try:
+            idx = json.loads(FOOTBALL_PLAYERS.read_text(encoding="utf-8"))
+            football = {_norm(p.get("name")) for p in idx.get("players") or []}
+        except (OSError, ValueError, AttributeError):
+            football = set()
+        # The learned roster adds this season's rookies the checklists may not
+        # have yet, but only names no other sport's list claims.
+        taken = _NAMES["basketball"] | _NAMES["baseball"]
+        football |= {n for n in (_norm(x) for x in _ROSTER) if n not in taken}
+        _NAMES["football"] = {n for n in football if len(n.split()) >= 2}
+    return _NAMES
+
+
+def _player_sport(title: str) -> str | None:
+    """The one sport whose player list names someone in the title, or None
+    when no list does or two sports claim the same name."""
+    names = _names()
+    player = _norm(parse_title(title, _ROSTER).player or "")
+    words = _norm(title).split()
+    # The parsed player first; then any two or three words in a row, which
+    # finds dual cards and names the parser missed.
+    candidates = [player] if player else []
+    candidates += [" ".join(words[i:i + n]) for n in (3, 2) for i in range(len(words) - n + 1)]
+    for cand in candidates:
+        hits = {sp for sp, ns in names.items() if cand in ns}
+        if cand in NOT_FOOTBALL_NAMES:
+            hits.discard("football")
+        if len(hits) == 1:
+            return hits.pop()
+        if len(hits) > 1:
+            return None
+    return None
+
+
 def sport_of(s: dict, title: str) -> tuple[str | None, str]:
     """The sale's sport, or (None, why not). Most recent sales come with the
-    sport field blank, so it falls back to the title, then the NFL roster."""
-    global _ROSTER
+    sport field blank, so it falls back to the title, then the players named."""
     sport = str(s.get("sport") or "").strip().lower()
     if sport:
         return (sport, "") if sport in SPORTS else (None, "other sport")
@@ -235,13 +298,10 @@ def sport_of(s: dict, title: str) -> tuple[str | None, str]:
     guess = sport_from_title(title)
     if guess:
         return (guess, "") if guess in SPORTS else (None, "other sport")
-    if _ROSTER is None:
-        _ROSTER = load_roster(ROSTER) if Path(ROSTER).exists() else set()
-    player = (parse_title(title, _ROSTER).player or "").lower()
-    # Some NFL roster names belong to a bigger star in another sport.
-    if player and player in _ROSTER and player not in NOT_FOOTBALL_NAMES:
-        return "football", ""
-    return None, "sport not stated (not an NFL roster name)"
+    by_player = _player_sport(title)
+    if by_player:
+        return by_player, ""
+    return None, "sport not stated (no known player)"
 
 
 def to_sale(s: dict) -> tuple[Sale | None, str]:
