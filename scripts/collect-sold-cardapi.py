@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nightly: collect yesterday's football, baseball and basketball sales from
+"""Nightly: collect football, baseball and basketball sales from two days ago from
 The Card API (thecardapi.com) and add them to D1.
 
 Why this exists: the home collector has been close to stopped since eBay hid
@@ -10,7 +10,7 @@ sale): Starter, $9/mo, is 10,000 a day, allows commercial display, and allows
 storing up to 500,000 of its records. Tested 20 Nov 2026 (scripts/probe-card-api.py).
 
 What it does, in order:
-  1. Pages through yesterday's sales at CARDAPI_MIN_PRICE and up (the API's
+  1. Pages through the day before yesterday's sales (yesterday is still being indexed) at CARDAPI_MIN_PRICE and up (the API's
      `price_min`), 100 a page, until the day runs out or the row budget does.
      Only titles naming a sports card maker (Panini, Topps, Bowman...), which
      keeps out the trading card games that were two-thirds of a day's rows,
@@ -38,7 +38,7 @@ Settings (environment):
   CARDAPI_MIN_PRICE  lowest sale price in dollars (default: the lowest that fits the rows)
   CARDAPI_QUERY      the title query (default: sports card makers, so TCG is skipped)
   CARDAPI_ROWS       rows to spend per run (default: the plan's daily allowance less 300)
-  CARDAPI_DAY        YYYY-MM-DD to collect (default: yesterday, UTC)
+  CARDAPI_DAY        YYYY-MM-DD to collect (default: two days ago, UTC)
   CARDAPI_PURGE=1    delete every Card API sale from D1 (after cancelling)
   DRY_RUN=1          collect and parse, upload nothing
 """
@@ -98,7 +98,9 @@ BRAND_QUERY = os.environ.get("CARDAPI_QUERY") or (
 # CARDAPI_MIN_PRICE overrides the search.
 FLOORS = (1, 2, 3, 5, 7, 10, 15, 25, 50)
 MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 0)
-DAY = os.environ.get("CARDAPI_DAY") or (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+# Two days back, not one: the vendor is still indexing yesterday (25 Nov 2026:
+# 1,515 brand sales for the 24th at $1+, while the 23rd had 6,253 at $5+).
+DAY = os.environ.get("CARDAPI_DAY") or (datetime.now(timezone.utc).date() - timedelta(days=2)).isoformat()
 DRY_RUN = os.environ.get("DRY_RUN") == "1" or not PAID
 PURGE = os.environ.get("CARDAPI_PURGE") == "1"
 ROSTER = os.environ.get("NFLCARDDB_ROSTER", "nflcarddb/config/nfl_players.txt")
