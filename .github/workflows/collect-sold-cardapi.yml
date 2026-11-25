@@ -4,7 +4,8 @@ name: Collect sold sales from The Card API (nightly)
 # straight into the nflcarddb D1 database -- no PC involved. See
 # scripts/collect-sold-cardapi.py for how and why.
 #
-# Nightly at 06:41 UTC, once the vendor has indexed the previous UTC day.
+# Daily at 7:00 AM Eastern (12:00 UTC), for the day before yesterday,
+# which the vendor has finished indexing.
 # Also runs when the script changes: (GitHub's mobile site has no "Run
 # workflow" button): on any branch but main, as a dry run.
 #
@@ -19,7 +20,13 @@ name: Collect sold sales from The Card API (nightly)
 
 on:
   schedule:
-    - cron: '41 6 * * *'
+    # Every day at 7:00 AM Eastern (12:00 UTC; 8 AM in summer, as GitHub runs
+    # on UTC). Owner, Nov 2026: "everyday after it just runs at 7 AM".
+    - cron: '0 12 * * *'
+    # One-off: 26 Nov 2026 00:05 UTC (7:05 PM Eastern on the 25th), the first
+    # minute of a fresh daily allowance after the 25th's was spent on a test.
+    # Fires again only on 26 Nov next year; remove it before then.
+    - cron: '5 0 26 11 *'
   push:
     paths:
       - scripts/collect-sold-cardapi.py
