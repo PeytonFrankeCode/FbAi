@@ -31,6 +31,7 @@ check('every platform the collector writes is one the site labels', slugs && slu
 check('the collector keeps under the plan storage cap and can purge after cancelling', /def prune_to_cap/.test(py) && /def purge/.test(py) && /"starter": \{"rows": 10_000,\s+"store": 500_000\}/.test(py));
 check('most expensive first, and at most 6 of one card in one grade a day', /SORT = os\.environ\.get\("CARDAPI_SORT"\) or "price_desc"/.test(py) && /PER_CARD_DAY = int\(os\.environ\.get\("CARDAPI_PER_CARD_DAY"\) or 6\)/.test(py) && /def cap_per_card/.test(py));
 check('a blank sport is filled from the site\'s basketball, baseball and football player lists', /sport-players\.json/.test(py) && /players" \/ "index\.json/.test(py) && /def _player_sport/.test(py));
+check('a dry run never spends more than 300 rows, on any plan', /if os\.environ\.get\("DRY_RUN"\) == "1":\s+ROWS = min\(ROWS, 300\)/.test(py));
 const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'collect-sold-cardapi.yml'), 'utf8');
 check('the workflow runs nightly and reads CARDAPI_PLAN from a repo variable', /cron:/.test(wf) && /vars\.CARDAPI_PLAN/.test(wf));
 

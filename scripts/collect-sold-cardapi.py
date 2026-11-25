@@ -81,6 +81,10 @@ if PLAN not in PLANS:
 PAID = PLAN != "free"
 # Stay a little under each limit: the probe and the site share the key.
 ROWS = int(os.environ.get("CARDAPI_ROWS") or (300 if not PAID else PLANS[PLAN]["rows"] - 300))
+# A dry run (a push to a branch) is a check, not a collection: never spend a
+# day's rows on one, whatever the plan.
+if os.environ.get("DRY_RUN") == "1":
+    ROWS = min(ROWS, 300)
 STORE_CAP = int(PLANS[PLAN]["store"] * 0.96)
 # The floor is chosen for the plan's whole day; on the free key (evaluation
 # only) it's chosen as Starter would, so a dry run shows what Starter gets.

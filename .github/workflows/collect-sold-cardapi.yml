@@ -10,9 +10,9 @@ name: Collect sold sales from The Card API (nightly)
 #
 # Repo Settings -> Secrets and variables -> Actions:
 #   Secret   CARD_API_KEY        the API key (already set)
-#   Variable CARDAPI_PLAN        starter once subscribed. Until then it stays
-#                                "free" and nothing is uploaded: the free key
-#                                is for evaluation only under the vendor's terms.
+#   Variable CARDAPI_PLAN        the plan the key is on. Default starter (owner
+#                                subscribed 25 Nov 2026); set it to "free" to
+#                                stop uploads (the free key is evaluation only).
 #   Variable CARDAPI_MIN_PRICE   lowest sale price in dollars (default: the lowest
 #                                that fits the day's rows)
 #   Variable CARDAPI_PURGE       1 to delete every Card API sale (after cancelling)
@@ -53,7 +53,7 @@ jobs:
           CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CARDAPI_PLAN: ${{ vars.CARDAPI_PLAN || 'free' }}
+          CARDAPI_PLAN: ${{ vars.CARDAPI_PLAN || 'starter' }}
           CARDAPI_MIN_PRICE: ${{ vars.CARDAPI_MIN_PRICE || '' }}
           CARDAPI_PURGE: ${{ github.ref == 'refs/heads/main' && (vars.CARDAPI_PURGE || '') || '' }}
           DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}
