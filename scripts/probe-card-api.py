@@ -181,6 +181,11 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("P. Which plan is the key on now?")
+    j = get("sales", limit=1, q="zzqx plan check")
+    out(f"  rate-limit headers: {last_headers}  (Starter = 10000 a day)")
+    return 0
+
     out("T. Can brand keywords skip the trading card games? Nov 23 totals")
     day = "2026-11-23"
     def tot(**kw):
