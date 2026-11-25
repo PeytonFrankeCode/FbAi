@@ -97,6 +97,15 @@ BRAND_QUERY = os.environ.get("CARDAPI_QUERY") or (
 # the most numerous, so the floor decides how many we can afford). A fixed
 # CARDAPI_MIN_PRICE overrides the search.
 FLOORS = (1, 2, 3, 5, 7, 10, 15, 25, 50)
+# Most expensive first (owner, Nov 2026), so if the rows ever run short it's
+# the cheapest sales that miss out.
+SORT = os.environ.get("CARDAPI_SORT") or "price_desc"
+# At most this many sales of one card (same card, same grade) per day (owner,
+# Nov 2026: "we don't want more than 6 of a single card in a day"). A seller
+# listing 50 copies of a $1 base card shouldn't drown the day. When a card
+# sold more, six are kept spread across its prices (highest, lowest, and
+# between), so the cap doesn't push the card's price up or down.
+PER_CARD_DAY = int(os.environ.get("CARDAPI_PER_CARD_DAY") or 6)
 MIN_PRICE = float(os.environ.get("CARDAPI_MIN_PRICE") or 0)
 # Two days back, not one: the vendor is still indexing yesterday (25 Nov 2026:
 # 1,515 brand sales for the 24th at $1+, while the 23rd had 6,253 at $5+).
@@ -142,7 +151,7 @@ class OutOfRows(RuntimeError):
 
 def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
     """One page of the day's sales. Returns (rows, total, rows remaining today)."""
-    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": "date_desc", "q": BRAND_QUERY}
+    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": SORT, "q": BRAND_QUERY}
     if MIN_PRICE > 0:
         params["price_min"] = f"{MIN_PRICE:g}"
     for attempt in range(1, 5):
@@ -287,6 +296,11 @@ def collect() -> tuple[dict[str, Sale], dict]:
             stats["total"] = total
         if left is not None:
             stats["left"] = left
+        if page == 1 and rows:
+            ps = [p for p in (cents(r.get("price_usd") if r.get("price_usd") is not None else r.get("price")) for r in rows) if p]
+            ordered = all(a >= b for a, b in zip(ps, ps[1:]))
+            log(f"  sort {SORT}: first page runs ${ps[0] / 100:,.2f} down to ${ps[-1] / 100:,.2f}"
+                + ("" if ordered or not SORT.startswith("price") else " (NOT in price order: the vendor ignored the sort)") if ps else "")
         for s in rows:
             sale, why = to_sale(s)
             if sale:
@@ -302,6 +316,26 @@ def collect() -> tuple[dict[str, Sale], dict]:
     if not stats["stopped"]:
         stats["stopped"] = f"row budget reached ({ROWS:,})"
     return sales, stats
+
+
+def cap_per_card(rows: list[dict]) -> tuple[list[dict], int]:
+    """At most PER_CARD_DAY sales of one card in one grade on one day, spread
+    across its prices. Returns (rows kept, how many were dropped)."""
+    groups: dict[tuple, list[dict]] = {}
+    for r in rows:
+        ident = r.get("card_key") or re.sub(r"[^a-z0-9]+", " ", str(r.get("title") or "").lower()).strip()
+        key = (ident, r.get("grader") or "", str(r.get("grade") or ""), r.get("sold_date") or "")
+        groups.setdefault(key, []).append(r)
+    kept: list[dict] = []
+    for g in groups.values():
+        if len(g) <= PER_CARD_DAY:
+            kept.extend(g)
+            continue
+        g.sort(key=lambda r: r.get("price_cents") or 0, reverse=True)
+        n = len(g)
+        picks = sorted({round(i * (n - 1) / (PER_CARD_DAY - 1)) for i in range(PER_CARD_DAY)})
+        kept.extend(g[i] for i in picks)
+    return kept, len(rows) - len(kept)
 
 
 def parse_into_rows(sales: list[Sale], confirmed_offers: set[str]) -> list[dict]:
@@ -415,6 +449,12 @@ def main() -> int:
     if sales:
         confirmed = {iid for iid, s in sales.items() if s.best_offer}
         rows = parse_into_rows(list(sales.values()), confirmed)
+        rows, capped = cap_per_card(rows)
+        if capped:
+            log(f"capped: {capped:,} sales dropped as more than {PER_CARD_DAY} of one card that day")
+        top = sorted(rows, key=lambda r: r.get("price_cents") or 0, reverse=True)[:5]
+        for r in top:
+            log(f"  top: ${(r.get('price_cents') or 0) / 100:,.2f}  {str(r.get('title') or '')[:80]}")
         by_sport: dict[str, int] = {}
         by_platform: dict[str, int] = {}
         for r in rows:
