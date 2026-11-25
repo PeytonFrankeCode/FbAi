@@ -88,6 +88,12 @@ BACKFILL_MIN_ROWS = 300
 BACKFILL_MAX_DAYS = 3
 BACKFILL_DONE_AT = 200
 BACKFILL_FLOOR = 1.0
+# Every page fetched is also written to CARDAPI_RAW_DIR (the workflow keeps it
+# as a 30-day artifact), so a run's sales are never lost: a test run's, or one
+# that failed after fetching. CARDAPI_REPLAY_DIR uploads a saved run's sales
+# without spending any rows (owner, Nov 2026: "why didn't it save the results").
+RAW_DIR = os.environ.get("CARDAPI_RAW_DIR") or ""
+REPLAY_DIR = os.environ.get("CARDAPI_REPLAY_DIR") or ""
 # A dry run (a push to a branch) is a check, not a collection: never spend a
 # day's rows on one, whatever the plan.
 if os.environ.get("DRY_RUN") == "1":
@@ -160,6 +166,32 @@ class OutOfRows(RuntimeError):
     """The plan's daily allowance is used up: stop, don't retry."""
 
 
+def save_raw(rows: list[dict]) -> None:
+    """Keep what we paid for: one JSON line per sale, a file per day."""
+    if not RAW_DIR or not rows:
+        return
+    import json
+    Path(RAW_DIR).mkdir(parents=True, exist_ok=True)
+    with open(Path(RAW_DIR) / f"{DAY}.jsonl", "a", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, separators=(",", ":")) + "\n")
+
+
+def load_raw(path: Path) -> list[dict]:
+    import json
+    out, seen = [], set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        k = r.get("id") or line
+        if k not in seen:
+            seen.add(k)
+            out.append(r)
+    return out
+
+
 def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
     """One page of the day's sales. Returns (rows, total, rows remaining today)."""
     params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": SORT, "q": BRAND_QUERY}
@@ -184,6 +216,7 @@ def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
             log(f"  page {page}: HTTP {r.status_code} {r.text[:150]}")
             return [], None, None
         j = r.json()
+        save_raw(j.get("data") or [])
         left = r.headers.get("x-ratelimit-remaining")
         return (j.get("data") or [], (j.get("pagination") or {}).get("total"),
                 int(left) if left and left.lstrip("-").isdigit() else None)
@@ -353,6 +386,16 @@ def to_sale(s: dict) -> tuple[Sale | None, str]:
 def collect() -> tuple[dict[str, Sale], dict]:
     sales: dict[str, Sale] = {}
     stats = {"pages": 0, "rows": 0, "total": None, "left": None, "dropped": {}, "stopped": ""}
+    if REPLAY_DIR:
+        rows = [r for f in sorted(Path(REPLAY_DIR).rglob(f"{DAY}.jsonl")) for r in load_raw(f)]
+        stats.update(pages=0, rows=0, total=len(rows), stopped="replayed from a saved run (no rows spent)")
+        for s in rows:
+            sale, why = to_sale(s)
+            if sale:
+                sales[sale.item_id] = sale
+            else:
+                stats["dropped"][why] = stats["dropped"].get(why, 0) + 1
+        return sales, stats
     page = 0
     while stats["rows"] + PAGE <= ROWS:
         page += 1
@@ -556,6 +599,17 @@ def main() -> int:
         log(f"PURGE: deleted {purge():,} Card API sales from D1")
         return 0
 
+    if REPLAY_DIR:
+        days = sorted({f.stem for f in Path(REPLAY_DIR).rglob("*.jsonl")})
+        log(f"REPLAY: uploading saved sales for {days or 'nothing (no saved files found)'}")
+        added_total = 0
+        for day in days:
+            DAY, MIN_PRICE = day, 1.0
+            log("")
+            _, a_, _ = process_day()
+            added_total += a_
+        log(f"TOTAL: {added_total:,} new sales added from the saved run")
+        return 0
     log(f"plan {PLAN}: up to {ROWS:,} rows"
         + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
     budget = ROWS

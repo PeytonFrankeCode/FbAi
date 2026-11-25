@@ -36,5 +36,6 @@ check('spare rows catch up earlier days not yet collected, within the plan\'s wi
 const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'collect-sold-cardapi.yml'), 'utf8');
 check('the workflow runs nightly and reads CARDAPI_PLAN from a repo variable', /cron:/.test(wf) && /vars\.CARDAPI_PLAN/.test(wf));
 
+check('every fetched page is saved as a 30-day artifact, and a saved run can be replayed without spending rows', /def save_raw/.test(py) && /save_raw\(j\.get\("data"\)/.test(py) && /REPLAY_DIR/.test(py) && /actions\/upload-artifact@v4/.test(wf) && /retention-days: 30/.test(wf) && /cardapi-replay\.txt/.test(wf) && /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/.test(wf));
 console.log(failures ? `\n${failures} cardapi check(s) failed` : '\nall cardapi checks passed');
 process.exit(failures ? 1 : 0);
