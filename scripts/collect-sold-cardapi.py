@@ -70,10 +70,10 @@ BASE = "https://www.thecardapi.com/api/v1/market"  # the bare host 307s here
 
 # Daily rows and stored records per plan (thecardapi.com/pricing and /terms, Nov 2026).
 PLANS = {
-    "free":    {"rows": 5_000,   "store": 0},
-    "starter": {"rows": 10_000,  "store": 500_000},
-    "builder": {"rows": 50_000,  "store": 5_000_000},
-    "pro":     {"rows": 200_000, "store": 25_000_000},
+    "free":    {"rows": 5_000,   "store": 0,          "window": 30},
+    "starter": {"rows": 10_000,  "store": 500_000,    "window": 60},
+    "builder": {"rows": 50_000,  "store": 5_000_000,  "window": 90},
+    "pro":     {"rows": 200_000, "store": 25_000_000, "window": 180},
 }
 PLAN = (os.environ.get("CARDAPI_PLAN") or "free").strip().lower()
 if PLAN not in PLANS:
@@ -81,6 +81,13 @@ if PLAN not in PLANS:
 PAID = PLAN != "free"
 # Stay a little under each limit: the probe and the site share the key.
 ROWS = int(os.environ.get("CARDAPI_ROWS") or (300 if not PAID else PLANS[PLAN]["rows"] - 300))
+# Catch-up: spare rows go to earlier days holding fewer than BACKFILL_DONE_AT
+# of our Card API sales, at most BACKFILL_MAX_DAYS a run, from $1 up (the
+# sort puts the most expensive first anyway).
+BACKFILL_MIN_ROWS = 300
+BACKFILL_MAX_DAYS = 3
+BACKFILL_DONE_AT = 200
+BACKFILL_FLOOR = 1.0
 # A dry run (a push to a branch) is a check, not a collection: never spend a
 # day's rows on one, whatever the plan.
 if os.environ.get("DRY_RUN") == "1":
@@ -484,21 +491,11 @@ def purge() -> int:
     return n
 
 
-def main() -> int:
+def process_day() -> tuple[int, int, str]:
+    """Collect DAY within ROWS and upload it. Returns (rows spent, sales
+    added, why it stopped)."""
     global MIN_PRICE
-    log(f"# Nightly sold collection (The Card API), {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
-    missing = [n for n, v in (("CARD_API_KEY", KEY), ("CLOUDFLARE_API_TOKEN", CF_TOKEN),
-                              ("CLOUDFLARE_ACCOUNT_ID", CF_ACCOUNT)) if not v]
-    if missing:
-        log(f"FAILED: missing secret(s): {', '.join(missing)}")
-        return 2
-    if PURGE:
-        ensure_tracking()
-        log(f"PURGE: deleted {purge():,} Card API sales from D1")
-        return 0
-
-    log(f"plan {PLAN}: sales on {DAY}, up to {ROWS:,} rows"
-        + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
+    log(f"sales on {DAY}, up to {ROWS:,} rows")
     if MIN_PRICE <= 0:
         MIN_PRICE = pick_floor()
     log(f"query {BRAND_QUERY}; price floor ${MIN_PRICE:g}")
@@ -543,12 +540,62 @@ def main() -> int:
             pruned = prune_to_cap()
             if pruned:
                 log(f"storage cap {STORE_CAP:,}: removed the {pruned:,} oldest Card API sales")
+    return stats["rows"], added, stats["stopped"]
+
+
+def main() -> int:
+    global DAY, ROWS, MIN_PRICE
+    log(f"# Nightly sold collection (The Card API), {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
+    missing = [n for n, v in (("CARD_API_KEY", KEY), ("CLOUDFLARE_API_TOKEN", CF_TOKEN),
+                              ("CLOUDFLARE_ACCOUNT_ID", CF_ACCOUNT)) if not v]
+    if missing:
+        log(f"FAILED: missing secret(s): {', '.join(missing)}")
+        return 2
+    if PURGE:
+        ensure_tracking()
+        log(f"PURGE: deleted {purge():,} Card API sales from D1")
+        return 0
+
+    log(f"plan {PLAN}: up to {ROWS:,} rows"
+        + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
+    budget = ROWS
+    spent, added_total, stopped = process_day()
+
+    # Catch-up (owner, Nov 2026): a day needs about 7,700 of Starter's 10,000
+    # rows. The rest fill in earlier days not collected yet, newest first and
+    # most expensive first, as far back as the plan's query window reaches.
+    left = budget - spent
+    if PAID and not DRY_RUN and "vendor stopped" not in stopped:
+        ensure_tracking()
+        today = datetime.now(timezone.utc).date()
+        done = 0
+        for back in range(3, PLANS[PLAN]["window"]):
+            if left < BACKFILL_MIN_ROWS or done >= BACKFILL_MAX_DAYS:
+                break
+            day = (today - timedelta(days=back)).isoformat()
+            have = int((d1(f"SELECT COUNT(*) AS n FROM vendor_sales WHERE vendor = '{VENDOR}' AND sold_date = '{day}'")
+                        or [{"n": 0}])[0]["n"])
+            if have >= BACKFILL_DONE_AT:
+                continue
+            log("")
+            log(f"## catch-up: {day} ({have:,} of its sales already held), {left:,} rows left")
+            DAY, ROWS, MIN_PRICE = day, left, BACKFILL_FLOOR
+            s_, a_, stopped = process_day()
+            left -= s_
+            added_total += a_
+            done += 1
+            if "vendor stopped" in stopped:
+                break
+    log("")
+    log(f"TOTAL: {added_total:,} new sales added this run")
 
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write("```\n" + "\n".join(log_lines) + "\n```\n")
-    if not sales and "vendor stopped" not in stats["stopped"]:
+    # A run that added nothing fails, so GitHub emails the owner, unless the
+    # vendor's daily limit was why (expected after a busy day) or it was a test.
+    if not added_total and not DRY_RUN and "vendor stopped" not in stopped:
         return 1
     return 0
 
