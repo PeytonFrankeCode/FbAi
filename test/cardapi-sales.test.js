@@ -37,7 +37,7 @@ const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'collect-sold
 check('the workflow runs nightly and reads CARDAPI_PLAN from a repo variable', /cron:/.test(wf) && /vars\.CARDAPI_PLAN/.test(wf));
 
 check('every fetched page is saved as a 30-day artifact, and a saved run can be replayed without spending rows', /def save_raw/.test(py) && /save_raw\(j\.get\("data"\)/.test(py) && /REPLAY_DIR/.test(py) && /actions\/upload-artifact@v4/.test(wf) && /retention-days: 30/.test(wf) && /cardapi-replay\.txt/.test(wf) && /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/.test(wf));
-check('a photo-less sale borrows a same-card, same-grade eBay photo, marked #same-card', /def fill_photos/.test(py) && /SAME_CARD_TAG = "#same-card"/.test(py) && /fill_photos\(rows\)/.test(py));
+check('a photo-less sale borrows an eBay photo of the same card (same grade first, then any), marked #same-card', /def fill_photos/.test(py) && /any_grade\.get\(r\["card_key"\]\)/.test(py) && /SAME_CARD_TAG = "#same-card"/.test(py) && /fill_photos\(rows\)/.test(py));
 check('soccer is dropped, and the player lists outrank a set name when the sport is blank', /SOCCER_RE = re\.compile/.test(py) && py.indexOf('by_player = _player_sport(title)') < py.indexOf('guess = sport_from_title(title)'));
 check('a change pushed to main re-checks stored sales (sport, photos) first', /def fix_stored/.test(py) && /CARDAPI_FIX/.test(wf));
 const appjs = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');

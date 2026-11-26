@@ -545,7 +545,8 @@ def purge() -> int:
 
 
 # A sale with no photo (Fanatics Collect and Yahoo sales come without one)
-# borrows the newest eBay photo of the same card in the same grade, marked
+# borrows the newest eBay photo of the same card, in the same grade when one
+# has a photo and in any grade otherwise, marked
 # with "#same-card" so the site labels it "Photo of the same card".
 SAME_CARD_TAG = "#same-card"
 
@@ -573,9 +574,15 @@ def fill_photos(rows: list[dict]) -> int:
                % ",".join(_sql_literal(k) for k in chunk))
         for row in d1(sql):
             have.setdefault(_grade_key(row), str(row["image_url"]).split("#")[0])
+    # Same card in any grade, when no copy in the same grade has a photo
+    # (26 Nov 2026: same grade only found photos for 512 of 2,471). A slab's
+    # photo for a raw sale still shows the right card.
+    any_grade: dict[str, str] = {}
+    for (key, _g, _n), u in have.items():
+        any_grade.setdefault(key, u)
     n = 0
     for r in need:
-        u = have.get(_grade_key(r))
+        u = have.get(_grade_key(r)) or any_grade.get(r["card_key"])
         if u:
             r["image_url"] = u + SAME_CARD_TAG
             n += 1

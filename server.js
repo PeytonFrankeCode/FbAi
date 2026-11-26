@@ -11087,10 +11087,11 @@ const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
 // v13: carries dealCandidates.
 // v14: each window ends at the newest sale held, not today, so v13 boards
 // hold a 7-day movers board with nothing in its last days.
-const SOLD_STATS_KEY = (days, sport) => `soldstats:v14:${days}${_ssSport(sport)}`;
+// v15: rebuilt after Card API sales were re-filed by sport and given photos.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v15:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v13:${days}${_ssSport(sport)}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v14:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
