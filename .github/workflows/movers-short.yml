@@ -10,7 +10,7 @@ jobs:
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36'
           echo "== build"; curl -sS -m 20 "$B/build.json"; echo
-          for d in 30 7; do
+          for d in 7 30; do
             curl -sS -m 90 -A "$UA" "$B/api/sold-stats?days=$d" -o s.json
             python3 - "$d" <<'PY'
           import json, sys, urllib.parse, urllib.request
