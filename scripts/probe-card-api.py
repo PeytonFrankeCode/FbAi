@@ -181,6 +181,28 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    out("I. Photos: what image links do sales carry, and do they load?")
+    j = get("sales", limit=20, date_from="2026-11-24", date_to="2026-11-24", sort="price_desc",
+            q="(panini,topps,bowman,upper deck,donruss,prizm)")
+    rows = (j or {}).get("data") or []
+    have = Counter()
+    for r in rows:
+        for f in ("image_url", "thumbnail_url"):
+            have[f + (" set" if r.get(f) else " empty")] += 1
+    out(f"  {len(rows)} sales; {dict(have)}")
+    for r in rows[:12]:
+        u = r.get("image_url") or r.get("thumbnail_url")
+        out(f"  - {r.get('platform')}: image={str(r.get('image_url'))[:110]} thumb={str(r.get('thumbnail_url'))[:110]}")
+        if u:
+            for ref in (None, "https://thecardhuddle.com/"):
+                try:
+                    rr = requests.get(u, timeout=20, headers={"Referer": ref} if ref else {}, allow_redirects=True)
+                    out(f"      GET {'with' if ref else 'no'} referer: HTTP {rr.status_code}, {rr.headers.get('content-type')}, {len(rr.content)} bytes")
+                except requests.RequestException as e:
+                    out(f"      GET failed: {type(e).__name__}")
+    out(f"  allowance: {last_headers}")
+    return 0
+
     # Run after the 00:00 UTC allowance reset (the first try on the 25th was refused).
     out("D. Do older days hold more sales? Sports-brand query, one row per count")
     from datetime import date, timedelta
