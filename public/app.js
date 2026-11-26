@@ -1589,10 +1589,11 @@ async function loadMarketPulse(days, attempt = 0) {
   let eager = 3;
   // eBay's 225px copy, not the full-size photo: the tiles are ~120px wide,
   // and full-size photos were ~380 KB of the phone's first screen.
-  const thumb = (url, alt) => url
+  const thumb = (url, alt, sale) => url
     ? '<img class="mp-tile-img" src="' + escHtml(_mpPhoto(url)) + '" alt="' + escHtml(alt) + '" width="120" height="160" '
       + (eager-- > 0 ? 'fetchpriority="high"' : 'loading="lazy"') + ' />'
-    : '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
+    : _needPhotoImg('mp-tile-img', alt, sale, 'width="120" height="160"')
+      || '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
 
   // The strip shows three; the payload holds fifty. Every section head carries
   // the way through to the rest rather than making the strip the whole story.
@@ -1623,7 +1624,7 @@ async function loadMarketPulse(days, attempt = 0) {
 
   parts.push(tiles('Most expensive', label, data.priciest, (r) =>
     '<a class="mp-tile" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' +
-    thumb(r.imageUrl, r.title) +
+    thumb(r.imageUrl, r.title, r) +
     '<span class="mp-tile-price">' + _mpMoney(r.price) + '</span>' +
     '<span class="mp-tile-name">' + escHtml(String(r.title).slice(0, 70)) + '</span>' +
     (r.grade ? '<span class="mp-tile-meta">' + escHtml(r.grade) + '</span>' : '') +
@@ -1631,7 +1632,7 @@ async function loadMarketPulse(days, attempt = 0) {
 
   parts.push(tiles('Most sold', label, data.mostSold, (r) =>
     '<button class="mp-tile" data-query="' + escHtml(r.query) + '">' +
-    thumb(r.imageUrl, r.name) +
+    thumb(r.imageUrl, r.name, r) +
     '<span class="mp-tile-price">' + r.sales.toLocaleString('en-US') + ' sold</span>' +
     '<span class="mp-tile-name">' + escHtml(String(r.name).slice(0, 70)) + '</span>' +
     '<span class="mp-tile-meta">' + _mpMoney(r.avgPrice) + ' avg &middot; ' + _mpMoney(r.topPrice) + ' high</span>' +
@@ -1725,7 +1726,7 @@ function _statsThumb(url, alt, sale) {
   return '<span class="st-thumb"' + _itemAttr(sale) + '>' + (u
     ? '<img class="st-img" src="' + escHtml(u) + '" alt="' + escHtml(alt || '') +
       '" loading="lazy" onerror="this.style.display=\'none\'" />'
-    : '') + '</span>';
+    : (_needPhotoImg('st-img', alt, sale, '') || '')) + '</span>';
 }
 
 // Which boards have a photo to show at all. topSets is deliberately absent:
@@ -2385,9 +2386,11 @@ function _ebayPhotoGone(img) {
 }
 // The sale an image belongs to: data-item on it or a parent, else the eBay
 // item link the row already is.
+// An eBay item id, or a Card API sale from another platform ("fanatics-…").
+const _SALE_ID_RE = /^(\d{6,20}|[a-z]+-[A-Za-z0-9|_.:-]{1,120})$/;
 function _photoItemId(img) {
   const tagged = img.closest('[data-item]');
-  if (tagged && /^\d{6,20}$/.test(tagged.dataset.item)) return tagged.dataset.item;
+  if (tagged && _SALE_ID_RE.test(tagged.dataset.item)) return tagged.dataset.item;
   const a = img.closest('a[href*="/itm/"]');
   const m = a && String(a.getAttribute('href')).match(/\/itm\/(?:[^/?#]*\/)?(\d{6,20})/);
   return m ? m[1] : null;
@@ -2395,7 +2398,7 @@ function _photoItemId(img) {
 // ` data-item="…"` for a sale, from its id or its eBay link.
 function _itemAttr(x) {
   const id = x && (x.itemId || (String(x.itemUrl || '').match(/\/itm\/(?:[^/?#]*\/)?(\d{6,20})/) || [])[1]);
-  return id && /^\d{6,20}$/.test(String(id)) ? ` data-item="${escHtml(String(id))}"` : '';
+  return id && _SALE_ID_RE.test(String(id)) ? ` data-item="${escHtml(String(id))}"` : '';
 }
 
 const _cardPhotoReq = new Map();   // item id -> Promise of /api/card-photo's answer
@@ -2515,6 +2518,34 @@ document.addEventListener('load', (e) => {
   if (_ebayPhotoGone(img)) { _photoGone(img); return; }
   if (!img.dataset.photoSource && /#same-card$/.test(img.getAttribute('src') || '')) _photoLabel(img, 'card');
 }, true);
+
+// A board sale that came with no photo (the Card API sends none for Fanatics
+// Collect or Yahoo sales; owner, Nov 2026: the Most expensive board's top
+// cards had none). Drawn as a waiting image tagged with the sale, then the
+// same finder a vanished eBay photo uses fills it: a photo of the same card
+// from another sale, else a current listing's, else a drawn card tile. Its
+// answer is cached on the server, so each card is looked up once for everyone.
+function _needPhotoImg(cls, alt, sale, extra) {
+  const id = sale && sale.itemId;
+  if (!id || !_SALE_ID_RE.test(String(id))) return '';
+  return '<img class="' + cls + '" src="' + _PHOTO_GONE + '" alt="' + escHtml(alt || '') + '" ' + (extra || '')
+    + ' data-item="' + escHtml(String(id)) + '" data-need-photo="1" />';
+}
+function _fillNeedPhotos(root) {
+  (root || document).querySelectorAll('img[data-need-photo]').forEach((img) => {
+    img.removeAttribute('data-need-photo');
+    _photoGone(img);
+  });
+}
+new MutationObserver((muts) => {
+  for (const m of muts) {
+    for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.matches && n.matches('img[data-need-photo]')) _fillNeedPhotos(n.parentNode);
+      else if (n.querySelector && n.querySelector('img[data-need-photo]')) _fillNeedPhotos(n);
+    }
+  }
+}).observe(document.documentElement, { childList: true, subtree: true });
 
 // ---- Sports ----
 // Football is the live sport; basketball and baseball are under testing: live

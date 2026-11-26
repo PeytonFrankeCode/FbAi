@@ -11088,10 +11088,11 @@ const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
 // v14: each window ends at the newest sale held, not today, so v13 boards
 // hold a 7-day movers board with nothing in its last days.
 // v15: rebuilt after Card API sales were re-filed by sport and given photos.
-const SOLD_STATS_KEY = (days, sport) => `soldstats:v15:${days}${_ssSport(sport)}`;
+// v16: each sale carries its itemId, so a photo-less one can be filled.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v16:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v14:${days}${_ssSport(sport)}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v15:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -11341,6 +11342,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
       changePct: olderC ? Math.round(((recentC - olderC) / olderC) * 1000) / 10 : NaN,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
+      itemId: r.item_id || null,
       query: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel)]
         .filter(Boolean).join(' ').trim() || r.title,
       // What the deals finder needs to recognise this card in a listing.
@@ -11385,6 +11387,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
         grade: gradeOf(r),
         imageUrl: r.image_url || null,
         itemUrl: linkOf(r),
+        itemId: r.item_id || null,
       })),
 
       mostSold: _mostSoldRows.slice(0, SOLD_STATS_TOP).map(g => {
@@ -11404,6 +11407,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
           topPrice: Math.round((g.max || 0) / 100),
           imageUrl: r.image_url || null,
           itemUrl: linkOf(r),
+          itemId: r.item_id || null,
           // What to run when the tile is clicked. Carries the parallel and the
           // kind, or clicking a row labelled Gold Auto runs a search that
           // returns base cards.
@@ -15168,7 +15172,10 @@ async function _cardPhotoLookup(db, itemId) {
 
 app.get('/api/card-photo', async (req, res) => {
   const itemId = String(req.query.itemId || '').trim();
-  if (!/^[0-9]{6,20}$/.test(itemId)) return res.status(400).json({ error: 'itemId is required' });
+  // An eBay item id, or a Card API sale from another platform ("fanatics-…"),
+  // which comes with no photo at all (owner, Nov 2026: the Most expensive
+  // board's Fanatics sales showed none).
+  if (!/^([0-9]{6,20}|[a-z]+-[A-Za-z0-9|_.:-]{1,120})$/.test(itemId)) return res.status(400).json({ error: 'itemId is required' });
   const db = getNflDb();
   if (!db) return res.json({ photo: null, card: null });
   const key = `cardphoto:v1:${itemId}`;
