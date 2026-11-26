@@ -2451,7 +2451,10 @@ function _photoReveal(img) {
   img.style.visibility = '';
   if (img.parentElement) img.parentElement.classList.remove('no-img');
 }
-const _PHOTO_SOURCE_LABEL = { sale: 'Photo from a later sale', listing: 'Photo from a current listing' };
+// 'card': a sale that came with no photo (Fanatics Collect, Yahoo) borrows
+// an eBay photo of the same card in the same grade at collection, marked by a
+// '#same-card' on its address (scripts/collect-sold-cardapi.py).
+const _PHOTO_SOURCE_LABEL = { sale: 'Photo from a later sale', listing: 'Photo from a current listing', card: 'Photo of the same card' };
 function _photoLabel(img, source) {
   const text = _PHOTO_SOURCE_LABEL[source];
   if (!text) return;
@@ -2463,7 +2466,7 @@ function _photoLabel(img, source) {
   host.classList.add('photo-sub-host');
   const tag = document.createElement('span');
   tag.className = 'photo-sub-tag';
-  tag.textContent = source === 'sale' ? 'Later sale photo' : 'Current listing photo';
+  tag.textContent = source === 'sale' ? 'Later sale photo' : source === 'card' ? 'Same card photo' : 'Current listing photo';
   host.appendChild(tag);
 }
 
@@ -2509,7 +2512,8 @@ document.addEventListener('error', (e) => {
 document.addEventListener('load', (e) => {
   const img = e.target;
   if (!img || img.tagName !== 'IMG' || !_isEbayImg(img.currentSrc || img.src)) return;
-  if (_ebayPhotoGone(img)) _photoGone(img);
+  if (_ebayPhotoGone(img)) { _photoGone(img); return; }
+  if (!img.dataset.photoSource && /#same-card$/.test(img.getAttribute('src') || '')) _photoLabel(img, 'card');
 }, true);
 
 // ---- Sports ----

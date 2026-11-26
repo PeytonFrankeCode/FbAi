@@ -331,20 +331,30 @@ def _player_sport(title: str) -> str | None:
     return None
 
 
+SOCCER_RE = re.compile(r"\b(mls|fifa|uefa|premier league|bundesliga|la liga|serie a|ligue 1|world cup|champions league"
+                       r"|soccer|futbol|f[uú]tbol|merlin|match attax|euro 20\d\d|copa)\b", re.I)
+
+
 def sport_of(s: dict, title: str) -> tuple[str | None, str]:
-    """The sale's sport, or (None, why not). Most recent sales come with the
-    sport field blank, so it falls back to the title, then the players named."""
+    """The sale's sport, or (None, why not). The vendor's own sport field
+    first; it is blank on most recent sales, so then the players the title
+    names (the site's checklist lists), and only then the title's own words.
+    Set names alone are not trusted early: Prizm, Contenders and Topps Chrome
+    are printed for every sport (26 Nov 2026: a Shai Gilgeous-Alexander
+    Contenders card was filed as football)."""
+    if SOCCER_RE.search(title):
+        return None, "other sport"
+    if str(s.get("category") or "").lower() == "tcg" or TCG_RE.search(title):
+        return None, "trading card game"
     sport = str(s.get("sport") or "").strip().lower()
     if sport:
         return (sport, "") if sport in SPORTS else (None, "other sport")
-    if str(s.get("category") or "").lower() == "tcg" or TCG_RE.search(title):
-        return None, "trading card game"
-    guess = sport_from_title(title)
-    if guess:
-        return (guess, "") if guess in SPORTS else (None, "other sport")
     by_player = _player_sport(title)
     if by_player:
         return by_player, ""
+    guess = sport_from_title(title)
+    if guess:
+        return (guess, "") if guess in SPORTS else (None, "other sport")
     return None, "sport not stated (no known player)"
 
 
@@ -534,6 +544,93 @@ def purge() -> int:
     return n
 
 
+# A sale with no photo (Fanatics Collect and Yahoo sales come without one)
+# borrows the newest eBay photo of the same card in the same grade, marked
+# with "#same-card" so the site labels it "Photo of the same card".
+SAME_CARD_TAG = "#same-card"
+
+
+def _grade_key(r: dict) -> tuple:
+    return (r.get("card_key") or "", str(r.get("grader") or ""), str(r.get("grade") or ""))
+
+
+def fill_photos(rows: list[dict]) -> int:
+    """Give photo-less rows a photo of the same card and grade, from this
+    batch or from D1. Returns how many got one."""
+    need = [r for r in rows if not r.get("image_url") and r.get("card_key")]
+    if not need:
+        return 0
+    have: dict[tuple, str] = {}
+    for r in rows:
+        u = str(r.get("image_url") or "")
+        if u.startswith("https://i.ebayimg.com/") and r.get("card_key"):
+            have.setdefault(_grade_key(r), u.split("#")[0])
+    keys = sorted({r["card_key"] for r in need if _grade_key(r) not in have})
+    for i in range(0, len(keys), 80):
+        chunk = keys[i:i + 80]
+        sql = ("SELECT card_key, grader, grade, image_url FROM sales WHERE card_key IN (%s) "
+               "AND image_url LIKE 'https://i.ebayimg.com/%%' ORDER BY sold_date DESC LIMIT 4000"
+               % ",".join(_sql_literal(k) for k in chunk))
+        for row in d1(sql):
+            have.setdefault(_grade_key(row), str(row["image_url"]).split("#")[0])
+    n = 0
+    for r in need:
+        u = have.get(_grade_key(r))
+        if u:
+            r["image_url"] = u + SAME_CARD_TAG
+            n += 1
+    return n
+
+
+def fix_stored() -> None:
+    """One pass over the Card API sales already stored: re-file any whose
+    sport the current rules read differently (drop soccer), and give photo-
+    less ones a photo of the same card. Runs when this script changes."""
+    rows = d1("SELECT s.item_id, s.title, s.sport, s.price_cents, s.shipping_cents, s.currency, s.sold_date, "
+              "s.listing_format, s.bids, s.best_offer, s.image_url, s.offer_known FROM sales s "
+              f"JOIN vendor_sales v ON v.item_id = s.item_id WHERE v.vendor = '{VENDOR}'")
+    log(f"fix: {len(rows):,} stored Card API sales")
+    drop, refile = [], []
+    for r in rows:
+        title = str(r.get("title") or "")
+        new, why = sport_of({}, title)
+        if why == "other sport" and SOCCER_RE.search(title):
+            drop.append(r["item_id"])
+        elif new and new != (r.get("sport") or ""):
+            refile.append((r, new))
+    if drop:
+        ids = ",".join(_sql_literal(x) for x in drop)
+        push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, f"DELETE FROM sales WHERE item_id IN ({ids});\n"
+                                              f"DELETE FROM vendor_sales WHERE item_id IN ({ids});\n")
+    log(f"fix: {len(drop):,} soccer sales removed; {len(refile):,} to re-file under another sport")
+    if refile:
+        sales = [Sale(item_id=r["item_id"], title=r["title"], price_cents=r.get("price_cents"),
+                      currency=r.get("currency") or "USD", shipping_cents=r.get("shipping_cents"),
+                      sold_date=r.get("sold_date"), listing_format=r.get("listing_format") or "fixed",
+                      bids=r.get("bids"), best_offer=bool(r.get("best_offer")), url=None,
+                      image_url=(r.get("image_url") or "").split("#")[0] or None,
+                      query_id=VENDOR, sport=new) for r, new in refile]
+        known = {r["item_id"] for r, _ in refile if r.get("offer_known")}
+        fixed = parse_into_rows(sales, known)
+        ids = ",".join(_sql_literal(r["item_id"]) for r, _ in refile)
+        push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, f"DELETE FROM sales WHERE item_id IN ({ids});\n")
+        push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, insert_sql(fixed))
+        moves: dict[str, int] = {}
+        for (r, new) in refile:
+            k = f"{r.get('sport') or '?'}->{new}"
+            moves[k] = moves.get(k, 0) + 1
+        log(f"fix: re-filed {moves}")
+    # Photos for the stored sales that have none.
+    bare = d1("SELECT s.item_id, s.card_key, s.grader, s.grade, s.image_url FROM sales s "
+              f"JOIN vendor_sales v ON v.item_id = s.item_id WHERE v.vendor = '{VENDOR}' AND s.image_url IS NULL")
+    got = fill_photos(bare)
+    sets = [f"UPDATE sales SET image_url = {_sql_literal(r['image_url'])} WHERE item_id = {_sql_literal(r['item_id'])};"
+            for r in bare if r.get("image_url")]
+    for i in range(0, len(sets), 200):
+        push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, "\n".join(sets[i:i + 200]) + "\n")
+    log(f"fix: {got:,} of {len(bare):,} photo-less sales got a photo of the same card")
+
+
 def process_day() -> tuple[int, int, str]:
     """Collect DAY within ROWS and upload it. Returns (rows spent, sales
     added, why it stopped)."""
@@ -554,6 +651,10 @@ def process_day() -> tuple[int, int, str]:
         confirmed = {iid for iid, s in sales.items() if s.best_offer}
         rows = parse_into_rows(list(sales.values()), confirmed)
         rows, capped = cap_per_card(rows)
+        if not DRY_RUN:
+            borrowed = fill_photos(rows)
+            if borrowed:
+                log(f"photos: {borrowed:,} photo-less sales got a photo of the same card and grade")
         if capped:
             log(f"capped: {capped:,} sales dropped as more than {PER_CARD_DAY} of one card that day")
         top = sorted(rows, key=lambda r: r.get("price_cents") or 0, reverse=True)[:5]
@@ -610,6 +711,10 @@ def main() -> int:
             added_total += a_
         log(f"TOTAL: {added_total:,} new sales added from the saved run")
         return 0
+    if os.environ.get("CARDAPI_FIX") == "1" and PAID and not DRY_RUN:
+        ensure_tracking()
+        fix_stored()
+        log("")
     log(f"plan {PLAN}: up to {ROWS:,} rows"
         + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
     budget = ROWS
