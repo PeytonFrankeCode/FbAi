@@ -8,11 +8,13 @@ on:
   push:
     paths:
       - scripts/probe-card-api.py
+      - scripts/check-cardapi-photos.py
       - .github/workflows/probe-card-api.yml
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   probe:
@@ -24,7 +26,18 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -q requests
+      - name: Get the 26 Nov collection's saved sales
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cardapi-raw-*
+          path: saved
+          merge-multiple: true
+          run-id: 45733866075
+          github-token: ${{ github.token }}
+      - name: Check their photos
+        run: python scripts/check-cardapi-photos.py saved
       - name: Probe
+        if: false
         run: python scripts/probe-card-api.py
         env:
           CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
