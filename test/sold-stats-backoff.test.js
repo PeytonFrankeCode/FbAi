@@ -40,10 +40,18 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   check('a failing board is tried by the gap warm', afterFirst > 0 && /football:?7d:skipped|^7d:skipped| 7d:skipped/.test(' ' + (first.periods || []).join(' ')),
     (first.periods || []).join(' '));
 
+  // One missing board per tick (Nov 2026), so the rest are tried on the
+  // ticks after; once every board has failed, a tick reads nothing.
+  check('  ...one board per tick', (first.periods || []).filter(p => /skipped$/.test(p)).length === 1, (first.periods || []).join(' '));
+  for (let i = 0; i < 20; i++) {
+    const r = await warmSoldStats({ onlyMissing: true });
+    if ((r.periods || []).every(p => /backoff$/.test(p))) break;
+  }
+  const afterAll = d1Queries;
   const second = await warmSoldStats({ onlyMissing: true });
-  check('  ...and the next tick leaves it alone, reading nothing',
-    d1Queries === afterFirst && (second.periods || []).every(p => /backoff$/.test(p)),
-    `${d1Queries - afterFirst} queries; ${(second.periods || []).join(' ')}`);
+  check('  ...and once each has failed, the next tick leaves them alone, reading nothing',
+    d1Queries === afterAll && (second.periods || []).every(p => /backoff$/.test(p)),
+    `${d1Queries - afterAll} queries; ${(second.periods || []).join(' ')}`);
 
   // A visitor finds only the last good copy: served, and no build behind it.
   store.set('soldstats:last:90', JSON.stringify({ available: true, days: 90, marker: 'older', generatedAt: new Date().toISOString() }));
