@@ -83,6 +83,9 @@ jobs:
           CARDAPI_PURGE: ${{ github.ref == 'refs/heads/main' && (vars.CARDAPI_PURGE || '') || '' }}
           DRY_RUN: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/main') && '1' || '0' }}
           CARDAPI_RAW_DIR: raw
+          # A change to the collector, pushed to main, re-checks what's stored
+          # under its current rules (sport, photos) before collecting.
+          CARDAPI_FIX: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') && '1' || '' }}
           CARDAPI_REPLAY_DIR: ${{ steps.replay.outputs.run != '' && 'replay' || '' }}
       # Every page this run fetched, kept 30 days, so its sales can be replayed.
       - name: Save the fetched sales
