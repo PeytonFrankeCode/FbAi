@@ -1,4 +1,4 @@
-name: Sold photos check (one-off, never merge)
+name: Board photos check (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
@@ -9,17 +9,23 @@ jobs:
       - run: |
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36'
-          for q in "1968 Topps Nolan Ryan" "Kobe Bryant Star Rubies" "Paolo Banchero Flawless" "Bo Nix Prizm" "Caleb Williams Prizm" "Jayden Daniels"; do
-            echo "== $q"
-            curl -sS -m 60 -A "$UA" "$B/api/search?mode=sold&limit=15&q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")" -o r.json
-            python3 -c "
-          import json; d=json.load(open('r.json')); r=d.get('results') or []
-          from collections import Counter
-          print(' results', len(r), 'with photo', sum(1 for x in r if x.get('imageUrl')), Counter((x.get('platform'), bool(x.get('imageUrl'))) for x in r))
-          for x in r[:6]: print('  ', x.get('soldDate'), x.get('price'), x.get('platform'), x.get('itemId'), (x.get('imageUrl') or 'NO PHOTO')[:70], (x.get('title') or '')[:50])
-          "
+          echo "== build"; curl -sS -m 20 "$B/build.json"; echo
+          for d in 30 7; do
+            curl -sS -m 90 -A "$UA" "$B/api/sold-stats?days=$d" -o s.json
+            python3 - "$d" <<'PY'
+          import json, sys, urllib.parse, urllib.request
+          d = json.load(open('s.json')); p = (d.get('priciest') or [])[:12]
+          print(f"== {sys.argv[1]}d board: refreshing={d.get('refreshing')} priciest={len(d.get('priciest') or [])}, with photo {sum(1 for x in d.get('priciest') or [] if x.get('imageUrl'))}, with itemId {sum(1 for x in d.get('priciest') or [] if x.get('itemId'))}")
+          for x in p:
+              line = f"  ${x.get('price')}  photo={'yes' if x.get('imageUrl') else 'NO '}  {(x.get('title') or '')[:55]}"
+              if not x.get('imageUrl') and x.get('itemId'):
+                  u = "https://the-card-huddle.thecardhuddleoffical.workers.dev/api/card-photo?itemId=" + urllib.parse.quote(x['itemId'])
+                  try:
+                      r = json.load(urllib.request.urlopen(urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'}), timeout=60))
+                      ph = (r.get('photo') or {})
+                      line += f"  -> finder: {ph.get('source') or ('tile' if (r.get('card') or {}).get('player') else 'none')} {str(ph.get('url') or '')[:50]}"
+                  except Exception as e:
+                      line += f"  -> finder error {e}"
+              print(line)
+          PY
           done
-          echo "== sold-stats 7d priciest"; curl -sS -m 60 -A "$UA" "$B/api/sold-stats?days=7" | python3 -c "
-          import json,sys; d=json.load(sys.stdin); p=d.get('priciest') or []
-          print(' priciest', len(p), 'with photo', sum(1 for x in p if x.get('imageUrl')))
-          for x in p[:6]: print('  ', x.get('price'), (x.get('imageUrl') or 'NO PHOTO')[:60], (x.get('title') or '')[:50])"
