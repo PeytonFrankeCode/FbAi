@@ -11561,15 +11561,21 @@ async function _soldStatsStore(days, payload, sport) {
 // are already being served meanwhile, so waiting costs nobody anything.
 // The daily warm still tries regardless, and the error is kept for
 // /api/debug/sold-stats-builds.
-const SOLD_STATS_FAIL_KEY = (days, sport) => `soldstats:fail:${days}${_ssSport(sport)}`;
+// fail2 (Nov 2026): drops the six-hour back-offs eleven boards took when D1
+// was overloaded by all twelve rebuilding at once.
+const SOLD_STATS_FAIL_KEY = (days, sport) => `soldstats:fail2:${days}${_ssSport(sport)}`;
 const SOLD_STATS_FAIL_TTL = 6 * 60 * 60;
+const SOLD_STATS_OVERLOAD_TTL = 30 * 60;
 async function _soldStatsBackingOff(days, sport) {
   return !!(await cacheGet(SOLD_STATS_FAIL_KEY(days, sport)).catch(() => null));
 }
 async function _soldStatsNoteFailure(days, sport) {
   const slot = `${days}${_ssSport(sport)}`;
-  await cachePut(SOLD_STATS_FAIL_KEY(days, sport),
-    { at: new Date().toISOString(), error: _soldStatsLastError.get(slot) || 'unavailable' }, SOLD_STATS_FAIL_TTL);
+  const error = _soldStatsLastError.get(slot) || 'unavailable';
+  // D1 being briefly overloaded says nothing about this board: try again in
+  // half an hour, not six.
+  const ttl = /overloaded|too many resources/i.test(error) ? SOLD_STATS_OVERLOAD_TTL : SOLD_STATS_FAIL_TTL;
+  await cachePut(SOLD_STATS_FAIL_KEY(days, sport), { at: new Date().toISOString(), error }, ttl);
 }
 // One build per period at a time, stored only when it worked.
 function _soldStatsBuild(db, days, sport = 'football') {
@@ -11757,10 +11763,18 @@ async function _warmSoldStats({ onlyMissing = false } = {}) {
         // error for a whole day.
         await _soldStatsNoteFailure(days, sport);
         done.push(`${tag}${days}d:skipped`);
-        continue;
+      } else {
+        await _soldStatsStore(days, payload, sport);
+        done.push(`${tag}${days}d:${(payload.cardMovers || []).length}`);
       }
-      await _soldStatsStore(days, payload, sport);
-      done.push(`${tag}${days}d:${(payload.cardMovers || []).length}`);
+      // One missing board per tick (Nov 2026): after a key change all twelve
+      // were built back to back and D1 answered "overloaded: too many
+      // resources consumed within a 10 second window" for eleven of them.
+      // The cron ticks every quarter hour, so twelve boards take three hours.
+      if (onlyMissing) {
+        console.log(`[SoldStats] warmed ${done.join(' ')} (one per tick)`);
+        return { ok: true, periods: done };
+      }
     }
   }
   console.log(`[SoldStats] warmed ${done.join(' ')}`);

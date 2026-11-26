@@ -108,6 +108,13 @@ const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() &
   check('the gap warm builds only missing periods', w.periods.includes('30d:cached') && w.periods.includes('7d:cached')
     && !/cached/.test(built90), w.periods.join(' '));
   check('  ...and seeds a last good copy from boards built before it existed', store.has('soldstats:last:30'));
+  // One missing board per call (Nov 2026: twelve at once overloaded D1), so
+  // warm until every board is built, then once more.
+  check('  ...one board per call, so a key change cannot overload D1', w.periods.filter(p => !/cached|backoff/.test(p)).length === 1, w.periods.join(' '));
+  for (let i = 0; i < 20; i++) {
+    const r = await warmSoldStats({ onlyMissing: true });
+    if (r.periods.every(p => /cached|backoff/.test(p))) break;
+  }
   const qBefore = d1Queries;
   await warmSoldStats({ onlyMissing: true });
   check('  ...and reads no D1 when nothing is missing', d1Queries === qBefore, `${d1Queries - qBefore} queries`);
