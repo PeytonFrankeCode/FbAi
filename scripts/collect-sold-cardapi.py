@@ -81,12 +81,12 @@ if PLAN not in PLANS:
 PAID = PLAN != "free"
 # Stay a little under each limit: the probe and the site share the key.
 ROWS = int(os.environ.get("CARDAPI_ROWS") or (300 if not PAID else PLANS[PLAN]["rows"] - 300))
-# Catch-up: spare rows go to earlier days holding fewer than BACKFILL_DONE_AT
-# of our Card API sales, at most BACKFILL_MAX_DAYS a run, from $1 up (the
+# Complete pass: the rows the fresh day leaves go to the day this many days
+# back, nearly complete by then (26 Nov 2026 counts: ~4,600 sports sales at 2
+# days back, ~10,000 at 3, ~22,000 at 7, ~30,000 at 10-14), from $1 up (the
 # sort puts the most expensive first anyway).
+MATURE_DAYS = int(os.environ.get("CARDAPI_MATURE_DAYS") or 14)
 BACKFILL_MIN_ROWS = 300
-BACKFILL_MAX_DAYS = 3
-BACKFILL_DONE_AT = 200
 BACKFILL_FLOOR = 1.0
 # Every page fetched is also written to CARDAPI_RAW_DIR (the workflow keeps it
 # as a 30-day artifact), so a run's sales are never lost: a test run's, or one
@@ -615,31 +615,19 @@ def main() -> int:
     budget = ROWS
     spent, added_total, stopped = process_day()
 
-    # Catch-up (owner, Nov 2026): a day needs about 7,700 of Starter's 10,000
-    # rows. The rest fill in earlier days not collected yet, newest first and
-    # most expensive first, as far back as the plan's query window reaches.
+    # Complete pass (owner, Nov 2026: fresh data matters most, but a day keeps
+    # filling in for about two weeks). The fresh pass above takes the day from
+    # two days ago, all of it so far (~4,600 on 26 Nov). The rows left go to
+    # the day MATURE_DAYS back, which by then holds ~30,000 sports sales: its
+    # most expensive first. Every day passes through both, once each.
     left = budget - spent
-    if PAID and not DRY_RUN and "vendor stopped" not in stopped:
-        ensure_tracking()
-        today = datetime.now(timezone.utc).date()
-        done = 0
-        for back in range(3, PLANS[PLAN]["window"]):
-            if left < BACKFILL_MIN_ROWS or done >= BACKFILL_MAX_DAYS:
-                break
-            day = (today - timedelta(days=back)).isoformat()
-            have = int((d1(f"SELECT COUNT(*) AS n FROM vendor_sales WHERE vendor = '{VENDOR}' AND sold_date = '{day}'")
-                        or [{"n": 0}])[0]["n"])
-            if have >= BACKFILL_DONE_AT:
-                continue
-            log("")
-            log(f"## catch-up: {day} ({have:,} of its sales already held), {left:,} rows left")
-            DAY, ROWS, MIN_PRICE = day, left, BACKFILL_FLOOR
-            s_, a_, stopped = process_day()
-            left -= s_
-            added_total += a_
-            done += 1
-            if "vendor stopped" in stopped:
-                break
+    if PAID and not DRY_RUN and "vendor stopped" not in stopped and left >= BACKFILL_MIN_ROWS:
+        day = (datetime.now(timezone.utc).date() - timedelta(days=MATURE_DAYS)).isoformat()
+        log("")
+        log(f"## complete pass: {day} ({MATURE_DAYS} days back), {left:,} rows left")
+        DAY, ROWS, MIN_PRICE = day, left, BACKFILL_FLOOR
+        s_, a_, stopped = process_day()
+        added_total += a_
     log("")
     log(f"TOTAL: {added_total:,} new sales added this run")
 
