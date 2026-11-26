@@ -1,4 +1,4 @@
-name: Sold data check (one-off, never merge)
+name: Sold photos check (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
@@ -9,21 +9,17 @@ jobs:
       - run: |
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36'
-          echo "== health (sold)"; curl -sS -m 40 -A "$UA" "$B/api/health" | python3 -c "import json,sys; d=json.load(sys.stdin); i=d.get('integrations',{}); print(json.dumps({k:i.get(k) for k in ('sold','nflcarddb','d1','soldProvider')})); print({k:d.get(k) for k in d if 'sold' in k.lower() or 'provider' in k.lower()})"
-          for q in "Bo Nix Prizm" "Patrick Mahomes" "2024 Prizm Caleb Williams Silver" "Josh Allen rookie"; do
-            echo "== sold search: $q"
-            curl -sS -m 60 -A "$UA" -w '\nHTTP %{http_code} in %{time_total}s\n' "$B/api/search?mode=sold&limit=20&q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")" -o r.json; \
+          for q in "1968 Topps Nolan Ryan" "Kobe Bryant Star Rubies" "Paolo Banchero Flawless" "Bo Nix Prizm" "Caleb Williams Prizm" "Jayden Daniels"; do
+            echo "== $q"
+            curl -sS -m 60 -A "$UA" "$B/api/search?mode=sold&limit=15&q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")" -o r.json
             python3 -c "
-          import json
-          try:
-              d=json.load(open('r.json'))
-          except Exception as e:
-              print('not json:', open('r.json').read()[:300]); raise SystemExit
-          r=d.get('results') or []
-          print('keys', sorted(d.keys())[:25])
-          print('results', len(r), 'total', d.get('total'), 'error', d.get('error'), 'soldUnavailable', d.get('soldUnavailable'), 'rateLimited', d.get('rateLimited'), 'source', d.get('source'), 'provider', d.get('provider'))
-          for x in r[:3]: print('  ', x.get('soldDate'), x.get('price'), x.get('platform'), (x.get('title') or '')[:70])
+          import json; d=json.load(open('r.json')); r=d.get('results') or []
+          from collections import Counter
+          print(' results', len(r), 'with photo', sum(1 for x in r if x.get('imageUrl')), Counter((x.get('platform'), bool(x.get('imageUrl'))) for x in r))
+          for x in r[:6]: print('  ', x.get('soldDate'), x.get('price'), x.get('platform'), x.get('itemId'), (x.get('imageUrl') or 'NO PHOTO')[:70], (x.get('title') or '')[:50])
           "
           done
-          echo "== sold-stats 7d"; curl -sS -m 60 -A "$UA" "$B/api/sold-stats?days=7" | python3 -c "import json,sys; d=json.load(sys.stdin); print({k:d.get(k) for k in ('available','reason','totalSales','refreshing','through','salesThrough')}); print('priciest', len(d.get('priciest') or []))"
-          echo "== build"; curl -sS -m 20 "$B/build.json"; echo
+          echo "== sold-stats 7d priciest"; curl -sS -m 60 -A "$UA" "$B/api/sold-stats?days=7" | python3 -c "
+          import json,sys; d=json.load(sys.stdin); p=d.get('priciest') or []
+          print(' priciest', len(p), 'with photo', sum(1 for x in p if x.get('imageUrl')))
+          for x in p[:6]: print('  ', x.get('price'), (x.get('imageUrl') or 'NO PHOTO')[:60], (x.get('title') or '')[:50])"
