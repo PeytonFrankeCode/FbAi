@@ -470,9 +470,17 @@ def parse_into_rows(sales: list[Sale], confirmed_offers: set[str]) -> list[dict]
         try:
             run_id = store.start_run(conn, None)
             store.upsert_sales(conn, sales, run_id)
-            store.upsert_cards(
-                conn, [(s.item_id, parse_title(s.title, roster, collected_as=s.sport)) for s in sales],
-                PARSER_VERSION)
+            # The sport sport_of() chose is final: NflCardDB's parser lets a
+            # set name in the title override it (Contenders reads as football),
+            # which the player lists have already ruled on. Set before the
+            # card is stored, so its card_key is built for that sport.
+            parsed = []
+            for s in sales:
+                attrs = parse_title(s.title, roster, collected_as=s.sport)
+                if s.sport:
+                    attrs.sport = s.sport
+                parsed.append((s.item_id, attrs))
+            store.upsert_cards(conn, parsed, PARSER_VERSION)
             store.finish_run(conn, run_id, "ok", 0, len(sales), len(sales), None)
             conn.row_factory = __import__("sqlite3").Row
             rows = [dict(r) for r in _iter_rows_to_export(conn, None)]
