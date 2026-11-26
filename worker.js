@@ -1474,13 +1474,14 @@ export default {
         // which do not visibly move in fifteen minutes. Four times an hour
         // would cost ~96x the rows read to publish the same figures.
         //
-        // 04:xx UTC: late enough that the day's imports have landed, early
-        // enough to be off-peak. Same gating style as the alias backfill —
+        // 13:xx UTC (8 AM Eastern): an hour after The Card API collector's
+        // 12:00 UTC run, so each morning's sales are priced the same morning
+        // (owner, Nov 2026; was 04:xx, timed for the PC collector's nights). Same gating style as the alias backfill —
         // derived from the scheduled time, so it needs no stored state and a
         // missed run costs one day of staleness against a two-day KV TTL.
         if (typeof buildPriceBlocks === 'function') {
           // Or right now, if there is no map at all — see priceBlocksMissing().
-          const due = (scheduledAt.getUTCHours() === 4 && aliasTick)
+          const due = (scheduledAt.getUTCHours() === 13 && aliasTick)
             || (typeof priceBlocksMissing === 'function' && await priceBlocksMissing().catch(() => false));
           if (due) {
             const r = await buildPriceBlocks().catch(err => {
@@ -1513,7 +1514,8 @@ export default {
         // missed run serves yesterday's figures rather than falling back to
         // computing on request, which is the slow path being removed.
         //
-        // 05:xx UTC — an hour AFTER the price blocks, deliberately not the same
+        // 14:xx UTC (9 AM Eastern) — an hour AFTER the price blocks, which run
+        // an hour after the morning collection; deliberately not the same
         // tick. Both are heavy D1 jobs, and this one runs last in the handler,
         // so sharing a tick means that whenever the price-block build is slow
         // or the tick runs out of budget, the boards are the thing that silently
@@ -1521,7 +1523,7 @@ export default {
         // a visitor paid for them, which is the exact failure this removes.
         // Separate hours cost nothing and make the two jobs independent.
         if (typeof warmSoldStats === 'function') {
-          if (scheduledAt.getUTCHours() === 5 && aliasTick) {
+          if (scheduledAt.getUTCHours() === 14 && aliasTick) {
             const r = await warmSoldStats().catch(err => {
               console.error('[Cron] sold-stats warm failed:', err && err.message || err);
               return null;
