@@ -181,6 +181,7 @@ def main() -> int:
         out("  activated, or for another product. Stopping before spending calls.")
         return 0
 
+    # Run after the 00:00 UTC allowance reset (the first try on the 25th was refused).
     out("D. Do older days hold more sales? Sports-brand query, one row per count")
     from datetime import date, timedelta
     brands = "(panini,topps,bowman,upper deck,donruss,prizm,select,optic,mosaic,leaf,fleer,score,hoops,contenders,skybox,stadium club,sage,wild card,onit,playoff,pacific,pinnacle,finest)"
