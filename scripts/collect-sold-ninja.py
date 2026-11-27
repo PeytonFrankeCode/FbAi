@@ -85,7 +85,7 @@ NOT_A_SINGLE = re.compile(
 # "football card" also finds soccer cards (football in most of the world):
 # a Topps Chrome MLS Messi topped the football board on 27 Nov 2026.
 SOCCER = re.compile(r"\b(mls|fifa|uefa|premier league|bundesliga|la liga|serie a|ligue 1|world cup|champions league"
-                    r"|soccer|futbol|f[uú]tbol|merlin|match attax|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
+                    r"|soccer|futbol|f[uú]tbol|topps merlin(?! olsen)|merlin (?:chrome|heritage)|match attax|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
 SOLD_RE = re.compile(r"sold\s+([A-Z][a-z]{2}\s+\d{1,2},?\s+\d{4})", re.I)
 ITEM_RE = re.compile(r"/itm/(?:[^/?#]+/)?(\d{9,15})")
 
