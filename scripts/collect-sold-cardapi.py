@@ -332,7 +332,11 @@ def _player_sport(title: str) -> str | None:
 
 
 SOCCER_RE = re.compile(r"\b(mls|fifa|uefa|premier league|bundesliga|la liga|serie a|ligue 1|world cup|champions league"
-                       r"|soccer|futbol|f[uú]tbol|merlin|match attax|euro 20\d\d|copa)\b", re.I)
+                       r"|soccer|futbol|f[uú]tbol|merlin|match attax|euro 20\d\d|copa|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
+# The same words in SQL, for the one-time sweep of soccer sales any collector
+# stored as football (the OpenWeb Ninja search for "football card" finds them).
+SOCCER_SQL_WORDS = ("% MLS %", "%FIFA%", "%UEFA%", "%Premier League%", "%Bundesliga%", "%Champions League%",
+                    "%Soccer%", "%Merlin%", "%Match Attax%", "%Messi%", "%Ronaldo%", "%Mbapp%", "%Haaland%")
 
 
 def sport_of(s: dict, title: str) -> tuple[str | None, str]:
@@ -635,6 +639,23 @@ def fix_stored() -> None:
             k = f"{r.get('sport') or '?'}->{new}"
             moves[k] = moves.get(k, 0) + 1
         log(f"fix: re-filed {moves}")
+    # Soccer stored as football by any collector, recent first, in batches so
+    # one statement never scans the whole table (D1 overloads, Nov 2026).
+    like = " OR ".join(f"title LIKE {_sql_literal(w)}" for w in SOCCER_SQL_WORDS)
+    since = (datetime.now(timezone.utc).date() - timedelta(days=400)).isoformat()
+    swept = 0
+    for _ in range(10):
+        ids = [r["item_id"] for r in d1(f"SELECT item_id FROM sales WHERE sold_date >= '{since}' "
+                                        f"AND (sport IS NULL OR sport = 'football') AND ({like}) LIMIT 500")]
+        if not ids:
+            break
+        lit = ",".join(_sql_literal(x) for x in ids)
+        push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, f"DELETE FROM sales WHERE item_id IN ({lit});\n"
+                                              f"DELETE FROM vendor_sales WHERE item_id IN ({lit});\n")
+        swept += len(ids)
+        if len(ids) < 500:
+            break   # that scan found them all; don't scan the table again
+    log(f"fix: {swept:,} soccer sales (any collector) removed from football")
     # Photos for the stored sales that have none.
     bare = d1("SELECT s.item_id, s.card_key, s.grader, s.grade, s.image_url FROM sales s "
               f"JOIN vendor_sales v ON v.item_id = s.item_id WHERE v.vendor = '{VENDOR}' AND s.image_url IS NULL")

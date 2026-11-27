@@ -82,6 +82,10 @@ NOT_A_SINGLE = re.compile(
     r"|\bgroup of\b|\bin total\b|\b\d{2,}\s*(?:graded\s+)?cards\b",
     re.I,
 )
+# "football card" also finds soccer cards (football in most of the world):
+# a Topps Chrome MLS Messi topped the football board on 27 Nov 2026.
+SOCCER = re.compile(r"\b(mls|fifa|uefa|premier league|bundesliga|la liga|serie a|ligue 1|world cup|champions league"
+                    r"|soccer|futbol|f[uú]tbol|merlin|match attax|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
 SOLD_RE = re.compile(r"sold\s+([A-Z][a-z]{2}\s+\d{1,2},?\s+\d{4})", re.I)
 ITEM_RE = re.compile(r"/itm/(?:[^/?#]+/)?(\d{9,15})")
 
@@ -211,6 +215,9 @@ def collect() -> tuple[dict[str, Sale], dict]:
             if NOT_A_SINGLE.search(str(item.get("title") or "")):
                 stats["dropped_not_single"] += 1
                 continue
+            if SOCCER.search(str(item.get("title") or "")):
+                stats["dropped_soccer"] = stats.get("dropped_soccer", 0) + 1
+                continue
             sale = to_sale(item)
             if not sale or sale.sold_date < oldest:
                 stats["dropped_old_or_undated"] += 1
@@ -286,7 +293,7 @@ def main() -> int:
         f"calls {stats['calls']}, billed {stats['pages_ok']}; {stats['minutes']} min")
     log(f"stopped because: {stats['stopped']}")
     log(f"results {stats['results']}: kept {len(sales)}, lots/sealed dropped "
-        f"{stats['dropped_not_single']}, undated or older than {KEEP_DAYS} days {stats['dropped_old_or_undated']}")
+        f"{stats['dropped_not_single']}, soccer {stats.get('dropped_soccer', 0)}, undated or older than {KEEP_DAYS} days {stats['dropped_old_or_undated']}")
 
     added = 0
     if sales:

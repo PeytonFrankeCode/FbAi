@@ -43,5 +43,7 @@ check('a change pushed to main re-checks stored sales (sport, photos) first', /d
 const appjs = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 check('the site labels a borrowed photo "Photo of the same card"', /card: 'Photo of the same card'/.test(appjs) && /#same-card\$\/\.test/.test(appjs));
 check('the chosen sport is final: set on the card before it is stored, so the parser\'s set-name guess cannot undo it', /attrs\.sport = s\.sport/.test(py));
+const ninja = fs.readFileSync(path.join(ROOT, 'scripts', 'collect-sold-ninja.py'), 'utf8');
+check('soccer is kept out of football: the OpenWeb Ninja collector drops it, and the fix pass sweeps what any collector stored', /SOCCER\.search/.test(ninja) && /SOCCER_SQL_WORDS/.test(py) && /removed from football/.test(py));
 console.log(failures ? `\n${failures} cardapi check(s) failed` : '\nall cardapi checks passed');
 process.exit(failures ? 1 : 0);
