@@ -45,5 +45,28 @@ check('the site labels a borrowed photo "Photo of the same card"', /card: 'Photo
 check('the chosen sport is final: set on the card before it is stored, so the parser\'s set-name guess cannot undo it', /attrs\.sport = s\.sport/.test(py));
 const ninja = fs.readFileSync(path.join(ROOT, 'scripts', 'collect-sold-ninja.py'), 'utf8');
 check('soccer is kept out of football: the OpenWeb Ninja collector drops it, and the fix pass sweeps what any collector stored', /SOCCER\.search/.test(ninja) && /SOCCER_SQL_WORDS/.test(py) && /removed from football/.test(py));
+// eBay sales only (owner, Nov 2026).
+check('the collector keeps eBay sales only, by default', /EBAY_ONLY = os\.environ\.get\("CARDAPI_EBAY_ONLY", "1"\) != "0"/.test(py) && /if EBAY_ONLY and not is_ebay\(s\):\s+return None, "not eBay"/.test(py));
+check('...asks the vendor for eBay only, and drops the filter if it is refused or empties the day', /PLATFORM_PARAM: dict\[str, str\] = \{"platform": "ebay"\}/.test(py) && /\*\*PLATFORM_PARAM/.test(py) && (py.match(/PLATFORM_PARAM\.clear\(\)/g) || []).length === 2);
+check('...and the stored non-eBay sales are removed on the next fix pass', /non-eBay sales removed \(eBay only\)/.test(py));
+const boards = S._ebayOnlyBoards({ available: true, priciest: [{ itemId: '1234567890' }, { itemId: 'fanatics-9' }, { itemId: 'goldin-3' }, { itemId: null }], mostSold: [1] });
+check('home boards cached before the change leave non-eBay sales off Most expensive', boards.priciest.length === 2 && boards.priciest[0].itemId === '1234567890' && boards.mostSold.length === 1, JSON.stringify(boards.priciest));
+check('...and a board without sales passes through untouched', S._ebayOnlyBoards({ available: false }).available === false && S._ebayOnlyBoards(null) === null);
+// The Python itself: a Fanatics sale is dropped before anything else is read.
+const { execFileSync } = require('child_process');
+let pyOut = '';
+try {
+  pyOut = execFileSync('python3', ['-c', [
+    'import importlib.util, sys',
+    `spec = importlib.util.spec_from_file_location("c", ${JSON.stringify(path.join(ROOT, 'scripts', 'collect-sold-cardapi.py'))})`,
+    'm = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)',
+    'print(m.to_sale({"platform": "Fanatics Collect", "id": "9", "title": "2024 Panini Prizm Bo Nix Silver PSA 10", "price": 500, "sold_at": "2026-11-20"})[1])',
+    'print(m.is_ebay({"platform": "eBay"}), m.is_ebay({"platform": "goldin"}))',
+  ].join('\n')], { encoding: 'utf8', env: { ...process.env, CARD_API_KEY: '' }, timeout: 60000 }).trim();
+} catch (e) { pyOut = 'python failed: ' + String(e.stderr || e.message).slice(-300); }
+// Deploy's runner has no NflCardDB installed (the collector's own workflow
+// does): there the source checks above stand in for this one.
+if (/No module named '?nflcarddb|python3: not found|ENOENT/.test(pyOut)) console.log('SKIP  the collector really drops a Fanatics sale (NflCardDB is not installed here)');
+else check('the collector really drops a Fanatics sale as "not eBay"', /^not eBay\nTrue False$/.test(pyOut), pyOut);
 console.log(failures ? `\n${failures} cardapi check(s) failed` : '\nall cardapi checks passed');
 process.exit(failures ? 1 : 0);

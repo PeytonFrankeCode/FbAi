@@ -22,8 +22,9 @@ What it does, in order:
      $0 / unconfirmed prices, lots, breaks, reprints and sealed product.
   3. Reads every title with NflCardDB's own parser, so rows match PC ones.
   4. Inserts into D1's `sales` with ON CONFLICT DO NOTHING. eBay sales keep
-     their eBay item id (so one we already hold is never duplicated); other
-     platforms get "<platform>-<id>" (fanatics-123), which the site labels.
+     their eBay item id (so one we already hold is never duplicated). Only
+     eBay sales are kept (owner, Nov 2026; CARDAPI_EBAY_ONLY=0 to change that);
+     other platforms would get "<platform>-<id>" (fanatics-123).
   5. Records every sale it added in `vendor_sales`, and keeps that set under
      the plan's storage cap by deleting the oldest. The terms also require
      deleting all stored records within 30 days of cancelling: see
@@ -39,6 +40,7 @@ Settings (environment):
   CARDAPI_QUERY      the title query (default: sports card makers, so TCG is skipped)
   CARDAPI_ROWS       rows to spend per run (default: the plan's daily allowance less 300)
   CARDAPI_DAY        YYYY-MM-DD to collect (default: two days ago, UTC)
+  CARDAPI_EBAY_ONLY  1 (default): keep eBay sales only; 0 also keeps Fanatics, Goldin...
   CARDAPI_PURGE=1    delete every Card API sale from D1 (after cancelling)
   DRY_RUN=1          collect and parse, upload nothing
 """
@@ -192,9 +194,23 @@ def load_raw(path: Path) -> list[dict]:
     return out
 
 
+# eBay sales only (owner, Nov 2026: "only use eBay sales"). Fanatics Collect,
+# Goldin and the auction houses come with no photo and no page to link to.
+# The vendor is asked for eBay only; whether it listens is untested, so other
+# platforms are also dropped here (they still cost rows if it doesn't), and a
+# filter it refuses or that empties the day is dropped for the rest of the run.
+EBAY_ONLY = os.environ.get("CARDAPI_EBAY_ONLY", "1") != "0"
+PLATFORM_PARAM: dict[str, str] = {"platform": "ebay"} if EBAY_ONLY else {}
+
+
+def is_ebay(s: dict) -> bool:
+    return str(s.get("platform") or "").strip().lower() == "ebay"
+
+
 def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
     """One page of the day's sales. Returns (rows, total, rows remaining today)."""
-    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": SORT, "q": BRAND_QUERY}
+    params = {"date_from": DAY, "date_to": DAY, "limit": PAGE, "page": page, "sort": SORT, "q": BRAND_QUERY,
+              **PLATFORM_PARAM}
     if MIN_PRICE > 0:
         params["price_min"] = f"{MIN_PRICE:g}"
     for attempt in range(1, 5):
@@ -212,10 +228,20 @@ def fetch(page: int) -> tuple[list[dict], int | None, int | None]:
         if r.status_code >= 500:
             time.sleep(10 * attempt)
             continue
+        if r.status_code in (400, 422) and PLATFORM_PARAM:
+            log(f"  the vendor refused the platform filter (HTTP {r.status_code}); filtering here instead")
+            PLATFORM_PARAM.clear()
+            return fetch(page)
         if r.status_code != 200:
             log(f"  page {page}: HTTP {r.status_code} {r.text[:150]}")
             return [], None, None
         j = r.json()
+        if page == 1 and PLATFORM_PARAM and not (j.get("data") or []):
+            # A whole day of sports sales with none on eBay means the filter
+            # misread "ebay", not that the day was empty: ask again without it.
+            log("  the platform filter returned nothing; filtering here instead")
+            PLATFORM_PARAM.clear()
+            return fetch(page)
         save_raw(j.get("data") or [])
         left = r.headers.get("x-ratelimit-remaining")
         return (j.get("data") or [], (j.get("pagination") or {}).get("total"),
@@ -227,7 +253,7 @@ def day_total(floor: float) -> int | None:
     """How many sales the day holds at this floor (costs one row)."""
     try:
         r = requests.get(f"{BASE}/sales", params={"date_from": DAY, "date_to": DAY, "limit": 1, "q": BRAND_QUERY,
-                                                 "price_min": f"{floor:g}"},
+                                                 "price_min": f"{floor:g}", **PLATFORM_PARAM},
                          headers={"x-market-api-key": KEY}, timeout=60)
         return int((r.json().get("pagination") or {}).get("total")) if r.ok else None
     except (requests.RequestException, ValueError, TypeError):
@@ -364,6 +390,8 @@ def sport_of(s: dict, title: str) -> tuple[str | None, str]:
 
 def to_sale(s: dict) -> tuple[Sale | None, str]:
     """(sale, '') or (None, why it was dropped)."""
+    if EBAY_ONLY and not is_ebay(s):
+        return None, "not eBay"
     title = str(s.get("title") or "").strip()
     sport, why = sport_of(s, title)
     if not sport:
@@ -427,6 +455,10 @@ def collect() -> tuple[dict[str, Sale], dict]:
         if page == 1 and rows:
             ps = [p for p in (cents(r.get("price_usd") if r.get("price_usd") is not None else r.get("price")) for r in rows) if p]
             ordered = all(a >= b for a, b in zip(ps, ps[1:]))
+            if EBAY_ONLY:
+                n_ebay = sum(1 for r in rows if is_ebay(r))
+                log(f"  platform filter {'on' if PLATFORM_PARAM else 'off'}: {n_ebay} of the first {len(rows)} "
+                    "sales are eBay" + ("" if n_ebay == len(rows) else " (the rest still cost rows)"))
             log(f"  sort {SORT}: first page runs ${ps[0] / 100:,.2f} down to ${ps[-1] / 100:,.2f}"
                 + ("" if ordered or not SORT.startswith("price") else " (NOT in price order: the vendor ignored the sort)") if ps else "")
         for s in rows:
@@ -609,6 +641,17 @@ def fix_stored() -> None:
               "s.listing_format, s.bids, s.best_offer, s.image_url, s.offer_known FROM sales s "
               f"JOIN vendor_sales v ON v.item_id = s.item_id WHERE v.vendor = '{VENDOR}'")
     log(f"fix: {len(rows):,} stored Card API sales")
+    if EBAY_ONLY:
+        # eBay only (owner, Nov 2026): the Fanatics, Goldin and auction-house
+        # sales already stored go. eBay ids are all digits; the others are
+        # "<platform>-<id>".
+        gone = [r["item_id"] for r in rows if not str(r["item_id"]).isdigit()]
+        for i in range(0, len(gone), 500):
+            lit = ",".join(_sql_literal(x) for x in gone[i:i + 500])
+            push_sql(CF_ACCOUNT, D1_ID, CF_TOKEN, f"DELETE FROM sales WHERE item_id IN ({lit});\n"
+                                                  f"DELETE FROM vendor_sales WHERE item_id IN ({lit});\n")
+        log(f"fix: {len(gone):,} non-eBay sales removed (eBay only)")
+        rows = [r for r in rows if str(r["item_id"]).isdigit()]
     drop, refile = [], []
     for r in rows:
         title = str(r.get("title") or "")
