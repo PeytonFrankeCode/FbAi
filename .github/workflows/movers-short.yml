@@ -8,4 +8,9 @@ jobs:
     steps:
       - run: |
           B=https://the-card-huddle.thecardhuddleoffical.workers.dev
-          curl -sS -m 60 -A 'Mozilla/5.0' "$B/api/debug/sold-stats-builds" | python3 -m json.tool
+          curl -sS -m 60 -A 'Mozilla/5.0' "$B/api/debug/sold-stats-builds" | python3 -c "
+          import json,sys; d=json.load(sys.stdin)
+          for b in d['boards']: print(b['sport'], b['days'], 'current' if b['current'] else 'OLD', b['servedFrom'], b['error'] or '')"
+          curl -sS -m 90 -A 'Mozilla/5.0' "$B/api/sold-stats?days=7" | python3 -c "
+          import json,sys; d=json.load(sys.stdin); p=d.get('priciest') or []
+          print('7d: refreshing', d.get('refreshing'), 'photos', sum(1 for x in p if x.get('imageUrl')), 'ids', sum(1 for x in p if x.get('itemId')), 'messi', sum(1 for x in p if 'messi' in (x.get('title') or '').lower()))"
