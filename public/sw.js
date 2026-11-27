@@ -10,7 +10,7 @@
  *
  * Bump VERSION to force a clean cache swap on the next visit.
  */
-const VERSION = 'b131489dd9696';
+const VERSION = 'b326eecd80ce8';
 const SHELL_CACHE = `chuddle-shell-${VERSION}`;
 const DATA_CACHE = `chuddle-data-${VERSION}`;
 
@@ -60,6 +60,12 @@ self.addEventListener('fetch', (event) => {
 
   // Our API is always live.
   if (url.pathname.startsWith('/api/')) return;
+
+  // Cloudflare's own paths (the "Verifying you are human" check, Turnstile,
+  // email protection) are never ours to cache: a challenge served a stale
+  // copy of its scripts never completes, and the page sits frozen on it
+  // (owner, Nov 2026: "completely frozen not loading at all").
+  if (url.pathname.startsWith('/cdn-cgi/')) return;
 
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req));
