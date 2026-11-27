@@ -332,11 +332,11 @@ def _player_sport(title: str) -> str | None:
 
 
 SOCCER_RE = re.compile(r"\b(mls|fifa|uefa|premier league|bundesliga|la liga|serie a|ligue 1|world cup|champions league"
-                       r"|soccer|futbol|f[uú]tbol|merlin|match attax|euro 20\d\d|copa|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
+                       r"|soccer|futbol|f[uú]tbol|topps merlin(?! olsen)|merlin (?:chrome|heritage)|match attax|euro 20\d\d|copa|messi|ronaldo|mbapp[eé]|haaland)\b", re.I)
 # The same words in SQL, for the one-time sweep of soccer sales any collector
 # stored as football (the OpenWeb Ninja search for "football card" finds them).
 SOCCER_SQL_WORDS = ("% MLS %", "%FIFA%", "%UEFA%", "%Premier League%", "%Bundesliga%", "%Champions League%",
-                    "%Soccer%", "%Merlin%", "%Match Attax%", "%Messi%", "%Ronaldo%", "%Mbapp%", "%Haaland%")
+                    "%Soccer%", "%Topps Merlin%", "%Merlin Chrome%", "%Merlin Heritage%", "%Match Attax%", "%Messi%", "%Ronaldo%", "%Mbapp%", "%Haaland%")
 
 
 def sport_of(s: dict, title: str) -> tuple[str | None, str]:
@@ -644,9 +644,13 @@ def fix_stored() -> None:
     like = " OR ".join(f"title LIKE {_sql_literal(w)}" for w in SOCCER_SQL_WORDS)
     since = (datetime.now(timezone.utc).date() - timedelta(days=400)).isoformat()
     swept = 0
-    for _ in range(10):
+    # A few batches a run: each scan is heavy, and D1 answered "overloaded"
+    # during the first sweep (27 Nov). What's left goes on the next run.
+    for _ in range(4):
+        # Merlin Olsen is an NFL Hall of Famer, not a Topps Merlin soccer card.
         ids = [r["item_id"] for r in d1(f"SELECT item_id FROM sales WHERE sold_date >= '{since}' "
-                                        f"AND (sport IS NULL OR sport = 'football') AND ({like}) LIMIT 500")]
+                                        f"AND (sport IS NULL OR sport = 'football') AND ({like}) "
+                                        f"AND title NOT LIKE '%Merlin Olsen%' LIMIT 500")]
         if not ids:
             break
         lit = ",".join(_sql_literal(x) for x in ids)
