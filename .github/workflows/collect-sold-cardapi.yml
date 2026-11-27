@@ -20,13 +20,16 @@ name: Collect sold sales from The Card API (nightly)
 
 on:
   schedule:
-    # Every day at 7:00 AM Eastern (12:00 UTC; 8 AM in summer, as GitHub runs
-    # on UTC). Owner, Nov 2026: "everyday after it just runs at 7 AM".
-    - cron: '0 12 * * *'
-    # One-off: 26 Nov 2026 00:05 UTC (7:05 PM Eastern on the 25th), the first
-    # minute of a fresh daily allowance after the 25th's was spent on a test.
-    # Fires again only on 26 Nov next year; remove it before then.
-    - cron: '5 0 26 11 *'
+    # Every morning around 7 AM Eastern (owner, Nov 2026). GitHub starts
+    # scheduled runs late when it's busy, worst at the top of the hour (the
+    # 12:00 UTC run on 26 Nov started at 20:35), so it's asked five times at
+    # quiet minutes, 11:17-13:17 UTC. The first that starts collects; the rest
+    # find the day's rows spent and stop at once (a 429 costs nothing).
+    - cron: '17 11 * * *'
+    - cron: '43 11 * * *'
+    - cron: '17 12 * * *'
+    - cron: '43 12 * * *'
+    - cron: '17 13 * * *'
   push:
     paths:
       - scripts/collect-sold-cardapi.py
