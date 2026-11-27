@@ -1,4 +1,4 @@
-name: Board build status (one-off, never merge)
+name: Live site check (one-off, never merge)
 on:
   push:
     branches: ['run/movers-short']
@@ -7,11 +7,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          B=https://the-card-huddle.thecardhuddleoffical.workers.dev
-          curl -sS -m 60 -A 'Mozilla/5.0' "$B/api/debug/sold-stats-builds" | python3 -c "
-          import json,sys; d=json.load(sys.stdin)
-          for b in d['boards']: print(b['sport'], b['days'], 'current' if b['current'] else 'OLD', b['servedFrom'], b['error'] or '')"
-          curl -sS -m 90 -A 'Mozilla/5.0' "$B/api/sold-stats?days=7" | python3 -c "
-          import json,sys; d=json.load(sys.stdin); p=d.get('priciest') or []
-          print('7d: refreshing', d.get('refreshing'), 'photos', sum(1 for x in p if x.get('imageUrl')), 'ids', sum(1 for x in p if x.get('itemId')), 'messi', sum(1 for x in p if 'messi' in (x.get('title') or '').lower()))"
-# 2026-11-27T14:36:11
+          for B in https://thecardhuddle.com https://the-card-huddle.thecardhuddleoffical.workers.dev; do
+            echo "======== $B"
+            for p in / /app.js /style.css /sw.js /build.json "/api/health" "/api/sold-stats?days=30" "/api/partners/live-now" "/api/auth/providers"; do
+              curl -sS -m 40 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131' -o /tmp/o -w "%{http_code} %{time_total}s %{size_download}B  $p\n" "$B$p" || echo "FAIL $p"
+            done
+            head -c 300 /tmp/o; echo
+          done
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: |
+          npm i -s playwright@1.49.1 >/dev/null 2>&1 && npx -y playwright@1.49.1 install --with-deps chromium >/dev/null 2>&1
+          cat > f.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch();
+            for (const vp of [{ width: 1366, height: 900 }, { width: 390, height: 844 }]) {
+              const p = await b.newPage({ viewport: vp });
+              const errs = []; let reqs = 0, pending = new Map();
+              p.on('pageerror', e => errs.push('pageerror: ' + e.message));
+              p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text().slice(0, 160)); });
+              p.on('request', r => { reqs++; pending.set(r, Date.now()); });
+              p.on('requestfinished', r => pending.delete(r)); p.on('requestfailed', r => { errs.push('failed: ' + r.url().slice(0, 120) + ' ' + (r.failure() || {}).errorText); pending.delete(r); });
+              const t0 = Date.now();
+              try { await p.goto('https://thecardhuddle.com/', { timeout: 45000, waitUntil: 'domcontentloaded' }); } catch (e) { errs.push('goto: ' + e.message.slice(0, 150)); }
+              console.log(vp.width, 'DOMContentLoaded after', Date.now() - t0, 'ms');
+              await p.waitForTimeout(12000);
+              let resp;
+              try { resp = await Promise.race([p.evaluate(() => new Promise(r => { const s = performance.now(); setTimeout(() => r(Math.round(performance.now() - s)), 0); })), new Promise(r => setTimeout(() => r('NO ANSWER in 8s (main thread frozen)'), 8000))]); } catch (e) { resp = 'err ' + e.message.slice(0, 80); }
+              console.log('  main thread:', resp, '| requests', reqs, '| still pending', pending.size);
+              for (const [r, t] of pending) console.log('   pending', Math.round((Date.now() - t) / 1000) + 's', r.url().slice(0, 120));
+              errs.slice(0, 15).forEach(e => console.log('  ', e));
+              const info = await Promise.race([p.evaluate(() => ({ mp: (document.getElementById('mp-body') || {}).innerText?.slice(0, 120), imgs: document.querySelectorAll('img').length, need: document.querySelectorAll('img[data-need-photo],[data-photo-fix=pending]').length })), new Promise(r => setTimeout(() => r('no answer'), 5000))]).catch(e => e.message);
+              console.log('  page:', JSON.stringify(info));
+              await p.close();
+            }
+            await b.close();
+          })();
+          JS
+          node f.js
