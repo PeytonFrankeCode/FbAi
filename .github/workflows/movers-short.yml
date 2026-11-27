@@ -14,3 +14,4 @@ jobs:
           curl -sS -m 90 -A 'Mozilla/5.0' "$B/api/sold-stats?days=7" | python3 -c "
           import json,sys; d=json.load(sys.stdin); p=d.get('priciest') or []
           print('7d: refreshing', d.get('refreshing'), 'photos', sum(1 for x in p if x.get('imageUrl')), 'ids', sum(1 for x in p if x.get('itemId')), 'messi', sum(1 for x in p if 'messi' in (x.get('title') or '').lower()))"
+# 2026-11-27T14:36:11
