@@ -36,6 +36,14 @@ on:
       - scripts/cardapi-replay.txt
       - .github/workflows/collect-sold-cardapi.yml
   workflow_dispatch:
+  # Backup (owner, Nov 2026): no scheduled try ran on 27 or 28 Nov while
+  # other workflows' schedules did, 9 hours late. Any of these finishing on
+  # main also starts a collection; before 11:00 UTC it stops at once, and
+  # after the day's run the vendor's daily limit stops it for free (429).
+  workflow_run:
+    workflows: ["Collect sold sales (nightly)", "Score sale photos for slabs", "Deploy to Cloudflare Workers"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read

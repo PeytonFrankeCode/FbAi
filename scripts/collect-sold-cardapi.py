@@ -778,6 +778,11 @@ def main() -> int:
     if missing:
         log(f"FAILED: missing secret(s): {', '.join(missing)}")
         return 2
+    # A backup start (another workflow finishing, see the workflow file) waits
+    # for the morning, so the day two back has filled in as usual.
+    if os.environ.get("GITHUB_EVENT_NAME") == "workflow_run" and datetime.now(timezone.utc).hour < 11:
+        log("backup start before 11:00 UTC: nothing to do yet")
+        return 0
     if PURGE:
         ensure_tracking()
         log(f"PURGE: deleted {purge():,} Card API sales from D1")
