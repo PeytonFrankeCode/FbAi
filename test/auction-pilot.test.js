@@ -103,6 +103,9 @@ const S = require(path.join(ROOT, 'server.js'));
   r = await S.auctionPilotTick();
   check('if eBay refuses the bulk read, results are read one at a time instead', r.method === 'single' && singleCalls > 0 && row('111').status === 'sold', JSON.stringify(r));
 
+  const src = require('fs').readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const ens = src.slice(src.indexOf('async function _ensureAuctionPilotTable'), src.indexOf('const _cents ='));
+  check('a failed table check is tried again next tick, never remembered as off', /if \(_auctionPilotReady\) return true;/.test(ens) && !/_auctionPilotReady = false/.test(ens) && /skipped: 'no table', error: _auctionPilotTableError/.test(src));
   process.env.AUCTION_PILOT = 'off';
   check('AUCTION_PILOT=off stops it', (await S.auctionPilotTick()).off === true);
   const rep2 = await S._auctionPilotReport(fakeD1);

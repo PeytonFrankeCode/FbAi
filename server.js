@@ -11520,9 +11520,13 @@ const AUCTION_PILOT_PER_TICK = 4;          // ~380 auctions a day at 96 ticks
 const AUCTION_PILOT_WAIT_MIN = 10;         // read the result this long after the end
 const AUCTION_PILOT_SINGLE_MAX = 8;        // single reads a tick if bulk is refused
 const AUCTION_PILOT_SPORTS = 'Football|Baseball|Basketball';
+// Only success is remembered: a failure (a busy D1 at deploy time) is tried
+// again on the next tick rather than switching the pilot off for the life of
+// the isolate, which is what kept the first cron runs from storing anything.
 let _auctionPilotReady = null;
+let _auctionPilotTableError = null;
 async function _ensureAuctionPilotTable(db) {
-  if (_auctionPilotReady !== null) return _auctionPilotReady;
+  if (_auctionPilotReady) return true;
   try {
     await db.prepare(
       `CREATE TABLE IF NOT EXISTS ${AUCTION_PILOT_TABLE} (
@@ -11547,9 +11551,10 @@ async function _ensureAuctionPilotTable(db) {
     _auctionPilotReady = true;
   } catch (err) {
     console.error('[AuctionPilot] table unavailable:', err && err.message);
-    _auctionPilotReady = false;
+    _auctionPilotTableError = String((err && err.message) || err).slice(0, 200);
+    return false;
   }
-  return _auctionPilotReady;
+  return true;
 }
 const _cents = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.round(n * 100) : null; };
 const _pilotIso = (t) => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
@@ -11617,7 +11622,7 @@ async function _auctionPilotTick() {
   if (String(process.env.AUCTION_PILOT || '').toLowerCase() === 'off') return { off: true };
   const db = getNflDb();
   if (!db) return { skipped: 'no D1 binding' };
-  if (!(await _ensureAuctionPilotTable(db))) return { skipped: 'no table' };
+  if (!(await _ensureAuctionPilotTable(db))) return { skipped: 'no table', error: _auctionPilotTableError };
   const token = await getOAuthToken();
   const headers = { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' };
   const now = Date.now();
