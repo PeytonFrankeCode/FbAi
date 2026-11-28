@@ -8,4 +8,4 @@ jobs:
     steps:
       - run: |
           sleep 5
-          curl -sS -m 90 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131' "https://the-card-huddle.thecardhuddleoffical.workers.dev/api/debug/auction-pilot" | head -c 6000; echo
+          curl -sS -m 90 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131' "https://the-card-huddle.thecardhuddleoffical.workers.dev/api/debug/sold-stats-builds" | head -c 4000; echo
