@@ -134,6 +134,8 @@ PURGE = os.environ.get("CARDAPI_PURGE") == "1"
 ROSTER = os.environ.get("NFLCARDDB_ROSTER", "nflcarddb/config/nfl_players.txt")
 PAGE = 100
 VENDOR = "thecardapi"
+# A backup start (see main) skips a day already holding this many of our sales.
+BACKUP_SKIP_AT = 500
 
 SPORTS = {"football", "baseball", "basketball"}
 NOT_A_SINGLE = re.compile(
@@ -803,6 +805,21 @@ def main() -> int:
         ensure_tracking()
         fix_stored()
         log("")
+    # Only the day's first run collects. Every later start (another scheduled
+    # try, a backup start, a push to main) stops here: the vendor's allowance
+    # counter lags, so a second run on 28 Nov spent ~200 rows re-fetching
+    # sales already held, added none and failed.
+    if PAID and not DRY_RUN and os.environ.get("CARDAPI_DAY") is None:
+        try:
+            ensure_tracking()
+            have = int((d1(f"SELECT COUNT(*) AS n FROM vendor_sales WHERE vendor = '{VENDOR}' AND sold_date = '{DAY}'")
+                        or [{"n": 0}])[0]["n"])
+        except Exception as e:  # noqa: BLE001 - a failed check just means collect
+            log(f"could not check {DAY} ({e}); collecting")
+            have = 0
+        if have >= BACKUP_SKIP_AT:
+            log(f"{DAY} already collected ({have:,} sales held); nothing to do")
+            return 0
     log(f"plan {PLAN}: up to {ROWS:,} rows"
         + ("" if PAID else " (free key: evaluation only, nothing will be uploaded)"))
     budget = ROWS
