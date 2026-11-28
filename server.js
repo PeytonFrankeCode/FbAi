@@ -11493,6 +11493,253 @@ async function _computeSoldStats(db, days, sport = 'football') {
 }
 const _soldStatsLastError = new Map();
 
+// ---- Auction watcher pilot (owner, Nov 2026: "go ahead and build it") ----
+//
+// Step 2 of the free sold-data plan. eBay shows sold prices only to signed-in
+// visitors now, but an auction's price is public through the Browse API while
+// it runs, and the item can still be read after it ends. The pilot proves (or
+// disproves) that before anything reaches the site:
+//
+//   1. Each cron tick picks a few football, baseball and basketball auctions
+//      ending in the next 15 minutes. What they show then is kept ONLY to
+//      measure how much last-second bids move the price; it is never a sale.
+//   2. 10+ minutes after an auction ends it is read again (bulk getItems, 20
+//      at a time; single getItem if bulk is refused). The final winning bid is
+//      the sold price, saved only when there was a bid and the reserve was not
+//      missed. No answer means nothing is saved.
+//   3. A week later a sample is read once more: does eBay still answer, and
+//      with the same price?
+//
+// Everything lives in its own table, auction_pilot; nothing here feeds the
+// site. /api/debug/auction-pilot reports it, including a cross-check against
+// The Card API's eBay sales of the same item numbers (the pass mark: 95%+
+// exact). AUCTION_PILOT=off stops it. Cost: at most about 4 bulk and 9 Browse
+// calls a tick, under 1,000 of the day's ~3,900 spare Browse calls.
+const AUCTION_PILOT_TABLE = 'auction_pilot';
+const AUCTION_PILOT_PER_TICK = 4;          // ~380 auctions a day at 96 ticks
+const AUCTION_PILOT_WAIT_MIN = 10;         // read the result this long after the end
+const AUCTION_PILOT_SINGLE_MAX = 8;        // single reads a tick if bulk is refused
+const AUCTION_PILOT_SPORTS = 'Football|Baseball|Basketball';
+let _auctionPilotReady = null;
+async function _ensureAuctionPilotTable(db) {
+  if (_auctionPilotReady !== null) return _auctionPilotReady;
+  try {
+    await db.prepare(
+      `CREATE TABLE IF NOT EXISTS ${AUCTION_PILOT_TABLE} (
+         item_id           TEXT PRIMARY KEY,  -- Browse id, v1|<legacy>|0
+         legacy_id         TEXT,              -- the eBay item number
+         title             TEXT,
+         end_at            TEXT NOT NULL,
+         pre_price_cents   INTEGER,           -- what it showed before the end (never a sale)
+         pre_bids          INTEGER,
+         seen_at           TEXT NOT NULL,
+         status            TEXT NOT NULL,     -- watching | sold | unsold | gone
+         final_price_cents INTEGER,           -- the winning bid, read after the end
+         final_bids        INTEGER,
+         reserve_met       INTEGER,
+         checked_at        TEXT,
+         method            TEXT,              -- bulk | single
+         checks            INTEGER NOT NULL DEFAULT 0,
+         week_price_cents  INTEGER,           -- read again a week on; -1 = eBay no longer answers
+         week_checked_at   TEXT
+       )`).run();
+    await db.prepare(`CREATE INDEX IF NOT EXISTS auction_pilot_status ON ${AUCTION_PILOT_TABLE} (status, end_at)`).run();
+    _auctionPilotReady = true;
+  } catch (err) {
+    console.error('[AuctionPilot] table unavailable:', err && err.message);
+    _auctionPilotReady = false;
+  }
+  return _auctionPilotReady;
+}
+const _cents = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.round(n * 100) : null; };
+const _pilotIso = (t) => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+// What one Browse item says about how its auction ended.
+function _auctionOutcome(item, nowMs) {
+  if (!item) return null;
+  const end = Date.parse(item.itemEndDate || '');
+  if (Number.isFinite(end) && end > nowMs) return { ended: false };
+  const bids = Number(item.bidCount) || 0;
+  const price = _cents((item.currentBidPrice && item.currentBidPrice.value) ?? (item.price && item.price.value));
+  const reserveMissed = item.reservePriceMet === false;
+  return { ended: true, bids, price, reserveMet: reserveMissed ? 0 : 1, sold: bids > 0 && !reserveMissed && price != null };
+}
+
+async function _pilotBulk(ids, headers) {
+  const r = await axios.get('https://api.ebay.com/buy/browse/v1/item/', {
+    params: { item_ids: ids.join(',') }, headers, timeout: 20000 });
+  const map = new Map();
+  for (const it of (r.data && r.data.items) || []) map.set(it.itemId, it);
+  return map;
+}
+async function _pilotSingle(id, headers) {
+  try {
+    const r = await axios.get(`https://api.ebay.com/buy/browse/v1/item/${encodeURIComponent(id)}`, { headers, timeout: 15000 });
+    return r.data || null;
+  } catch (err) {
+    const st = err.response && err.response.status;
+    if (st === 404 || st === 410) return null;   // eBay no longer answers for it
+    throw err;
+  }
+}
+// Reads these items, bulk first. Returns { items: Map, method }.
+async function _pilotRead(ids, headers) {
+  try {
+    const items = new Map();
+    for (let i = 0; i < ids.length; i += 20) {
+      for (const [k, v] of await _pilotBulk(ids.slice(i, i + 20), headers)) items.set(k, v);
+    }
+    return { items, method: 'bulk' };
+  } catch (err) {
+    const st = err.response && err.response.status;
+    if (st !== 403 && st !== 401) throw err;
+    console.log('[AuctionPilot] bulk getItems refused (' + st + '); reading one at a time');
+    const items = new Map();
+    for (const id of ids.slice(0, AUCTION_PILOT_SINGLE_MAX)) {
+      const it = await _pilotSingle(id, headers);
+      if (it) items.set(id, it);
+    }
+    return { items, method: 'single', readIds: ids.slice(0, AUCTION_PILOT_SINGLE_MAX) };
+  }
+}
+
+async function auctionPilotTick() {
+  if (String(process.env.AUCTION_PILOT || '').toLowerCase() === 'off') return { off: true };
+  const db = getNflDb();
+  if (!db || !(await _ensureAuctionPilotTable(db))) return { skipped: 'no table' };
+  const token = await getOAuthToken();
+  const headers = { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' };
+  const now = Date.now();
+  const out = { watched: 0, resolved: 0, weekChecked: 0 };
+
+  // 1. A few auctions ending in the next 15 minutes, chosen at random from the
+  // first 50 so the sample is not only the very next to close.
+  try {
+    const r = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: { category_ids: '261328', limit: 50, sort: 'endingSoonest',
+                filter: `buyingOptions:{AUCTION},itemEndDate:[..${_pilotIso(now + 15 * 60000)}]`,
+                aspect_filter: `categoryId:261328,Sport:{${AUCTION_PILOT_SPORTS}}` },
+      headers, timeout: 15000 });
+    const pool = ((r.data && r.data.itemSummaries) || [])
+      .filter(it => it.itemId && Date.parse(it.itemEndDate || '') > now + 60000);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    for (const it of pool.slice(0, AUCTION_PILOT_PER_TICK)) {
+      await db.prepare(
+        `INSERT OR IGNORE INTO ${AUCTION_PILOT_TABLE} (item_id, legacy_id, title, end_at, pre_price_cents, pre_bids, seen_at, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'watching')`).bind(
+        it.itemId, String(it.legacyItemId || (String(it.itemId).split('|')[1] || '')), String(it.title || '').slice(0, 200),
+        it.itemEndDate, _cents((it.currentBidPrice && it.currentBidPrice.value) ?? (it.price && it.price.value)),
+        Number(it.bidCount) || 0, new Date(now).toISOString()).run();
+      out.watched++;
+    }
+  } catch (err) {
+    console.error('[AuctionPilot] snapshot failed:', err && err.message);
+  }
+
+  // 2. The results of auctions that ended 10+ minutes ago.
+  const due = (await db.prepare(
+    `SELECT item_id, checks FROM ${AUCTION_PILOT_TABLE} WHERE status = 'watching' AND end_at < ? ORDER BY end_at LIMIT 40`)
+    .bind(new Date(now - AUCTION_PILOT_WAIT_MIN * 60000).toISOString()).all()).results || [];
+  if (due.length) {
+    try {
+      const { items, method, readIds } = await _pilotRead(due.map(d => d.item_id), headers);
+      const read = new Set(readIds || due.map(d => d.item_id));
+      for (const d of due) {
+        if (!read.has(d.item_id)) continue;
+        const o = _auctionOutcome(items.get(d.item_id), now);
+        if (o && !o.ended) continue;
+        if (!o) {
+          // Not returned: tried again on later ticks, then given up on.
+          await db.prepare(`UPDATE ${AUCTION_PILOT_TABLE} SET checks = checks + 1, method = ?,
+                              status = CASE WHEN checks + 1 >= 3 THEN 'gone' ELSE status END, checked_at = ? WHERE item_id = ?`)
+            .bind(method, new Date(now).toISOString(), d.item_id).run();
+          continue;
+        }
+        await db.prepare(`UPDATE ${AUCTION_PILOT_TABLE} SET status = ?, final_price_cents = ?, final_bids = ?, reserve_met = ?,
+                            checked_at = ?, method = ?, checks = checks + 1 WHERE item_id = ?`)
+          .bind(o.sold ? 'sold' : 'unsold', o.price, o.bids, o.reserveMet, new Date(now).toISOString(), method, d.item_id).run();
+        out.resolved++;
+      }
+      out.method = method;
+    } catch (err) {
+      console.error('[AuctionPilot] result read failed:', err && err.message);
+    }
+  }
+
+  // 3. A week on: does eBay still answer, with the same price?
+  const old = (await db.prepare(
+    `SELECT item_id FROM ${AUCTION_PILOT_TABLE} WHERE status = 'sold' AND week_checked_at IS NULL AND end_at < ? LIMIT 20`)
+    .bind(new Date(now - 7 * 86400000).toISOString()).all()).results || [];
+  if (old.length) {
+    try {
+      const { items, readIds } = await _pilotRead(old.map(d => d.item_id), headers);
+      const read = new Set(readIds || old.map(d => d.item_id));
+      for (const d of old) {
+        if (!read.has(d.item_id)) continue;
+        const o = _auctionOutcome(items.get(d.item_id), now);
+        await db.prepare(`UPDATE ${AUCTION_PILOT_TABLE} SET week_price_cents = ?, week_checked_at = ? WHERE item_id = ?`)
+          .bind(o && o.price != null ? o.price : -1, new Date(now).toISOString(), d.item_id).run();
+        out.weekChecked++;
+      }
+    } catch (err) {
+      console.error('[AuctionPilot] week re-read failed:', err && err.message);
+    }
+  }
+  return out;
+}
+
+// The pilot's scorecard. Public and read-only, cached 10 minutes.
+async function _auctionPilotReport(db) {
+  const T = AUCTION_PILOT_TABLE;
+  const one = async (sql, ...b) => ((await db.prepare(sql).bind(...b).all()).results || []);
+  const byStatus = await one(`SELECT status, method, COUNT(*) AS n FROM ${T} GROUP BY status, method`);
+  const lift = (await one(
+    `SELECT COUNT(*) AS n, SUM(CASE WHEN final_price_cents > pre_price_cents THEN 1 ELSE 0 END) AS rose,
+            AVG(CAST(final_price_cents AS REAL) / pre_price_cents) AS avg_ratio
+       FROM ${T} WHERE status = 'sold' AND pre_price_cents > 0`))[0] || {};
+  // The Card API holds some of the same auctions under their eBay item number.
+  const cross = await one(
+    `SELECT p.legacy_id, p.title, p.final_price_cents AS ours, s.price_cents AS theirs
+       FROM ${T} p JOIN sales s ON s.item_id = p.legacy_id WHERE p.status = 'sold' LIMIT 500`);
+  const exact = cross.filter(r => r.ours === r.theirs).length;
+  const week = (await one(
+    `SELECT COUNT(*) AS n, SUM(CASE WHEN week_price_cents = final_price_cents THEN 1 ELSE 0 END) AS same,
+            SUM(CASE WHEN week_price_cents = -1 THEN 1 ELSE 0 END) AS gone
+       FROM ${T} WHERE week_checked_at IS NOT NULL`))[0] || {};
+  const samples = await one(
+    `SELECT legacy_id, title, pre_price_cents, final_price_cents, final_bids, end_at FROM ${T}
+      WHERE status = 'sold' ORDER BY end_at DESC LIMIT 20`);
+  const usd = (c) => (c == null ? null : Math.round(c) / 100);
+  return {
+    generatedAt: new Date().toISOString(),
+    byStatus,
+    snipes: { sold: lift.n || 0, finalAbovePreEnd: lift.rose || 0,
+              avgFinalOverPreEnd: lift.avg_ratio ? Math.round(lift.avg_ratio * 1000) / 1000 : null },
+    crossCheck: { matched: cross.length, exact, exactPct: cross.length ? Math.round((exact / cross.length) * 1000) / 10 : null,
+                  passMark: 95,
+                  mismatches: cross.filter(r => r.ours !== r.theirs).slice(0, 15)
+                    .map(r => ({ item: `https://www.ebay.com/itm/${r.legacy_id}`, title: r.title, ours: usd(r.ours), cardApi: usd(r.theirs) })) },
+    weekLater: { checked: week.n || 0, samePrice: week.same || 0, noLongerAnswers: week.gone || 0 },
+    spotCheck: samples.map(r => ({ item: `https://www.ebay.com/itm/${r.legacy_id}`, title: r.title,
+                                   preEnd: usd(r.pre_price_cents), sold: usd(r.final_price_cents), bids: r.final_bids, ended: r.end_at })),
+  };
+}
+const AUCTION_PILOT_REPORT_KEY = 'debug:auction-pilot:v1';
+app.get('/api/debug/auction-pilot', async (req, res) => {
+  const cached = await cacheGet(AUCTION_PILOT_REPORT_KEY);
+  if (cached) return res.json(_fromCache(cached));
+  const db = getNflDb();
+  if (!db) return res.json({ available: false });
+  try {
+    if (!(await _ensureAuctionPilotTable(db))) return res.json({ available: false });
+    const out = await _auctionPilotReport(db);
+    await cachePut(AUCTION_PILOT_REPORT_KEY, out, 600);
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ error: String((err && err.message) || err).slice(0, 200) });
+  }
+});
+
 // How many football, baseball and basketball auctions end on eBay, the first
 // test of an auction watcher (owner, Nov 2026: count the market before
 // building one). Search totals only (limit=1), plus the app's Browse quota.
@@ -23761,7 +24008,7 @@ app.post('/api/admin/game/swap', async (req, res) => {
   } catch (err) { _gameFail(res, 'swap', err); }
 });
 
-module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE, _saleLink, _salePlatform, _ebayOnlyBoards, _liveNowList, _liveNowMemo, _isLive, _streamUrlOk };
+module.exports = { _gameTestHooks, _gameCall, _gameBoardMemo, _gamePackRaw, GAME_SWAP_KEY, GAME_STATS_KEY, _fitTitle, _bountySetStripe, bountyTick, _bountyGet, _bountySave, _bountyPaid, bountyPaymentsOn, _userSyncSave, collectionWeekly, _collWeekCards, _collWeekSummary, _collWeekMessage, _collWeekToken, COLL_WEEK_KEY, _growthSrc, _growthRefOf, _huddleStep, _spellVocab, _huddleFollowUps, HUDDLE_PLANS, _aiCostUsd, _huddleTier, MARKET_OTHER_SPORTS, _computeMarketIndex, _computeMarketBasket, _marketIndexKey, _marketBasketKey, _comparablePlayers, _huddleAiVisuals, HUDDLE_AI_PER_DAY, loadSubscriptions, saveSubscriptions, _bizSetPaused, BIZ_IDENTIFY_SCHEMA, _bizCardsJson, _bizAskSystem, _bizSetClient, _bizSettleEnded, _bizRunTool, _bizToolText, BIZ_AI_TOOLS, _searchChecklists, _d1Retry, _topupShare, _topupCredit, _huddleTopup, _huddleTopupAdd, _huddleTopupSpend, HUDDLE_TOPUP_PRICE_PER_M, _productOverview, _topPlayers, GRADER_FEES, _footballSql, _nflHasSportColumn, MOVERS_MIN_HALF, MOVERS_MIN_YEAR, bizRevalueAll, _bizRevalue, bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _marketDriftAt, _primeMarketDrift, _playerDrift, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, pricedHead, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip, trialReminders, _trialReminderEmail, TRIAL_REMIND_DAYS, partnerInvoicePaid, partnerChargeRefunded, _partnerTotals, PARTNER_RATE, _saleLink, _salePlatform, _ebayOnlyBoards, auctionPilotTick, _auctionOutcome, _auctionPilotReport, _ensureAuctionPilotTable, _liveNowList, _liveNowMemo, _isLive, _streamUrlOk };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

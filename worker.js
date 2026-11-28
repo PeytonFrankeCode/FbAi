@@ -148,7 +148,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick, auctionPilotTick } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -160,7 +160,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, trialReminders, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock, pricedHead, bizRevalueAll, collectionWeekly, bountyTick, auctionPilotTick };
   return serverInit;
 }
 
@@ -1413,7 +1413,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll, collectionWeekly, bountyTick } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll, collectionWeekly, bountyTick, auctionPilotTick } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1638,6 +1638,17 @@ export default {
           await collectionWeekly().catch(err => console.error('[Cron] collection week failed:', err && err.message || err));
         } else {
           console.error('[Cron] collectionWeekly missing from init() — not wired through');
+        }
+
+        // The auction watcher pilot (owner, Nov 2026): a few auctions watched
+        // to their end each tick, kept apart from the site's sales. Isolated
+        // like the rest; AUCTION_PILOT=off stops it.
+        if (typeof auctionPilotTick === 'function') {
+          await auctionPilotTick()
+            .then(r => console.log('[Cron] auction pilot', JSON.stringify(r)))
+            .catch(err => console.error('[Cron] auction pilot failed:', err && err.message || err));
+        } else {
+          console.error('[Cron] auctionPilotTick missing from init() — not wired through');
         }
 
         // Home-page boards with no current copy (a deploy changed the key, or
