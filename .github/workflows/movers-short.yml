@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          sleep 5
+          sleep 330   # let the deploy finish
           for B in https://the-card-huddle.thecardhuddleoffical.workers.dev https://thecardhuddle.com; do
             echo "======== $B"
             curl -sS -m 90 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131' "$B/api/debug/auction-count" | head -c 3000; echo
