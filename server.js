@@ -11493,6 +11493,60 @@ async function _computeSoldStats(db, days, sport = 'football') {
 }
 const _soldStatsLastError = new Map();
 
+// How many football, baseball and basketball auctions end on eBay, the first
+// test of an auction watcher (owner, Nov 2026: count the market before
+// building one). Search totals only (limit=1), plus the app's Browse quota.
+// Public and read-only; the answer is cached an hour, so at most 8 eBay
+// calls an hour whoever asks.
+const AUCTION_COUNT_KEY = 'debug:auction-count:v1';
+const AUCTION_SPORTS = ['Football', 'Baseball', 'Basketball'];
+async function _auctionCount() {
+  const token = await getOAuthToken();
+  const headers = { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' };
+  const now = Date.now();
+  const iso = (t) => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const total = async (filter, sport) => {
+    try {
+      const r = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+        params: { category_ids: '261328', limit: 1, filter,
+                  ...(sport ? { aspect_filter: `categoryId:261328,Sport:{${sport}}` } : {}) },
+        headers, timeout: 15000 });
+      return Number(r.data && r.data.total) || 0;
+    } catch (err) {
+      return `error ${(err.response && err.response.status) || err.message}`;
+    }
+  };
+  const window = (mins) => `itemEndDate:[${iso(now)}..${iso(now + mins * 60000)}]`;
+  const out = { at: new Date(now).toISOString(), category: 'Sports Trading Card Singles (261328)', next24h: {}, next2min: {} };
+  for (const sport of [null, ...AUCTION_SPORTS]) {
+    const k = sport || 'all';
+    out.next24h[k] = await total(`buyingOptions:{AUCTION},${window(24 * 60)}`, sport);
+  }
+  out.next2min.all = await total(`buyingOptions:{AUCTION},${window(2)}`, null);
+  out.fixedPriceListedAll = await total('buyingOptions:{FIXED_PRICE}', null);
+  out.auctionsLiveAll = await total('buyingOptions:{AUCTION}', null);
+  try {
+    const r = await axios.get('https://api.ebay.com/developer/analytics/v1_beta/rate_limit/', {
+      params: { api_name: 'browse' }, headers: { Authorization: `Bearer ${token}` }, timeout: 15000 });
+    out.quota = ((r.data && r.data.rateLimits) || []).flatMap(a => (a.resources || []).map(x => ({
+      api: `${a.apiName}/${x.name}`, ...((x.rates || [])[0] || {}) })));
+  } catch (err) {
+    out.quota = `error ${(err.response && err.response.status) || err.message}`;
+  }
+  return out;
+}
+app.get('/api/debug/auction-count', async (req, res) => {
+  const cached = await cacheGet(AUCTION_COUNT_KEY);
+  if (cached) return res.json(_fromCache(cached));
+  try {
+    const out = await _auctionCount();
+    await cachePut(AUCTION_COUNT_KEY, out, 3600);
+    res.json(out);
+  } catch (err) {
+    res.status(502).json({ error: String((err && err.message) || err).slice(0, 200) });
+  }
+});
+
 // Which boards are current, which are served from an older copy, and why a
 // failed build failed. Read-only: KV reads only, no D1.
 app.get('/api/debug/sold-stats-builds', async (req, res) => {
