@@ -1414,6 +1414,19 @@ export default {
     ctx.waitUntil((async () => {
       try {
         const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, bizRevalueAll, collectionWeekly, bountyTick, auctionPilotTick } = await init(env);
+        // The auction watcher pilot (owner, Nov 2026): a few auctions watched
+        // to their end each tick, kept apart from the site's sales. First in
+        // the tick: after the heavy jobs D1 answered "overloaded" (28 Nov),
+        // and its handful of small writes is no burden at the start. Isolated
+        // like the rest; AUCTION_PILOT=off stops it.
+        if (typeof auctionPilotTick === 'function') {
+          await auctionPilotTick()
+            .then(r => console.log('[Cron] auction pilot', JSON.stringify(r)))
+            .catch(err => console.error('[Cron] auction pilot failed:', err && err.message || err));
+        } else {
+          console.error('[Cron] auctionPilotTick missing from init() — not wired through');
+        }
+
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1638,17 +1651,6 @@ export default {
           await collectionWeekly().catch(err => console.error('[Cron] collection week failed:', err && err.message || err));
         } else {
           console.error('[Cron] collectionWeekly missing from init() — not wired through');
-        }
-
-        // The auction watcher pilot (owner, Nov 2026): a few auctions watched
-        // to their end each tick, kept apart from the site's sales. Isolated
-        // like the rest; AUCTION_PILOT=off stops it.
-        if (typeof auctionPilotTick === 'function') {
-          await auctionPilotTick()
-            .then(r => console.log('[Cron] auction pilot', JSON.stringify(r)))
-            .catch(err => console.error('[Cron] auction pilot failed:', err && err.message || err));
-        } else {
-          console.error('[Cron] auctionPilotTick missing from init() — not wired through');
         }
 
         // Home-page boards with no current copy (a deploy changed the key, or

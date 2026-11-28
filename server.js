@@ -11528,7 +11528,7 @@ let _auctionPilotTableError = null;
 async function _ensureAuctionPilotTable(db) {
   if (_auctionPilotReady) return true;
   try {
-    await db.prepare(
+    await _d1Retry(() => db.prepare(
       `CREATE TABLE IF NOT EXISTS ${AUCTION_PILOT_TABLE} (
          item_id           TEXT PRIMARY KEY,  -- Browse id, v1|<legacy>|0
          legacy_id         TEXT,              -- the eBay item number
@@ -11546,8 +11546,8 @@ async function _ensureAuctionPilotTable(db) {
          checks            INTEGER NOT NULL DEFAULT 0,
          week_price_cents  INTEGER,           -- read again a week on; -1 = eBay no longer answers
          week_checked_at   TEXT
-       )`).run();
-    await db.prepare(`CREATE INDEX IF NOT EXISTS auction_pilot_status ON ${AUCTION_PILOT_TABLE} (status, end_at)`).run();
+       )`).run(), 3000);
+    await _d1Retry(() => db.prepare(`CREATE INDEX IF NOT EXISTS auction_pilot_status ON ${AUCTION_PILOT_TABLE} (status, end_at)`).run(), 3000);
     _auctionPilotReady = true;
   } catch (err) {
     console.error('[AuctionPilot] table unavailable:', err && err.message);
