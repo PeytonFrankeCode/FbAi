@@ -11496,9 +11496,9 @@ const _soldStatsLastError = new Map();
 // How many football, baseball and basketball auctions end on eBay, the first
 // test of an auction watcher (owner, Nov 2026: count the market before
 // building one). Search totals only (limit=1), plus the app's Browse quota.
-// Public and read-only; the answer is cached an hour, so at most 8 eBay
+// Public and read-only; the answer is cached an hour, so at most 11 eBay
 // calls an hour whoever asks.
-const AUCTION_COUNT_KEY = 'debug:auction-count:v1';
+const AUCTION_COUNT_KEY = 'debug:auction-count:v2';
 const AUCTION_SPORTS = ['Football', 'Baseball', 'Basketball'];
 async function _auctionCount() {
   const token = await getOAuthToken();
@@ -11511,7 +11511,9 @@ async function _auctionCount() {
         params: { category_ids: '261328', limit: 1, filter,
                   ...(sport ? { aspect_filter: `categoryId:261328,Sport:{${sport}}` } : {}) },
         headers, timeout: 15000 });
-      return Number(r.data && r.data.total) || 0;
+      const w = ((r.data && r.data.warnings) || []).map(x => x.message || x.errorId).filter(Boolean);
+      const n = Number(r.data && r.data.total) || 0;
+      return w.length ? { total: n, warnings: w } : n;
     } catch (err) {
       return `error ${(err.response && err.response.status) || err.message}`;
     }
@@ -11522,7 +11524,13 @@ async function _auctionCount() {
     const k = sport || 'all';
     out.next24h[k] = await total(`buyingOptions:{AUCTION},${window(24 * 60)}`, sport);
   }
+  // The first run's window was ignored (the 2-minute count equalled every live
+  // auction), so eBay's documented forms are tried side by side.
+  const isoMs = (t) => new Date(t).toISOString();
   out.next2min.all = await total(`buyingOptions:{AUCTION},${window(2)}`, null);
+  out.next2min.withMs = await total(`buyingOptions:{AUCTION},itemEndDate:[${isoMs(now)}..${isoMs(now + 120000)}]`, null);
+  out.next2min.upperOnly = await total(`buyingOptions:{AUCTION},itemEndDate:[..${iso(now + 120000)}]`, null);
+  out.next2min.endDateOnly = await total(`itemEndDate:[${iso(now)}..${iso(now + 120000)}]`, null);
   out.fixedPriceListedAll = await total('buyingOptions:{FIXED_PRICE}', null);
   out.auctionsLiveAll = await total('buyingOptions:{AUCTION}', null);
   try {
