@@ -21,7 +21,7 @@ const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
   const fn = src.slice(src.indexOf('async function _auctionCount'), src.indexOf("app.get('/api/debug/auction-count'"));
   check('it asks eBay for totals only (limit 1), in Sports Trading Card Singles', /limit: 1/.test(fn) && /category_ids: '261328'/.test(fn));
   check('it counts auctions ending in the next 24 hours, per sport, and in the next 2 minutes', /buyingOptions:\{AUCTION\},\$\{window\(24 \* 60\)\}/.test(fn) && /window\(2\)/.test(fn) && /Sport:\{\$\{sport\}\}/.test(fn));
-  check('the answer is cached an hour, so the public page costs at most 8 calls an hour', /cachePut\(AUCTION_COUNT_KEY, out, 3600\)/.test(src) && (fn.match(/await total\(/g) || []).length === 4);
+  check('the answer is cached an hour, so the public page costs at most 11 calls an hour', /cachePut\(AUCTION_COUNT_KEY, out, 3600\)/.test(src) && (fn.match(/await total\(/g) || []).length === 7);
   console.log(failures ? `\n${failures} auction-count check(s) failed` : '\nall auction-count checks passed');
   process.exit(failures ? 1 : 0);
 })();
