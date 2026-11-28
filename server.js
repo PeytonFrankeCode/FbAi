@@ -11646,6 +11646,9 @@ async function _auctionPilotTick() {
     const pool = ((r.data && r.data.itemSummaries) || [])
       .filter(it => it.itemId && Date.parse(it.itemEndDate || '') > now + 60000);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    // Auctions that already have a bid first: those are the sales, and a
+    // pilot of no-bid auctions proves nothing about reading a sold price.
+    pool.sort((a, b) => ((Number(b.bidCount) || 0) > 0) - ((Number(a.bidCount) || 0) > 0));
     for (const it of pool.slice(0, AUCTION_PILOT_PER_TICK)) {
       await db.prepare(
         `INSERT OR IGNORE INTO ${AUCTION_PILOT_TABLE} (item_id, legacy_id, title, end_at, pre_price_cents, pre_bids, seen_at, status)
@@ -11667,6 +11670,12 @@ async function _auctionPilotTick() {
     try {
       const { items, method, readIds } = await _pilotRead(due.map(d => d.item_id), headers);
       const read = new Set(readIds || due.map(d => d.item_id));
+      // What eBay actually returns for an ended auction, for the scorecard.
+      const first = [...items.values()][0];
+      if (first) out.sample = { itemId: first.itemId, itemEndDate: first.itemEndDate, bidCount: first.bidCount,
+        currentBidPrice: first.currentBidPrice, price: first.price, reservePriceMet: first.reservePriceMet,
+        uniqueBidderCount: first.uniqueBidderCount, buyingOptions: first.buyingOptions,
+        availability: (first.estimatedAvailabilities || []).map(a => a.estimatedAvailabilityStatus) };
       for (const d of due) {
         if (!read.has(d.item_id)) continue;
         const o = _auctionOutcome(items.get(d.item_id), now);
@@ -11684,6 +11693,7 @@ async function _auctionPilotTick() {
         out.resolved++;
       }
       out.method = method;
+      if (method === 'single') out.bulkRefused = true;
     } catch (err) {
       fail('result read', err);
     }
@@ -11715,7 +11725,7 @@ async function _auctionPilotTick() {
 async function _auctionPilotReport(db) {
   const T = AUCTION_PILOT_TABLE;
   const one = async (sql, ...b) => ((await db.prepare(sql).bind(...b).all()).results || []);
-  const byStatus = await one(`SELECT status, method, COUNT(*) AS n FROM ${T} GROUP BY status, method`);
+  const byStatus = await one(`SELECT status, method, COUNT(*) AS n, SUM(CASE WHEN pre_bids > 0 THEN 1 ELSE 0 END) AS hadBidsBeforeEnd FROM ${T} GROUP BY status, method`);
   const lift = (await one(
     `SELECT COUNT(*) AS n, SUM(CASE WHEN final_price_cents > pre_price_cents THEN 1 ELSE 0 END) AS rose,
             AVG(CAST(final_price_cents AS REAL) / pre_price_cents) AS avg_ratio
