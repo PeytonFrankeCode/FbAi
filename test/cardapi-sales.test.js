@@ -46,6 +46,7 @@ check('the chosen sport is final: set on the card before it is stored, so the pa
 const ninja = fs.readFileSync(path.join(ROOT, 'scripts', 'collect-sold-ninja.py'), 'utf8');
 check('soccer is kept out of football: the OpenWeb Ninja collector drops it, and the fix pass sweeps what any collector stored', /SOCCER\.search/.test(ninja) && /SOCCER_SQL_WORDS/.test(py) && /removed from football/.test(py));
 check('the collection has backup starts (other workflows finishing), which wait until 11:00 UTC', /workflow_run:\s+workflows: \["Collect sold sales \(nightly\)"/.test(wf) && /GITHUB_EVENT_NAME"\) == "workflow_run" and datetime\.now\(timezone\.utc\)\.hour < 11/.test(py));
+check('only the day\'s first run collects; any later start skips a day already collected, so rows are never re-bought', /if have >= BACKUP_SKIP_AT:\s+log\(f"\{DAY\} already collected/.test(py) && /BACKUP_SKIP_AT = 500/.test(py));
 // eBay sales only (owner, Nov 2026).
 check('the collector keeps eBay sales only, by default', /EBAY_ONLY = os\.environ\.get\("CARDAPI_EBAY_ONLY", "1"\) != "0"/.test(py) && /if EBAY_ONLY and not is_ebay\(s\):\s+return None, "not eBay"/.test(py));
 check('...asks the vendor for eBay only, and drops the filter if it is refused or empties the day', /PLATFORM_PARAM: dict\[str, str\] = \{"platform": "ebay"\}/.test(py) && /\*\*PLATFORM_PARAM/.test(py) && (py.match(/PLATFORM_PARAM\.clear\(\)/g) || []).length === 2);
