@@ -105,6 +105,8 @@ const S = require(path.join(ROOT, 'server.js'));
 
   process.env.AUCTION_PILOT = 'off';
   check('AUCTION_PILOT=off stops it', (await S.auctionPilotTick()).off === true);
+  const rep2 = await S._auctionPilotReport(fakeD1);
+  check('the scorecard shows the last run, errors included', rep2.lastTick && rep2.lastTick.off === true && rep2.lastTick.at, JSON.stringify(rep2.lastTick));
   Date.now = realNow;
   console.log(failures ? `\n${failures} auction-pilot check(s) failed` : '\nall auction-pilot checks passed');
   process.exit(failures ? 1 : 0);

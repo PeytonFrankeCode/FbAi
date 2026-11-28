@@ -11603,14 +11603,30 @@ async function _pilotRead(ids, headers) {
   }
 }
 
+// The last tick's outcome, errors included, for the scorecard: a cron's
+// console is not something anyone here can read.
+const AUCTION_PILOT_LAST_KEY = 'debug:auction-pilot:last';
+let _auctionPilotLast = null;   // this isolate's copy, when KV is not there
 async function auctionPilotTick() {
+  const out = await _auctionPilotTick().catch(err => ({ error: String((err && err.message) || err).slice(0, 300) }));
+  _auctionPilotLast = { at: new Date().toISOString(), ...out };
+  await cachePut(AUCTION_PILOT_LAST_KEY, _auctionPilotLast, 7 * 86400);
+  return out;
+}
+async function _auctionPilotTick() {
   if (String(process.env.AUCTION_PILOT || '').toLowerCase() === 'off') return { off: true };
   const db = getNflDb();
-  if (!db || !(await _ensureAuctionPilotTable(db))) return { skipped: 'no table' };
+  if (!db) return { skipped: 'no D1 binding' };
+  if (!(await _ensureAuctionPilotTable(db))) return { skipped: 'no table' };
   const token = await getOAuthToken();
   const headers = { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' };
   const now = Date.now();
-  const out = { watched: 0, resolved: 0, weekChecked: 0 };
+  const out = { watched: 0, resolved: 0, weekChecked: 0, errors: [] };
+  const fail = (where, err) => {
+    const st = err && err.response && err.response.status;
+    const body = err && err.response && err.response.data ? JSON.stringify(err.response.data).slice(0, 200) : '';
+    out.errors.push(`${where}: ${st ? 'HTTP ' + st + ' ' : ''}${String((err && err.message) || err).slice(0, 120)} ${body}`.trim());
+  };
 
   // 1. A few auctions ending in the next 15 minutes, chosen at random from the
   // first 50 so the sample is not only the very next to close.
@@ -11620,6 +11636,8 @@ async function auctionPilotTick() {
                 filter: `buyingOptions:{AUCTION},itemEndDate:[..${_pilotIso(now + 15 * 60000)}]`,
                 aspect_filter: `categoryId:261328,Sport:{${AUCTION_PILOT_SPORTS}}` },
       headers, timeout: 15000 });
+    out.found = (r.data && r.data.itemSummaries || []).length;
+    if (r.data && r.data.warnings) out.warnings = r.data.warnings.map(w => w.message).slice(0, 3);
     const pool = ((r.data && r.data.itemSummaries) || [])
       .filter(it => it.itemId && Date.parse(it.itemEndDate || '') > now + 60000);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
@@ -11633,7 +11651,7 @@ async function auctionPilotTick() {
       out.watched++;
     }
   } catch (err) {
-    console.error('[AuctionPilot] snapshot failed:', err && err.message);
+    fail('snapshot', err);
   }
 
   // 2. The results of auctions that ended 10+ minutes ago.
@@ -11662,7 +11680,7 @@ async function auctionPilotTick() {
       }
       out.method = method;
     } catch (err) {
-      console.error('[AuctionPilot] result read failed:', err && err.message);
+      fail('result read', err);
     }
   }
 
@@ -11682,13 +11700,13 @@ async function auctionPilotTick() {
         out.weekChecked++;
       }
     } catch (err) {
-      console.error('[AuctionPilot] week re-read failed:', err && err.message);
+      fail('week re-read', err);
     }
   }
   return out;
 }
 
-// The pilot's scorecard. Public and read-only, cached 10 minutes.
+// The pilot's scorecard. Public and read-only, cached 2 minutes.
 async function _auctionPilotReport(db) {
   const T = AUCTION_PILOT_TABLE;
   const one = async (sql, ...b) => ((await db.prepare(sql).bind(...b).all()).results || []);
@@ -11712,6 +11730,7 @@ async function _auctionPilotReport(db) {
   const usd = (c) => (c == null ? null : Math.round(c) / 100);
   return {
     generatedAt: new Date().toISOString(),
+    lastTick: (await cacheGet(AUCTION_PILOT_LAST_KEY)) || _auctionPilotLast,
     byStatus,
     snipes: { sold: lift.n || 0, finalAbovePreEnd: lift.rose || 0,
               avgFinalOverPreEnd: lift.avg_ratio ? Math.round(lift.avg_ratio * 1000) / 1000 : null },
@@ -11724,7 +11743,7 @@ async function _auctionPilotReport(db) {
                                    preEnd: usd(r.pre_price_cents), sold: usd(r.final_price_cents), bids: r.final_bids, ended: r.end_at })),
   };
 }
-const AUCTION_PILOT_REPORT_KEY = 'debug:auction-pilot:v1';
+const AUCTION_PILOT_REPORT_KEY = 'debug:auction-pilot:v2';
 app.get('/api/debug/auction-pilot', async (req, res) => {
   const cached = await cacheGet(AUCTION_PILOT_REPORT_KEY);
   if (cached) return res.json(_fromCache(cached));
@@ -11733,7 +11752,7 @@ app.get('/api/debug/auction-pilot', async (req, res) => {
   try {
     if (!(await _ensureAuctionPilotTable(db))) return res.json({ available: false });
     const out = await _auctionPilotReport(db);
-    await cachePut(AUCTION_PILOT_REPORT_KEY, out, 600);
+    await cachePut(AUCTION_PILOT_REPORT_KEY, out, 120);
     res.json(out);
   } catch (err) {
     res.status(500).json({ error: String((err && err.message) || err).slice(0, 200) });
